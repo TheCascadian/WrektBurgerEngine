@@ -3,7 +3,8 @@ set -Eeuo pipefail
 
 REMOTE=${REMOTE:-origin}
 TARGET=${TARGET:-main}
-CHECK_CMD=${CHECK_CMD:-'./burger.sh validate SampleGame --days 60'}
+# Use the default only when CHECK_CMD is unset; CHECK_CMD="" intentionally skips validation.
+CHECK_CMD=${CHECK_CMD-'./burger.sh validate SampleGame --days 60'}
 MESSAGE=${1:-'Apply pending changes'}
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
