@@ -1,8 +1,8 @@
 namespace Burger.Core;
 
-public enum ScopeType { None, Country, Character, State, Location, War }
+public enum ScopeType { None, Country, Character, State, Location, War, Generic }
 
-/// <summary>Flags and numeric variables that scripts can attach to any scope (country, character, state, location).</summary>
+/// <summary>Flags and numeric variables that scripts can attach to any scope, including data-defined generic scopes.</summary>
 public sealed class VarStore
 {
     public readonly HashSet<string> Flags = new(StringComparer.OrdinalIgnoreCase);
@@ -24,7 +24,7 @@ public sealed class VarStore
     }
 }
 
-/// <summary>Anything a script can "scope" into: countries, characters, states, locations, wars.</summary>
+/// <summary>Anything a script can "scope" into: countries, characters, states, locations, wars, and generic scopes.</summary>
 public interface IScope
 {
     ScopeType ScopeType { get; }

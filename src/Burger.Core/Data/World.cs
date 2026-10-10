@@ -23,6 +23,12 @@ public sealed class World
     public readonly Dictionary<string, Character> CharacterByKey = new(StringComparer.OrdinalIgnoreCase);
     public int NextCharacterId = 1;
 
+    /// <summary>Data-defined and runtime-created scopes, separate from gameplay relationships.</summary>
+    public readonly List<GenericScope> GenericScopes = new();
+    public readonly Dictionary<string, GenericScope> GenericScopeByKey = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Explicit organizational links among scopes; ownership and authority are not inferred from it.</summary>
+    public ScopeHierarchy ScopeHierarchy { get; } = new();
+
     public readonly List<Division> Divisions = new();
     public readonly List<Army> Armies = new();
     public readonly List<Battle> Battles = new();
@@ -55,6 +61,50 @@ public sealed class World
     public State? GetState(string? key) => key != null && StateByKey.TryGetValue(key, out var s) ? s : null;
     public Location? GetLocation(string? key) => key != null && LocationByKey.TryGetValue(key, out var l) ? l : null;
     public Character? GetCharacter(string? key) => key != null && CharacterByKey.TryGetValue(key, out var c) ? c : null;
+
+    public GenericScope? GetGenericScope(string? key) => key != null && GenericScopeByKey.TryGetValue(key, out var s) ? s : null;
+
+    /// <summary>Looks up an existing entity with a stable typed reference such as <c>country:GER</c> or <c>generic:org</c>.</summary>
+    public IScope? ResolveScopeReference(string? reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference)) return null;
+        int colon = reference.IndexOf(':');
+        if (colon <= 0) return Country.IsValidTag(reference) ? GetCountry(reference) : null;
+        string prefix = reference[..colon].ToLowerInvariant();
+        string key = reference[(colon + 1)..];
+        return prefix switch
+        {
+            "c" or "country" or "tag" => GetCountry(key),
+            "s" or "state" => GetState(key),
+            "l" or "location" or "loc" or "p" or "province" => GetLocation(key),
+            "char" or "character" => GetCharacter(key),
+            "generic" or "generic_scope" or "scope_id" => GetGenericScope(key),
+            "war" => Wars.FirstOrDefault(w => string.Equals(w.Id.ToString(), key, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(w.ScopeKey, key, StringComparison.OrdinalIgnoreCase)),
+            _ => null,
+        };
+    }
+
+    /// <summary>Registers all currently existing world entities as hierarchy nodes without adding inferred links.</summary>
+    public void RegisterScopesInHierarchy()
+    {
+        foreach (var scope in Countries.Cast<IScope>().Concat(Characters).Concat(States).Concat(Locations).Concat(Wars).Concat(GenericScopes))
+            ScopeHierarchy.Register(scope);
+    }
+
+    /// <summary>Creates one generic scope, preserving its entity identity and rejecting duplicate identifiers.</summary>
+    public bool TryCreateGenericScope(string key, string kind, string name, bool dynamic, out GenericScope? scope, out string error)
+    {
+        scope = null;
+        if (string.IsNullOrWhiteSpace(key)) { error = "A generic scope needs a non-empty id"; return false; }
+        if (GenericScopeByKey.ContainsKey(key)) { error = $"Generic scope id '{key}' is already defined"; return false; }
+        scope = new GenericScope { Key = key, Kind = string.IsNullOrWhiteSpace(kind) ? "generic" : kind, Name = name, Dynamic = dynamic };
+        GenericScopeByKey.Add(key, scope);
+        GenericScopes.Add(scope);
+        ScopeHierarchy.Register(scope);
+        error = "";
+        return true;
+    }
 
     public Location? LocationAtPixel(int x, int y)
     {

@@ -430,6 +430,7 @@ public static class Program
         if (selftest)
         {
             PatchSelfTest(game);
+            ScopeHierarchySelfTest(game);
             expectedSelfTestErrors = InterfaceSelfTest();
             string tmp = Path.Combine(Path.GetTempPath(), "burger_selftest.sav");
             SaveGame.Save(game, tmp);
@@ -440,6 +441,31 @@ public static class Program
             Check(game2.World.Wars.Count == game.World.Wars.Count, "save/load keeps wars");
             Check(game2.World.Characters.Count == game.World.Characters.Count, "save/load keeps characters");
             Check(game.World.States.All(s => game2.World.GetState(s.Key)?.Owner?.Tag == s.Owner?.Tag), "save/load keeps state owners");
+            if (game.World.GetGenericScope("selftest_runtime_scope") is { } runtimeScope)
+            {
+                var loadedRuntime = game2.World.GetGenericScope(runtimeScope.Key);
+                Check(loadedRuntime != null && loadedRuntime.Vars.Get("score") == 9
+                    && ReferenceEquals(game2.World.ScopeHierarchy.ParentOf(loadedRuntime), game2.World.GetState("west_state")),
+                    "save/load keeps dynamic scope data and its mixed-type parent link");
+            }
+            if (game.World.GetGenericScope("scope_parent") != null)
+                Check(ReferenceEquals(game2.World.ScopeHierarchy.ParentOf(game2.World.GetGenericScope("scope_child_first")), game2.World.GetGenericScope("scope_parent")),
+                    "save/load keeps forward-resolved static hierarchy links");
+
+            // Removing the new sections produces a legacy-format save. Data-defined parent links must still rebuild.
+            if (game.World.GetGenericScope("scope_parent") != null)
+            {
+                string legacyPath = Path.Combine(Path.GetTempPath(), "burger_legacy_scope_selftest.sav");
+                var legacyRoot = ScriptParser.ParseFile(tmp, Path.GetFileName(tmp));
+                legacyRoot.Children!.RemoveAll(n => n.Key.Equals("generic_scopes", StringComparison.OrdinalIgnoreCase)
+                    || n.Key.Equals("scope_hierarchy", StringComparison.OrdinalIgnoreCase));
+                ScriptWriter.WriteFile(legacyPath, legacyRoot, "Legacy-format scope self-test");
+                var legacyGame = Game.Load(GameDir(project), compileScripts: true, seed: 1234);
+                SaveGame.Load(legacyGame, legacyPath);
+                Check(ReferenceEquals(legacyGame.World.ScopeHierarchy.ParentOf(legacyGame.World.GetGenericScope("scope_child_first")),
+                    legacyGame.World.GetGenericScope("scope_parent")), "legacy save rebuilds data-defined hierarchy links");
+                Check(legacyGame.World.GetGenericScope("selftest_runtime_scope") == null, "legacy save without generic scope state remains loadable");
+            }
             if (game.Features.Has(FeatureSet.Navy))
                 Check(game2.Navy.Fleets.Count == game.Navy.Fleets.Count && game2.Navy.Fleets.Sum(f => f.Ships.Count) == game.Navy.Fleets.Sum(f => f.Ships.Count), $"save/load keeps fleets ({game2.Navy.Fleets.Count}/{game.Navy.Fleets.Count})");
             if (game.Features.Has(FeatureSet.Air))
@@ -478,6 +504,108 @@ public static class Program
     }
 
     private static int _failedChecks;
+
+    private static void ScopeHierarchySelfTest(Game game)
+    {
+        var graph = new ScopeHierarchy();
+        var root = new GenericScope { Key = "test_root" };
+        var first = new GenericScope { Key = "test_first" };
+        var second = new GenericScope { Key = "test_second" };
+        var nested = new GenericScope { Key = "test_nested" };
+        var alternate = new GenericScope { Key = "test_alternate" };
+        Check(graph.TrySetParent(first, root, out _), "scope hierarchy assigns a first parent");
+        Check(graph.TrySetParent(second, root, out _), "scope hierarchy allows multiple direct children");
+        Check(graph.TrySetParent(nested, first, out _), "scope hierarchy supports recursive descendants");
+        Check(graph.ChildrenOf(root).SequenceEqual(new IScope[] { first, second })
+            && graph.DescendantsOf(root).SequenceEqual(new IScope[] { first, nested, second }),
+            "scope hierarchy traversal is deterministic depth-first and preserves identity");
+        Check(!graph.TrySetParent(root, root, out _) && !graph.TryReparent(root, nested, out _),
+            "scope hierarchy rejects self-parenting and cycles");
+        Check(!graph.TrySetParent(first, alternate, out _), "scope hierarchy rejects duplicate parent assignment");
+        Check(graph.TryReparent(first, alternate, out _) && ReferenceEquals(graph.ParentOf(first), alternate)
+            && !graph.ChildrenOf(root).Contains(first), "scope hierarchy reparents without duplicating child links");
+        var mutationGraph = new ScopeHierarchy();
+        var mutationRoot = new GenericScope { Key = "mutation_root" };
+        var mutationFirst = new GenericScope { Key = "mutation_first" };
+        var mutationSecond = new GenericScope { Key = "mutation_second" };
+        var mutationAlternate = new GenericScope { Key = "mutation_alternate" };
+        mutationGraph.TrySetParent(mutationFirst, mutationRoot, out _);
+        mutationGraph.TrySetParent(mutationSecond, mutationRoot, out _);
+        using (var traversal = mutationGraph.DescendantsOf(mutationRoot).GetEnumerator())
+        {
+            bool stable = traversal.MoveNext() && ReferenceEquals(traversal.Current, mutationFirst)
+                && mutationGraph.TryReparent(mutationSecond, mutationAlternate, out _)
+                && traversal.MoveNext() && ReferenceEquals(traversal.Current, mutationSecond);
+            Check(stable, "scope traversal snapshots children safely during runtime reparenting");
+        }
+
+        var world = game.World;
+        var dataParent = world.GetGenericScope("scope_parent");
+        if (dataParent == null) return; // Fixtures are intentionally confined to projects/Test.
+        var dataChild = world.GetGenericScope("scope_child_first");
+        var dataGrandchild = world.GetGenericScope("scope_grandchild");
+        Check(dataChild != null && ReferenceEquals(world.ScopeHierarchy.ParentOf(dataChild), dataParent),
+            "scope loader resolves a forward generic parent reference");
+        Check(dataParent != null && ReferenceEquals(world.ScopeHierarchy.ParentOf(dataParent), world.GetCountry("AAA"))
+            && ReferenceEquals(world.ScopeHierarchy.ParentOf(world.GetGenericScope("scope_state_attachment")), world.GetState("west_state"))
+            && ReferenceEquals(world.ScopeHierarchy.ParentOf(world.GetGenericScope("scope_character_attachment")), world.GetCharacter("aaa_king"))
+            && ReferenceEquals(world.ScopeHierarchy.ParentOf(world.GetGenericScope("scope_location_attachment")), world.GetLocation("first_town")),
+            "scope hierarchy supports mixed generic, country, state, character, and location types");
+        Check(world.ScopeHierarchy.DescendantsOf(dataParent!).Select(s => s.ScopeKey)
+            .SequenceEqual(new[] { "scope_child_first", "scope_grandchild" }),
+            "loaded descendants preserve deterministic definition order");
+
+        var king = world.GetCharacter("aaa_king")!;
+        var queen = world.GetCharacter("bbb_queen")!;
+        var ctx = new ScriptContext(game, world.GetCountry("AAA")).WithScope("named", dataParent).Enter(king);
+        game.Script.TryResolveScope("ROOT", ctx, out var rootScope);
+        game.Script.TryResolveScope("THIS", ctx, out var thisScope);
+        game.Script.TryResolveScope("PREV", ctx, out var prevScope);
+        game.Script.TryResolveScope("scope:named", ctx, out var namedScope);
+        Check(ReferenceEquals(rootScope, world.GetCountry("AAA")) && ReferenceEquals(thisScope, king)
+            && ReferenceEquals(prevScope, world.GetCountry("AAA")) && ReferenceEquals(namedScope, dataParent),
+            "ROOT/THIS/PREV and named-scope semantics remain compatible");
+        Check(game.Script.TryResolveScope("generic:scope_parent", ctx, out var identified) && ReferenceEquals(identified, dataParent)
+            && game.Script.TryResolveScope("parent", ctx.Enter(dataChild), out var parentLink) && ReferenceEquals(parentLink, dataParent),
+            "generic identifier lookup and parent navigation resolve existing scope identity");
+        Check(game.Script.Iterate("scope_child", new ScriptContext(game, dataParent)).SequenceEqual(new IScope[] { dataChild! })
+            && game.Script.Iterate("scope_descendant", new ScriptContext(game, dataParent)).SequenceEqual(new IScope[] { dataChild!, dataGrandchild! }),
+            "script child/descendant iterators use hierarchy rather than copying entity data");
+        Check(game.Script.EvalStatement(new Node("scope_kind", "department"), new ScriptContext(game, dataChild))
+            && game.Script.EvalStatement(new Node("is_scope_descendant_of", "generic:scope_parent"), new ScriptContext(game, dataGrandchild))
+            && game.Script.EvalStatement(new Node("scope_data", new List<Node> { new("label", "Forward child") }), new ScriptContext(game, dataChild))
+            && game.Script.EvalStatement(new Node("has_scope_data", "label"), new ScriptContext(game, dataChild)),
+            "script scope-kind checks, hierarchy predicates, and generic data access work");
+
+        var originalFather = queen.Father;
+        var originalChildren = king.Children.ToList();
+        queen.Father = king;
+        king.Children.Add(queen);
+        Check(game.Script.Iterate("child", new ScriptContext(game, king)).Contains(queen)
+            && game.Script.EvalStatement(new Node("is_child_of", "character:aaa_king"), new ScriptContext(game, queen))
+            && game.Script.EvalStatement(new Node("is_parent_of", "character:bbb_queen"), new ScriptContext(game, king)),
+            "legacy child iterator and character parent triggers retain their existing meaning");
+        king.Children.Clear();
+        king.Children.AddRange(originalChildren);
+        queen.Father = originalFather;
+
+        var create = Node.Root("scope_selftest");
+        var createEffect = create.AddBlock("create_scope");
+        createEffect.Add("id", "selftest_runtime_scope");
+        createEffect.Add("kind", "runtime_test");
+        createEffect.Add("parent", "generic:scope_parent");
+        createEffect.AddBlock("vars").Add("score", "9");
+        game.Script.Execute(create, new ScriptContext(game, dataParent));
+        var runtime = world.GetGenericScope("selftest_runtime_scope");
+        Check(runtime != null && runtime.Dynamic && runtime.Vars.Get("score") == 9
+            && ReferenceEquals(world.ScopeHierarchy.ParentOf(runtime), dataParent),
+            "script can create a data-bearing dynamic scope with a validated parent");
+        var reparent = Node.Root("scope_selftest");
+        reparent.AddBlock("set_scope_parent").Add("parent", "state:west_state");
+        game.Script.Execute(reparent, new ScriptContext(game, runtime));
+        Check(ReferenceEquals(world.ScopeHierarchy.ParentOf(runtime), world.GetState("west_state")),
+            "script runtime mutation reparents a scope across scope kinds");
+    }
 
     /// <summary>A scripted war that exercises battle plans, air missions, lend-lease and volunteers (when installed).</summary>
     private static void MilitaryFeatureTests(string project)
@@ -548,8 +676,21 @@ public static class Program
         g.StartNewGame(null);
         g.Ai.Enabled = false;
         var D = g.Diplomacy;
-        var a = g.World.Countries.Where(c => c.Exists && Builtins.NeighborCountries(g, c).Count >= 2).OrderByDescending(c => c.OwnedStates.Count).First();
-        var b = Builtins.NeighborCountries(g, a).Where(x => x.OwnedStates.Count >= 2).OrderByDescending(x => x.OwnedStates.Count).First();
+        var candidates = g.World.Countries.Where(c => c.Exists && Builtins.NeighborCountries(g, c).Count >= 2)
+            .OrderByDescending(c => c.OwnedStates.Count).ToList();
+        if (candidates.Count == 0)
+        {
+            Console.WriteLine("  [skip] war-goal self-test needs a country with two neighbors");
+            return;
+        }
+        var a = candidates[0];
+        var b = Builtins.NeighborCountries(g, a).Where(x => x.OwnedStates.Count >= 2)
+            .OrderByDescending(x => x.OwnedStates.Count).FirstOrDefault();
+        if (b == null)
+        {
+            Console.WriteLine("  [skip] war-goal self-test needs a neighboring country with at least two states");
+            return;
+        }
         foreach (var t in g.World.Relations.Truces.Keys.ToList()) g.World.Relations.Truces.Remove(t);
         g.World.Relations.SetAlliance(a, b, false);
         // a lost core gives a cheap casus belli

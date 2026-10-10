@@ -10,3 +10,4 @@ _helper.bat
 burger.sh
 WBE.sh
 .pyc
+.patch

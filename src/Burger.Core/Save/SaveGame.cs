@@ -1,4 +1,5 @@
 using System.Globalization;
+using Burger.Core.Data;
 using Burger.Core.Model;
 using Burger.Core.Script;
 
@@ -187,6 +188,28 @@ public static class SaveGame
             WriteVars(n.AddBlock("vars"), war.Vars);
         }
 
+        var genericScopes = root.AddBlock("generic_scopes");
+        foreach (var scope in w.GenericScopes)
+        {
+            var n = genericScopes.AddBlock("scope");
+            n.Add("id", scope.Key, true);
+            n.Add("kind", scope.Kind, true);
+            n.Add("name", scope.Name, true);
+            if (scope.Dynamic) n.Add("dynamic", "yes");
+            var attributes = n.AddBlock("data");
+            foreach (var pair in scope.Attributes) attributes.Add(pair.Key, pair.Value, true);
+            WriteVars(n.AddBlock("vars"), scope.Vars);
+        }
+        var hierarchy = root.AddBlock("scope_hierarchy");
+        foreach (var (child, parent) in w.ScopeHierarchy.ParentLinks)
+        {
+            string childRef = ScopeRef(child), parentRef = ScopeRef(parent);
+            if (childRef.Length == 0 || parentRef.Length == 0) continue;
+            var link = hierarchy.AddBlock("link");
+            link.Add("child", childRef, true);
+            link.Add("parent", parentRef, true);
+        }
+
         var rel = root.AddBlock("relations");
         var R = w.Relations;
         foreach (var (a, b) in R.Alliances) { var n = rel.AddBlock("alliance"); n.Add("first", a.Tag); n.Add("second", b.Tag); }
@@ -245,6 +268,8 @@ public static class SaveGame
         Character ch => "character:" + ch.Key,
         State st => "state:" + st.Key,
         Location l => "location:" + l.Key,
+        War war => "war:" + war.Id,
+        GenericScope generic => "generic:" + generic.Key,
         _ => "",
     };
 
@@ -263,6 +288,49 @@ public static class SaveGame
         foreach (var f in n.GetList("flags")) v.Flags.Add(f);
         foreach (var c in n.All)
             if (c.Value != null && Node.TryParseDouble(c.Value, out var d)) v.Vars[c.Key] = d;
+    }
+
+    private static void RestoreScopeHierarchy(World world, Node? savedHierarchy)
+    {
+        world.ScopeHierarchy.Clear();
+        world.RegisterScopesInHierarchy();
+        if (savedHierarchy != null)
+        {
+            foreach (var link in savedHierarchy.GetAll("link"))
+            {
+                var child = world.ResolveScopeReference(link.GetString("child"));
+                var parent = world.ResolveScopeReference(link.GetString("parent"));
+                if (child == null || parent == null)
+                {
+                    Log.Error($"Saved hierarchy link references an unknown scope (child '{link.GetString("child")}', parent '{link.GetString("parent")}')", link.Location);
+                    continue;
+                }
+                if (!world.ScopeHierarchy.TrySetParent(child, parent, out var error))
+                    Log.Error($"Invalid saved hierarchy link: {error}", link.Location);
+            }
+            return;
+        }
+
+        // Older saves have no hierarchy section. Reapply only explicit data-defined parents,
+        // resolving them against the newly-restored entity identities.
+        foreach (var scope in world.GenericScopes)
+        {
+            var parents = scope.Definition?.GetAll("parent").ToList() ?? new List<Node>();
+            if (parents.Count > 1)
+            {
+                Log.Error($"Scope '{scope.ScopeKey}' has more than one parent declaration; only one parent is allowed", parents[1].Location);
+                continue;
+            }
+            if (parents.Count == 0) continue;
+            var parent = world.ResolveScopeReference(parents[0].Value);
+            if (parent == null)
+            {
+                Log.Error($"Scope '{scope.ScopeKey}' references unknown parent '{parents[0].Value}'", parents[0].Location);
+                continue;
+            }
+            if (!world.ScopeHierarchy.TrySetParent(scope, parent, out var error))
+                Log.Error($"Invalid parent for scope '{scope.ScopeKey}': {error}", parents[0].Location);
+        }
     }
 
     /// <summary>Reads only the header of a save (for the load menu).</summary>
@@ -327,6 +395,34 @@ public static class SaveGame
         foreach (var f in meta.GetList("fired_once")) w.FiredOnceEvents.Add(f);
         var cds = meta.Get("cooldowns");
         if (cds != null) foreach (var c in cds.All) if (c.Value != null) w.ActionCooldowns[c.Key] = (int)c.AsDouble();
+
+        // ---- restore generic scopes before hierarchy and later save sections refer to them
+        foreach (var n in root.Get("generic_scopes")?.GetAll("scope") ?? Enumerable.Empty<Node>())
+        {
+            string key = n.GetString("id") ?? n.Key;
+            var scope = w.GetGenericScope(key);
+            if (scope == null && n.GetBool("dynamic"))
+            {
+                if (!w.TryCreateGenericScope(key, n.GetString("kind", "generic")!, n.GetString("name", "")!, true, out scope, out var createError))
+                {
+                    Log.Error($"Save generic scope '{key}': {createError}", n.Location);
+                    continue;
+                }
+            }
+            if (scope == null)
+            {
+                Log.Warn($"Save contains unknown generic scope '{key}' (removed from the game files?)");
+                continue;
+            }
+            scope.Kind = n.GetString("kind", scope.Kind)!;
+            scope.Name = n.GetString("name", scope.Name)!;
+            scope.Dynamic = n.GetBool("dynamic", scope.Dynamic);
+            scope.Attributes.Clear();
+            if (n.Get("data") is { } attributes)
+                foreach (var item in attributes.All)
+                    if (item.Value != null) scope.Attributes[item.Key] = item.Value;
+            ReadVars(n.Get("vars"), scope.Vars);
+        }
 
         // ---- countries made during the game (civil war rebels...) must exist before anything refers to them
         foreach (var n in root.Get("countries")?.All ?? Enumerable.Empty<Node>())
@@ -512,6 +608,8 @@ public static class SaveGame
             ReadVars(n.Get("vars"), war.Vars);
             w.Wars.Add(war);
         }
+
+        RestoreScopeHierarchy(w, root.Get("scope_hierarchy"));
 
         // ---- relations
         var R = w.Relations;

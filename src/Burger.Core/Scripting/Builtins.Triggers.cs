@@ -50,6 +50,40 @@ public static partial class Builtins
             return Node.Compare(v, cmp.Op, s.ResolveNumber(cmp.Value, ctx));
         }, (ctx, n) => $"Variable {n.GetString("name")} {Node.OpToString(n.Get("value")?.Op ?? Op.Eq)} {n.GetString("value")}");
         s.RegisterTrigger("is_same_as", (ctx, n) => ReferenceEquals(ctx.This, s.ArgScope(n, ctx)));
+        s.RegisterTrigger("scope_type", (ctx, n) => string.Equals(ctx.This?.ScopeType.ToString(), n.Value, StringComparison.OrdinalIgnoreCase) == (n.Op != Op.Ne));
+        s.RegisterTrigger("scope_kind", (ctx, n) =>
+        {
+            string? kind = ctx.This is GenericScope generic ? generic.Kind : ctx.This?.ScopeType.ToString();
+            return string.Equals(kind, n.Value, StringComparison.OrdinalIgnoreCase) == (n.Op != Op.Ne);
+        });
+        s.RegisterTrigger("is_scope_kind", (ctx, n) =>
+        {
+            string? kind = ctx.This is GenericScope generic ? generic.Kind : ctx.This?.ScopeType.ToString();
+            return string.Equals(kind, n.Value, StringComparison.OrdinalIgnoreCase) == (n.Op != Op.Ne);
+        });
+        s.RegisterTrigger("has_scope_data", (ctx, n) => ctx.This is GenericScope generic && generic.Attributes.ContainsKey(n.Value ?? ""));
+        s.RegisterTrigger("scope_data", (ctx, n) =>
+        {
+            if (ctx.This is not GenericScope generic) return false;
+            string? key = n.GetString("key");
+            string? expected = n.GetString("value");
+            Node? comparison = n.Get("value");
+            if (key == null)
+            {
+                var item = n.All.FirstOrDefault(child => !child.Key.Equals("value", StringComparison.OrdinalIgnoreCase));
+                key = item?.Key;
+                expected ??= item?.Value;
+                comparison ??= item;
+            }
+            if (key == null || !generic.Attributes.TryGetValue(key, out var value)) return false;
+            return expected == null || string.Equals(value, expected, StringComparison.OrdinalIgnoreCase) == (comparison?.Op != Op.Ne);
+        });
+        s.RegisterTrigger("is_scope_child_of", (ctx, n) => ctx.This != null && s.ArgScope(n, ctx) is { } parent
+            && ReferenceEquals(game.World.ScopeHierarchy.ParentOf(ctx.This), parent));
+        s.RegisterTrigger("is_scope_parent_of", (ctx, n) => ctx.This != null && s.ArgScope(n, ctx) is { } child
+            && ReferenceEquals(game.World.ScopeHierarchy.ParentOf(child), ctx.This));
+        s.RegisterTrigger("is_scope_descendant_of", (ctx, n) => ctx.This != null && s.ArgScope(n, ctx) is { } ancestor
+            && game.World.ScopeHierarchy.DescendantsOf(ancestor).Any(descendant => ReferenceEquals(descendant, ctx.This)));
         s.RegisterTrigger("exists", (ctx, n) =>
         {
             if (n.Value != null && !Node.ParseBool(n.Value, false) && !n.Value.Equals("no", StringComparison.OrdinalIgnoreCase))

@@ -26,7 +26,7 @@ public sealed class CountryLabels
 
     private sealed record LocationInput(int Index, int OwnerIndex, bool IsWater, int PixelCount,
         float CenterX, float CenterY, int MinX, int MinY, int MaxX, int MaxY, int[] LandNeighbors);
-    private sealed record CountryInput(int Index, string Name, int CapitalIndex);
+    private sealed record CountryInput(int Index, string Tag, string Name, int CapitalIndex);
     private sealed record BuildInput(int Version, int Width, int Height, int[] PixelLocation,
         LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex);
     private sealed record BuildResult(int Version, Label[] Labels);
@@ -71,7 +71,7 @@ public sealed class CountryLabels
                 l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, landNeighbors);
         }
         var countries = world.Countries.Where(c => c.Exists)
-            .Select(c => new CountryInput(c.Index, c.Name, c.Capital?.Index ?? -1)).ToArray();
+            .Select(c => new CountryInput(c.Index, c.Tag, c.Name, c.Capital?.Index ?? -1)).ToArray();
         return new BuildInput(version, map.Width, map.Height, map.PixelLocation, locations,
             countries.ToDictionary(c => c.Index));
     }
@@ -618,16 +618,7 @@ public sealed class CountryLabels
             float byThick = room.Count > 0 ? room[room.Count / 2] * 0.9f : (float)(maxThick * 0.5);
             float byLength = len / Math.Max(3, text.Length * 0.62f);
             float fontPx = Math.Max(1.5f, Math.Min(byThick, byLength));
-            // terrain height under the line, smoothed so the name follows the land without wobbling
-            var raw = points.Select(p => _map.WorldPos(p.X, p.Y).Y).ToArray();
-            var heights = new float[np];
-            for (int i = 0; i < np; i++)
-            {
-                float sum = 0, wsum = 0;
-                for (int j = Math.Max(0, i - 6); j <= Math.Min(np - 1, i + 6); j++) { float wgt = 7 - Math.Abs(i - j); sum += raw[j] * wgt; wsum += wgt; }
-                heights[i] = sum / wsum + 0.02f;
-            }
-            return new Label { Country = c, Text = text, Points = points, FontPx = fontPx, Heights = heights, LengthPx = len, Coverage = (float)Math.Min(1, Math.Min(len, fontPx * (text.Length * 0.62f + MaxSpacing * (text.Length - 1))) / Math.Max(1, extent)) };
+            return new Label { Text = text, Points = points, FontPx = fontPx, LengthPx = len, Coverage = (float)Math.Min(1, Math.Min(len, fontPx * (text.Length * 0.62f + MaxSpacing * (text.Length - 1))) / Math.Max(1, extent)) };
         }
         }
     }

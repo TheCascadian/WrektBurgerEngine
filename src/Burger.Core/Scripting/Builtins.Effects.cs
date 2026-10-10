@@ -70,6 +70,58 @@ public static partial class Builtins
         s.RegisterEffect("remove_variable", (ctx, n) => ctx.This?.Vars.Vars.Remove(n.Value ?? ""), (ctx, n) => null);
         s.RegisterEffect("save_scope_as", (ctx, n) => ctx.Scopes[n.Value ?? "saved"] = ctx.This, (ctx, n) => null);
         s.RegisterEffect("save_event_target_as", (ctx, n) => ctx.Scopes[n.Value ?? "saved"] = ctx.This, (ctx, n) => null);
+        s.RegisterEffect("create_scope", (ctx, n) =>
+        {
+            string id = n.GetString("id") ?? "";
+            string parentRef = n.GetString("parent") ?? "";
+            IScope? parent = null;
+            if (parentRef.Length > 0 && !parentRef.Equals("none", StringComparison.OrdinalIgnoreCase)
+                && (!s.TryResolveScope(parentRef, ctx, out parent) || parent == null))
+            {
+                Log.Error($"create_scope references unknown parent '{parentRef}'", n.Location);
+                return;
+            }
+            if (!w.TryCreateGenericScope(id, n.GetString("kind", "generic")!, n.GetString("name", "")!, true, out var created, out var error))
+            {
+                Log.Error($"create_scope: {error}", n.Location);
+                return;
+            }
+            var data = n.Get("data");
+            if (data != null)
+                foreach (var item in data.All)
+                    if (item.Value != null)
+                    {
+                        created!.Attributes[item.Key] = item.Value;
+                        if (Node.TryParseDouble(item.Value, out var numeric)) created.Vars.Set(item.Key, numeric);
+                    }
+            var vars = n.Get("vars") ?? n.Get("variables");
+            if (vars != null)
+                foreach (var item in vars.All)
+                    if (item.Value != null && Node.TryParseDouble(item.Value, out var numeric)) created!.Vars.Set(item.Key, numeric);
+            foreach (var flag in n.GetList("flags")) created!.Vars.SetFlag(flag);
+            if (parent != null && !w.ScopeHierarchy.TrySetParent(created!, parent, out error))
+                Log.Error($"create_scope: {error}", n.Location);
+        }, (ctx, n) => null);
+        s.RegisterEffect("set_scope_parent", (ctx, n) =>
+        {
+            if (ctx.This == null) { Log.Error("set_scope_parent needs a current scope", n.Location); return; }
+            var parentRef = n.Value ?? n.GetString("parent");
+            if (parentRef == null) { Log.Error("set_scope_parent needs parent = <scope> (or none)", n.Location); return; }
+            IScope? parent = null;
+            if (!parentRef.Equals("none", StringComparison.OrdinalIgnoreCase)
+                && (!s.TryResolveScope(parentRef, ctx, out parent) || parent == null))
+            {
+                Log.Error($"set_scope_parent references unknown parent '{parentRef}'", n.Location);
+                return;
+            }
+            if (!w.ScopeHierarchy.TryReparent(ctx.This, parent, out var error))
+                Log.Error($"set_scope_parent: {error}", n.Location);
+        }, (ctx, n) => null);
+        s.RegisterEffect("clear_scope_parent", (ctx, n) =>
+        {
+            if (ctx.This != null && !w.ScopeHierarchy.TryReparent(ctx.This, null, out var error))
+                Log.Error($"clear_scope_parent: {error}", n.Location);
+        }, (ctx, n) => null);
         s.RegisterEffect("log", (ctx, n) => Log.Info($"[script] {game.Events.FormatText(n.Value ?? "", ctx)}", n.Location), (ctx, n) => null);
         s.RegisterEffect("notify", (ctx, n) =>
         {

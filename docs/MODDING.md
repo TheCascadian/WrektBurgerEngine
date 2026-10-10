@@ -587,6 +587,53 @@ check_variable = { name = x value >= 5 }     add_gold = var:x
 save_scope_as = my_target   →   scope:my_target
 ```
 
+### Data-defined hierarchical scopes
+
+Use `game/common/scopes/*.txt` for reusable organizational scopes that may contain other scopes. Definitions are
+loaded before their `parent` links are resolved, so a parent may be declared later in the same or another file:
+
+```text
+field_office = {
+    kind = office
+    name = "Northern Field Office"
+    parent = generic:agency
+    data = { region = north rank = 2 }
+    vars = { budget = 50 }
+    flags = { active }
+}
+agency = {
+    kind = organization
+    parent = country:GER
+}
+```
+
+`kind` is a mod-defined scope-kind label; `data` stores arbitrary text attributes, and numeric-valued data attributes
+are also copied into the numeric variable store. Explicit `vars` and `flags` use the same script variable/flag store
+as existing entities.
+Read text attributes with `scope_data = { region = north }` or test their presence with `has_scope_data = region`.
+Generic identifiers use `generic:<id>` (or `scope_id:<id>`); existing country, state, location, character and war
+references remain available.
+Invalid or cyclic parent references are reported with their source file and line.
+
+Hierarchy is **only organizational containment**: it does not imply ownership, authority, permissions, employment,
+alliances, or supply. Those remain separate systems/relationships. Existing `child`, `is_child_of`, and `is_parent_of`
+continue to mean biological character relationships. For the explicit hierarchy, use `parent` / `scope_parent`,
+`scope_kind` (or `scope_type`), and `any_scope_child`, `all_scope_child`, `every_scope_child`,
+`any_scope_descendant`, `all_scope_descendant`, `every_scope_descendant` (plus the existing `random_` iterator form).
+For example:
+
+```text
+any_scope_descendant = { scope_kind = office has_flag = active }
+generic:field_office = { set_variable = { name = budget value = 75 } }
+```
+
+Scripts may create and reparent generic scopes with `create_scope = { id = ... kind = ... parent = ... vars = { ... } }`,
+`set_scope_parent = { parent = ... }`, `set_scope_parent = none`, and `clear_scope_parent = yes`. These operations validate
+their references and reject cycles. Generic scope variables, dynamic scopes and explicit hierarchy links are saved;
+older saves without these sections still load and rebuild links declared in the game files.
+
+The engine's fixture checks can be run with `burger validate Test --selftest`.
+
 **`docs/SCRIPT_REFERENCE.md`** lists every trigger, effect, value, iterator and link. Regenerate it with
 `burger docs` after adding your own in C#.
 

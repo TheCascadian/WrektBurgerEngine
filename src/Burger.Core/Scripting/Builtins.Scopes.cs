@@ -38,6 +38,8 @@ public static partial class Builtins
         s.RegisterLink("mother", (ctx, x) => (x as Character)?.Mother);
         s.RegisterLink("spouse", (ctx, x) => (x as Character)?.Spouse);
         s.RegisterLink("overlord", (ctx, x) => C(x) is { } c ? game.World.Relations.OverlordOf(c) : null);
+        s.RegisterLink("parent", (ctx, x) => game.World.ScopeHierarchy.ParentOf(x));
+        s.RegisterLink("scope_parent", (ctx, x) => game.World.ScopeHierarchy.ParentOf(x));
         s.RegisterLink("attacker_leader", (ctx, x) => (x as War)?.AttackerLeader);
         s.RegisterLink("defender_leader", (ctx, x) => (x as War)?.DefenderLeader);
     }
@@ -66,6 +68,8 @@ public static partial class Builtins
             ? game.World.CharactersOf(c).ToList()
             : game.World.LivingCharacters.ToList());
         s.RegisterIterator("child", (ctx, x) => (x as Character)?.Children.Where(ch => ch.Alive).ToList() ?? Enumerable.Empty<IScope>());
+        s.RegisterIterator("scope_child", (ctx, x) => game.World.ScopeHierarchy.ChildrenOf(x));
+        s.RegisterIterator("scope_descendant", (ctx, x) => game.World.ScopeHierarchy.DescendantsOf(x));
         s.RegisterIterator("core_state", (ctx, x) => C(x) is { } c ? game.World.States.Where(st => st.Cores.Contains(c)).ToList() : Enumerable.Empty<IScope>());
         s.RegisterIterator("claimed_state", (ctx, x) => C(x) is { } c ? game.World.States.Where(st => st.Claims.Contains(c)).ToList() : Enumerable.Empty<IScope>());
         s.RegisterIterator("state", (ctx, x) => game.World.States);

@@ -20,9 +20,67 @@ public static class WorldLoader
         LoadCharacters(game);
         LoadUnits(game);
         LoadDiplomacy(game);
+        LoadScopes(game);
         game.Politics.LoadHistory();
         game.Population.InitWorld();
         game.Warfare.RebuildIndex();
+    }
+
+    /// <summary>Creates all declared scopes first, then resolves their optional parents (including forward references).</summary>
+    private static void LoadScopes(Game game)
+    {
+        var world = game.World;
+        world.RegisterScopesInHierarchy();
+        var pendingParents = new List<(GenericScope Scope, Node Parent)>();
+        foreach (var root in DataLoader.ParseFileOrFolder(game.Data, "common/scopes"))
+        {
+            foreach (var n in root.All)
+            {
+                if (n.Children == null)
+                {
+                    Log.Error($"Expected a generic scope block for '{n.Key}'", n.Location);
+                    continue;
+                }
+                if (!world.TryCreateGenericScope(n.Key, n.GetString("kind", "generic")!, n.GetString("name", "")!, false, out var scope, out var error))
+                {
+                    Log.Error(error, n.Location);
+                    continue;
+                }
+                scope!.Definition = n;
+                var data = n.Get("data");
+                if (data != null)
+                    foreach (var item in data.All)
+                    {
+                        if (item.Value == null) { Log.Error($"Scope '{n.Key}': data field '{item.Key}' needs a value", item.Location); continue; }
+                        scope!.Attributes[item.Key] = item.Value;
+                        if (Node.TryParseDouble(item.Value, out var numeric)) scope.Vars.Set(item.Key, numeric);
+                    }
+                var vars = n.Get("vars") ?? n.Get("variables");
+                if (vars != null)
+                    foreach (var item in vars.All)
+                    {
+                        if (item.Value != null && Node.TryParseDouble(item.Value, out var numeric)) scope!.Vars.Set(item.Key, numeric);
+                        else Log.Error($"Scope '{n.Key}': variable '{item.Key}' must be numeric", item.Location);
+                    }
+                foreach (var flag in n.GetList("flags")) scope!.Vars.SetFlag(flag);
+
+                var parents = n.GetAll("parent").ToList();
+                if (parents.Count > 1)
+                    Log.Error($"Scope '{n.Key}' has more than one parent declaration; only one parent is allowed", parents[1].Location);
+                else if (parents.Count == 1) pendingParents.Add((scope!, parents[0]));
+            }
+        }
+        foreach (var (scope, parentNode) in pendingParents)
+        {
+            var parent = world.ResolveScopeReference(parentNode.Value);
+            if (parent == null)
+            {
+                Log.Error($"Scope '{scope.ScopeKey}' references unknown parent '{parentNode.Value}'", parentNode.Location);
+                continue;
+            }
+            if (!world.ScopeHierarchy.TrySetParent(scope, parent, out var error))
+                Log.Error($"Invalid parent for scope '{scope.ScopeKey}': {error}", parentNode.Location);
+        }
     }
 
     // ------------------------------------------------------------------------------------------------
