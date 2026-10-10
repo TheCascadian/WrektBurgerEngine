@@ -31,6 +31,55 @@ public sealed class ScriptEngine
     private readonly Dictionary<string, IteratorFn> _iterators = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, LinkFn> _links = new(StringComparer.OrdinalIgnoreCase);
 
+    // Hot-path caches: the daily/weekly ticks re-evaluate the same parsed Node trees thousands of times.
+    // Resolving a node key is a case-insensitive string hash + delegate lookup every time; these caches
+    // memoize that per Node instance (bounded by the number of parsed script nodes). They are cleared
+    // whenever a trigger/effect/value/iterator/link is (re-)registered, so mods can never read stale entries.
+    private long _registrationCounter;
+    private static readonly ConditionalWeakTable<Node, CachedLookups> _nodeCache = new();
+
+    private sealed class CachedLookups
+    {
+        public long Stamp = -1;                    // registration generation this cache belongs to
+        public string Key = "";                    // n.Key as seen when cached (keys stay null after clear)
+        public TriggerFn? Trigger;                 // registered trigger for Key (null = none)
+        public EffectFn? Effect;                   // registered effect for Key
+        public ValueFn? Value;                     // registered numeric value for Key
+        public int IteratorPrefix = -1;            // 0 any, 1 all, 2 every, 3 random, 4 ordered, -1 not an iterator call
+        public string IteratorName = "";           // iterator name when IteratorPrefix >= 0
+        public bool ScopeChecked;                  // TryResolveScope(key) already attempted and failed
+    }
+
+    /// <summary>Looks up <paramref name="key"/> on <paramref name="n"/>'s cache; returns false if it is cold (and arms it).</summary>
+    private bool CachedLookup(Node n, string key, out CachedLookups hit)
+    {
+        var c = _nodeCache.GetValue(n, _ => new CachedLookups());
+        lock (c)
+        {
+            if (c.Stamp == _registrationCounter && c.Key.Length == key.Length
+                && string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                hit = c;
+                return true;
+            }
+            c.Stamp = _registrationCounter;
+            c.Key = key;
+            c.Trigger = _triggers.TryGetValue(key, out var t) ? t : null;
+            c.Effect = _effects.TryGetValue(key, out var e) ? e : null;
+            c.Value = _values.TryGetValue(key, out var v) ? v : null;
+            c.IteratorPrefix = -1;
+            c.IteratorName = "";
+            if (TrySplitIteratorParts(key, out var prefix, out var iterName) && _iterators.ContainsKey(iterName))
+            {
+                c.IteratorPrefix = prefix switch { "any" => 0, "all" => 1, "every" => 2, "random" => 3, _ => 4 };
+                c.IteratorName = iterName;
+            }
+            c.ScopeChecked = false;
+            hit = c;
+            return false;
+        }
+    }
+
     private static readonly HashSet<string> WeightKeys = new(StringComparer.OrdinalIgnoreCase) { "factor", "add", "base", "days", "months", "years" };
     private static readonly HashSet<string> IteratorReservedKeys = new(StringComparer.OrdinalIgnoreCase) { "limit", "count", "percent", "max", "order_by", "weight" };
 
@@ -45,26 +94,30 @@ public sealed class ScriptEngine
     public IEnumerable<string> IteratorNames => _iterators.Keys;
     public IEnumerable<string> LinkNames => _links.Keys;
 
+    private void InvalidateNodeCache() => Interlocked.Increment(ref _registrationCounter);
+
     public void RegisterTrigger(string name, TriggerFn fn, DescribeFn? describe = null)
     {
         _triggers[name] = fn;
         if (describe != null) _triggerDescriptions[name] = describe;
+        InvalidateNodeCache();
     }
 
     public void RegisterEffect(string name, EffectFn fn, DescribeFn? describe = null)
     {
         _effects[name] = fn;
         if (describe != null) _effectDescriptions[name] = describe;
+        InvalidateNodeCache();
     }
 
     /// <summary>A numeric value usable in triggers (<c>gold &gt;= 100</c>) and as effect arguments.</summary>
-    public void RegisterValue(string name, ValueFn fn) => _values[name] = fn;
+    public void RegisterValue(string name, ValueFn fn) { _values[name] = fn; InvalidateNodeCache(); }
 
     /// <summary>Registers <c>any_NAME</c>, <c>all_NAME</c>, <c>every_NAME</c> and <c>random_NAME</c>.</summary>
-    public void RegisterIterator(string name, IteratorFn fn) => _iterators[name] = fn;
+    public void RegisterIterator(string name, IteratorFn fn) { _iterators[name] = fn; InvalidateNodeCache(); }
 
     /// <summary>A scope link such as <c>ruler</c>, <c>capital</c>, <c>owner</c>.</summary>
-    public void RegisterLink(string name, LinkFn fn) => _links[name] = fn;
+    public void RegisterLink(string name, LinkFn fn) { _links[name] = fn; InvalidateNodeCache(); }
 
     /// <summary>Items of a registered iterator (e.g. "owned_state") for the current scope.</summary>
     public IEnumerable<IScope> Iterate(string iterator, ScriptContext ctx)
@@ -226,6 +279,7 @@ public sealed class ScriptEngine
             return false;
         }
         ctx.Where = n.Location;
+        string key = n.Key;
         switch (key.ToLowerInvariant())
         {
             case "and": return EvalTrigger(n, ctx);
@@ -239,11 +293,15 @@ public sealed class ScriptEngine
             case "limit": return EvalTrigger(n, ctx);
         }
 
-        if (_triggers.TryGetValue(key, out var trig)) return trig(ctx, n);
+        // cached resolution of this node's key (trigger / iterator / value), see CachedLookups
+        bool warm = CachedLookup(n, key, out var cache);
+        if (cache.Trigger != null) return cache.Trigger(ctx, n);
 
         // iterators: any_x / all_x
-        if (TrySplitIterator(key, out var prefix, out var iterName) && (prefix == "any" || prefix == "all"))
+        if (cache.IteratorPrefix is 0 or 1)
         {
+            var iterName = cache.IteratorName;
+            var prefix = cache.IteratorPrefix == 0 ? "any" : "all";
             var items = _iterators[iterName](ctx, ctx.This);
             if (prefix == "all")
             {

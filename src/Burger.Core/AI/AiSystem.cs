@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Burger.Core.Modding;
 using Burger.Core.Model;
 
@@ -6,6 +7,10 @@ namespace Burger.Core.AI;
 /// <summary>
 /// Default AI. Every method is virtual: subclass it in a C# script and assign <c>Game.Ai = new MyAi(Game);</c>
 /// to replace any part of it.
+/// The per-country work runs on several threads (<see cref="Parallelism"/>); country-scoped randomness uses
+/// deterministic per-country streams (<see cref="CountryRng"/>) instead of the shared <see cref="Game.Rng"/>.
+/// Overriding the per-country methods with old signatures still works, but those overrides will draw from the
+/// shared <see cref="Game.Rng"/>: prefer the overloads that take an <see cref="AiRng"/>.
 /// </summary>
 public class AiSystem
 {
@@ -16,43 +21,142 @@ public class AiSystem
     /// <summary>Set to false to freeze all AI decisions (debugging).</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Max degree of parallelism for the per-country AI ticks (null = one thread per core).
+    /// Set to 1 to serialize the AI (for debugging or when a mod's overrides are not thread-safe);
+    /// results stay identical either way thanks to the per-country RNG streams.
+    /// </summary>
+    public static int? Parallelism = null;
+
+    private CountryRng? _countryRng;
+    private int _countryRngSeed;
+
+    /// <summary>Per-country deterministic random streams, seeded from the last seed passed to <see cref="ResetRng"/>.</summary>
+    protected CountryRng RngStreams => _countryRng ??= new CountryRng(_countryRngSeed);
+
+    /// <summary>Called by <see cref="Game"/> after (re)seeding <see cref="Game.Rng"/> so AI streams match the game seed.</summary>
+    public void ResetRng(int seed) { _countryRngSeed = seed; _countryRng = new CountryRng(seed); }
+
+    // ---- border cache: which countries touch each other's land (the old Borders() scan was O(6400 locations) per pair) ----
+    private long _borderStamp = -1;
+    private int _borderMapVersion = -1;
+    private ConcurrentDictionary<(int, int), bool> _borders = new();
+
+    /// <summary>Cached answer for <see cref="Borders"/>: recomputed once per tick when ownership changed (<see cref="Game.MapVersion"/>).</summary>
+    protected ConcurrentDictionary<(int, int), bool> BorderCache
+    {
+        get
+        {
+            long stamp = Game.World.Date.TotalDays;
+            int version = Game.MapVersion;
+            if (_borderStamp != stamp || _borderMapVersion != version)
+            {
+                lock (_borders)
+                {
+                    if (_borderStamp != stamp || _borderMapVersion != version)
+                    {
+                        _borders.Clear();
+                        ComputeAllBorders();
+                        _borderStamp = stamp;
+                        _borderMapVersion = version;
+                    }
+                }
+            }
+            return _borders;
+        }
+    }
+
+    private void ComputeAllBorders()
+    {
+        var w = Game.World;
+        foreach (var l in w.Locations)
+        {
+            var a = l.Controller;
+            if (a == null) continue;
+            foreach (var adj in l.Neighbors)
+            {
+                if (adj.Kind == AdjacencyKind.Sea) continue;
+                var b = adj.To.Controller;
+                if (b == null || ReferenceEquals(b, a)) continue;
+                _borders[(a.Index, b.Index)] = true;
+                _borders[(b.Index, a.Index)] = true;
+            }
+        }
+    }
+
+    /// <summary>Runs <paramref name="work"/> over the given countries, in parallel unless <see cref="Parallelism"/> is 1.</summary>
+    private void ForEachAi(List<Country> countries, Action<Country> work)
+    {
+        if (countries.Count == 0) return;
+        if (Parallelism == 1 || countries.Count == 1)
+        {
+            foreach (var c in countries) work(c);
+            return;
+        }
+        var options = new ParallelOptions { MaxDegreeOfParallelism = Parallelism ?? Environment.ProcessorCount };
+        Parallel.For(0, countries.Count, options, i => work(countries[i]));
+    }
+
+    private List<Country> ActiveAiCountries()
+    {
+        var list = new List<Country>();
+        foreach (var c in Game.World.Countries)
+            if (c.Exists && !c.IsPlayer) list.Add(c);
+        return list;
+    }
+
     public virtual void DailyTick()
     {
         if (!Enabled) return;
         int day = Game.World.Date.TotalDays;
-        foreach (var c in Game.World.Countries)
+        var military = Game.Features.Has(FeatureSet.Military);
+        var navy = Game.Features.Has(FeatureSet.Navy);
+        var air = Game.Features.Has(FeatureSet.Air) && day % 7 == 0;
+        if (!military && !navy && !air) return;
+        var countries = ActiveAiCountries();
+        ForEachAi(countries, c =>
         {
-            if (!c.Exists || c.IsPlayer) continue;
-            if ((day + c.Index) % 2 == 0 && Game.Features.Has(FeatureSet.Military)) Game.P("Ai.Military", () => ManageMilitary(c));
-            if ((day + c.Index) % 2 == 1 && Game.Features.Has(FeatureSet.Navy)) Game.P("Ai.Fleets", () => MoveFleets(c));
-            if ((day + c.Index) % 7 == 0 && Game.Features.Has(FeatureSet.Air)) Game.P("Ai.Air", () => AssignAirWings(c));
-        }
+            var rng = RngStreams.For(c.Index);
+            if ((day + c.Index) % 2 == 0 && military) Game.P("Ai.Military", () => ManageMilitary(c, new AiRng(Game, rng)));
+            if ((day + c.Index) % 2 == 1 && navy) Game.P("Ai.Fleets", () => MoveFleets(c));
+            if (air) Game.P("Ai.Air", () => AssignAirWings(c));
+        });
     }
 
     public virtual void MonthlyTick()
     {
         if (!Enabled) return;
-        foreach (var c in Game.World.Countries.ToList())
+        var F = Game.Features;
+        bool diplomacy = F.Has(FeatureSet.Diplomacy);
+        var countries = ActiveAiCountries();
+        // warm the border cache on this thread before workers read it
+        if (diplomacy) _ = BorderCache;
+        ForEachAi(countries, c =>
         {
-            if (!c.Exists || c.IsPlayer) continue;
-            if (Game.Features.Has(FeatureSet.Military)) Recruit(c);
-            if (Game.Features.Has(FeatureSet.Air)) ManageAir(c);
-            if (Game.Features.Has(FeatureSet.LendLease) && Game.Features.Has(FeatureSet.Military)) HelpFriends(c);
-            if (Game.Features.Has(FeatureSet.Production)) ManageProduction(c);
-            if (Game.Features.Has(FeatureSet.Navy)) ManageNavy(c);
+            var rng = RngStreams.For(c.Index);
+            var ar = new AiRng(Game, rng);
+            if (F.Has(FeatureSet.Military)) Recruit(c);
+            if (F.Has(FeatureSet.Air)) ManageAir(c);
+            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) HelpFriends(c);
+            if (F.Has(FeatureSet.Production)) ManageProduction(c);
+            if (F.Has(FeatureSet.Navy)) ManageNavy(c);
             Game.Decisions.AiMonthly(c);
-            if (Game.Features.Has(FeatureSet.Politics)) ManagePolitics(c);
-            if (Game.Features.Has(FeatureSet.Population)) ManagePopulation(c);
-            if (Game.Features.Has(FeatureSet.Diplomacy))
+            if (F.Has(FeatureSet.Politics)) ManagePolitics(c);
+            if (F.Has(FeatureSet.Population)) ManagePopulation(c);
+            if (diplomacy)
             {
-                Diplomacy(c);
+                Diplomacy(c, ar);
                 Peace(c);
             }
-        }
+        });
     }
 
     // ------------------------------------------------------------------------------------------- military
-    public virtual void ManageMilitary(Country c)
+    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rng"/>.</summary>
+    public virtual void ManageMilitary(Country c) => ManageMilitary(c, new AiRng(Game, null));
+
+    /// <summary>Per-country army/front management. <paramref name="rng"/> is this country's private random stream.</summary>
+    public virtual void ManageMilitary(Country c, AiRng rng)
     {
         var w = Game.World;
         var wars = w.WarsOf(c).ToList();
@@ -73,7 +177,7 @@ public class AiSystem
             foreach (var d in biggest.Divisions.Skip(biggest.Divisions.Count / 2).ToList()) Game.Warfare.AssignToArmy(d, army);
             armies.Add(army);
         }
-        AssignGenerals(c, armies);
+        AssignGenerals(c, armies, rng);
 
         if (wars.Count == 0)
         {
@@ -87,15 +191,20 @@ public class AiSystem
             return;
         }
 
-        // enemies we actually border (directly or through allies' land)
+        // enemies we actually border (directly or through allies' land) - O(1) cached answer per pair
         var enemies = wars.SelectMany(war => war.EnemiesOf(c)).Distinct().Where(e => e.Exists).ToList();
-        var bordering = enemies.Where(e => Borders(c, e)).ToList();
+        var cache = BorderCache;
+        var bordering = enemies.Where(e => cache.ContainsKey((c.Index, e.Index))).ToList();
         if (bordering.Count == 0) bordering = enemies.Where(e => e.Exists).ToList();
         if (bordering.Count == 0) return;
 
         double ownPower = Game.Rules.Diplomacy.MilitaryStrength(Game, c);
         var strength = new Dictionary<Country, double>();
-        double StrengthOf(Country e) => strength.TryGetValue(e, out var v) ? v : strength[e] = Game.Rules.Diplomacy.MilitaryStrength(Game, e);
+        double StrengthOf(Country e)
+        {
+            lock (strength)
+                return strength.TryGetValue(e, out var v) ? v : strength[e] = Game.Rules.Diplomacy.MilitaryStrength(Game, e);
+        }
         for (int i = 0; i < armies.Count; i++)
         {
             var army = armies[i];
@@ -111,18 +220,15 @@ public class AiSystem
         }
     }
 
-    protected virtual bool Borders(Country a, Country b)
-    {
-        foreach (var l in Game.World.Locations)
-        {
-            if (l.Controller != a) continue;
-            foreach (var adj in l.Neighbors)
-                if (adj.To.Controller == b && adj.Kind != AdjacencyKind.Sea) return true;
-        }
-        return false;
-    }
+    /// <summary>
+    /// True if some land location of <paramref name="a"/> borders a land location of <paramref name="b"/>.
+    /// Uses the per-tick border cache (one O(locations) pass instead of a full map scan per country pair).
+    /// </summary>
+    protected virtual bool Borders(Country a, Country b) => BorderCache.ContainsKey((a.Index, b.Index));
 
-    protected virtual void AssignGenerals(Country c, List<Army> armies)
+    protected virtual void AssignGenerals(Country c, List<Army> armies) => AssignGenerals(c, armies, new AiRng(Game, null));
+
+    protected virtual void AssignGenerals(Country c, List<Army> armies, AiRng rng)
     {
         var now = Game.World.Date;
         string stat = Game.Data.Defines.GeneralStat;
@@ -133,7 +239,7 @@ public class AiSystem
                 .Where(ch => !used.Contains(ch) && ch.Age(now) >= Game.Data.Defines.AdultAge && !ch.IsRuler && !ch.Female)
                 .OrderByDescending(ch => ch.IsGeneral).ThenByDescending(ch => ch.GetStat(stat)).FirstOrDefault();
             if (candidate == null && !Game.Features.Has(FeatureSet.Characters)) continue; // no characters: armies have no generals
-            candidate ??= Game.Characters.Generate(c, false, 35 + Game.Rng.Next(20));
+            candidate ??= Game.Characters.Generate(c, false, 35 + rng.Next(20));
             Game.Warfare.SetGeneral(army, candidate);
         }
     }
@@ -184,9 +290,13 @@ public class AiSystem
     public virtual void ManagePopulation(Country c) => Game.Population.AiMonthly(c);
 
     // ------------------------------------------------------------------------------------------- diplomacy
-    public virtual void Diplomacy(Country c)
+    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rng"/>.</summary>
+    public virtual void Diplomacy(Country c) => Diplomacy(c, new AiRng(Game, null));
+
+    /// <summary>Per-country diplomatic actions. <paramref name="rng"/> is this country's private random stream.</summary>
+    public virtual void Diplomacy(Country c, AiRng rng)
     {
-        if (Game.Rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
+        if (rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
         foreach (var a in Game.Data.DiplomaticActions.Values)
         {
@@ -201,7 +311,7 @@ public class AiSystem
         }
         if (options.Count == 0) return;
         double total = options.Sum(o => o.Weight);
-        double r = Game.Rng.NextDouble() * total;
+        double r = rng.NextDouble() * total;
         foreach (var o in options)
         {
             r -= o.Weight;

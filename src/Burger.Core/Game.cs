@@ -72,6 +72,8 @@ public sealed class Game
     public GameData Data { get; private set; } = new();
     public World World { get; private set; } = new();
     public Random Rng { get; private set; } = new();
+    /// <summary>The seed that seeded <see cref="Rng"/> (a random one if none was given). Systems with per-entity RNG streams use it.</summary>
+    public int Seed { get; private set; } = Environment.TickCount;
     public GameRules Rules { get; } = new();
     /// <summary>The mechanics this game uses (game/features.txt). Systems of missing features do not run.</summary>
     public Burger.Core.Modding.FeatureSet Features { get; private set; } = new();
@@ -174,7 +176,9 @@ public sealed class Game
     public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null)
     {
         var game = new Game();
-        game.Rng = seed.HasValue ? new Random(seed.Value) : new Random();
+        game.Seed = seed ?? Environment.TickCount;
+        game.Rng = new Random(game.Seed);
+        game.Ai.ResetRng(game.Seed); // per-country AI streams derive from the same seed (deterministic under parallel ticks)
         game.Data.Root = Path.GetFullPath(gameRoot);
         if (!File.Exists(Path.Combine(game.Data.Root, "game.txt")) && !Directory.Exists(Path.Combine(game.Data.Root, "common")))
             throw new GameLoadException($"'{game.Data.Root}' is not a game folder (no game.txt or common/ folder found).");
@@ -183,6 +187,7 @@ public sealed class Game
         game.Features = Burger.Core.Modding.FeatureSet.Load(game.Data.Root);
         DataLoader.LoadDefinitions(game);
         if (compileScripts) game.Mods.CompileAndLoad();
+        game.Ai.ResetRng(game.Seed); // mods may have replaced Game.Ai (OnLoad): reseed the active AI's streams
         WorldLoader.LoadWorld(game);
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);
