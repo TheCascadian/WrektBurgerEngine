@@ -207,13 +207,13 @@ public sealed class SupplySystem
 
     public void DailyTick()
     {
-        // countries at war get a fresh supply map every day; at peace once a week is enough (and much cheaper on big maps)
+        // countries at war get a fresh supply map every day; at peace every 4-10 days is enough (staggered per country so they never all expire on the same day)
         int today = _game.World.Date.TotalDays;
         foreach (var c in _maps.Keys.ToList())
         {
             int age = today - _computedDay.GetValueOrDefault(c, -999);
             bool changed = _computedVersion.GetValueOrDefault(c, -1) != _game.MapVersion;
-            if (age >= 7 || (changed && _game.World.WarsOf(c).Any())) _maps.Remove(c);
+            if (age >= 4 + c.Index % 7 || (changed && _game.World.WarsOf(c).Any())) _maps.Remove(c);
         }
         var byLoc = new Dictionary<(Country, Location), double>();
         foreach (var d in _game.World.Divisions)

@@ -140,18 +140,18 @@ public class AiSystem
         {
             var rng = RngStreams.For(c.Index);
             var ar = new AiRng(Game, rng);
-            if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", () => Recruit(c));
-            if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", () => ManageAir(c));
-            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.HelpFriends", () => HelpFriends(c));
-            if (F.Has(FeatureSet.Production)) Game.P("Ai.MonthlyTick.ManageProduction", () => ManageProduction(c));
-            if (F.Has(FeatureSet.Navy)) Game.P("Ai.MonthlyTick.ManageNavy", () => ManageNavy(c));
-            Game.P("Ai.MonthlyTick.Decisions", () => Game.Decisions.AiMonthly(c));
-            if (F.Has(FeatureSet.Politics)) Game.P("Ai.MonthlyTick.ManagePolitics", () => ManagePolitics(c));
-            if (F.Has(FeatureSet.Population)) Game.P("Ai.MonthlyTick.ManagePopulation", () => ManagePopulation(c));
+            if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", c.Tag, () => Recruit(c));
+            if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", c.Tag, () => ManageAir(c));
+            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.HelpFriends", c.Tag, () => HelpFriends(c));
+            if (F.Has(FeatureSet.Production)) Game.P("Ai.MonthlyTick.ManageProduction", c.Tag, () => ManageProduction(c));
+            if (F.Has(FeatureSet.Navy)) Game.P("Ai.MonthlyTick.ManageNavy", c.Tag, () => ManageNavy(c));
+            Game.P("Ai.MonthlyTick.Decisions", c.Tag, () => Game.Decisions.AiMonthly(c));
+            if (F.Has(FeatureSet.Politics)) Game.P("Ai.MonthlyTick.ManagePolitics", c.Tag, () => ManagePolitics(c));
+            if (F.Has(FeatureSet.Population)) Game.P("Ai.MonthlyTick.ManagePopulation", c.Tag, () => ManagePopulation(c));
             if (diplomacy)
             {
-                Game.P("Ai.MonthlyTick.Diplomacy", () => Diplomacy(c, ar));
-                Game.P("Ai.MonthlyTick.Peace", () => Peace(c));
+                Game.P("Ai.MonthlyTick.Diplomacy", c.Tag, () => Diplomacy(c, ar));
+                Game.P("Ai.MonthlyTick.Peace", c.Tag, () => Peace(c));
             }
         });
     }
@@ -298,22 +298,37 @@ public class AiSystem
     /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rng"/>.</summary>
     public virtual void Diplomacy(Country c) => Diplomacy(c, new AiRng(Game, null));
 
+    /// <summary>Set BURGER_AI_CHECK=1 to compare the fast diplomacy filter with the full one and log any difference.</summary>
+    private static readonly bool CheckFastPath = Environment.GetEnvironmentVariable("BURGER_AI_CHECK") == "1";
+
+    /// <summary>Set BURGER_AI_DEBUG=1 to log, for every AI diplomacy roll, how many targets passed per action, how many had weight &gt; 0, and what was chosen.</summary>
+    private static readonly bool DebugDiplomacy = Environment.GetEnvironmentVariable("BURGER_AI_DEBUG") == "1";
+
     /// <summary>Per-country diplomatic actions. <paramref name="rng"/> is this country's private random stream.</summary>
     public virtual void Diplomacy(Country c, AiRng rng)
     {
         if (rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
+        var D = Game.Diplomacy;
+        var ctx = D.NewActorContext(c); // one context per country, re-bound per target (no per-pair allocations)
+        Dictionary<string, (int Pass, int Pos)>? stats = DebugDiplomacy ? new() : null;
         foreach (var a in Game.Data.DiplomaticActions.Values)
         {
             if (a.AiWillDo == null) continue;
             foreach (var t in Game.World.Countries)
             {
                 if (t == c || !t.Exists) continue;
-                if (!Game.Diplomacy.IsVisible(a, c, t) || !Game.Diplomacy.CanUse(a, c, t)) continue;
-                double weight = Game.Script.EvalWeight(a.AiWillDo, Game.Diplomacy.ActionContext(a, c, t), 0);
+                bool ok = D.CanUseFast(a, c, t, ctx);
+                if (CheckFastPath && ok != (D.IsVisible(a, c, t) && D.CanUse(a, c, t)))
+                    Log.Warn($"AI diplomacy fast path mismatch: {a.Key} {c.Tag}->{t.Tag} fast={ok}", a.Where);
+                if (!ok) continue;
+                double weight = Game.Script.EvalWeight(a.AiWillDo, ctx, 0);
+                if (stats != null) { stats.TryGetValue(a.Key, out var st); stats[a.Key] = (st.Pass + 1, st.Pos + (weight > 0 ? 1 : 0)); }
                 if (weight > 0) options.Add((a, t, weight));
             }
         }
+        if (stats != null)
+            Log.Info($"AI diplomacy {c.Tag}: " + (stats.Count == 0 ? "no action passed" : string.Join(", ", stats.Select(kv => $"{kv.Key} pass={kv.Value.Pass} w>0={kv.Value.Pos}"))));
         if (options.Count == 0) return;
         double total = options.Sum(o => o.Weight);
         double r = rng.NextDouble() * total;
@@ -321,7 +336,8 @@ public class AiSystem
         {
             r -= o.Weight;
             if (r > 0) continue;
-            Game.Diplomacy.Use(o.Action, c, o.Target);
+            string result = Game.Diplomacy.Use(o.Action, c, o.Target);
+            if (stats != null) Log.Info($"AI diplomacy {c.Tag} chose {o.Action.Key} -> {o.Target.Tag}: {result}");
             return;
         }
     }

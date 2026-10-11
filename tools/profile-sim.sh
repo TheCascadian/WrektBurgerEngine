@@ -43,7 +43,7 @@ set -e
 cp "$OUT/profile.log" "$OUT/raw.log"
 
 echo "runtime_exit=$RC"
-grep -E '(^| )((PERF|Path)\.|time per system|Validating|  loaded|Simulating|  simulated|  feature |  world:)' "$OUT/profile.log" >"$OUT/all-profile-lines.txt" || true
+grep -E '(^| )((PERF|Path)\.|PROFILE_(RAW|DAY)|time per system|Validating|  loaded|Simulating|  simulated|  feature |  world:)' "$OUT/profile.log" >"$OUT/all-profile-lines.txt" || true
 {
   echo "command: dotnet src/Burger.Tools/bin/Release/net8.0/burger.dll validate $PROJECT --days $DAYS --profile"
   echo "host: $(uname -a)"
@@ -70,34 +70,23 @@ grep -E '(^| )((PERF|Path)\.|time per system|Validating|  loaded|Simulating|  si
   echo
   echo "SYSTEM TIME (milliseconds per simulated day)"
   echo "------------------------------------------------------------"
-  echo " rank  ms/day   share   function"
-  echo "------ -------- ------- ------------------------------------"
-  grep '^  time per system' "$OUT/profile.log" | sed 's/^  time per system[^:]*: //' |
-    tr ',' '\n' | sed 's/^ *//' | awk -F' ' '
-      { name=$0; sub(/[[:space:]][0-9.]+$/, "", name); value=$NF; total += value; n++; row[n]=name "\t" value }
-      END {
-        for (i=1; i<=n; i++) { split(row[i], a, "\t"); printf "%s\t%.6f\n", a[1], a[2] }
-      }
-    ' | sort -t $'\t' -k2,2nr | awk -F'\t' -v total="$(grep '^  time per system' "$OUT/profile.log" | sed 's/^  time per system[^:]*: //' | tr ',' '\n' | awk '{sum += $NF} END {print sum+0}')" '
-      { printf "%5d  %8.2f  %6.1f%%  %s\n", NR, $2, (total ? 100*$2/total : 0), $1 }
-    ' | tee "$OUT/system-functions.txt"
+  echo " rank  ms/day   calls/day   function (nested scopes overlap)"
+  echo "------ -------- ----------- ------------------------------------"
+  grep '^  PROFILE_DAY ' "$OUT/profile.log" | sed -E 's/^  PROFILE_DAY ([^ ]+) ms_per_day=([^ ]+) calls_per_day=([^ ]+).*/\2\t\3\t\1/' |
+    sort -t $'\t' -k1,1nr | awk -F'\t' '{ printf "%5d  %8.3f  %11.3f  %s\n", NR, $1, $2, $3 }' | tee "$OUT/system-functions.txt"
   if [[ -n "$FOCUS" ]]; then
     echo
     echo "FOCUSED SYSTEM: $FOCUS"
     echo "------------------------------------------------------------"
-    grep '^  time per system' "$OUT/profile.log" | sed 's/^  time per system[^:]*: //' |
-      tr ',' '\n' | sed 's/^ *//' | awk -v focus="$FOCUS" '
-        { value=$NF; name=$0; sub(/[[:space:]][0-9.]+$/, "", name) }
-        name == focus { printf "%s: %.6f ms per simulated day\n", name, value; found=1 }
+    grep '^  PROFILE_DAY ' "$OUT/profile.log" | sed -E 's/^  PROFILE_DAY ([^ ]+) ms_per_day=([^ ]+) calls_per_day=([^ ]+).*/\1\t\2\t\3/' | awk -F'\t' -v focus="$FOCUS" '
+        $1 == focus { printf "%s: %s ms/day, %s calls/day\n", $1, $2, $3; found=1 }
         END { if (!found) { print "No exact matching system was reported."; exit 1 } }
       ' || true
   fi
   echo
   echo "PATHFINDING"
   echo "------------------------------------------------------------"
-  grep '^  ' "$OUT/profile.log" | grep -E '^  (Path\.|time per system)' | tail -1 || true
-  grep '^  time per system' "$OUT/profile.log" | tail -1 | sed 's/^  time per system[^:]*: //' |
-    tr ',' '\n' | sed 's/^ *Path\./Path./' | grep '^Path\.' || true
+  grep '^  PROFILE_DAY Path\.' "$OUT/profile.log" || true
   echo
   echo "WORLD / FEATURE SNAPSHOTS"
   echo "------------------------------------------------------------"

@@ -282,8 +282,22 @@ public sealed class Game
         if (!Profiling) { a(); return; }
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         try { a(); }
-        finally { _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, System.Diagnostics.Stopwatch.GetTimestamp() - t0); }
+        finally { RecordProfile(name, World.Date.TotalDays, System.Diagnostics.Stopwatch.GetTimestamp() - t0); }
     }
+    public void P(string name, string countryTag, Action a)
+    {
+        if (!Profiling) { a(); return; }
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        try { a(); }
+        finally
+        {
+            long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
+            int day = World.Date.TotalDays;
+            RecordProfile(name, day, elapsed);
+            RecordProfile($"{name}[{countryTag}]", day, elapsed);
+        }
+    }
+    private void RecordProfile(string name, int day, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(day, elapsedTicks);
     public void ProfileElapsed(string name, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsedTicks);
 
     /// <summary>Advances the simulation by one hour.</summary>

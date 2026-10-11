@@ -89,6 +89,45 @@ public sealed partial class DiplomacySystem
     public bool CanUse(ActionDef a, Country actor, IScope recipient)
         => IsVisible(a, actor, recipient) && Requirements(a, actor, recipient).All(r => r.Ok);
 
+    /// <summary>
+    /// Allocation-light twin of <see cref="CanUse"/> for the AI hot loop: same rules (potential, allow, gold, cooldown),
+    /// but one shared context, a single potential evaluation, short-circuiting and no tooltip text.
+    /// </summary>
+    public bool CanUseFast(ActionDef a, Country actor, IScope recipient, ScriptContext ctx)
+    {
+        if (recipient is Country rc && (rc == actor || !rc.Exists)) return false;
+        BindRecipient(ctx, recipient);
+        ctx.Where = a.Where;
+        if (!_game.Script.EvalTrigger(a.Potential, ctx)) return false;
+        if (!_game.Script.EvalTrigger(a.Allow, ctx)) return false;
+        double cost = CostOf(a);
+        if (cost > 0 && actor.Gold < cost) return false;
+        return CooldownLeft(a, actor, recipient) <= 0;
+    }
+
+    /// <summary>Context for <see cref="CanUseFast"/> / <see cref="BindRecipient"/>; build once per actor and reuse.</summary>
+    public ScriptContext NewActorContext(Country actor)
+    {
+        var ctx = _game.Context(actor);
+        ctx.Scopes["actor"] = actor;
+        return ctx;
+    }
+
+    /// <summary>Points a reused actor context at another recipient (same scope keys as <see cref="ActionContext"/>).</summary>
+    public void BindRecipient(ScriptContext ctx, IScope recipient)
+    {
+        if (recipient is Character ch)
+        {
+            ctx.Scopes["target"] = ch;
+            ctx.Scopes["recipient"] = ch.Country;
+        }
+        else
+        {
+            ctx.Scopes["recipient"] = recipient;
+            ctx.Scopes["target"] = recipient;
+        }
+    }
+
     private string CooldownKey(ActionDef a, Country actor, IScope recipient) => $"{actor.Tag}:{a.Key}:{recipient.ScopeKey}";
 
     public int CooldownLeft(ActionDef a, Country actor, IScope recipient)

@@ -9,7 +9,8 @@ public static class Templates
     public static void WriteScriptsProject(string scriptsDir, string engineRoot)
     {
         Directory.CreateDirectory(scriptsDir);
-        string core = Path.Combine(engineRoot, "src", "Burger.Core", "Burger.Core.csproj");
+        string core = Path.GetRelativePath(scriptsDir, Path.Combine(engineRoot, "src", "Burger.Core", "Burger.Core.csproj"))
+            .Replace(Path.DirectorySeparatorChar, '/');
         File.WriteAllText(Path.Combine(scriptsDir, "Scripts.csproj"), $@"<!-- Only for code completion in Visual Studio / VS Code / Rider. The game compiles these scripts itself at startup. -->
 <Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>

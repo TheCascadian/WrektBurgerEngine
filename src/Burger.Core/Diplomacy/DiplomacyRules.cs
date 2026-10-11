@@ -253,9 +253,20 @@ public class DiplomacyRules
     /// <summary>Rough military power of a country (used by AI and acceptance factors).</summary>
     public virtual double MilitaryStrength(Game game, Country c)
     {
-        double s = 0;
-        foreach (var d in game.World.Divisions)
-            if (d.Owner == c) s += game.Warfare.DivisionPower(d);
-        return s;
+        // The AI asks this thousands of times a month (every stronger_than / military_strength in every ai_will_do).
+        // One pass over the divisions per game day (or when the division count changes) instead of one pass per call.
+        var cache = _strength;
+        int day = game.World.Date.TotalDays, count = game.World.Divisions.Count;
+        if (cache == null || cache.Day != day || cache.Count != count)
+        {
+            var map = new Dictionary<Country, double>();
+            foreach (var d in game.World.Divisions)
+                map[d.Owner] = map.GetValueOrDefault(d.Owner) + game.Warfare.DivisionPower(d);
+            _strength = cache = new StrengthCache(day, count, map);
+        }
+        return cache.Map.GetValueOrDefault(c);
     }
+
+    private sealed record StrengthCache(int Day, int Count, Dictionary<Country, double> Map);
+    private volatile StrengthCache? _strength;
 }

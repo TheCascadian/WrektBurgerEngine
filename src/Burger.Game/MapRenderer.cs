@@ -369,7 +369,8 @@ public sealed unsafe class MapRenderer : IDisposable
     public Vector3 LocationPos(Location l, float lift = 0) => WorldPos(l.CenterX, l.CenterY, lift);
 
     /// <summary>Finds the location under a screen position (ray-marched against the heightfield).</summary>
-    public Location? Pick(Vector2 screen, Camera3D cam)
+    /// <param name="stepScale">Ray-march step multiplier; the 12-step refinement keeps the hit accurate, so a larger step only risks skipping very thin ridges.</param>
+    public Location? Pick(Vector2 screen, Camera3D cam, float stepScale = 1f)
     {
         var ray = Viewport.Ray(screen, cam);
         if (ray.Direction.Y >= 0) return null;
@@ -377,7 +378,7 @@ public sealed unsafe class MapRenderer : IDisposable
         // start where the ray crosses the top of the terrain
         float t = (ray.Position.Y - maxH) / -ray.Direction.Y;
         if (t < 0) t = 0;
-        float step = 0.05f * Math.Max(1, cam.Position.Y / 20);
+        float step = 0.05f * stepScale * Math.Max(1, cam.Position.Y / 20);
         Vector3 prev = ray.Position + ray.Direction * t;
         for (int i = 0; i < 4000; i++)
         {

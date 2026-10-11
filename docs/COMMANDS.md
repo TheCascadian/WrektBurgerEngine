@@ -50,6 +50,12 @@ The CLI is available as `./burger.sh <command>` or as `dotnet src/Burger.Tools/b
 ./burger.sh validate MyGame --days 30
 ./burger.sh validate MyGame --days 60 --profile
 
+tools/profile-sim.sh Earth1930 365
+tools/profile-sim-dense.sh Earth1930 365
+
+tools/zip.sh
+tools/zip.sh /tmp/WrektBurgerEngine-share.zip
+
 ./burger.sh run MyGame
 ./burger.sh run MyGame --tag USA
 
@@ -64,6 +70,28 @@ The CLI is available as `./burger.sh <command>` or as `dotnet src/Burger.Tools/b
 ```
 
 Project arguments can be names such as `MyGame` or project paths. Feature removal moves changed files to `removed_features/<feature-id>/`. `burger validate` checks data and simulates the requested number of days headlessly. `burger docs` regenerates `docs/SCRIPT_REFERENCE.md`.
+
+With `--profile`, `burger validate` reports total time, calls, average milliseconds per simulated day, and per-day timing diagnostics for every profile scope:
+
+- `max_day_ms`: the maximum accumulated time for that scope on one simulated day.
+- `p99_day_ms`: the 99th percentile of accumulated daily times.
+- `worst_days`: up to five `GameDate.TotalDays` values with the highest daily times.
+
+The `tools/profile-sim.sh` wrapper saves the complete output and a filtered profile-lines file. `tools/profile-sim-dense.sh` additionally writes `all-metrics.tsv` and a summary report. The daily max and p99 values make month-boundary spikes visible; inspect `worst_days` against the calendar to distinguish monthly pulses from event-driven spikes such as wars, peace deals, or battles.
+
+The profiler records daily totals for each named scope, including nested scopes and path counters. Timing scopes are accumulated against the simulation day active when they run; count-only scopes have zero timing values.
+
+## Source packaging
+
+Create and validate a source archive from the repository root:
+
+```bash
+tools/zip.sh
+tools/zip.sh /tmp/WrektBurgerEngine-share.zip
+tools/zip.sh dist/WrektBurgerEngine.zip
+```
+
+The default archive is written to the repository root with a timestamped name. An explicit relative path is resolved from the repository root. The archive contains source and build metadata only: C#, project files, Python, shell, and PowerShell scripts. It excludes game assets and data, `.git`, IDE metadata, `bin/` and `obj/` build output, logs, saves, removed feature staging files, Python caches, documentation, and temporary editor files. The script tests the completed archive with `unzip -t`.
 
 ## Direct binaries and runtime options
 

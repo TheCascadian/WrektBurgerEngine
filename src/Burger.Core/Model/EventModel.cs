@@ -71,6 +71,9 @@ public sealed class ActionDef
     public string? Dialog;
     public string File = "";
     public int Line;
+    private string? _where;
+    /// <summary>"file:line" for script error messages (built once).</summary>
+    public string Where => _where ??= $"{File}:{Line}";
 }
 
 /// <summary>A hook from <c>common/on_actions/*.txt</c>.</summary>

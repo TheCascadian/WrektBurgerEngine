@@ -346,7 +346,9 @@ public sealed class App
         _hud!.HandleKeys();
         // camera input + damped movement are resolved here, before BeginDrawing - never inside the draw loop
         cam.Update(dt, Gui.MouseOverUi, false, !_hud.KeyboardCaptured);
-        var hovered = Gui.MouseOverUi ? null : (cam.IsMoving ? map.PickFast(Gui.Mouse, cam.Camera) : map.Pick(Gui.Mouse, cam.Camera));
+        // Always raycast against the heightfield. The sea-level shortcut used while moving
+        // can land hundreds of provinces away on large, high-relief maps such as Earth1930.
+        var hovered = Gui.MouseOverUi ? null : PickCached(map, cam);
         if (hovered != map.Hovered) { map.Hovered = hovered; map.Dirty = true; }
         _renderPerf?.Mark(1);
 
@@ -383,6 +385,26 @@ public sealed class App
             Log.Error($"Simulation error: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
             Ui.SetStatus("Simulation error - game paused (see F2)");
         }
+    }
+
+    // Exact heightfield pick, but only re-run when the mouse, camera or window actually changed (a still frame reuses the last answer).
+    private Vector2 _pickMouse, _pickScreen;
+    private Camera3D _pickCam;
+    private Location? _pickResult;
+    private bool _pickValid;
+
+    private Location? PickCached(MapRenderer map, CameraController cam)
+    {
+        var mouse = Gui.Mouse;
+        var screen = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        var c = cam.Camera;
+        if (_pickValid && mouse == _pickMouse && screen == _pickScreen
+            && c.Position == _pickCam.Position && c.Target == _pickCam.Target && c.Up == _pickCam.Up && c.FovY == _pickCam.FovY)
+            return _pickResult;
+        // while the camera moves the answer changes every frame anyway: march with a coarser step (still refined at the hit)
+        _pickResult = map.Pick(mouse, c, cam.IsMoving ? 2f : 1f);
+        _pickMouse = mouse; _pickScreen = screen; _pickCam = c; _pickValid = true;
+        return _pickResult;
     }
 
     // ---------------------------------------------------------------------------------------- click or drag-select

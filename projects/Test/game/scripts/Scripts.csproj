@@ -7,7 +7,7 @@
     <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\Jason\Desktop\BurgerEngine\src\Burger.Core\Burger.Core.csproj" />
+    <ProjectReference Include="../../../../src/Burger.Core/Burger.Core.csproj" />
     <Using Include="Burger.Core" />
     <Using Include="Burger.Core.AI" />
     <Using Include="Burger.Core.Characters" />

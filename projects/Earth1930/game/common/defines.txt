@@ -7,6 +7,9 @@ pause_on_event = yes            # events can override this with pause = yes/no/{
 game_speeds = { 0.5 1.5 4 10 0 }
 km_per_pixel = 5.0
 
+# how often an AI country takes a diplomatic action each month (engine default 0.15)
+ai_diplomacy_chance = 0.5
+
 combat_model = hoi4
 
 recruit_gold_cost = no
