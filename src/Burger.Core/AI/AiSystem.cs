@@ -217,7 +217,7 @@ public class AiSystem
             double enemyTotal = StrengthOf(enemy);
             double enemyPower = enemyTotal / Math.Max(1, armies.Count);
             double armyPower = army.Divisions.Sum(Game.Warfare.DivisionPower);
-            var mode = armyPower > enemyPower * 0.9 || ownPower > enemyTotal * 1.3 ? ArmyMode.Offensive : ArmyMode.Hold;
+            var mode = ChooseArmyMode(c, wars, enemy, armyPower, enemyPower, ownPower, enemyTotal);
             if (army.FrontEnemy != enemy || army.Mode != mode) Game.Warfare.SetFront(army, enemy, mode);
             // battle plans: offensives aim at the enemy capital
             if (Game.Features.Has(FeatureSet.BattlePlans))
@@ -231,9 +231,20 @@ public class AiSystem
     /// </summary>
     protected virtual bool Borders(Country a, Country b) => BorderCache.ContainsKey((a.Index, b.Index));
 
-    protected virtual void AssignGenerals(Country c, List<Army> armies) => AssignGenerals(c, armies, new AiRng(Game, null));
+    /// <summary>
+    /// Offensive or hold: attack when the army is a match for its share of the enemy (0.9) or the country is far ahead; the side that started the war,
+    /// or that history set against this enemy (an awake ambition), attacks from armyPower >= aggressor_attack_ratio (0.35) of the enemy's share - an
+    /// aggressor that sits on its border loses the war it chose.
+    /// </summary>
+    protected virtual ArmyMode ChooseArmyMode(Country c, List<War> wars, Country enemy, double armyPower, double enemyPower, double ownPower, double enemyTotal)
+    {
+        if (armyPower > enemyPower * 0.9 || ownPower > enemyTotal * 1.3) return ArmyMode.Offensive;
+        bool aggressor = wars.Any(w => w.IsAttacker(c) && w.EnemiesOf(c).Contains(enemy));
+        if (aggressor && ownPower > enemyTotal * Game.Data.Defines.Get("aggressor_attack_ratio", 0.35)) return ArmyMode.Offensive;
+        return ArmyMode.Hold;
+    }
 
-    protected virtual void AssignGenerals(Country c, List<Army> armies, AiRng rng)
+    protected virtual void AssignGenerals(Country c, List<Army> armies)
     {
         var now = Game.World.Date;
         string stat = Game.Data.Defines.GeneralStat;
@@ -308,7 +319,10 @@ public class AiSystem
     /// <summary>Per-country diplomatic actions. <paramref name="rng"/> is this country's private random stream.</summary>
     public virtual void Diplomacy(Country c, AiRng rng)
     {
-        if (rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
+        // (a country's history is pursued every month, not only on the months its diplomats are busy)
+        if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Pursuit(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } early) { Game.Diplomacy.Use(early.Action, c, early.Target); return; }
+        if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Courtship(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } court) { Game.Diplomacy.Use(court.Action, c, court.Target); return; }
+        if (Game.Rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
         Dictionary<string, (int Pass, int Pos)>? stats = DebugDiplomacy ? new() : null;
         var personality = Game.AiProfiles.PersonalityOf(c);
@@ -374,22 +388,27 @@ public class AiSystem
         {
             if (war.LeaderOf(c) != c) continue;
             if (war.Vars.HasFlag("civil_war")) continue;
+            if (D.IsCapitulated(war, c)) continue; // (a capitulated country has no say: its faction decides)
             var enemy = war.EnemyLeaderOf(c);
+            bool total = D.IsTotal(war), enemyDone = war.EnemiesOf(c).All(e => D.IsCapitulated(war, e));
+            double exhausted = total ? Game.Data.Defines.Get("total_war_exhaustion", 14) : 0;
             double score = war.ScoreFor(c);
             int months = (w.Date.TotalDays - war.StartDate.TotalDays) / 30;
             if (Game.PendingProposals.Any(p => p.Kind == ProposalKind.Peace && p.War == war)) continue;
             double tired = Game.Rules.Diplomacy.PeaceWillingness(Game, war, c);
 
             // winning: demand what the war score pays for (a worn-out winner settles for less, sooner)
-            if (score >= Math.Max(8, 25 - tired * 0.5) && months >= 2)
+            if (score >= Math.Max(8, 25 - tired * 0.5) && months >= 2 && (!total || enemyDone))
             {
                 var offer = BuildDemands(war, c, enemy, score);
                 // (a winner that has taken nothing worth the war yet - only demilitarized zones, a humiliation, gold - fights on while it is not worn out)
                 bool substantive = offer.Terms.Any(t => t.Type is PeaceTermType.TransferState or PeaceTermType.Annex or PeaceTermType.Subjugate or PeaceTermType.Independence or PeaceTermType.RegimeChange);
-                if (offer.Terms.Count > 0 && (substantive || months >= 12 || tired >= 4)) { D.SendPeaceOffer(offer); continue; }
+                // (a winner that started the war to take land fights until it holds the loser's capital or half a year has gone)
+                bool settled = enemy.Capital?.Controller != null && war.SideOf(c).Contains(enemy.Capital.Controller) || months >= Game.Data.Defines.Get("conquest_war_months", 6);
+                if (offer.Terms.Count > 0 && (substantive && settled || months >= Game.Data.Defines.Get("conquest_war_months", 6) + 3 || tired >= 4 && months >= 6)) { D.SendPeaceOffer(offer); continue; }
             }
             // losing badly (or worn out and losing): offer the enemy what it could take anyway
-            if (score <= -40 + tired * 0.5 && score < -5)
+            if (score <= -40 + tired * 0.5 && score < -5 && (!total || D.WarExhaustion(c) >= exhausted))
             {
                 var demands = BuildDemands(war, enemy, c, -score);
                 var concession = new PeaceOffer { War = war, From = c, To = enemy, FromIsWinner = false };
@@ -402,6 +421,7 @@ public class AiSystem
             }
             // a war that goes nowhere, or exhaustion: white peace
             bool stalemate = w.Date.TotalDays - war.LastChangeDay > 365 && months >= 12;
+            if (total && D.WarExhaustion(c) < exhausted) continue; // (a total war is not ended by tiredness alone)
             if (score <= -40 || (months >= Game.Data.Defines.WarExhaustionPeaceMonths && Math.Abs(score) < 15)
                 || (stalemate && Math.Abs(score) < 25) || (D.WarExhaustion(c) >= 10 && score < 15))
             {
@@ -424,6 +444,7 @@ public class AiSystem
         var D = Game.Diplomacy;
         var rules = Game.Rules.Diplomacy;
         var offer = new PeaceOffer { War = war, From = winner, To = loser, FromIsWinner = true };
+        bool aim = Game.AiProfiles.Enabled && Game.Rules.AiProfile.IsAwake(Game, winner, loser, Game.AiProfiles.PersonalityOf(winner));
         var winnerSide = war.SideOf(winner).ToHashSet();
         var loserSide = war.SideOf(loser);
         double budget = Math.Min(score, D.MaxDemands(war, winner));
@@ -432,6 +453,8 @@ public class AiSystem
         {
             var (wn, ls) = (winner, t.State?.Owner ?? loser);
             double cost = rules.PeaceTermCost(Game, war, t, wn, ls);
+            // (a war fought for an ambition of history takes what it was fought for at half the price in war score)
+            if (aim && (t.State == null || t.State.Claims.Contains(winner) || t.State.Cores.Contains(winner) || Game.Rules.Population.HasCulturalTies(Game, winner, t.State))) cost *= Game.Data.Defines.Get("war_aim_cost", 0.5); // (only for land it has a claim, a core or a people on)
             if (used + cost > budget) return false;
             offer.Terms.Add(t);
             if (D.InvalidReason(offer) != null) { offer.Terms.Remove(t); return false; }
@@ -447,13 +470,16 @@ public class AiSystem
         var held = loserSide.SelectMany(l => l.OwnedStates)
             .Select(s => (State: s, Held: s.Locations.Count(l => l.Controller != null && winnerSide.Contains(l.Controller)) / (double)Math.Max(1, s.Locations.Count)))
             .Where(x => x.Held >= 0.5).ToList();
-        if (loser.OwnedStates.Count > 0 && held.Count(x => x.State.Owner == loser) == loser.OwnedStates.Count)
+        // (a country another power is also at war with is partitioned along the historical lines, not swallowed whole)
+        bool partition = Game.World.Wars.Any(w2 => w2 != war && w2.EnemiesOf(loser).Any(e => e != winner && !winnerSide.Contains(e) && loser.OwnedStates.Any(st => st.Cores.Contains(e))));
+        if (loser.OwnedStates.Count > 0 && rules.AllowsAnnex(Game, winner, loser) && !partition && held.Count(x => x.State.Owner == loser) == loser.OwnedStates.Count)
         {
             var annex = new PeaceTerm { Type = PeaceTermType.Annex, Beneficiary = winner };
             if (Try(annex)) return offer;
         }
         // regime change for ideological wars
-        if (Game.Politics.Enabled && goals.Any(g => g.CasusBelli.WarGoal == WarGoalType.Ideology) && Game.Politics.Of(loser).Ruling != Game.Politics.Of(winner).Ruling)
+        // (a government is only replaced by a winner that stands in its capital)
+        if (Game.Politics.Enabled && loser.Capital?.Controller != null && winnerSide.Contains(loser.Capital.Controller) && goals.Any(g => g.CasusBelli.WarGoal == WarGoalType.Ideology) && Game.Politics.Of(loser).Ruling != Game.Politics.Of(winner).Ruling)
             Try(new PeaceTerm { Type = PeaceTermType.RegimeChange, Beneficiary = winner, Ideology = Game.Politics.Of(winner).Ruling });
         var pop = Game.Population;
         var rel = Game.World.Relations;
@@ -491,7 +517,7 @@ public class AiSystem
         bool OursToTake(State s) => !puppets || !pop.Enabled || pop.IsColony(s) || s.Cores.Contains(winner) || s.Claims.Contains(winner)
                                     || pop.MajorityCulture(s) is not { } mc || pop.IsAccepted(winner, mc);
         // sometimes a change of government is enough: the defeated country stays independent, nobody is made a subject
-        bool regimeOnly = puppets && rules.PrefersRegimeChange(Game, war, winner, loser)
+        bool regimeOnly = puppets && loser.Capital?.Controller != null && winnerSide.Contains(loser.Capital.Controller) && rules.PrefersRegimeChange(Game, war, winner, loser)
                           && (offer.Terms.Any(t => t.Type == PeaceTermType.RegimeChange)
                               || Try(new PeaceTerm { Type = PeaceTermType.RegimeChange, Beneficiary = winner, Ideology = Game.Politics.Of(winner).Ruling }));
         if (puppets && pop.Enabled && !regimeOnly)
@@ -526,6 +552,8 @@ public class AiSystem
             if (s.Claims.Contains(winner)) return winner;
             if (pop.Enabled && pop.IsColony(s) && D.CanReach(winner, s, gained.GetValueOrDefault(winner))) return winner; // colonies: taken directly
             if (Kin(s) is { } kin) return kin;
+            // (land goes back to its rightful owner on the winning side wherever it lies: Britain does not take the Chinese land Japan holds)
+            if (winnerSide.FirstOrDefault(x => x != winner && s.Cores.Contains(x)) is { } rightful) return rightful;
             var claimant = winnerSide.FirstOrDefault(x => x != winner && s.Cores.Contains(x) && Touches(x, s))
                            ?? winnerSide.FirstOrDefault(x => x != winner && s.Claims.Contains(x) && Touches(x, s));
             return claimant ?? winner;
@@ -549,6 +577,8 @@ public class AiSystem
                     if (state.Owner!.OwnedStates.Count - offer.Terms.Count(x => x.Type == PeaceTermType.TransferState && x.State?.Owner == state.Owner) <= 1) continue;
                     var to = BeneficiaryOf(state);
                     if (to == winner && !OursToTake(state)) continue;
+                    // (a partition keeps to the historical lines: land another country at war with the loser holds the cores on is left for that country)
+                    if (to == winner && !state.Cores.Contains(winner) && Game.World.Wars.Any(w2 => w2 != war && w2.EnemiesOf(loser).Any(e => e != winner && !winnerSide.Contains(e) && state.Cores.Contains(e)))) continue;
                     if (!D.CanReach(to, state, gained.GetValueOrDefault(to))) continue;
                     wanted.Remove(state);
                     if (Try(new PeaceTerm { Type = PeaceTermType.TransferState, State = state, Beneficiary = to }))
@@ -584,9 +614,12 @@ public class AiSystem
         {
             int demil = 0;
             foreach (var st in loser.OwnedStates.OrderBy(x => x.Index).ToList())
+            {
+                if (offer.Terms.Any(t => t.State == st)) continue; // (land that changes hands is not also demilitarized)
                 if (rules.WantsDemilitarized(Game, winner, loser, st, demil) && Try(new PeaceTerm { Type = PeaceTermType.Demilitarize, State = st, Beneficiary = winner })) demil++;
+            }
         }
-        if (offer.Terms.Count == 0 && !regimeOnly && rel.OverlordOf(loser) == null && !D.HoldsHomelandOf(patron, loser)
+        if (offer.Terms.Count == 0 && !regimeOnly && loser.Capital?.Controller != null && winnerSide.Contains(loser.Capital.Controller) && rel.OverlordOf(loser) == null && !D.HoldsHomelandOf(patron, loser)
             && D.SubjectOfCulture(winner, pop.Enabled ? pop.Of(loser).Culture ?? "" : "") == null)
             Try(new PeaceTerm { Type = PeaceTermType.Subjugate, Beneficiary = winner, SubjectType = Game.Data.SubjectTypes.Keys.First() });
         if (offer.Terms.Count == 0) Try(new PeaceTerm { Type = PeaceTermType.Humiliate, Beneficiary = winner });
