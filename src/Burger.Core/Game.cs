@@ -173,6 +173,7 @@ public sealed class Game
     /// <summary>Loads a game folder (the one containing game.txt, common/, map/ ...).</summary>
     /// <param name="gameRoot">Path to the game folder.</param>
     /// <param name="compileScripts">Compile C# scripts in scripts/ (disable for pure data validation).</param>
+    /// <param name="seed">RNG seed for deterministic ticks; defaults to the current time when null.</param>
     public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null)
     {
         var game = new Game();

@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using Burger.Core.Model;
 using Burger.Core.Script;
 
@@ -69,6 +71,8 @@ public sealed class ScriptEngine
             c.Value = _values.TryGetValue(key, out var v) ? v : null;
             c.IteratorPrefix = -1;
             c.IteratorName = "";
+            // NB: TrySplitIteratorParts does not require registration (it is also used by the legacy
+            // Describe path); check membership here so the cache never claims a bogus iterator.
             if (TrySplitIteratorParts(key, out var prefix, out var iterName) && _iterators.ContainsKey(iterName))
             {
                 c.IteratorPrefix = prefix switch { "any" => 0, "all" => 1, "every" => 2, "random" => 3, _ => 4 };
@@ -279,7 +283,6 @@ public sealed class ScriptEngine
             return false;
         }
         ctx.Where = n.Location;
-        string key = n.Key;
         switch (key.ToLowerInvariant())
         {
             case "and": return EvalTrigger(n, ctx);
@@ -335,15 +338,25 @@ public sealed class ScriptEngine
         }
 
         // numeric values: gold >= 100, age > 30
-        if (n.Value != null && _values.TryGetValue(key, out var valueFn))
+        if (n.Value != null && cache.Value != null)
         {
-            var v = valueFn(ctx, ctx.This);
+            var v = cache.Value(ctx, ctx.This);
             if (v == null) return false;
             return Node.Compare(v.Value, n.Op, ResolveNumber(n.Value, ctx));
         }
 
-        // scope switch / comparison
-        if (TryResolveScope(key, ctx, out var scope))
+        // scope switch / comparison (cache: once resolution failed for this key it cannot succeed
+        // until a new link is registered, which bumps the generation and invalidates the entry)
+        bool isScope;
+        IScope? scope;
+        if (warm && cache.ScopeChecked) { isScope = false; scope = null; }
+        else
+        {
+            isScope = TryResolveScope(key, ctx, out var resolved);
+            cache.ScopeChecked = !isScope;
+            scope = resolved;
+        }
+        if (isScope)
         {
             if (n.Children != null)
             {
@@ -368,15 +381,28 @@ public sealed class ScriptEngine
     }
 
     private bool TrySplitIterator(string key, out string prefix, out string name)
+        => TrySplitIteratorParts(key, out prefix, out name);
+
+    /// <summary>Splits "every_province" into ("every", "province") without requiring the iterator to be registered.
+    /// Returns false (and empty parts) when the prefix isn't a known iterator prefix.</summary>
+    private static bool TrySplitIteratorParts(string key, out string prefix, out string name)
     {
         prefix = name = "";
         int us = key.IndexOf('_');
         if (us <= 0) return false;
-        prefix = key[..us].ToLowerInvariant();
+        var p = key[..us];
+        if (!IsIteratorPrefix(p)) return false;
+        prefix = p.ToLowerInvariant();
         name = key[(us + 1)..];
-        if (prefix != "any" && prefix != "all" && prefix != "every" && prefix != "random" && prefix != "ordered") return false;
-        return _iterators.ContainsKey(name);
+        return true;
     }
+
+    private static bool IsIteratorPrefix(string p)
+        => p.Equals("any", StringComparison.OrdinalIgnoreCase)
+        || p.Equals("all", StringComparison.OrdinalIgnoreCase)
+        || p.Equals("every", StringComparison.OrdinalIgnoreCase)
+        || p.Equals("random", StringComparison.OrdinalIgnoreCase)
+        || p.Equals("ordered", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>For the UI: each top-level condition of a trigger block with its result.</summary>
     public List<(string Text, bool Ok)> ExplainTrigger(Node? block, ScriptContext ctx)
@@ -494,15 +520,19 @@ public sealed class ScriptEngine
                 return;
         }
 
-        if (_effects.TryGetValue(key, out var eff))
+        // cached resolution of this node's key (effect / iterator call), see CachedLookups
+        CachedLookup(n, key, out var cache);
+        if (cache.Effect != null)
         {
-            try { eff(ctx, n); }
+            try { cache.Effect(ctx, n); }
             catch (Exception ex) { Log.Error($"Effect '{key}' failed: {ex.Message}", n.Location); }
             return;
         }
 
-        if (TrySplitIterator(key, out var prefix, out var iterName) && prefix != "any" && prefix != "all")
+        if (cache.IteratorPrefix >= 2)
         {
+            var iterName = cache.IteratorName;
+            var prefix = cache.IteratorPrefix switch { 2 => "every", 3 => "random", _ => "ordered" };
             var limit = n.Get("limit");
             var items = _iterators[iterName](ctx, ctx.This).Where(it => EvalTrigger(limit, ctx.Enter(it))).ToList();
             if (prefix == "random")
