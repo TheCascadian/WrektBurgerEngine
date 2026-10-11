@@ -24,6 +24,12 @@ public sealed class CameraController
     private Vector2? _dragAnchor; // screen-space cursor position while middle-dragging
     private Vector3 _dragTarget;  // logical Target captured at drag start / last re-anchor
 
+    /// <summary>True while the camera moved this frame (input or damping). Hover picking can use its cheap path.</summary>
+    public bool IsMoving { get; private set; }
+    private Vector3 _lastCamPos;
+    private Vector3 _lastCamTarget;
+    private float _lastCamDist = -1f;
+
     // Internal smoothed state (the "current" side of the Lerp). Read-only from outside.
     private Vector3 _currentPos;
     private Vector3 _currentTarget;
@@ -138,6 +144,17 @@ public sealed class CameraController
             _currentDistance += (desiredDist - _currentDistance) * f;
         }
         Camera = BuildCamera(_currentPos, _currentTarget, _currentDistance);
+
+        // Track whether the rendered pose actually changed this frame. While it does, hover picking
+        // runs on the cheap plane path (see MapRenderer.PickFast): a full heightfield ray-march every
+        // frame during fast panning is what tanks the frame time, and its result would be stale anyway.
+        float tol = Math.Max(0.01f, _currentDistance * 1e-4f);
+        IsMoving = (Camera.Position - _lastCamPos).LengthSquared() > tol * tol
+                || (Camera.Target - _lastCamTarget).LengthSquared() > tol * tol
+                || Math.Abs(_currentDistance - _lastCamDist) > tol;
+        _lastCamPos = Camera.Position;
+        _lastCamTarget = Camera.Target;
+        _lastCamDist = _currentDistance;
     }
 
     private void ClampLogical()

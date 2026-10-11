@@ -401,6 +401,22 @@ public sealed unsafe class MapRenderer : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Cheap hover pick: projects the mouse onto the sea-level ground plane instead of ray-marching the
+    /// heightfield (up to ~48k bilinear samples per frame). The plane hit is always farther along the ray
+    /// than the true terrain hit, so it can never cross the map's far edge into another region; the only
+    /// inaccuracy is hills lifting the real surface in front of the plane, which just offsets the picked
+    /// point downhill by at most HeightScale/tan(elevation) world units. Used while the camera is moving
+    /// (panning/zooming), where picking the exact hill you hover over matters less than a smooth frame time.
+    /// </summary>
+    public Location? PickFast(Vector2 screen, Camera3D cam)
+    {
+        var g = GroundPoint(screen, cam);
+        if (g == null) return null;
+        int px = (int)(g.Value.X * _map.Settings.PixelsPerUnit), py = (int)(g.Value.Z * _map.Settings.PixelsPerUnit);
+        return _game.World.LocationAtPixel(px, py);
+    }
+
     /// <summary>World position under the mouse on the ground plane (for camera dragging).</summary>
     public Vector3? GroundPoint(Vector2 screen, Camera3D cam)
     {
@@ -574,12 +590,57 @@ public sealed unsafe class MapRenderer : IDisposable
         float stateFade = Math.Clamp((StrategicZoom * 0.6f - camH) / (StrategicZoom * 0.25f), 0f, 1f);
         if (HighlightState != null) stateFade = Math.Max(stateFade, 0.6f);
         Raylib.SetShaderValue(_shader, _locStateBorders, stateFade, ShaderUniformDataType.Float);
+
+        // Hover/selection highlights change while the camera moves (every frame during a pan).
+        // Patch just the affected locations' flag texels instead of rebuilding + re-uploading the
+        // whole lookup texture per frame - that full rebuild was the main CPU cost of fast panning.
+        int hoverIdx = Hovered?.Index ?? -1, selIdx = Selected?.Index ?? -1;
+        if (!Dirty && (hoverIdx != _lastHovered || selIdx != _lastSelected))
+        {
+            foreach (int i in (_lastHovered, _lastSelected))
+                if (i >= 0 && i != hoverIdx && i != selIdx) UpdateLutFlags(i);
+            foreach (int i in (hoverIdx, selIdx))
+                if (i >= 0 && i != _lastHovered && i != _lastSelected) UpdateLutFlags(i);
+        }
+        _lastHovered = hoverIdx;
+        _lastSelected = selIdx;
+
         // endless sea around the map, drawn with the map shader so it matches the water at the edges
         float seaY = _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale - 0.03f;
         Raylib.DrawMesh(_seaMesh, _material, Raymath.MatrixTranslate(WorldWidth / 2, seaY, WorldHeight / 2));
         Raylib.DrawMesh(_terrainMesh, _material, Matrix4x4.Identity);
         if (_hasTrees && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain)))
             Raylib.DrawMesh(_treeMesh, _treeMaterial, Matrix4x4.Identity);
+    }
+
+    private int _lastHovered = -1, _lastSelected = -1;
+
+    /// <summary>
+    /// Recomputes and re-uploads only one location's flag texel of the LUT (hover/selection highlight),
+    /// avoiding a full UpdateLut rebuild when only the highlight moved. The other two LUT rows for this
+    /// location are unchanged by hover state, so they keep their last-built values in _lut.
+    /// </summary>
+    private void UpdateLutFlags(int index)
+    {
+        var w = _game.World;
+        if ((uint)index >= (uint)w.Locations.Count) return;
+        var l = w.Locations[index];
+        int flags = 0;
+        if (l.IsWater) flags |= 1;
+        bool occupied = l.IsOccupied && Mode is MapMode.Political or MapMode.Diplomacy;
+        if (occupied) flags |= 2;
+        if (l == Selected) flags |= 4;
+        if (l == Hovered) flags |= 8;
+        if (l.IsLake) flags |= 16;
+        if (!_game.IsVisible(l)) flags |= 32;
+        if (HighlightState != null && l.State == HighlightState) flags |= 64;
+        var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
+        var cell = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
+        _lut[LutWidth * _blockRows * 2 + index] = cell;
+        // upload just the single texel (row y = 2*blockRows, x = index % LutWidth)
+        var src = stackalloc Color[1];
+        src[0] = cell;
+        Raylib.UpdateTextureRec(_lutTex, new Rectangle(index % LutWidth, _blockRows * 2, 1, 1), src);
     }
 
     public void Dispose()

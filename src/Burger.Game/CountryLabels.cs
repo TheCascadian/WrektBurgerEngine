@@ -634,6 +634,11 @@ public sealed class CountryLabels
         var font = Assets.HeaderFont;
         var scr = new Vector2[24];
         var cum = new float[24];
+        // Glyph advances only depend on (font, char, size); measuring every letter of every label
+        // each frame (Raylib MeasureTextEx -> glyph-atlas lookup) dominated the frame time while
+        // panning. Cache them; sizes are rounded to whole pixels so the cache stays small and bounded.
+        Dictionary<char, float>? advCache = null;
+        int advCacheSize = 0;
         foreach (var lb in _labels)
         {
             int n = lb.Points.Length;
@@ -655,9 +660,23 @@ public sealed class CountryLabels
             if (fs < minScreenFont) continue;
             fs = Math.Min(fs, 140);
             // glyph advances
+            int keySize = (int)Math.Round(fs);
+            float kscale = keySize / fs;
+            if (advCacheSize != keySize) { advCache = null; advCacheSize = keySize; }
+            advCache ??= new Dictionary<char, float>();
             float total = 0;
             var adv = new float[lb.Text.Length];
-            for (int i = 0; i < lb.Text.Length; i++) { adv[i] = Raylib.MeasureTextEx(font, lb.Text[i].ToString(), fs, 0).X; total += adv[i]; }
+            for (int i = 0; i < lb.Text.Length; i++)
+            {
+                char ch = lb.Text[i];
+                if (!advCache.TryGetValue(ch, out float a))
+                {
+                    a = Raylib.MeasureTextEx(font, ch.ToString(), keySize, 0).X;
+                    advCache[ch] = a;
+                }
+                adv[i] = a *= kscale;
+                total += adv[i];
+            }
             float avail = L * 0.9f;   // a little room at both ends, so neighbouring names do not touch
             if (total > avail) { float k = avail / total; fs *= k; for (int i = 0; i < adv.Length; i++) adv[i] *= k; total = avail; if (fs < minScreenFont) continue; }
             float spacing = lb.Text.Length > 1 ? Math.Clamp((avail - total) / (lb.Text.Length - 1), 0, fs * MaxSpacing) : 0;
