@@ -140,18 +140,18 @@ public class AiSystem
         {
             var rng = RngStreams.For(c.Index);
             var ar = new AiRng(Game, rng);
-            if (F.Has(FeatureSet.Military)) Recruit(c);
-            if (F.Has(FeatureSet.Air)) ManageAir(c);
-            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) HelpFriends(c);
-            if (F.Has(FeatureSet.Production)) ManageProduction(c);
-            if (F.Has(FeatureSet.Navy)) ManageNavy(c);
-            Game.Decisions.AiMonthly(c);
-            if (F.Has(FeatureSet.Politics)) ManagePolitics(c);
-            if (F.Has(FeatureSet.Population)) ManagePopulation(c);
+            if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", () => Recruit(c));
+            if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", () => ManageAir(c));
+            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.HelpFriends", () => HelpFriends(c));
+            if (F.Has(FeatureSet.Production)) Game.P("Ai.MonthlyTick.ManageProduction", () => ManageProduction(c));
+            if (F.Has(FeatureSet.Navy)) Game.P("Ai.MonthlyTick.ManageNavy", () => ManageNavy(c));
+            Game.P("Ai.MonthlyTick.Decisions", () => Game.Decisions.AiMonthly(c));
+            if (F.Has(FeatureSet.Politics)) Game.P("Ai.MonthlyTick.ManagePolitics", () => ManagePolitics(c));
+            if (F.Has(FeatureSet.Population)) Game.P("Ai.MonthlyTick.ManagePopulation", () => ManagePopulation(c));
             if (diplomacy)
             {
-                Diplomacy(c, ar);
-                Peace(c);
+                Game.P("Ai.MonthlyTick.Diplomacy", () => Diplomacy(c, ar));
+                Game.P("Ai.MonthlyTick.Peace", () => Peace(c));
             }
         });
     }

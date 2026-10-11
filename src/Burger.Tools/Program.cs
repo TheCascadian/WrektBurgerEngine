@@ -425,7 +425,7 @@ public static class Program
         }
         PrintFeatureStats(game);
         if (game.Profiling)
-            Console.WriteLine("  time per system (ms per simulated day): " + string.Join(", ", game.ProfileMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
+            Console.WriteLine("  time per system (ms per simulated day): " + string.Join(", ", game.ProfileMs.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
 
         if (selftest)
         {
