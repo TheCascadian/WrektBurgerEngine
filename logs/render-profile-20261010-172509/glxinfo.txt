@@ -1,0 +1,41 @@
+name of display: :0
+display: :0  screen: 0
+direct rendering: Yes
+Extended renderer info (GLX_MESA_query_renderer):
+    Vendor: AMD (0x1002)
+    Device: AMD Ryzen 5 7600X 6-Core Processor (radeonsi, raphael_mendocino, ACO, DRM 3.64, 6.18.55-2-cachyos-lts) (0x164e)
+    Version: 26.2.4
+    Accelerated: yes
+    Video memory: 512MB
+    Unified memory: yes
+    Preferred profile: core (0x1)
+    Max core profile version: 4.6
+    Max compat profile version: 4.6
+    Max GLES1 profile version: 1.1
+    Max GLES[23] profile version: 3.2
+Memory info (GL_ATI_meminfo):
+    VBO free memory - total: 64 MB, largest block: 64 MB
+    VBO free aux. memory - total: 30370 MB, largest block: 30370 MB
+    Texture free memory - total: 64 MB, largest block: 64 MB
+    Texture free aux. memory - total: 30370 MB, largest block: 30370 MB
+    Renderbuffer free memory - total: 64 MB, largest block: 64 MB
+    Renderbuffer free aux. memory - total: 30370 MB, largest block: 30370 MB
+Memory info (GL_NVX_gpu_memory_info):
+    Dedicated video memory: 512 MB
+    Total available memory: 32205 MB
+    Currently available dedicated video memory: 64 MB
+OpenGL vendor string: AMD
+OpenGL renderer string: AMD Ryzen 5 7600X 6-Core Processor (radeonsi, raphael_mendocino, ACO, DRM 3.64, 6.18.55-2-cachyos-lts)
+OpenGL core profile version string: 4.6 (Core Profile) Mesa 26.2.4-arch3.1
+OpenGL core profile shading language version string: 4.60
+OpenGL core profile context flags: (none)
+OpenGL core profile profile mask: core profile
+
+OpenGL version string: 4.6 (Compatibility Profile) Mesa 26.2.4-arch3.1
+OpenGL shading language version string: 4.60
+OpenGL context flags: (none)
+OpenGL profile mask: compatibility profile
+
+OpenGL ES profile version string: OpenGL ES 3.2 Mesa 26.2.4-arch3.1
+OpenGL ES profile shading language version string: OpenGL ES GLSL ES 3.20
+

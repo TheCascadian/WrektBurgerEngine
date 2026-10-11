@@ -1,0 +1,15 @@
+  Determining projects to restore...
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/Burger.Game.csproj (in 171 ms).
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Tools/Burger.Tools.csproj (in 171 ms).
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj (in 171 ms).
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Core/Burger.Core.csproj (in 171 ms).
+  Burger.Core -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Core/bin/Release/net8.0/Burger.Core.dll
+  Burger.Tools -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Tools/bin/Release/net8.0/burger.dll
+  Burger.Game -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/bin/Release/net8.0/Burger.Game.dll
+  Burger.Studio -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/bin/Release/net8.0/BurgerStudio.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:01.40

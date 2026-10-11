@@ -96,8 +96,10 @@ public sealed class App
         _perfSim += Game?.Clock.LastUpdateMs ?? 0;
         if (_perfTime < 10) return;
         int day = Game?.World.Date.TotalDays ?? 0;
-        Log.Info($"PERF fps {_perfFrames / _perfTime:0.0}, frame {_perfTime * 1000 / _perfFrames:0.0} ms, simulation {_perfSim / _perfFrames:0.0} ms/frame, {(day - _perfDay) / _perfTime:0.0} days/s");
-        if (Game != null)
+            Log.Info($"PERF fps {_perfFrames / _perfTime:0.0}, frame {_perfTime * 1000 / _perfFrames:0.0} ms, simulation {_perfSim / _perfFrames:0.0} ms/frame, {(day - _perfDay) / _perfTime:0.0} days/s");
+            if (_renderPerf != null)
+                Log.Info("PERF render " + _renderPerf.Report(_perfTime, _perfSim, _perfFrames));
+            if (Game != null)
         {
             int days = Math.Max(1, day - _perfDay);
             Log.Info("PERF systems (ms/day): " + string.Join(", ", Game.ProfileMs.Where(kv => !kv.Key.StartsWith("Path.")).OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));

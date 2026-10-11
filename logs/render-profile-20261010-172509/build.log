@@ -1,0 +1,22 @@
+  Determining projects to restore...
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/Burger.Game.csproj (in 171 ms).
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Tools/Burger.Tools.csproj (in 171 ms).
+  Restored /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj (in 171 ms).
+  1 of 4 projects are up-to-date for restore.
+  Burger.Core -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Core/bin/Release/net8.0/Burger.Core.dll
+  Burger.Tools -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Tools/bin/Release/net8.0/burger.dll
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/MapRenderer.cs(42,30): warning CS0414: The field 'MapRenderer._locLut' is assigned but its value is never used [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/Burger.Game.csproj]
+  Burger.Game -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/bin/Release/net8.0/Burger.Game.dll
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Studio.cs(347,69): warning CS8602: Dereference of a possibly null reference. [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj]
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Studio.Shell.cs(251,17): warning CS0169: The field 'Studio._newTemplate' is never used [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj]
+  Burger.Studio -> /data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/bin/Release/net8.0/BurgerStudio.dll
+
+Build succeeded.
+
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/MapRenderer.cs(42,30): warning CS0414: The field 'MapRenderer._locLut' is assigned but its value is never used [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Game/Burger.Game.csproj]
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Studio.cs(347,69): warning CS8602: Dereference of a possibly null reference. [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj]
+/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Studio.Shell.cs(251,17): warning CS0169: The field 'Studio._newTemplate' is never used [/data/LinuxWork/GitRepos/WrektBurgerEngine/src/Burger.Studio/Burger.Studio.csproj]
+    3 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.31

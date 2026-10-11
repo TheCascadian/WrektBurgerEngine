@@ -1,0 +1,9 @@
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:23:42] INFO: Province map 6144x3456
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:23:53] INFO: PERF fps 25.3, frame 39.5 ms, simulation 15.1 ms/frame, 54.6 days/s
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:23:53] INFO: PERF systems (ms/day): 
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:23:53] INFO: PERF paths (per day): 
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:23:53] INFO: PERF world: 609 divisions, 120 armies, 0 wars, 0 battles
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:24:03] INFO: PERF fps 20.7, frame 48.3 ms, simulation 40.7 ms/frame, 178.6 days/s
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:24:03] INFO: PERF systems (ms/day): Ai.MonthlyTick 1.26, Supply.DailyTick 0.95, Warfare.DailyTick 0.52, Warfare.Fronts 0.41, Ai.DailyTick 0.40, Air.DailyTick 0.36, Warfare.HourlyTick 0.36, Fronts.Move 0.32, Population.MonthlyTick 0.22, Production.DailyTick 0.22, Ai.Military 0.21, Ai.Fleets 0.10
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:24:03] INFO: PERF paths (per day): Path.Failed 0.01ms, Path.Failed# 1.7, Path.Found 0.31ms, Path.Found# 4.0, Path.Reach 0.04ms, Path.Rejected# 0.0
+/data/LinuxWork/GitRepos/WrektBurgerEngine/logs/render-profile-20261010-172338/error.log:[17:24:03] INFO: PERF world: 875 divisions, 140 armies, 1 wars, 0 battles

@@ -1,0 +1,11 @@
+adjacencies.txt 23542 bytes
+air_regions.txt 35923 bytes
+default.map 459 bytes
+earth_stats.json 117 bytes
+heightmap.png 4406247 bytes
+locations.txt 438992 bytes
+provinces.png 1272078 bytes
+rivers.png 178786 bytes
+SOURCES.txt 679 bytes
+terrain.png 619937 bytes
+trees.png 2185722 bytes
