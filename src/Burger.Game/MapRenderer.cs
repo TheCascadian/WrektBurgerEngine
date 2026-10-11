@@ -90,15 +90,18 @@ public sealed unsafe class MapRenderer : IDisposable
         _heights = new float[_hw * _hh];
         for (int y = 0; y < _hh; y++)
         {
-            int my = Math.Min(_map.Height - 1, (int)((y + 0.5f) * _map.Height / _hh));
+            // Height samples become vertices spanning [0..WorldHeight]. Sample the source at
+            // those same endpoint-aligned coordinates; center resampling shifted the rendered
+            // heightfield away from the province pixels used by the fragment shader and picker.
+            int my = Math.Min(_map.Height - 1, (int)MathF.Round(y * (_map.Height - 1f) / (_hh - 1)));
             for (int x = 0; x < _hw; x++)
             {
-                int mx = Math.Min(_map.Width - 1, (int)((x + 0.5f) * _map.Width / _hw));
+                int mx = Math.Min(_map.Width - 1, (int)MathF.Round(x * (_map.Width - 1f) / (_hw - 1)));
                 int i = my * _map.Width + mx;
                 int li = _map.PixelLocation[i];
                 bool water = li < 0 || _game.World.Locations[li].IsWater;
                 int h = _map.HeightMap[i];
-                h = water ? sea : Math.Max(h, sea + 2);
+                h = water ? sea : Math.Max(h, Math.Min(255, sea + 2));
                 int o = (y * _hw + x) * 4;
                 px[o] = px[o + 1] = px[o + 2] = (byte)h;
                 px[o + 3] = 255;
@@ -120,10 +123,21 @@ public sealed unsafe class MapRenderer : IDisposable
                     }
                 smooth[y * _hw + x] = (byte)(sum / n);
             }
-        for (int i = 0; i < _hw * _hh; i++)
+        for (int y = 0; y < _hh; y++)
         {
-            px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = smooth[i];
-            _heights[i] = smooth[i] / 255f * s.HeightScale;
+            for (int x = 0; x < _hw; x++)
+            {
+                int i = y * _hw + x;
+                int mx = Math.Min(_map.Width - 1, (int)MathF.Round(x * (_map.Width - 1f) / (_hw - 1)));
+                int my = Math.Min(_map.Height - 1, (int)MathF.Round(y * (_map.Height - 1f) / (_hh - 1)));
+                int li = _map.PixelLocation[my * _map.Width + mx];
+                // Smoothing across a coast can lower the land mesh below the separate sea plane.
+                // Keep land vertices above that plane so ocean shading cannot cover coastal provinces.
+                if (li >= 0 && !_game.World.Locations[li].IsWater)
+                    smooth[i] = (byte)Math.Max(smooth[i], Math.Min(255, sea + 2));
+                px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = smooth[i];
+                _heights[i] = smooth[i] / 255f * s.HeightScale;
+            }
         }
         // Keep the high-resolution height field for position queries and picking. Only the
         // presentation mesh uses fewer vertices on very large maps; map-data texture stays full-res.
@@ -358,7 +372,12 @@ public sealed unsafe class MapRenderer : IDisposable
         int x1 = Math.Min(x0 + 1, _hw - 1), z1 = Math.Min(z0 + 1, _hh - 1);
         float fx = Math.Clamp(gx - x0, 0, 1), fz = Math.Clamp(gz - z0, 0, 1);
         float a = _heights[z0 * _hw + x0], b = _heights[z0 * _hw + x1], c = _heights[z1 * _hw + x0], d = _heights[z1 * _hw + x1];
-        return (a * (1 - fx) + b * fx) * (1 - fz) + (c * (1 - fx) + d * fx) * fz;
+        // GenMeshHeightmap splits each cell along the top-right/bottom-left diagonal.
+        // Use the same two planar triangles here; bilinear interpolation made the CPU picker
+        // intersect a slightly different surface than the one the player sees.
+        return fx + fz <= 1
+            ? a * (1 - fx - fz) + b * fx + c * fz
+            : c * (1 - fx) + b * (1 - fz) + d * (fx + fz - 1);
     }
 
     public Vector3 WorldPos(float pixelX, float pixelY, float lift = 0)

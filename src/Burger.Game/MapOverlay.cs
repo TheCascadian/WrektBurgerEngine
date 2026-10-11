@@ -78,9 +78,12 @@ public sealed class MapOverlay
             Gui.Bar(bar, (float)b.AttackerProgress, C(b.AttackerCountry.Color), C(b.DefenderCountry.Color));
             var hit = new Rectangle(s.X - r, s.Y - r, r * 2, r * 2);
             if (Gui.Hover(hit) && !mouseOverUi)
-                Gui.Tooltip($"Battle of {b.Location.DisplayName}\nAttacker: {b.AttackerCountry.Name} ({b.Attackers.Count} divisions)\n" +
-                            $"Defender: {b.DefenderCountry.Name} ({b.Defenders.Count} divisions)\nLosses: {b.AttackerLosses:0} / {b.DefenderLosses:0}\n" +
-                            $"Terrain: {b.Location.Terrain.Name}{(Burger.Core.Warfare.CombatMath.RiverCrossing(b) ? ", river crossing" : "")}\nModel: {_game.Combat.Current(_game).Name}");
+                Gui.Tooltip($"Battle of {b.Location.DisplayName}\n" +
+                            $"[i] Attacker: {b.AttackerCountry.Name} ({b.Attackers.Count} divisions)\n" +
+                            $"[i] Defender: {b.DefenderCountry.Name} ({b.Defenders.Count} divisions)\n" +
+                            $"[!] Losses: {b.AttackerLosses:0} attacker / {b.DefenderLosses:0} defender\n" +
+                            $"[=] Terrain: {b.Location.Terrain.Name}{(Burger.Core.Warfare.CombatMath.RiverCrossing(b) ? ", river crossing" : "")}\n" +
+                            $"[=] Combat model: {_game.Combat.Current(_game).Name}");
         }
 
         // counters: one per (location, owner)

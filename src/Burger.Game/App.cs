@@ -388,23 +388,27 @@ public sealed class App
     }
 
     // Exact heightfield pick, but only re-run when the mouse, camera or window actually changed (a still frame reuses the last answer).
-    private Vector2 _pickMouse, _pickScreen;
+    private Vector2 _pickMouse, _pickScreen, _pickOrigin;
     private Camera3D _pickCam;
     private Location? _pickResult;
     private bool _pickValid;
 
     private Location? PickCached(MapRenderer map, CameraController cam)
     {
-        var mouse = Gui.Mouse;
-        var screen = new Vector2(Raylib.GetScreenWidth(), Raylib.GetScreenHeight());
+        // Pick() and Viewport.Ray() operate in map-local coordinates. Gui.Mouse is window-global;
+        // using it here offsets every pick when the map is hosted below/inside a UI panel.
+        var mouse = Viewport.Mouse;
+        var screen = new Vector2(Viewport.W, Viewport.H);
+        var origin = Viewport.Origin;
         var c = cam.Camera;
         if (_pickValid && mouse == _pickMouse && screen == _pickScreen
+            && origin == _pickOrigin
             && c.Position == _pickCam.Position && c.Target == _pickCam.Target && c.Up == _pickCam.Up && c.FovY == _pickCam.FovY)
             return _pickResult;
         // Always use the exact heightfield pick. Caching avoids repeat work on unchanged frames;
         // a coarser movement step would reintroduce province offsets.
         _pickResult = map.Pick(mouse, c);
-        _pickMouse = mouse; _pickScreen = screen; _pickCam = c; _pickValid = true;
+        _pickMouse = mouse; _pickScreen = screen; _pickOrigin = origin; _pickCam = c; _pickValid = true;
         return _pickResult;
     }
 

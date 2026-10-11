@@ -542,21 +542,115 @@ public static class Gui
     /// <summary>True if the scroll wheel was used by a UI scroll area this frame (map zoom should ignore it).</summary>
     public static bool WheelUsed => _wheelUsed;
 
+    private enum TooltipTone { Neutral, Good, Bad, Warning, Info, Value }
+    private readonly record struct TooltipRow(string Text, TooltipTone Tone, bool Spacer = false);
+
+    /// <summary>
+    /// Tooltip line markers: [+] beneficial, [-] adverse, [!] caution, [i] explanation,
+    /// [=] value/detail. Markers add shape and color without changing legacy plain text.
+    /// The first line is presented as the card title.
+    /// </summary>
+    private static TooltipRow ParseTooltipRow(string line)
+    {
+        if (line.Length == 0) return new TooltipRow("", TooltipTone.Neutral, true);
+        if (line.StartsWith("[+] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Good);
+        if (line.StartsWith("[-] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Bad);
+        if (line.StartsWith("[!] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Warning);
+        if (line.StartsWith("[i] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Info);
+        if (line.StartsWith("[=] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Value);
+        return new TooltipRow(line, TooltipTone.Neutral);
+    }
+
+    private static Color TooltipToneColor(TooltipTone tone) => tone switch
+    {
+        TooltipTone.Good => Good,
+        TooltipTone.Bad => Bad,
+        TooltipTone.Warning => Gold,
+        TooltipTone.Info => new Color(142, 196, 226, 255),
+        TooltipTone.Value => Lighter(Gold, 0.12f),
+        _ => Text,
+    };
+
+    /// <summary>Small vector badges communicate row meaning in shape as well as color.</summary>
+    private static void DrawTooltipIcon(Vector2 center, TooltipTone tone)
+    {
+        if (tone == TooltipTone.Neutral) return;
+        Color color = TooltipToneColor(tone);
+        float r = 5.5f * Scale;
+        if (tone == TooltipTone.Warning)
+        {
+            Raylib.DrawPoly(center, 3, r + 1 * Scale, 0, color);
+            Raylib.DrawLineEx(new Vector2(center.X, center.Y - 2.5f * Scale), new Vector2(center.X, center.Y + 1 * Scale), 1.4f * Scale, TooltipBg);
+            Raylib.DrawCircleV(new Vector2(center.X, center.Y + 3 * Scale), 0.7f * Scale, TooltipBg);
+            return;
+        }
+        Raylib.DrawCircleV(center, r, Darker(color, 0.62f));
+        Raylib.DrawCircleLines((int)center.X, (int)center.Y, r, color);
+        if (tone == TooltipTone.Good)
+        {
+            Raylib.DrawLineEx(new Vector2(center.X - 2.8f * Scale, center.Y), new Vector2(center.X - 0.7f * Scale, center.Y + 2 * Scale), 1.5f * Scale, color);
+            Raylib.DrawLineEx(new Vector2(center.X - 0.7f * Scale, center.Y + 2 * Scale), new Vector2(center.X + 3 * Scale, center.Y - 2.5f * Scale), 1.5f * Scale, color);
+        }
+        else if (tone == TooltipTone.Bad)
+        {
+            Raylib.DrawLineEx(new Vector2(center.X - 2.2f * Scale, center.Y - 2.2f * Scale), new Vector2(center.X + 2.2f * Scale, center.Y + 2.2f * Scale), 1.4f * Scale, color);
+            Raylib.DrawLineEx(new Vector2(center.X + 2.2f * Scale, center.Y - 2.2f * Scale), new Vector2(center.X - 2.2f * Scale, center.Y + 2.2f * Scale), 1.4f * Scale, color);
+        }
+        else if (tone == TooltipTone.Info)
+        {
+            Raylib.DrawLineEx(new Vector2(center.X, center.Y - 0.2f * Scale), new Vector2(center.X, center.Y + 2.8f * Scale), 1.4f * Scale, color);
+            Raylib.DrawCircleV(new Vector2(center.X, center.Y - 2.2f * Scale), 0.8f * Scale, color);
+        }
+        else
+        {
+            Raylib.DrawLineEx(new Vector2(center.X - 2.5f * Scale, center.Y - 1.2f * Scale), new Vector2(center.X + 2.5f * Scale, center.Y - 1.2f * Scale), 1.2f * Scale, color);
+            Raylib.DrawLineEx(new Vector2(center.X - 2.5f * Scale, center.Y + 1.2f * Scale), new Vector2(center.X + 2.5f * Scale, center.Y + 1.2f * Scale), 1.2f * Scale, color);
+        }
+    }
+
     private static void DrawTooltip(string text)
     {
-        float maxW = 420 * Scale;
-        float h = WrappedHeight(text, maxW - 20 * Scale, 16) + 12 * Scale;
-        float w = Math.Min(maxW, text.Split('\n').Max(l => Measure(l, 16).X) + 22 * Scale);
-        float x = Mouse.X + 18, y = Mouse.Y + 18;
-        if (x + w > Raylib.GetScreenWidth()) x = Raylib.GetScreenWidth() - w - 4;
-        if (y + h > Raylib.GetScreenHeight()) y = Mouse.Y - h - 6;
+        var lines = text.Replace("\r", "").Split('\n');
+        string title = lines.Length > 0 ? lines[0] : "";
+        var rows = lines.Skip(1).Select(ParseTooltipRow).ToList();
+        float pad = 12 * Scale, iconColumn = 19 * Scale, bodySize = 14;
+        float screenW = Raylib.GetScreenWidth(), screenH = Raylib.GetScreenHeight();
+        float maxW = Math.Min(480 * Scale, screenW - 16 * Scale);
+        float measured = Measure(title, 17, FontKind.Bold).X;
+        foreach (var row in rows) measured = Math.Max(measured, Measure(row.Text, bodySize).X + (row.Tone == TooltipTone.Neutral ? 0 : iconColumn));
+        float w = Math.Min(maxW, Math.Max(190 * Scale, measured + 2 * pad));
+        float contentW = w - 2 * pad - iconColumn;
+        float titleH = WrappedHeight(title, w - 2 * pad, 17) + 2 * Scale;
+        float bodyH = 0;
+        foreach (var row in rows) bodyH += row.Spacer ? 5 * Scale : WrappedHeight(row.Text, contentW, bodySize) + 4 * Scale;
+        float h = 10 * Scale + titleH + (rows.Count > 0 ? 7 * Scale + bodyH : 0) + 8 * Scale;
+        float x = Mouse.X + 18 * Scale, y = Mouse.Y + 18 * Scale;
+        if (x + w > screenW - 4 * Scale) x = Mouse.X - w - 14 * Scale;
+        if (x < 4 * Scale) x = 4 * Scale;
+        if (y + h > screenH - 4 * Scale) y = Mouse.Y - h - 8 * Scale;
+        y = Math.Clamp(y, 4 * Scale, Math.Max(4 * Scale, screenH - h - 4 * Scale));
         var r = new Rectangle(x, y, w, h);
-        Raylib.DrawRectangleRec(new Rectangle(x + 3, y + 4, w, h), new Color(0, 0, 0, 90));
+        Raylib.DrawRectangleRec(new Rectangle(x + 3 * Scale, y + 4 * Scale, w, h), new Color(0, 0, 0, 115));
         if (!Skin("tooltip", r))
         {
-            Raylib.DrawRectangleRec(r, TooltipBg);
-            Raylib.DrawRectangleLinesEx(r, 1, PanelBorder);
+            Gradient(r, Lighter(TooltipBg, 0.08f), TooltipBg);
+            Raylib.DrawRectangleLinesEx(r, 1.2f * Scale, PanelBorder);
+            Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, 3 * Scale, r.Height), Gold);
         }
-        Wrapped(text, x + 10 * Scale, y + 6 * Scale, w - 20 * Scale, 16);
+        float cy = y + 8 * Scale;
+        cy += Wrapped(title, x + pad, cy, w - 2 * pad, 17, Gold) + 2 * Scale;
+        if (rows.Count > 0)
+        {
+            Raylib.DrawLineEx(new Vector2(x + pad, cy + 2 * Scale), new Vector2(x + w - pad, cy + 2 * Scale), 1 * Scale, PanelInner);
+            cy += 7 * Scale;
+        }
+        foreach (var row in rows)
+        {
+            if (row.Spacer) { cy += 5 * Scale; continue; }
+            if (row.Tone != TooltipTone.Neutral) DrawTooltipIcon(new Vector2(x + pad + 5.5f * Scale, cy + FontSize(bodySize) * 0.58f), row.Tone);
+            float left = x + pad + (row.Tone == TooltipTone.Neutral ? 0 : iconColumn);
+            float used = Wrapped(row.Text, left, cy, w - (left - x) - pad, bodySize, TooltipToneColor(row.Tone));
+            cy += used + 4 * Scale;
+        }
     }
 }
