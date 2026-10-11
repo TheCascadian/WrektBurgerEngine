@@ -1,4 +1,65 @@
-BurgerEngine log - 10/11/2026 3:22:40 PM
-[15:22:41] INFO: Province map 512x256
-[15:22:41] INFO: Map loaded: 8 locations, 16 borders
-[15:22:41] INFO: Game 'GifPortraitDemo' loaded in 98 ms
+BurgerEngine log - 10/11/2026 4:08:56 PM
+[16:08:57] INFO: Loaded 18 C# script(s) (including the backend)
+[16:08:58] INFO: Province map 6144x3456
+[16:08:59] INFO: Map loaded: 6426 locations, 19086 borders
+[16:08:59] INFO: Game 'Earth1930' loaded in 3071 ms
+[16:09:09] INFO: PERF fps 88.6, frame 11.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:09] INFO: PERF render 
+[16:09:09] INFO: PERF systems (ms/day): 
+[16:09:09] INFO: PERF paths (per day): 
+[16:09:09] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:09:19] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:19] INFO: PERF render 
+[16:09:19] INFO: PERF systems (ms/day): 
+[16:09:19] INFO: PERF paths (per day): 
+[16:09:19] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:09:29] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:29] INFO: PERF render 
+[16:09:29] INFO: PERF systems (ms/day): 
+[16:09:29] INFO: PERF paths (per day): 
+[16:09:29] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:09:39] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:39] INFO: PERF render 
+[16:09:39] INFO: PERF systems (ms/day): 
+[16:09:39] INFO: PERF paths (per day): 
+[16:09:39] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:09:49] INFO: PERF fps 118.9, frame 8.4 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:49] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 84.3 KB/frame; GC Δ 2/0/0, pause 16.1 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.3/0.4ms; labels p50/p95/p99 0.3/0.7/0.8ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.1ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.8/8.0/8.0ms; simulation 0.0 ms/frame
+[16:09:49] INFO: PERF systems (ms/day): Warfare.Fronts 0.81ms/108.0 calls max=0.81 p99=0.81 worst=704085
+[16:09:49] INFO: PERF paths (per day): 
+[16:09:49] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:09:59] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:09:59] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.0 KB/frame; GC Δ 2/1/0, pause 0.5 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.2/0.3ms; labels p50/p95/p99 0.2/0.3/0.3ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.0ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.9/7.9/7.9ms; simulation 0.0 ms/frame
+[16:09:59] INFO: PERF systems (ms/day): 
+[16:09:59] INFO: PERF paths (per day): 
+[16:09:59] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:09] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:09] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.5 KB/frame; GC Δ 2/0/0, pause 0.4 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.2/0.4ms; labels p50/p95/p99 0.8/1.3/1.6ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.1/0.2ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.3/0.4ms; EndDrawing/flush+swap p50/p95/p99 7.2/7.4/7.5ms; simulation 0.0 ms/frame
+[16:10:09] INFO: PERF systems (ms/day): 
+[16:10:09] INFO: PERF paths (per day): 
+[16:10:09] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:19] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:19] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.6 KB/frame; GC Δ 3/0/0, pause 0.6 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.0/0.0ms; labels p50/p95/p99 0.7/0.9/0.9ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.1ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.3/7.4/7.4ms; simulation 0.0 ms/frame
+[16:10:19] INFO: PERF systems (ms/day): 
+[16:10:19] INFO: PERF paths (per day): 
+[16:10:19] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:29] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:29] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.6 KB/frame; GC Δ 3/0/0, pause 0.6 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.0/0.1ms; labels p50/p95/p99 0.7/0.8/1.1ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.1ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.3ms; EndDrawing/flush+swap p50/p95/p99 7.4/7.4/7.4ms; simulation 0.0 ms/frame
+[16:10:29] INFO: PERF systems (ms/day): 
+[16:10:29] INFO: PERF paths (per day): 
+[16:10:29] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:39] INFO: PERF fps 119.8, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:39] INFO: PERF render frame p50/p95/p99 8.3/8.3/9.0ms n=600; avg FPS 60.0; alloc 64.5 KB/frame; GC Δ 2/0/0, pause 0.4 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.1/0.1ms; labels p50/p95/p99 0.8/1.4/3.0ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.1/0.2ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.4/3.2ms; EndDrawing/flush+swap p50/p95/p99 7.3/7.5/7.5ms; simulation 0.0 ms/frame
+[16:10:39] INFO: PERF systems (ms/day): 
+[16:10:39] INFO: PERF paths (per day): 
+[16:10:39] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:49] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:49] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.5 KB/frame; GC Δ 2/1/0, pause 0.4 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.0/0.0ms; labels p50/p95/p99 0.7/0.8/0.9ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.1ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.4/7.4/7.4ms; simulation 0.0 ms/frame
+[16:10:49] INFO: PERF systems (ms/day): 
+[16:10:49] INFO: PERF paths (per day): 
+[16:10:49] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
+[16:10:59] INFO: PERF fps 120.0, frame 8.3 ms, simulation 0.0 ms/frame, 0.0 days/s
+[16:10:59] INFO: PERF render frame p50/p95/p99 8.3/8.3/8.3ms n=600; avg FPS 60.0; alloc 64.4 KB/frame; GC Δ 3/0/0, pause 0.7 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.0/0.0/0.3ms; labels p50/p95/p99 0.7/0.9/0.9ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.0/0.0/0.1ms; fleets p50/p95/p99 0.0/0.0/0.0ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.2/0.2/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.3/7.4/7.4ms; simulation 0.0 ms/frame
+[16:10:59] INFO: PERF systems (ms/day): 
+[16:10:59] INFO: PERF paths (per day): 
+[16:10:59] INFO: PERF world: 469 divisions, 108 armies, 0 wars, 0 battles
