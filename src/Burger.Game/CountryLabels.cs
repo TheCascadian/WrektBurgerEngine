@@ -639,16 +639,23 @@ public sealed class CountryLabels
         // panning. Cache them; sizes are rounded to whole pixels so the cache stays small and bounded.
         Dictionary<char, float>? advCache = null;
         int advCacheSize = 0;
+        var forward = Vector3.Normalize(cam.Target - cam.Position);
         foreach (var lb in _labels)
         {
             int n = lb.Points.Length;
             float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+            bool behindCamera = false;
             for (int i = 0; i < n; i++)
             {
                 var p = lb.Points[i];
-                scr[i] = Viewport.SnapToScreen(new Vector3(p.X / ppu, lb.Heights[i], p.Y / ppu), cam);
+                var world = new Vector3(p.X / ppu, lb.Heights[i], p.Y / ppu);
+                // A point behind the eye projects mirrored and magnified (see Viewport.TryProjectSnapped), which made
+                // names flash across the screen while panning. A name that touches that region is not drawn at all.
+                if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth) { behindCamera = true; break; }
+                scr[i] = Viewport.SnapToScreen(world, cam);
                 minX = Math.Min(minX, scr[i].X); maxX = Math.Max(maxX, scr[i].X); minY = Math.Min(minY, scr[i].Y); maxY = Math.Max(maxY, scr[i].Y);
             }
+            if (behindCamera) continue;
             if (maxX < -100 || minX > Viewport.W + 100 || maxY < -100 || minY > Viewport.H + 100) continue;
             // left to right on screen
             if (scr[0].X > scr[n - 1].X) Array.Reverse(scr, 0, n);

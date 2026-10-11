@@ -124,6 +124,7 @@ public static class SaveGame
             if (ch.Mother != null) n.Add("mother", ch.Mother.Key);
             if (ch.Spouse != null) n.Add("spouse", ch.Spouse.Key);
             if (ch.Portrait != null) n.Add("portrait", ch.Portrait, true);
+            if (ch.PortraitRules != null) n.Add(ch.PortraitRules.Clone());
             n.Add("general", ch.IsGeneral ? "yes" : "no");
             WriteVars(n.AddBlock("vars"), ch.Vars);
         }
@@ -459,6 +460,7 @@ public static class SaveGame
                 Loyalty = n.GetDouble("loyalty", 50),
                 Health = n.GetDouble("health", 100),
                 Portrait = n.GetString("portrait"),
+                PortraitRules = n.Get("portraits")?.Clone(),
                 IsGeneral = n.GetBool("general"),
             };
             if (n.Has("death")) { ch.DeathDate = GameDate.Parse(n.GetString("death")!, w.Date); ch.DeathReason = n.GetString("death_reason", "")!; }

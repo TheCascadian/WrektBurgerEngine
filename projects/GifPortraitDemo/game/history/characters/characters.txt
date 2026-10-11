@@ -1,0 +1,23 @@
+# Animated and conditional portrait demo.
+# See the README.md next to game.txt for how the portraits are wired.
+
+alice_westland = {
+	first_name = "Alice"
+	family = "Westland"
+	birth_date = 1790.3.1
+	country = AAA
+	martial = 5 finesse = 6 charisma = 8 zeal = 4
+	# An animated gif: plays while she is selected in the Characters panel.
+	portrait = "gfx/portraits/ah.gif"
+}
+bob_eastland = {
+	first_name = "Bob"
+	family = "Eastland"
+	birth_date = 1795.7.9
+	country = BBB
+	martial = 6 finesse = 4 charisma = 5 zeal = 7
+	# No default portrait (a silhouette shows) until his health falls: the first rule whose trigger holds wins.
+	portraits = {
+		frail = { image = "gfx/portraits/ah.gif" trigger = { health < 40 } }
+	}
+}

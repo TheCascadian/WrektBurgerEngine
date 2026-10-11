@@ -46,7 +46,8 @@ public class PoliticsRules
         {
             // (support only counts as weak where the government is not the clear plurality: a divided opposition does not unseat it)
             double gov = GovernmentSupport(game, c);
-            double rival = p.Popularity.Where(kv => !p.Government.Contains(kv.Key) && kv.Key != p.Ruling).Select(kv => kv.Value).DefaultIfEmpty(0).Max();
+            double rival = p.PartyPopularity.Where(kv => !p.GovernmentOrganizations.Contains(kv.Key, StringComparer.OrdinalIgnoreCase))
+                .Select(kv => kv.Value).DefaultIfEmpty(0).Max();
             double plurality = Math.Clamp((gov - rival * 1.25) / 0.15, 0, 1);
             double weak = Math.Max(Math.Clamp((d.Get("weak_democracy_stability", 40) - stability) / 30, 0, 1),
                                    Math.Clamp((d.Get("weak_democracy_support", 0.35) - gov) / 0.2, 0, 1) * (1 - plurality));
@@ -144,15 +145,24 @@ public class PoliticsRules
         var p = pol.Of(c);
         var d = game.Data.Defines;
         if (p.LastElection is { } last && game.World.Date.TotalDays - last.TotalDays < d.Get("snap_election_months", 12) * 30) return false;
-        var top = p.Popularity.OrderByDescending(kv => kv.Value).First();
-        if (p.Government.Contains(top.Key)) return false;
-        return top.Value - p.Popularity.GetValueOrDefault(p.Ruling) >= d.Get("snap_election_lead", 0.08);
+        var top = p.PartyPopularity.OrderByDescending(kv => kv.Value).FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(top.Key))
+        {
+            var ideologicalTop = p.Popularity.OrderByDescending(kv => kv.Value).First();
+            if (p.Government.Contains(ideologicalTop.Key)) return false;
+            return ideologicalTop.Value - p.Popularity.GetValueOrDefault(p.Ruling) >= d.Get("snap_election_lead", 0.08);
+        }
+        if (p.GovernmentOrganizations.Contains(top.Key, StringComparer.OrdinalIgnoreCase)) return false;
+        return top.Value - p.PartyPopularity.GetValueOrDefault(p.RulingOrganization) >= d.Get("snap_election_lead", 0.08);
     }
 
-    /// <summary>Support for the parties in government (0-1): the sum of their ideologies' popularity.</summary>
+    /// <summary>Support for organizations actually represented in government (0-1), with an ideology fallback for legacy saves.</summary>
     public virtual double GovernmentSupport(Game game, Country c)
     {
         var p = game.Politics.Of(c);
+        // Named organizations can share an ideology while competing for votes. Count only organizations in the actual cabinet.
+        if (p.GovernmentOrganizations.Count > 0)
+            return Math.Clamp(p.GovernmentOrganizations.Sum(key => p.PartyPopularity.GetValueOrDefault(key)), 0, 1);
         return p.Government.Count > 0 ? p.Government.Sum(g => p.Popularity.GetValueOrDefault(g)) : p.Popularity.GetValueOrDefault(p.Ruling);
     }
 

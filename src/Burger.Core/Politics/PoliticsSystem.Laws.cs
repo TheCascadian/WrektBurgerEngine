@@ -77,13 +77,35 @@ public sealed partial class PoliticsSystem
         _modsDirty.Add(c);
         LawsChanged++;
         if (law.OnEnact != null) _game.Script.Execute(law.OnEnact, _game.Context(c));
-        // banned parties lose their seats and leave the government
+        // Bans apply to every party of the affected ideology; single-party laws also exclude rival organizations
+        // that share the ruling ideology. Keep zero-seat entries so inspecting the HUD cannot re-apportion the result.
+        foreach (var key in p.PartySeats.Keys.ToList())
+            if (IsPartyBanned(c, p, key)) p.PartySeats[key] = 0;
+        p.Seats = AggregatePartySeats(c, p.PartySeats);
         foreach (var i in Ideologies)
         {
             if (!IsBanned(c, p, i.Key)) continue;
             p.Seats.Remove(i.Key);
             if (p.Government.Contains(i.Key, StringComparer.OrdinalIgnoreCase) && i.Key != p.Ruling)
                 SetGovernment(c, p.Government.Where(g => !g.Equals(i.Key, StringComparison.OrdinalIgnoreCase)).ToList(), "");
+        }
+        var allowedOrganizations = p.GovernmentOrganizations.Where(key => !IsPartyBanned(c, p, key)
+            && IdeologyKeyOfParty(key) is { } ideology && p.Government.Contains(ideology, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (allowedOrganizations.Count != p.GovernmentOrganizations.Count)
+        {
+            if (allowedOrganizations.Count == 0)
+            {
+                string fallback = p.PartySeats.Where(kv => kv.Value > 0 && !IsPartyBanned(c, p, kv.Key)
+                        && !PoliticsSystem.IsMinorityParty(kv.Key) && IdeologyKeyOfParty(kv.Key) != null)
+                    .OrderByDescending(kv => kv.Value).Select(kv => kv.Key).FirstOrDefault()
+                    ?? (PartyOf(c, p.Ruling) is { } rulingParty && !IsPartyBanned(c, p, rulingParty.Key)
+                        ? rulingParty.Key : p.Ruling);
+                allowedOrganizations.Add(fallback);
+            }
+            var allowedIdeologies = allowedOrganizations.Select(IdeologyKeyOfParty).Where(key => key != null).Cast<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (allowedIdeologies.Count == 0) allowedIdeologies.Add(p.Ruling);
+            SetGovernment(c, allowedIdeologies, "", allowedOrganizations);
         }
         if (HoldsElections(c, p)) p.NextElection ??= _game.World.Date.AddMonths(ElectionMonths());
         else p.NextElection = null;

@@ -18,6 +18,28 @@ public sealed class GenericScope : IScope
     public VarStore Vars { get; } = new();
     public ScopeType ScopeType => ScopeType.Generic;
     public string ScopeKey => Key;
-    public string DisplayName => string.IsNullOrWhiteSpace(Name) ? Localisation.GetOrPretty(Key) : Localisation.Get(Name);
+    public string DisplayName
+    {
+        get
+        {
+            // Political organizations use a stable <scope-key>_name localization entry.
+            // Resolve the original default literal from existing saves, but preserve scripted renames.
+            bool politicalOrganization = Kind.Equals("party", StringComparison.OrdinalIgnoreCase)
+                || Kind.Equals("party_faction", StringComparison.OrdinalIgnoreCase)
+                || Kind.Equals("party_branch", StringComparison.OrdinalIgnoreCase);
+            string localizedKey = Key + "_name";
+            if (politicalOrganization && Localisation.Has(localizedKey))
+            {
+                string localizedName = Localisation.Get(localizedKey);
+                string legacyName = Definition?.GetString("legacy_name") ?? "";
+                if (string.IsNullOrWhiteSpace(Name)
+                    || Name.Equals(localizedKey, StringComparison.OrdinalIgnoreCase)
+                    || Name.Equals(localizedName, StringComparison.Ordinal)
+                    || (!string.IsNullOrEmpty(legacyName) && Name.Equals(legacyName, StringComparison.Ordinal)))
+                    return localizedName;
+            }
+            return string.IsNullOrWhiteSpace(Name) ? Localisation.GetOrPretty(Key) : Localisation.Get(Name);
+        }
+    }
     public override string ToString() => Key;
 }

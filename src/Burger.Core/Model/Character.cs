@@ -44,6 +44,11 @@ public sealed class Character : IScope
     public Character? Father, Mother, Spouse;
     public List<Character> Children = new();
     public string? Portrait;
+    /// <summary>
+    /// Optional <c>portraits = { name = { image = "..." trigger = { ... } } }</c> block: the first entry whose trigger holds
+    /// (evaluated with this character as scope) replaces <see cref="Portrait"/>. Images may be pictures, .gif or video files.
+    /// </summary>
+    public Node? PortraitRules;
     public bool IsGeneral;
     public VarStore Vars { get; } = new();
 

@@ -252,6 +252,7 @@ Used in `immediate`, `option`, `on_accept`, `effect` blocks. Control flow: `if`/
 - `set_owner`
 - `set_party_name`
 - `set_political_power`
+- `set_portrait`
 - `set_ruler`
 - `set_ruling_party`
 - `set_stability`

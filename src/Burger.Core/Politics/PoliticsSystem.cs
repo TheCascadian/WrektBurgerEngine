@@ -116,6 +116,7 @@ public sealed partial class PoliticsSystem
                         Key = ln.Key,
                         Name = ln.GetString("name") ?? Localisation.GetOrPretty(ln.Key),
                         Desc = ln.GetString("desc", "")!,
+                        Icon = ln.GetString("icon"),
                         Group = grp,
                         Cost = ln.GetDouble("cost", data.Defines.Get("law_cost", 100)),
                         Potential = ln.Get("potential"),
@@ -217,12 +218,19 @@ public sealed partial class PoliticsSystem
         if (p.Popularity[p.Ruling] <= 0) p.Popularity[p.Ruling] = 0.3;
         Normalize(p);
         p.Government = new List<string> { p.Ruling };
-        // a first parliament: seats from popularity (no chance), the ruling party heads the government
-        p.Seats = SeatsFrom(c, p, new Dictionary<string, double>(p.Popularity));
+        // Split the existing ideology support into independent named parties, then elect each organization separately.
+        InitializePartyPopularity(c, p);
+        p.RulingOrganization = PartiesOfIdeology(c, p.Ruling)
+            .OrderByDescending(party => p.PartyPopularity.GetValueOrDefault(party.Key)).Select(party => party.Key).FirstOrDefault() ?? p.Ruling;
+        p.GovernmentOrganizations = new List<string> { p.RulingOrganization };
+        p.PartySeats = PartySeatsFrom(c, p, new Dictionary<string, double>(p.PartyPopularity, StringComparer.OrdinalIgnoreCase));
+        p.Seats = AggregatePartySeats(c, p.PartySeats);
+        AssignGovernmentOrganizations(c, p);
         if (HoldsElections(c, p))
         {
             var coalition = FormCoalition(c, p, p.Ruling);
             if (coalition != null) p.Government = coalition;
+            AssignGovernmentOrganizations(c, p);
             int freq = ElectionMonths();
             var now = _game.World.Date;
             if (p.LastElection is { } last)
@@ -288,13 +296,25 @@ public sealed partial class PoliticsSystem
         if (others <= 1e-9 && target < 1) // everybody supported this ideology: spread the rest evenly
             foreach (var k in p.Popularity.Keys.ToList()) if (!k.Equals(ideology, StringComparison.OrdinalIgnoreCase)) p.Popularity[k] = (1 - target) / Math.Max(1, p.Popularity.Count - 1);
         Normalize(p);
+        SyncPartyPopularityToIdeologies(c, p);
     }
 
-    public string PartyName(Country c, string ideology)
+    public string PartyName(Country c, string ideologyOrParty)
     {
-        if (Of(c).PartyNames.TryGetValue(ideology, out var n)) return Localisation.Get(n);
-        if (IsMinorityParty(ideology)) return MinorityPartyName(ideology);
-        return Ideology(ideology)?.PartyName ?? ideology;
+        if (_game.World.GetGenericScope(ideologyOrParty) is { } named && IsParty(named) && PartyCountry(named) == c)
+            return named.DisplayName;
+        if (IsMinorityParty(ideologyOrParty)) return MinorityPartyName(ideologyOrParty);
+        var state = Of(c);
+        if (state.PartyNames.TryGetValue(ideologyOrParty, out var n)) return Localisation.Get(n);
+        if (string.Equals(state.Ruling, ideologyOrParty, StringComparison.OrdinalIgnoreCase)
+            && _game.World.GetGenericScope(state.RulingOrganization) is { } ruling && IsParty(ruling)
+            && string.Equals(IdeologyOfParty(ruling), ideologyOrParty, StringComparison.OrdinalIgnoreCase)) return ruling.DisplayName;
+        var candidates = PartiesOfIdeology(c, ideologyOrParty).ToList();
+        if (candidates.Count == 1) return candidates[0].DisplayName;
+        if (candidates.Count > 1)
+            return candidates.OrderByDescending(p => state.PartyPopularity.GetValueOrDefault(p.Key))
+                .ThenByDescending(p => state.PartySeats.GetValueOrDefault(p.Key)).First().DisplayName;
+        return Ideology(ideologyOrParty)?.PartyName ?? ideologyOrParty;
     }
 
     // ------------------------------------------------------------------------------------- minority parties
@@ -314,6 +334,8 @@ public sealed partial class PoliticsSystem
     /// <summary>Color of a party: its ideology, or the culture/religion of a minority party.</summary>
     public Rgb PartyColor(string key)
     {
+        if (_game.World.GetGenericScope(key) is { } party && IsParty(party)
+            && Ideology(IdeologyOfParty(party)) is { } partyIdeology) return partyIdeology.Color;
         if (Ideology(key) is { } i) return i.Color;
         string k = key[(key.IndexOf(':') + 1)..];
         if (key.StartsWith("culture:", StringComparison.OrdinalIgnoreCase)) return _game.Population.Culture(k)?.Color ?? Rgb.Gray;
@@ -322,14 +344,18 @@ public sealed partial class PoliticsSystem
     }
 
     /// <summary>Short label of a party for lists: ideology name, or the minority party's name.</summary>
-    public string PartyLabel(string key) => Ideology(key)?.Name ?? (IsMinorityParty(key) ? MinorityPartyName(key) : key);
+    public string PartyLabel(string key)
+        => _game.World.GetGenericScope(key) is { } party && IsParty(party) ? party.DisplayName
+            : Ideology(key)?.Name ?? (IsMinorityParty(key) ? MinorityPartyName(key) : key);
 
-    /// <summary>Share of the seats a party holds (0-1).</summary>
+    /// <summary>Share of the seats held by a named party, ideology bucket, or minority party (0-1).</summary>
     public double SeatShare(Country c, string key)
     {
         var p = Of(c);
-        int total = p.Seats.Values.Sum();
-        return total <= 0 ? 0 : p.Seats.GetValueOrDefault(key) / (double)total;
+        int total = p.PartySeats.Values.Sum();
+        bool namedParty = _game.World.GetGenericScope(key) is { } scope && IsParty(scope) && PartyCountry(scope) == c;
+        int seats = namedParty ? p.PartySeats.GetValueOrDefault(key) : p.Seats.GetValueOrDefault(key);
+        return total <= 0 ? 0 : seats / (double)total;
     }
 
     public bool IsBanned(Country c, string ideology) => IsBanned(c, Of(c), ideology);
@@ -402,7 +428,7 @@ public sealed partial class PoliticsSystem
     {
         if (!Enabled) return;
         var p = Of(c);
-        var votes = Rules.Votes(_game, c);
+        var votes = PartyVotes(c);
         // parties of minorities and faiths take their voters' share; the ideologies share the rest
         var minority = _game.Population.Enabled ? Rules.MinorityVotes(_game, c) : new Dictionary<string, double>();
         double minShare = Math.Min(0.6, minority.Values.Sum());
@@ -412,24 +438,32 @@ public sealed partial class PoliticsSystem
             double scale = minShare / Math.Max(1e-9, minority.Values.Sum());
             foreach (var kv in minority) votes[kv.Key] = kv.Value * scale;
         }
-        p.Seats = SeatsFrom(c, p, votes);
+        p.PartySeats = PartySeatsFrom(c, p, votes);
+        p.Seats = AggregatePartySeats(c, p.PartySeats);
         p.LastElection = _game.World.Date;
         p.NextElection = _game.World.Date.AddMonths(ElectionMonths());
         ElectionsHeld++;
-        List<string>? gov = null;
-        foreach (var leader in p.Seats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Key))
+        List<string>? organizationCoalition = null;
+        foreach (var leader in p.PartySeats.Where(kv => kv.Value > 0 && !IsMinorityParty(kv.Key))
+                     .OrderByDescending(kv => kv.Value).Select(kv => kv.Key))
         {
-            gov = FormCoalition(c, p, leader);
-            if (gov != null) break;
+            organizationCoalition = FormPartyCoalition(c, p, leader);
+            if (organizationCoalition != null) break;
         }
-        // no majority: the biggest party governs alone (minority government)
-        gov ??= new List<string> { p.Seats.Where(kv => kv.Value > 0 && IdeologyByKey.ContainsKey(kv.Key)).OrderByDescending(kv => kv.Value).Select(kv => kv.Key).FirstOrDefault() ?? p.Ruling };
+        // If no coalition can reach a majority, the largest eligible organization forms a minority government alone.
+        organizationCoalition ??= new List<string> { p.PartySeats.Where(kv => kv.Value > 0 && !IsMinorityParty(kv.Key)
+                && IdeologyKeyOfParty(kv.Key) != null).OrderByDescending(kv => kv.Value)
+            .Select(kv => kv.Key).FirstOrDefault() ?? (PartyOf(c, p.Ruling)?.Key ?? p.Ruling) };
+        var gov = organizationCoalition.Select(IdeologyKeyOfParty).Where(key => key != null).Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (gov.Count == 0) gov.Add(p.Ruling);
         string before = p.Ruling;
-        SetGovernment(c, gov, "election");
-        if (c.IsPlayer || before != p.Ruling)
+        string beforeOrganization = p.RulingOrganization;
+        SetGovernment(c, gov, "election", organizationCoalition);
+        if (c.IsPlayer || before != p.Ruling || !beforeOrganization.Equals(p.RulingOrganization, StringComparison.OrdinalIgnoreCase))
         {
-            string result = string.Join(", ", p.Seats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => $"{PartyName(c, kv.Key)} {kv.Value}"));
-            string text = $"Election in {c.Name}: {result}. " + (gov.Count > 1 ? $"Coalition of {string.Join(" and ", gov.Select(g => PartyName(c, g)))}." : $"{PartyName(c, gov[0])} governs.");
+            string result = string.Join(", ", p.PartySeats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => $"{PartyName(c, kv.Key)} {kv.Value}"));
+            string text = $"Election in {c.Name}: {result}. " + (p.GovernmentOrganizations.Count > 1 ? $"Coalition of {string.Join(" and ", p.GovernmentOrganizations.Select(g => PartyName(c, g)))}." : $"{PartyName(c, p.RulingOrganization)} governs.");
             if (c.IsPlayer) _game.Notify(text, NotificationKind.Diplomacy);
         }
         _game.Events.FireOnAction("on_election", c);
@@ -444,15 +478,36 @@ public sealed partial class PoliticsSystem
         if (HoldsElections(c, p) && p.NextElection == null) p.NextElection = _game.World.Date.AddMonths(ElectionMonths());
     }
 
-    private void SetGovernment(Country c, List<string> gov, string reason)
+    private void SetGovernment(Country c, List<string> gov, string reason, List<string>? governmentOrganizations = null)
     {
         var p = Of(c);
         string old = p.Ruling;
+        string oldOrganization = p.RulingOrganization;
+        var oldOrganizations = p.GovernmentOrganizations.ToList();
         p.Government = gov.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         p.Ruling = p.Government[0];
+        if (governmentOrganizations is { Count: > 0 })
+        {
+            p.GovernmentOrganizations = governmentOrganizations.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            p.RulingOrganization = p.GovernmentOrganizations[0];
+        }
+        else
+        {
+            // A coup or scripted government change can replace the ruling ideology. Under a single-party law,
+            // identify its replacement organization before filtering the other organizations out of government.
+            if (IdeologyKeyOfParty(p.RulingOrganization) is not { } oldIdeology
+                || !oldIdeology.Equals(p.Ruling, StringComparison.OrdinalIgnoreCase)
+                || IsPartyBanned(c, p, p.RulingOrganization))
+                p.RulingOrganization = PartiesOfIdeology(c, p.Ruling)
+                    .OrderByDescending(party => p.PartyPopularity.GetValueOrDefault(party.Key)).Select(party => party.Key).FirstOrDefault() ?? p.Ruling;
+            AssignGovernmentOrganizations(c, p);
+        }
         _modsDirty.Add(c);
-        if (old == p.Ruling) return;
-        GovernmentChanges++;
+        bool ideologyChanged = !old.Equals(p.Ruling, StringComparison.OrdinalIgnoreCase);
+        bool organizationChanged = !oldOrganization.Equals(p.RulingOrganization, StringComparison.OrdinalIgnoreCase)
+            || !oldOrganizations.SequenceEqual(p.GovernmentOrganizations, StringComparer.OrdinalIgnoreCase);
+        if (!ideologyChanged && !organizationChanged) return;
+        if (ideologyChanged) GovernmentChanges++;
         var ideology = Ideology(p.Ruling)!;
         if (ideology.Government != null) c.Government = ideology.Government;
         _game.RefreshName(c); // country_names follow the government
@@ -464,7 +519,7 @@ public sealed partial class PoliticsSystem
         if (_game.World.Player != null)
         {
             string how = reason switch { "election" => "after an election", "revolution" => "after a revolution", "coup" => "in a coup", "overlord" => "backed by its overlord", _ => "" };
-            _game.Notify($"{c.Name}: the {PartyName(c, p.Ruling)} ({ideology.Name}) took power {how}.".Replace("  ", " ").Replace(" .", "."), c.IsPlayer ? NotificationKind.Diplomacy : NotificationKind.Info);
+            _game.Notify($"{c.Name}: the {PartyName(c, p.RulingOrganization)} ({ideology.Name}) took power {how}.".Replace("  ", " ").Replace(" .", "."), c.IsPlayer ? NotificationKind.Diplomacy : NotificationKind.Info);
         }
         _game.Events.FireOnAction("on_ruling_party_changed", c);
         _game.RaiseMapChanged(); // ideology map mode colors
@@ -589,6 +644,7 @@ public sealed partial class PoliticsSystem
             foreach (var kv in drift)
                 if (p.Popularity.ContainsKey(kv.Key)) p.Popularity[kv.Key] = Math.Max(0, p.Popularity[kv.Key] + kv.Value / 100.0);
             Normalize(p);
+            SyncPartyPopularityToIdeologies(c, p);
             if (HoldsElections(c, p) && !InCivilWar(c) && Rules.CallsSnapElection(_game, c)) HoldElection(c);
             // ministers who died or left the country leave the cabinet
             foreach (var kv in p.Ministers.ToList())
@@ -611,8 +667,15 @@ public sealed partial class PoliticsSystem
             var n = root.AddBlock("country");
             n.Add("tag", c.Tag);
             n.Add("ruling_party", p.Ruling);
+            if (!string.IsNullOrWhiteSpace(p.RulingOrganization)) n.Add("ruling_organization", p.RulingOrganization);
             var gov = n.AddBlock("government");
             foreach (var g in p.Government) gov.AddItem(g);
+            var govOrgs = n.AddBlock("government_organizations");
+            foreach (var g in p.GovernmentOrganizations) govOrgs.AddItem(g);
+            var partyPop = n.AddBlock("party_popularity");
+            foreach (var kv in p.PartyPopularity) partyPop.Add(kv.Key, F(kv.Value));
+            var partySeats = n.AddBlock("party_seats");
+            foreach (var kv in p.PartySeats) partySeats.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
             var pop = n.AddBlock("popularity");
             foreach (var kv in p.Popularity) pop.Add(kv.Key, F(kv.Value));
             var seats = n.AddBlock("seats");
@@ -678,6 +741,14 @@ public sealed partial class PoliticsSystem
             foreach (var m in n.Get("ministers")?.All ?? Enumerable.Empty<Node>())
                 if (w.GetCharacter(m.Value) is { } ch) p.Ministers[m.Key] = ch;
             foreach (var pn in n.Get("parties")?.All ?? Enumerable.Empty<Node>()) if (pn.Value != null) p.PartyNames[pn.Key] = pn.Value;
+            ReadNumbers(n.Get("party_popularity"), p.PartyPopularity);
+            foreach (var item in n.Get("party_seats")?.All ?? Enumerable.Empty<Node>()) p.PartySeats[item.Key] = (int)item.AsDouble();
+            p.RulingOrganization = n.GetString("ruling_organization", "")!;
+            p.GovernmentOrganizations.AddRange(n.GetList("government_organizations"));
+            if (p.PartyPopularity.Count == 0) InitializePartyPopularity(c, p);
+            else RebuildIdeologyPopularityFromParties(c, p);
+            if (p.PartySeats.Count == 0) p.PartySeats = DistributeLegacySeats(c, p, p.Seats);
+            if (p.GovernmentOrganizations.Count == 0 || string.IsNullOrWhiteSpace(p.RulingOrganization)) AssignGovernmentOrganizations(c, p);
             _state[c] = p;
             _modsDirty.Add(c);
         }

@@ -71,7 +71,7 @@ public sealed class CharacterSystem
     private static readonly HashSet<string> CharacterKnownKeys = new(StringComparer.OrdinalIgnoreCase)
     {
         "id", "first_name", "name", "family", "dynasty", "birth_date", "age", "female", "country", "traits", "ruler", "heir",
-        "general", "father", "mother", "spouse", "portrait", "loyalty", "health", "save_scope_as", "random_traits", "flags", "dead", "death_date",
+        "general", "father", "mother", "spouse", "portrait", "loyalty", "health", "save_scope_as", "random_traits", "flags", "dead", "death_date", "portraits",
     };
 
     /// <summary>Registers a character (assigns id and unique key).</summary>
@@ -131,6 +131,7 @@ public sealed class CharacterSystem
         c.Loyalty = n.GetDouble("loyalty", 50);
         c.Health = n.GetDouble("health", 100);
         c.Portrait = n.GetString("portrait");
+        c.PortraitRules = n.Get("portraits")?.Clone();
         c.IsGeneral = n.GetBool("general", false);
 
         foreach (var t in n.GetList("traits"))
@@ -163,6 +164,23 @@ public sealed class CharacterSystem
             if (n.GetBool("heir")) c.Country.Heir = c;
         }
         return c;
+    }
+
+    /// <summary>The portrait file to show now: the first matching <c>portraits</c> rule, else the plain portrait. Relative to the game folder.</summary>
+    public string? PortraitFor(Character c)
+    {
+        if (c.PortraitRules?.Children != null)
+        {
+            Scripting.ScriptContext? ctx = null;
+            foreach (var rule in c.PortraitRules.Children)
+            {
+                string? image = rule.Get("image")?.Value;
+                if (string.IsNullOrWhiteSpace(image)) continue;
+                var trigger = rule.Get("trigger");
+                if (trigger == null || _game.Script.EvalTrigger(trigger, ctx ??= new Scripting.ScriptContext(_game, c))) return image;
+            }
+        }
+        return c.Portrait;
     }
 
     private double ResolveNum(Node n, string key, Scripting.ScriptContext? ctx, double def)

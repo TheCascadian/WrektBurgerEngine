@@ -40,6 +40,8 @@ heinrich_bruening = {
 	country = GER
 	martial = 4 finesse = 8 charisma = 4 zeal = 6
 	traits = { diligent }
+	# Demo: a video portrait with a sound track (see the speaker button on the portrait).
+	portrait = "gfx/portraits/demo/clip_with_audio.mp4"
 }
 benito_mussolini = {
 	first_name = "Benito"

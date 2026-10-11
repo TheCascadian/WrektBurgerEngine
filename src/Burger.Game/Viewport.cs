@@ -44,6 +44,33 @@ public static class Viewport
         return new Vector2(MathF.Round(s.X), MathF.Round(s.Y));
     }
 
+    /// <summary>
+    /// Nearest distance in front of the eye, in world units, at which <see cref="TryProjectSnapped"/> still accepts a point.
+    /// Chosen well below the lowest label camera height so ordinary points never hit it.
+    /// </summary>
+    public const float MinProjectionDepth = 1f;
+
+    /// <summary>Signed distance of a point in front of the camera plane (negative when it is behind the eye).</summary>
+    public static float DepthAlong(Vector3 world, Vector3 eye, Vector3 forward) => Vector3.Dot(world - eye, forward);
+
+    /// <summary>
+    /// <see cref="SnapToScreen"/> for overlays that must not draw points the camera cannot see. Raylib's
+    /// world-to-screen divides by a negative w for points behind the eye, which lands them mirrored and
+    /// magnified inside the window; panning the tilted camera across a large map made country names
+    /// flash in huge letters. Returns false for such points.
+    /// </summary>
+    public static bool TryProjectSnapped(Vector3 world, Camera3D cam, out Vector2 screen)
+    {
+        var forward = Vector3.Normalize(cam.Target - cam.Position);
+        if (DepthAlong(world, cam.Position, forward) < MinProjectionDepth)
+        {
+            screen = default;
+            return false;
+        }
+        screen = SnapToScreen(world, cam);
+        return true;
+    }
+
     public static Ray Ray(Vector2 pos, Camera3D cam) => Raylib.GetScreenToWorldRayEx(pos, cam, W, H);
 
     /// <summary>Back to full-window mode.</summary>

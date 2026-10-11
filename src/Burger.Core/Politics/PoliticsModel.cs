@@ -68,6 +68,8 @@ public sealed class LawDef
     public string Key = "";
     public string Name = "";
     public string Desc = "";
+    /// <summary>Optional law icon path, relative to the game folder (e.g. gfx/interface/politics/conscription.png).</summary>
+    public string? Icon;
     public LawGroup Group = null!;
     /// <summary>Political power to enact it.</summary>
     public double Cost;
@@ -113,8 +115,16 @@ public sealed class CountryPolitics
     public List<string> Government = new();
     /// <summary>Support of each ideology (fractions that add up to 1).</summary>
     public Dictionary<string, double> Popularity = new(StringComparer.OrdinalIgnoreCase);
-    /// <summary>Seats in parliament per ideology (from the last election).</summary>
+    /// <summary>Seats in parliament by ideology (aggregated for legacy rules and government mechanics).</summary>
     public Dictionary<string, int> Seats = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Independent support by named party scope key (legacy ideology keys stand in when no party scope exists).</summary>
+    public Dictionary<string, double> PartyPopularity = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Independent seats by party scope key, plus culture:/religion: keys for minority parties.</summary>
+    public Dictionary<string, int> PartySeats = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Actual organization leading the government, while Ruling remains its ideology for legacy mechanics.</summary>
+    public string RulingOrganization = "";
+    /// <summary>Organizations represented in government; Government remains the distinct ideology list for legacy mechanics.</summary>
+    public List<string> GovernmentOrganizations = new();
     public int TotalSeats = 100;
     public GameDate? LastElection;
     public GameDate? NextElection;

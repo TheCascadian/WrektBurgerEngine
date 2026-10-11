@@ -37,7 +37,7 @@ public sealed class MapOverlay
             foreach (var l in _game.World.Locations)
             {
                 if (l.IsWater || l.PixelCount < 30) continue;
-                var s = Viewport.SnapToScreen(_map.LocationPos(l, 0.1f), cam);
+                if (!Viewport.TryProjectSnapped(_map.LocationPos(l, 0.1f), cam, out var s)) continue;
                 if (!OnScreen(s, 0)) continue;
                 string name = l.DisplayName;
                 var m = Gui.Measure(name, 13);
@@ -78,12 +78,12 @@ public sealed class MapOverlay
             Gui.Bar(bar, (float)b.AttackerProgress, C(b.AttackerCountry.Color), C(b.DefenderCountry.Color));
             var hit = new Rectangle(s.X - r, s.Y - r, r * 2, r * 2);
             if (Gui.Hover(hit) && !mouseOverUi)
-                Gui.Tooltip($"Battle of {b.Location.DisplayName}\n" +
-                            $"[i] Attacker: {b.AttackerCountry.Name} ({b.Attackers.Count} divisions)\n" +
-                            $"[i] Defender: {b.DefenderCountry.Name} ({b.Defenders.Count} divisions)\n" +
-                            $"[!] Losses: {b.AttackerLosses:0} attacker / {b.DefenderLosses:0} defender\n" +
+                Gui.Tooltip($"[icon:battle] Battle of {b.Location.DisplayName}\n" +
+                            $"[icon:army][state:info] Attacker: {b.AttackerCountry.Name} ({b.Attackers.Count} divisions)\n" +
+                            $"[icon:army][state:info] Defender: {b.DefenderCountry.Name} ({b.Defenders.Count} divisions)\n" +
+                            $"[icon:war][state:warning] Losses: {b.AttackerLosses:0} attacker / {b.DefenderLosses:0} defender\n" +
                             $"[=] Terrain: {b.Location.Terrain.Name}{(Burger.Core.Warfare.CombatMath.RiverCrossing(b) ? ", river crossing" : "")}\n" +
-                            $"[=] Combat model: {_game.Combat.Current(_game).Name}");
+                            $"[icon:military][state:value] Combat model: {_game.Combat.Current(_game).Name}");
         }
 
         // counters: one per (location, owner)
@@ -137,7 +137,7 @@ public sealed class MapOverlay
             if (!mouseOverUi && Gui.Hover(rect))
             {
                 string army = string.Join(", ", g.Where(d => d.Army != null).Select(d => d.Army!.Name).Distinct());
-                Gui.Tooltip($"{owner.Name}: {count} division(s) in {loc.DisplayName}\n" + (army.Length > 0 ? $"Army: {army}\n" : "") +
+                Gui.Tooltip($"[icon:army][state:value] {owner.Name}: {count} division(s) in {loc.DisplayName}\n" + (army.Length > 0 ? $"Army: {army}\n" : "") +
                             string.Join("\n", g.Take(8).Select(d => $"{d.Name}  str {d.StrengthFraction:P0}  org {d.OrgFraction:P0}" +
                                 (_game.Features.HasSupply ? $"  supply {d.Supply:P0}" : "") + (d.Retreating ? " (retreating)" : ""))) +
                             (count > 8 ? $"\n... and {count - 8} more" : ""));
@@ -212,7 +212,7 @@ public sealed class MapOverlay
             if (!mouseOverUi && Gui.Hover(rect))
             {
                 string status = f.Battle != null ? "In battle" : f.Retreating ? "Retreating" : f.Path.Count > 0 ? $"Moving to {f.Path[^1].DisplayName}" : f.InPort ? "In port" : "At sea";
-                Gui.Tooltip($"{f.Name} ({f.Owner.Name})\n{status} - {f.Location.DisplayName}\nShips: " +
+                Gui.Tooltip($"[icon:navy] {f.Name} ({f.Owner.Name})\n{status} - {f.Location.DisplayName}\nShips: " +
                             string.Join(", ", f.Ships.GroupBy(x => x.Type).Select(g => $"{g.Count()} {g.Key.Name}")) + $"\nCondition: {f.HpFraction:P0}" +
                             (f.Owner == player ? "\nClick to select, then right-click a sea location or a port" : ""));
                 if (f.Owner == player && Gui.Clicked(rect))
@@ -255,7 +255,7 @@ public sealed class MapOverlay
             Gui.Label(text, rect.X + rect.Width * 0.62f - m.X / 2, rect.Y + (rect.Height - m.Y) / 2, 13 * scale / Gui.Scale, Color.White);
             if (!mouseOverUi && Gui.Hover(rect))
             {
-                Gui.Tooltip($"Air base: {st.DisplayName} ({_game.Air.PlanesAt(st):0}/{_game.Air.Capacity(st):0} planes)\n" +
+                Gui.Tooltip($"[icon:air] Air base: {st.DisplayName} ({_game.Air.PlanesAt(st):0}/{_game.Air.Capacity(st):0} planes)\n" +
                             string.Join("\n", g.Select(w => $"{w.Name}: {w.Planes:0} planes, " + (w.Region == null ? "idle" : $"{Burger.Core.Air.AirSystem.MissionName(w.Mission)} over {w.Region.DisplayName}"))) +
                             "\nClick to open the air menu");
                 if (Gui.Clicked(rect)) clicked = true;

@@ -550,6 +550,7 @@ public static class Program
         {
             PatchSelfTest(game);
             ScopeHierarchySelfTest(game);
+            PartyScopeSelfTest(game);
             expectedSelfTestErrors = InterfaceSelfTest();
             string tmp = Path.Combine(Path.GetTempPath(), "burger_selftest.sav");
             SaveGame.Save(game, tmp);
@@ -584,6 +585,38 @@ public static class Program
                 Check(ReferenceEquals(legacyGame.World.ScopeHierarchy.ParentOf(legacyGame.World.GetGenericScope("scope_child_first")),
                     legacyGame.World.GetGenericScope("scope_parent")), "legacy save rebuilds data-defined hierarchy links");
                 Check(legacyGame.World.GetGenericScope("selftest_runtime_scope") == null, "legacy save without generic scope state remains loadable");
+            }
+            if (game.World.GetGenericScope("selftest_party_a") is { } savedParty && game.World.ScopeHierarchy.ParentOf(savedParty) is Country savedCountry)
+            {
+                string savedIdeology = Burger.Core.Politics.PoliticsSystem.IdeologyOfParty(savedParty) ?? "";
+                var loadedCountry = game2.World.GetCountry(savedCountry.Tag);
+                var loadedParty = game2.World.GetGenericScope(savedParty.Key);
+                Check(loadedCountry != null && loadedParty != null && loadedParty.Dynamic && loadedParty.Kind == "party"
+                    && Burger.Core.Politics.PoliticsSystem.IdeologyOfParty(loadedParty) == savedIdeology && loadedParty.Name == savedParty.Name
+                    && ReferenceEquals(game2.World.ScopeHierarchy.ParentOf(loadedParty), loadedCountry)
+                    && ReferenceEquals(game2.Politics.PartyOf(loadedCountry!, savedIdeology), loadedParty),
+                    "save/load keeps a party's identity, ideology, name and country");
+                Check(ReferenceEquals(game2.World.ScopeHierarchy.ParentOf(game2.World.GetGenericScope("selftest_party_a_faction")), loadedParty)
+                    && ReferenceEquals(game2.World.ScopeHierarchy.ParentOf(game2.World.GetGenericScope("selftest_party_a_branch")), loadedParty),
+                    "save/load keeps party faction and branch containment");
+                Check(loadedParty != null && Math.Abs(game2.Politics.PartyPopularity(loadedParty).GetValueOrDefault(-1) - game.Politics.PartyPopularity(savedParty).GetValueOrDefault()) < 1e-4
+                    && game2.Politics.PartySeats(loadedParty) == game.Politics.PartySeats(savedParty)
+                    && game2.Politics.PartyInGovernment(loadedParty) == game.Politics.PartyInGovernment(savedParty),
+                    "save/load keeps party popularity, seats and government membership from the single politics source");
+
+                // Removing the scope sections produces a save from before party scopes existed: it must load with intact politics.
+                string partyLegacyPath = Path.Combine(Path.GetTempPath(), "burger_legacy_party_selftest.sav");
+                var partyLegacyRoot = ScriptParser.ParseFile(tmp, Path.GetFileName(tmp));
+                partyLegacyRoot.Children!.RemoveAll(n => n.Key.Equals("generic_scopes", StringComparison.OrdinalIgnoreCase)
+                    || n.Key.Equals("scope_hierarchy", StringComparison.OrdinalIgnoreCase));
+                ScriptWriter.WriteFile(partyLegacyPath, partyLegacyRoot, "Legacy-format party self-test");
+                var partyLegacyGame = Game.Load(GameDir(project), compileScripts: true, seed: 1234);
+                SaveGame.Load(partyLegacyGame, partyLegacyPath);
+                var legacyCountry = partyLegacyGame.World.GetCountry(savedCountry.Tag);
+                Check(legacyCountry != null && partyLegacyGame.World.GetGenericScope(savedParty.Key) == null
+                    && partyLegacyGame.Politics.PartyOf(legacyCountry, savedIdeology) == null
+                    && Math.Abs(partyLegacyGame.Politics.PopularityOf(legacyCountry, savedIdeology) - game.Politics.PopularityOf(savedCountry, savedIdeology)) < 1e-4,
+                    "a save without scope sections loads with intact politics and no party scopes");
             }
             if (game.Features.Has(FeatureSet.Navy))
                 Check(game2.Navy.Fleets.Count == game.Navy.Fleets.Count && game2.Navy.Fleets.Sum(f => f.Ships.Count) == game.Navy.Fleets.Sum(f => f.Ships.Count), $"save/load keeps fleets ({game2.Navy.Fleets.Count}/{game.Navy.Fleets.Count})");
@@ -726,6 +759,149 @@ public static class Program
         game.Script.Execute(reparent, new ScriptContext(game, runtime));
         Check(ReferenceEquals(world.ScopeHierarchy.ParentOf(runtime), world.GetState("west_state")),
             "script runtime mutation reparents a scope across scope kinds");
+    }
+
+    /// <summary>
+    /// Party scopes: identity apart from ideology, independent support/seats, containment, name ownership, script
+    /// queries, validation, leader references and branch-state links. Runs against the active scenario and skips when
+    /// politics is off or no country has two ideologies without an organization to use for an isolated test party.
+    /// </summary>
+    private static void PartyScopeSelfTest(Game game)
+    {
+        var politics = game.Politics;
+        var world = game.World;
+        if (!politics.Enabled) return;
+        var candidate = world.Countries.Where(c => c.Exists)
+            .Select(c => (Country: c, Free: politics.Ideologies.Where(i => politics.PartyOf(c, i.Key) == null).ToList()))
+            .FirstOrDefault(x => x.Free.Count >= 2);
+        if (candidate.Country == null) return;
+        var country = candidate.Country;
+        var free = candidate.Free;
+        var main = free[0];
+        var plain = free[1];
+
+        var state = politics.Of(country);
+        var governmentBefore = state.Government.ToList();
+        var popularityBefore = state.Popularity.ToDictionary(kv => kv.Key, kv => kv.Value);
+        string plainNameBefore = politics.PartyName(country, plain.Key);
+        var existingParties = politics.PartiesOf(country).ToList();
+        int problemsBefore = politics.FindPartyProblems().Count;
+
+        Check(world.TryCreateGenericScope("selftest_party_a", "party", "Selftest Alliance", true, out var party, out _) && party != null,
+            "a party is created as a generic scope");
+        party!.Attributes["ideology"] = main.Key;
+        Check(world.ScopeHierarchy.TrySetParent(party, country, out _), "a party is parented to its country");
+        var create = Node.Root("party_selftest");
+        foreach (var (id, kind) in new[] { ("selftest_party_a_faction", "party_faction"), ("selftest_party_a_branch", "party_branch") })
+        {
+            var effect = create.AddBlock("create_scope");
+            effect.Add("id", id);
+            effect.Add("kind", kind);
+            effect.Add("parent", "generic:selftest_party_a");
+        }
+        game.Script.Execute(create, new ScriptContext(game, country));
+        var faction = world.GetGenericScope("selftest_party_a_faction")!;
+        var branch = world.GetGenericScope("selftest_party_a_branch")!;
+        var testLeader = world.Characters.FirstOrDefault();
+        var testState = world.States.FirstOrDefault();
+        if (testLeader != null)
+        {
+            party.Attributes["leader"] = testLeader.Key;
+            faction.Attributes["leader"] = testLeader.Key;
+            branch.Attributes["leader"] = testLeader.Key;
+        }
+        if (testState != null) branch.Attributes["state"] = testState.Key;
+
+        Check(!politics.IdeologyByKey.ContainsKey(party.Key) && ReferenceEquals(politics.PartyOf(country, main.Key), party)
+            && ReferenceEquals(politics.PartyOf(country, main.Key.ToUpperInvariant()), party) && politics.PartyOf(country, plain.Key) == null,
+            "a party has its own stable key, separate from the ideology it stands for");
+        Check(ReferenceEquals(world.ScopeHierarchy.ParentOf(party), country) && world.ScopeHierarchy.ChildrenOf(country).Contains(party)
+            && ReferenceEquals(politics.PartyCountry(faction), country) && ReferenceEquals(politics.PartyCountry(branch), country)
+            && politics.PartyCountry(country) == null,
+            "party, faction and branch containment resolves to the owning country");
+        Check(world.ScopeHierarchy.DescendantsOf(party).Select(s => s.ScopeKey).SequenceEqual(new[] { "selftest_party_a_faction", "selftest_party_a_branch" }),
+            "party descendants keep definition order");
+
+        var partyContext = new ScriptContext(game, party);
+        var countryContext = new ScriptContext(game, country);
+        Check(Math.Abs(game.Script.ResolveNumber("party_popularity", partyContext) - state.Popularity[main.Key]) < 1e-9
+            && game.Script.ResolveNumber("party_seats", partyContext) == state.Seats.GetValueOrDefault(main.Key)
+            && politics.PartyPopularity(country) == null && politics.PartySeats(faction) == null,
+            "a sole named party initially inherits the ideology support and seats without duplicating their source state");
+        Check(game.Script.EvalStatement(new Node("party_ideology", main.Key), partyContext)
+            && !game.Script.EvalStatement(new Node("party_ideology", plain.Key), partyContext)
+            && game.Script.EvalStatement(new Node("has_party", main.Key), countryContext)
+            && !game.Script.EvalStatement(new Node("has_party", plain.Key), countryContext)
+            && game.Script.EvalStatement(new Node("party_in_government", politics.InGovernment(country, main.Key) ? "yes" : "no"), partyContext),
+            "party triggers report ideology, organization and government membership");
+        var factionContext = new ScriptContext(game, faction);
+        var branchContext = new ScriptContext(game, branch);
+        Check(game.Script.Iterate("party", countryContext).SequenceEqual(existingParties.Append(party!).Cast<IScope>())
+            && game.Script.Iterate("party_faction", partyContext).SequenceEqual(new IScope[] { faction })
+            && game.Script.Iterate("party_branch", partyContext).SequenceEqual(new IScope[] { branch })
+            && game.Script.TryResolveScope("party_country", factionContext, out var linkedCountry) && ReferenceEquals(linkedCountry, country),
+            "party iterators and the party_country link follow the hierarchy");
+        Check((testLeader == null || ReferenceEquals(politics.LeaderOf(party), testLeader)
+                && ReferenceEquals(politics.LeaderOf(faction), testLeader) && ReferenceEquals(politics.LeaderOf(branch), testLeader))
+            && (testState == null || ReferenceEquals(politics.StateOfBranch(branch), testState))
+            && (testLeader == null || game.Script.TryResolveScope("party_leader", partyContext, out var linkedLeader) && ReferenceEquals(linkedLeader, testLeader))
+            && (testState == null || game.Script.TryResolveScope("party_branch_state", branchContext, out var linkedState) && ReferenceEquals(linkedState, testState)),
+            "party leaders and regional branch states resolve existing character/state objects through the API and script links");
+
+        if (!state.PartyNames.ContainsKey(main.Key))
+            Check(politics.PartyName(country, main.Key) == "Selftest Alliance", "a party scope's name replaces the ideology's default party name");
+        var rename = Node.Root("party_selftest");
+        var renameEffect = rename.AddBlock("set_party_name");
+        renameEffect.Add("ideology", main.Key);
+        renameEffect.Add("name", "Selftest Renamed");
+        game.Script.Execute(rename, countryContext);
+        Check(party.Name == "Selftest Renamed" && !state.PartyNames.ContainsKey(main.Key) && politics.PartyName(country, main.Key) == "Selftest Renamed",
+            "set_party_name renames the party scope and leaves no second name behind");
+        Check(politics.PartyName(country, plain.Key) == plainNameBefore, "ideologies without a party scope keep their existing party name");
+        Check(state.Government.SequenceEqual(governmentBefore) && state.Popularity.Keys.All(k => state.Popularity[k] == popularityBefore[k])
+            && politics.FindPartyProblems().Count == problemsBefore,
+            "organizing a party changes neither government, popularity nor validation results");
+
+        world.TryCreateGenericScope("selftest_party_orphan", "party", "", true, out var orphan, out _);
+        orphan!.Attributes["ideology"] = main.Key;
+        world.TryCreateGenericScope("selftest_party_unknown", "party", "", true, out var unknown, out _);
+        unknown!.Attributes["ideology"] = "selftest_no_such_ideology";
+        world.ScopeHierarchy.TrySetParent(unknown, country, out _);
+        world.TryCreateGenericScope("selftest_party_duplicate", "party", "Selftest Rival", true, out var duplicate, out _);
+        duplicate!.Attributes["ideology"] = main.Key;
+        duplicate.Attributes["leader"] = "selftest_missing_character";
+        world.ScopeHierarchy.TrySetParent(duplicate, country, out _);
+        var sharedIdeologyParties = politics.PartiesOfIdeology(country, main.Key).ToList();
+        double primarySupport = politics.PartyPopularity(party).GetValueOrDefault();
+        double rivalSupport = politics.PartyPopularity(duplicate).GetValueOrDefault();
+        int primarySeats = politics.PartySeats(party).GetValueOrDefault();
+        int rivalSeats = politics.PartySeats(duplicate).GetValueOrDefault();
+        Check(sharedIdeologyParties.Count == 2 && primarySupport + rivalSupport <= state.Popularity[main.Key] + 1e-9
+            && primarySupport + rivalSupport >= state.Popularity[main.Key] - 1e-9
+            && primarySeats + rivalSeats == state.Seats.GetValueOrDefault(main.Key)
+            && !politics.PartyInGovernment(duplicate),
+            "two parties may share an ideology while support, seats and government membership remain organization-specific");
+        var supportEffect = Node.Root("party_independence_selftest");
+        var addSupport = supportEffect.AddBlock("add_party_support");
+        addSupport.Add("party", "selftest_party_duplicate");
+        addSupport.Add("value", "0.1");
+        game.Script.Execute(supportEffect, countryContext);
+        double rivalAfterSupport = politics.PartyPopularity(duplicate).GetValueOrDefault();
+        double primaryAfterSupport = politics.PartyPopularity(party).GetValueOrDefault();
+        Check(Math.Abs(rivalAfterSupport - 0.1) < 1e-8
+            && Math.Abs(state.Popularity[main.Key] - (primaryAfterSupport + rivalAfterSupport)) < 1e-8,
+            "add_party_support shifts support to an individual party and updates its ideology aggregate");
+        world.TryCreateGenericScope("selftest_faction_orphan", "party_faction", "", true, out _, out _);
+        world.TryCreateGenericScope("selftest_branch_unknown_state", "party_branch", "", true, out var badBranch, out _);
+        badBranch!.Attributes["state"] = "selftest_missing_state";
+        world.ScopeHierarchy.TrySetParent(badBranch, party, out _);
+        var problems = politics.FindPartyProblems().Select(p => p.Message).ToList();
+        Check(problems.Count == problemsBefore + 5
+            && problems.Any(m => m.Contains("selftest_party_orphan")) && problems.Any(m => m.Contains("selftest_party_unknown"))
+            && problems.Any(m => m.Contains("selftest_faction_orphan"))
+            && problems.Any(m => m.Contains("selftest_missing_character")) && problems.Any(m => m.Contains("selftest_missing_state"))
+            && ReferenceEquals(politics.PartyOf(country, main.Key), primaryAfterSupport >= rivalAfterSupport ? party : duplicate),
+            "validation reports broken hierarchy, ideology, leader and branch-state references while permitting shared ideologies");
     }
 
     /// <summary>A scripted war that exercises battle plans, air missions, lend-lease and volunteers (when installed).</summary>

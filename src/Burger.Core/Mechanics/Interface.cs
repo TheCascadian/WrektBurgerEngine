@@ -75,6 +75,8 @@ public sealed class ThemeDef
     /// Elements without an image are drawn with the theme colors.
     /// </summary>
     public readonly Dictionary<string, string> Textures = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Subject-specific tooltip icons, from <c>tooltip_icons = { army = "gfx/interface/ui/menu_military.png" }</c>.</summary>
+    public readonly Dictionary<string, string> TooltipIcons = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Pixels kept unstretched at the edges of each image (9-slice), from <c>texture_borders = { panel = 12 }</c>; 0 stretches the whole image.</summary>
     public readonly Dictionary<string, int> TextureBorders = new(StringComparer.OrdinalIgnoreCase);
 
@@ -96,8 +98,7 @@ public sealed class ThemeDef
     }
     /// <summary>Draw the decorated (gradient, double border, corner) style. Off = flat panels.</summary>
     public bool Ornate = true;
-    /// <summary>Colors by name: panel, panel_border, panel_inner_border, panel_header, top_bar, text, text_dim, title, good, bad,
-    /// button, button_hover, button_selected, button_disabled, button_border, tooltip, menu_bar.</summary>
+    /// <summary>Colors by name, including tooltip_neutral, tooltip_good, tooltip_bad, tooltip_warning, tooltip_info and tooltip_value.</summary>
     public readonly Dictionary<string, ThemeColor> Colors = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Shared HUD dimensions in layout units. Omitted values keep the engine's current defaults.</summary>
     public readonly Dictionary<string, float> Layout = new(StringComparer.OrdinalIgnoreCase)
@@ -116,6 +117,13 @@ public sealed class ThemeDef
         Version++;
     }
 
+    /// <summary>Set or remove a subject-specific tooltip icon (path is relative to the game folder).</summary>
+    public void SetTooltipIcon(string subject, string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) TooltipIcons.Remove(subject); else TooltipIcons[subject] = path;
+        Version++;
+    }
+
     /// <summary>Call after changing fonts, textures or scales from C#.</summary>
     public void Changed() => Version++;
 
@@ -123,6 +131,7 @@ public sealed class ThemeDef
     {
         "panel", "panel_border", "panel_inner_border", "panel_header", "top_bar", "text", "text_dim", "title", "good", "bad",
         "button", "button_hover", "button_selected", "button_disabled", "button_border", "tooltip", "menu_bar",
+        "tooltip_neutral", "tooltip_good", "tooltip_bad", "tooltip_warning", "tooltip_info", "tooltip_value",
     };
 
     public static readonly string[] KnownLayout = { "top_bar_height", "left_menu_width", "left_panel_width", "right_panel_width" };
@@ -147,6 +156,9 @@ public sealed class ThemeDef
                     Log.Warn($"Unknown interface texture '{t.Key}' (known: {string.Join(", ", KnownTextures)})", t.Location);
                 Textures[t.Key] = t.Value;
             }
+        if (n.Get("tooltip_icons") is { } tooltipIcons)
+            foreach (var icon in tooltipIcons.All)
+                if (icon.Value != null && !string.IsNullOrWhiteSpace(icon.Value)) TooltipIcons[icon.Key] = icon.Value;
         if (n.Get("texture_borders") is { } borders)
             foreach (var b in borders.All) if (b.Value != null) TextureBorders[b.Key] = (int)Math.Max(0, b.AsDouble());
         if (n.Get("colors") is { } colors)

@@ -11,6 +11,8 @@ public static class UserSettings
     public static double Speed5DaysPerSecond;
     /// <summary>Historical bias of the AI for new games (0 = free alternate history, 1 = strongly historical).</summary>
     public static double HistoricalBias = 0.75;
+    /// <summary>Play the sound of animated portraits (the speaker button on a character portrait toggles it).</summary>
+    public static bool PortraitSound = true;
 
     private static string PathOf => System.IO.Path.Combine(AppContext.BaseDirectory, "settings.cfg");
 
@@ -25,6 +27,7 @@ public static class UserSettings
                 if (parts.Length != 2 || !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var v)) continue;
                 if (parts[0] == "speed5_days_per_second") Speed5DaysPerSecond = Math.Max(0, v);
                 else if (parts[0] == "historical_bias") HistoricalBias = Math.Clamp(v, 0, 1);
+                else if (parts[0] == "portrait_sound") PortraitSound = v != 0;
             }
         }
         catch { /* settings are a convenience: the defaults will do */ }
@@ -38,6 +41,7 @@ public static class UserSettings
             {
                 $"speed5_days_per_second = {Speed5DaysPerSecond.ToString("0.##", CultureInfo.InvariantCulture)}",
                 $"historical_bias = {HistoricalBias.ToString("0.##", CultureInfo.InvariantCulture)}",
+                $"portrait_sound = {(PortraitSound ? 1 : 0)}",
             });
         }
         catch { }

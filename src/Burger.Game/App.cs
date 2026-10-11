@@ -45,6 +45,8 @@ public sealed class App
         Raylib.InitWindow(_opt.Width, _opt.Height, "BurgerEngine");
         Raylib.SetWindowMinSize(1024, 640);
         Raylib.SetExitKey(KeyboardKey.Null);
+        UserSettings.Load();
+        Media.AudioEnabled = UserSettings.PortraitSound;
         Raylib.SetTargetFPS(120);
         Assets.Font = Raylib.GetFontDefault();
         if (_opt.Perf) _renderPerf = new RenderPerf();
@@ -73,6 +75,7 @@ public sealed class App
                 case AppScreen.Playing: FramePlaying(dt); break;
             }
             _frame++;
+            Media.EndFrame();
             if (_opt.Perf) { PerfSample(); if (Game != null && Game.Started && _opt.Speed > 0) Game.Clock.Paused = false; }
             if (_opt.Screenshot != null && _frame == _opt.ScreenshotFrame)
             {
@@ -83,6 +86,7 @@ public sealed class App
             }
         }
         Renderer?.Dispose();
+        Media.Shutdown();
         Raylib.CloseWindow();
     }
 

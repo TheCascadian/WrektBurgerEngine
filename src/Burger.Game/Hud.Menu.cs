@@ -22,34 +22,29 @@ public sealed partial class Hud
         var player = G.World.Player;
         if (player == null) return;
         var items = new List<(string Label, string Tip, bool Active, Action Click, MenuIcon? Icon, PanelDef? Panel, int Badge)>();
-        if (Has(FeatureSet.Military))
-        {
-            items.Add(("Military", "Armies, generals and fronts (F1)", Ui.Left == LeftPanel.Military, () => ToggleLeft(LeftPanel.Military), MenuIcon.Military, null, 0));
-            items.Add(("Recruit", "Train new divisions (R)", Ui.Left == LeftPanel.Recruit, () => ToggleLeft(LeftPanel.Recruit), MenuIcon.Recruit, null, player.Recruitment.Count));
-            if (Has(FeatureSet.DivisionDesigner))
-                items.Add(("Designer", "Design your own division templates", Ui.Left == LeftPanel.Designer, () => ToggleLeft(LeftPanel.Designer), MenuIcon.Designer, null, 0));
-            if (Has(FeatureSet.Navy))
-                items.Add(("Navy", "Fleets, ships and transports (N)", Ui.Left == LeftPanel.Navy, () => ToggleLeft(LeftPanel.Navy), MenuIcon.Navy, null, G.Navy.OrdersOf(player).Count));
-            if (Has(FeatureSet.Air))
-                items.Add(("Air", "Air wings, air bases and missions", Ui.Left == LeftPanel.Air, () => ToggleLeft(LeftPanel.Air), MenuIcon.Air, null, G.Air.OrdersOf(player).Count));
-        }
-        if (Has(FeatureSet.Production))
-            items.Add(("Production", "Factories, production lines, construction and the equipment stockpile (P)", Ui.Left == LeftPanel.Production, () => ToggleLeft(LeftPanel.Production), MenuIcon.Production, null, player.Construction.Count));
-        if (G.Population.Enabled)
-            items.Add(("People", "Population, cultures, religions and colonies (U)", Ui.Left == LeftPanel.Population, () => ToggleLeft(LeftPanel.Population), MenuIcon.Population, null, 0));
         if (G.Politics.Enabled)
-            items.Add(("Politics", "Government, parliament, laws, cabinet and political movements (O)", Ui.Left == LeftPanel.Politics, () => ToggleLeft(LeftPanel.Politics), MenuIcon.Politics, null, G.Politics.MovementsOf(player).Count()));
+            items.Add(("Politics", "Government, parliament, laws, cabinet, characters and political movements (O)", NavGroupOf(Ui.Left) == LeftPanel.Politics, () => ToggleLeft(LeftPanel.Politics), MenuIcon.Politics, null, G.Politics.MovementsOf(player).Count()));
         if (G.Focus.Enabled && G.Focus.TreeOf(player) != null)
             items.Add(("Focus", "National focus: the goals your country works toward (G)", Ui.Left == LeftPanel.Focus, () => ToggleLeft(LeftPanel.Focus), MenuIcon.Politics, null, G.Focus.Current(player) == null ? 1 : 0));
-        if (G.Tech.Enabled)
-            items.Add(("Technology", "Research: technologies unlock units, ships and planes and strengthen your divisions (T)", Ui.Left == LeftPanel.Technology, () => ToggleLeft(LeftPanel.Technology), MenuIcon.Designer, null, G.Tech.SlotsOf(player).Count() < G.Rules.Tech.Slots(G, player) ? 1 : 0));
-        if (Has(FeatureSet.Characters))
-            items.Add(("Characters", "Ruler, heir, family and interactions (F3)", Ui.Left == LeftPanel.Characters, () => ToggleLeft(LeftPanel.Characters), MenuIcon.Characters, null, 0));
         if (G.Decisions.Defs.Count > 0)
         {
             int available = G.Decisions.Defs.Values.Count(d => G.Decisions.IsVisible(d, player) && G.Decisions.CanTake(d, player));
             items.Add(("Decisions", "Decisions you can take (F6)", Ui.Left == LeftPanel.Decisions, () => ToggleLeft(LeftPanel.Decisions), MenuIcon.Decisions, null, available));
         }
+        if (G.Tech.Enabled)
+            items.Add(("Research", "Research: technologies unlock units, ships and planes and strengthen your divisions (T)", Ui.Left == LeftPanel.Technology, () => ToggleLeft(LeftPanel.Technology), MenuIcon.Designer, null, G.Tech.SlotsOf(player).Count() < G.Rules.Tech.Slots(G, player) ? 1 : 0));
+        if (Has(FeatureSet.Production))
+            items.Add(("Production", "Factories, production lines, construction and the equipment stockpile (P)", Ui.Left == LeftPanel.Production, () => ToggleLeft(LeftPanel.Production), MenuIcon.Production, null, player.Construction.Count));
+        if (Has(FeatureSet.Military))
+        {
+            items.Add(("Army", "Armies, generals and fronts, recruiting and division designer (F1)", NavGroupOf(Ui.Left) == LeftPanel.Military, () => ToggleLeft(LeftPanel.Military), MenuIcon.Military, null, player.Recruitment.Count));
+            if (Has(FeatureSet.Air))
+                items.Add(("Air", "Air wings, air bases and missions", Ui.Left == LeftPanel.Air, () => ToggleLeft(LeftPanel.Air), MenuIcon.Air, null, G.Air.OrdersOf(player).Count));
+            if (Has(FeatureSet.Navy))
+                items.Add(("Navy", "Fleets, ships and transports (N)", Ui.Left == LeftPanel.Navy, () => ToggleLeft(LeftPanel.Navy), MenuIcon.Navy, null, G.Navy.OrdersOf(player).Count));
+        }
+        if (G.Population.Enabled)
+            items.Add(("People", "Population, cultures, religions and colonies (U)", Ui.Left == LeftPanel.Population, () => ToggleLeft(LeftPanel.Population), MenuIcon.Population, null, 0));
         foreach (var p in G.Interface.Panels)
         {
             if (!PanelVisible(p, player)) continue;
@@ -80,6 +75,51 @@ public sealed partial class Hud
             Gui.Block(r);
             if (Gui.Clicked(r)) it.Click();
             y += bs + gap;
+        }
+        DrawSubNav();
+    }
+
+    /// <summary>The menu button a panel is grouped under, or the panel itself when it is not a sub-page.</summary>
+    private LeftPanel NavGroupOf(LeftPanel p) => p switch
+    {
+        LeftPanel.Recruit or LeftPanel.Designer => LeftPanel.Military,
+        LeftPanel.Characters => LeftPanel.Politics,
+        _ => p,
+    };
+
+    /// <summary>Sub-pages of a grouped menu button, in tab order.</summary>
+    private List<(string Label, string Tip, LeftPanel Panel)> SubNavOf(LeftPanel group)
+    {
+        var tabs = new List<(string, string, LeftPanel)>();
+        if (group == LeftPanel.Military)
+        {
+            tabs.Add(("Army", "Armies, generals and fronts (F1)", LeftPanel.Military));
+            tabs.Add(("Recruit", "Train new divisions (R)", LeftPanel.Recruit));
+            if (Has(FeatureSet.DivisionDesigner)) tabs.Add(("Designer", "Design your own division templates", LeftPanel.Designer));
+        }
+        else if (group == LeftPanel.Politics && Has(FeatureSet.Characters))
+        {
+            tabs.Add(("Politics", "Government, parliament, laws and cabinet (O)", LeftPanel.Politics));
+            tabs.Add(("Characters", "Ruler, heir, family and interactions (F3)", LeftPanel.Characters));
+        }
+        return tabs;
+    }
+
+    /// <summary>Space reserved above a left panel for its sub-page tabs.</summary>
+    private float SubNavH => SubNavOf(NavGroupOf(Ui.Left)).Count > 1 && !Ui.EditorActive && G.World.Player != null ? 32 * S : 0;
+
+    private void DrawSubNav()
+    {
+        var tabs = SubNavOf(NavGroupOf(Ui.Left));
+        if (tabs.Count < 2) return;
+        var area = LeftRect(2000);
+        float gap = 4 * S, w = (area.Width - gap * (tabs.Count - 1)) / tabs.Count;
+        for (int i = 0; i < tabs.Count; i++)
+        {
+            var r = new Rectangle(area.X + i * (w + gap), TopH + 8 * S, w, 28 * S);
+            Gui.Block(r);
+            if (Gui.Button(r, tabs[i].Label, true, tabs[i].Tip, Ui.Left == tabs[i].Panel, 15) && Ui.Left != tabs[i].Panel)
+                Ui.Left = tabs[i].Panel;
         }
     }
 

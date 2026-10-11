@@ -378,6 +378,10 @@ public static partial class Builtins
         }, (ctx, n) => $"Gains trait {(game.Data.Traits.TryGetValue(n.Value ?? "", out var t) ? Localisation.Get(t.Name) : n.Value)}");
         s.RegisterEffect("remove_trait", (ctx, n) => { if (NeedCharacter(ctx, n) is { } ch) ch.Traits.RemoveAll(t => string.Equals(t.Key, n.Value, StringComparison.OrdinalIgnoreCase)); },
             (ctx, n) => $"Loses trait {(game.Data.Traits.TryGetValue(n.Value ?? "", out var t) ? Localisation.Get(t.Name) : n.Value)}");
+        s.RegisterEffect("set_portrait", (ctx, n) =>
+        {
+            if (NeedCharacter(ctx, n) is { } ch) ch.Portrait = string.IsNullOrWhiteSpace(n.Value) ? null : n.Value;
+        }, (ctx, n) => "Portrait changes");
         s.RegisterEffect("add_stat", (ctx, n) =>
         {
             if (NeedCharacter(ctx, n) is not { } ch) return;

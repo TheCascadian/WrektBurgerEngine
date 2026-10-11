@@ -82,8 +82,30 @@ public sealed partial class PoliticsSystem
         {
             if (ctx.This is not Country c || !Enabled) return;
             string? ideology = n.GetString("ideology"), name = n.GetString("name");
-            if (ideology != null && name != null) Of(c).PartyNames[ideology] = name;
-        }, (ctx, n) => $"The {Name(n.GetString("ideology"))} party is now called {n.GetString("name")}");
+            if (ideology == null || name == null || !IdeologyByKey.ContainsKey(ideology)) return;
+            var candidates = PartiesOfIdeology(c, ideology).ToList();
+            if (candidates.Count == 1)
+            {
+                candidates[0].Name = name;
+                Of(c).PartyNames.Remove(ideology);
+            }
+            else
+            {
+                // This legacy effect renames the ideology-level fallback/label. Never silently rename one of several parties.
+                Of(c).PartyNames[ideology] = name;
+                if (candidates.Count > 1) Log.WarnOnce("partyname-ambiguous:" + c.Tag + ":" + ideology,
+                    $"set_party_name for {c.Tag}/{ideology} affects the legacy ideology label because multiple named parties share this ideology; use set_named_party_name to rename one organization.");
+            }
+        }, (ctx, n) => $"Rename the {Name(n.GetString("ideology"))} party label to {n.GetString("name")}");
+        s.RegisterEffect("set_named_party_name", (ctx, n) =>
+        {
+            string? key = n.GetString("party"), name = n.GetString("name");
+            var party = _game.World.GetGenericScope(key);
+            if (party == null || !IsParty(party) || name == null) return;
+            party.Name = name;
+        }, (ctx, n) => $"Rename political organization {n.GetString("party")} to {n.GetString("name")}");
+
+        RegisterPartyScript();
     }
 
     /// <summary>Console commands (called once the console exists).</summary>
@@ -95,9 +117,10 @@ public sealed partial class PoliticsSystem
         {
             var c = a.Length > 0 ? _game.World.GetCountry(a[0]) ?? Player() : Player();
             var p = Of(c);
-            return $"{c.Name}: ruling {p.Ruling} (government: {string.Join(", ", p.Government)}), elections: {(HoldsElections(c) ? p.NextElection?.ToScript() : "none")}\n" +
-                   "popularity: " + string.Join(", ", p.Popularity.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key} {kv.Value:P0}")) + "\n" +
-                   "seats: " + string.Join(", ", p.Seats.Where(kv => kv.Value > 0).Select(kv => $"{kv.Key} {kv.Value}")) + "\n" +
+            return $"{c.Name}: ruling {PartyName(c, p.RulingOrganization)} [{p.Ruling}], government: {string.Join(", ", p.GovernmentOrganizations.Select(key => PartyName(c, key)))}, elections: {(HoldsElections(c) ? p.NextElection?.ToScript() : "none")}\n" +
+                   "party support: " + string.Join(", ", p.PartyPopularity.OrderByDescending(kv => kv.Value).Select(kv => $"{PartyName(c, kv.Key)} {kv.Value:P0}")) + "\n" +
+                   "party seats: " + string.Join(", ", p.PartySeats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => $"{PartyName(c, kv.Key)} {kv.Value}")) + "\n" +
+                   "ideology support: " + string.Join(", ", p.Popularity.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key} {kv.Value:P0}")) + "\n" +
                    "laws: " + string.Join(", ", p.Laws.Select(kv => $"{kv.Key}={kv.Value}"));
         });
         cmd.Register("popularity", "popularity <ideology> <0-1> - add popularity to an ideology in the player country", a =>
@@ -111,7 +134,9 @@ public sealed partial class PoliticsSystem
         {
             var c = a.Length > 0 ? _game.World.GetCountry(a[0]) ?? Player() : Player();
             HoldElection(c);
-            return string.Join(", ", Of(c).Seats.Where(kv => kv.Value > 0).Select(kv => $"{kv.Key} {kv.Value}")) + $" - governing: {string.Join(", ", Of(c).Government)}";
+            var state = Of(c);
+            return string.Join(", ", state.PartySeats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value)
+                .Select(kv => $"{PartyName(c, kv.Key)} {kv.Value}")) + $" - governing: {string.Join(", ", state.GovernmentOrganizations.Select(key => PartyName(c, key)))}";
         });
         cmd.Register("law", "law <law> - enact a law in the player country for free", a =>
         {
@@ -141,5 +166,6 @@ public sealed partial class PoliticsSystem
         foreach (var p in Positions)
             if (p.Stat.Length > 0 && !_game.Data.Defines.CharacterStats.Contains(p.Stat, StringComparer.OrdinalIgnoreCase))
                 Log.Warn($"Cabinet post '{p.Key}' uses unknown character stat '{p.Stat}'");
+        ValidateParties();
     }
 }

@@ -161,6 +161,25 @@ Characters age, marry, have children (married women, `birth_chance_per_year`), d
 and rulers are succeeded by their heir or eldest child. The succession rules can be replaced in C#
 (`Game.Rules.Characters`).
 
+**Portraits** can be still images (`.png`, `.jpg`), animated GIFs, or video files (`.mp4`, `.webm`, `.mov`, `.mkv`, `.avi`),
+all relative to the `game/` folder. A character without a usable image gets a silhouette in their country's colour.
+A `portraits` block changes the picture while the game runs: entries are checked in order once a day, with the
+character as scope, and the first whose `trigger` holds replaces `portrait`:
+
+```
+portrait = "gfx/portraits/bruening.png"
+portraits = {
+    frail = { image = "gfx/portraits/bruening_sick.gif" trigger = { health < 40 } }
+    commander = { image = "gfx/portraits/bruening_general.mp4" trigger = { is_general = yes } }
+}
+```
+
+The effect `set_portrait = "gfx/portraits/x.png"` (character scope) changes the plain `portrait`, and `portraits`
+rules still take precedence. Animation plays only while the picture is on screen (the Characters panel shows the selected
+character animated and list thumbnails as still frames). Clips are decoded at up to 256 px. GIFs need nothing extra;
+video needs `ffmpeg` and `ffprobe` on the PATH. A video with a sound track plays it through the speaker button on the
+portrait (the choice is saved as `portrait_sound` in `settings.cfg`), and without ffmpeg the portrait falls back to the silhouette.
+
 Traits (`common/traits.txt`): any number changes the stat or modifier with that name, for example
 `martial = 2 general_attack = 0.1 health = -20 fertility = 0.3`. Traits also take `opposites`, `random_weight` and
 `inherit_chance`.

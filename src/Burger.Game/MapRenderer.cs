@@ -158,7 +158,14 @@ public sealed unsafe class MapRenderer : IDisposable
                 meshPx[o] = meshPx[o + 1] = meshPx[o + 2] = h;
                 meshPx[o + 3] = 255;
             }
-        _terrainMesh = Raylib.GenMeshHeightmap(meshImg, new Vector3(WorldWidth, s.HeightScale, WorldHeight));
+        // raylib spaces heightmap vertices by size/(vertexCount), not size/(vertexCount - 1).
+        // Expand the input size by one cell so the first and last vertices land exactly at
+        // [0..WorldWidth] and [0..WorldHeight], matching HeightAt(), WorldPos(), and map pixels.
+        var terrainSize = new Vector3(
+            WorldWidth * meshW / (meshW - 1f),
+            s.HeightScale,
+            WorldHeight * meshH / (meshH - 1f));
+        _terrainMesh = Raylib.GenMeshHeightmap(meshImg, terrainSize);
         Raylib.UnloadImage(meshImg);
         Raylib.UnloadImage(img);
     }
@@ -388,55 +395,124 @@ public sealed unsafe class MapRenderer : IDisposable
 
     public Vector3 LocationPos(Location l, float lift = 0) => WorldPos(l.CenterX, l.CenterY, lift);
 
-    /// <summary>Finds the location under a screen position (ray-marched against the heightfield).</summary>
-    /// <param name="stepScale">Ray-march step multiplier; the 12-step refinement keeps the hit accurate, so a larger step only risks skipping very thin ridges.</param>
+    /// <summary>Finds the first terrain location intersected by the mouse ray.</summary>
+    /// <param name="screen">Mouse position relative to the map viewport.</param>
+    /// <param name="cam">The camera used to render the map.</param>
+    /// <param name="stepScale">Retained for source compatibility; exact triangle traversal has no step size.</param>
     public Location? Pick(Vector2 screen, Camera3D cam, float stepScale = 1f)
     {
+        _ = stepScale;
+        // Traverse the heightfield cells in ray order and intersect the actual two triangles
+        // rendered for each cell. Fixed-step ray marching can step over narrow high-relief peaks,
+        // causing the cursor to select terrain far behind the visible surface.
         var ray = Viewport.Ray(screen, cam);
-        if (ray.Direction.Y >= 0) return null;
-        float maxH = _map.Settings.HeightScale;
-        // start where the ray crosses the top of the terrain
-        float t = (ray.Position.Y - maxH) / -ray.Direction.Y;
-        if (t < 0) t = 0;
-        float step = 0.05f * stepScale * Math.Max(1, cam.Position.Y / 20);
-        Vector3 prev = ray.Position + ray.Direction * t;
-        for (int i = 0; i < 4000; i++)
+        if (ray.Direction.Y >= 0 || _hw < 2 || _hh < 2) return null;
+
+        float enter = 0f, exit = float.PositiveInfinity;
+        if (!ClipRayAxis(ray.Position.X, ray.Direction.X, 0, WorldWidth, ref enter, ref exit) ||
+            !ClipRayAxis(ray.Position.Z, ray.Direction.Z, 0, WorldHeight, ref enter, ref exit) ||
+            exit < enter)
+            return null;
+
+        float cellX = WorldWidth / (_hw - 1f);
+        float cellZ = WorldHeight / (_hh - 1f);
+        // Probe a tiny distance inside the clipped area so a ray entering exactly on a grid
+        // edge starts in the cell it is moving into, not the adjacent cell behind it.
+        var probe = ray.Position + ray.Direction * (enter + 1e-4f);
+        int ix = Math.Clamp((int)MathF.Floor(probe.X / cellX), 0, _hw - 2);
+        int iz = Math.Clamp((int)MathF.Floor(probe.Z / cellZ), 0, _hh - 2);
+        int stepX = ray.Direction.X > 1e-7f ? 1 : ray.Direction.X < -1e-7f ? -1 : 0;
+        int stepZ = ray.Direction.Z > 1e-7f ? 1 : ray.Direction.Z < -1e-7f ? -1 : 0;
+        float tDeltaX = stepX == 0 ? float.PositiveInfinity : cellX / MathF.Abs(ray.Direction.X);
+        float tDeltaZ = stepZ == 0 ? float.PositiveInfinity : cellZ / MathF.Abs(ray.Direction.Z);
+        float tMaxX = float.PositiveInfinity, tMaxZ = float.PositiveInfinity;
+        if (stepX != 0)
         {
-            var p = ray.Position + ray.Direction * t;
-            if (p.Y <= HeightAt(p.X, p.Z))
+            float boundaryX = (stepX > 0 ? ix + 1 : ix) * cellX;
+            tMaxX = (boundaryX - ray.Position.X) / ray.Direction.X;
+            while (tMaxX < enter) tMaxX += tDeltaX;
+        }
+        if (stepZ != 0)
+        {
+            float boundaryZ = (stepZ > 0 ? iz + 1 : iz) * cellZ;
+            tMaxZ = (boundaryZ - ray.Position.Z) / ray.Direction.Z;
+            while (tMaxZ < enter) tMaxZ += tDeltaZ;
+        }
+
+        Vector3 Vertex(int x, int z) => new(x * cellX, _heights[z * _hw + x], z * cellZ);
+        const float hitEpsilon = 1e-4f;
+        // A ray crosses at most _hw + _hh cells in the map rectangle. The guard also
+        // protects against floating-point stalls at exact grid corners.
+        int maxCells = _hw + _hh + 8;
+        for (int visited = 0; visited < maxCells && (uint)ix < (uint)(_hw - 1) && (uint)iz < (uint)(_hh - 1); visited++)
+        {
+            float nextT = Math.Min(exit, Math.Min(tMaxX, tMaxZ));
+            var a = Vertex(ix, iz);
+            var b = Vertex(ix + 1, iz);
+            var c = Vertex(ix, iz + 1);
+            var d = Vertex(ix + 1, iz + 1);
+            // GenMeshHeightmap uses the diagonal from b to c.
+            bool hit = RayTriangle(ray.Position, ray.Direction, a, c, b, out float ta);
+            if (RayTriangle(ray.Position, ray.Direction, b, c, d, out float tb) && (!hit || tb < ta))
             {
-                // refine between prev and p
-                Vector3 lo = prev, hi = p;
-                for (int k = 0; k < 12; k++)
-                {
-                    var mid = (lo + hi) * 0.5f;
-                    if (mid.Y <= HeightAt(mid.X, mid.Z)) hi = mid; else lo = mid;
-                }
-                int px = (int)(hi.X * _map.Settings.PixelsPerUnit), py = (int)(hi.Z * _map.Settings.PixelsPerUnit);
+                hit = true;
+                ta = tb;
+            }
+            if (hit && ta >= enter - hitEpsilon && ta <= nextT + hitEpsilon)
+            {
+                var point = ray.Position + ray.Direction * ta;
+                int px = Math.Clamp((int)(point.X * _map.Settings.PixelsPerUnit), 0, _map.Width - 1);
+                int py = Math.Clamp((int)(point.Z * _map.Settings.PixelsPerUnit), 0, _map.Height - 1);
                 return _game.World.LocationAtPixel(px, py);
             }
-            if (p.Y < -1) break;
-            prev = p;
-            t += step;
+
+            if (nextT >= exit - hitEpsilon) break;
+            bool crossX = tMaxX <= tMaxZ + hitEpsilon;
+            bool crossZ = tMaxZ <= tMaxX + hitEpsilon;
+            if (crossX) { ix += stepX; tMaxX += tDeltaX; }
+            if (crossZ) { iz += stepZ; tMaxZ += tDeltaZ; }
+            if (stepX == 0 && stepZ == 0) break;
         }
         return null;
     }
 
-    /// <summary>
-    /// Cheap hover pick: projects the mouse onto the sea-level ground plane instead of ray-marching the
-    /// heightfield (up to ~48k bilinear samples per frame). The plane hit is always farther along the ray
-    /// than the true terrain hit, so it can never cross the map's far edge into another region; the only
-    /// inaccuracy is hills lifting the real surface in front of the plane, which just offsets the picked
-    /// point downhill by at most HeightScale/tan(elevation) world units. Used while the camera is moving
-    /// (panning/zooming), where picking the exact hill you hover over matters less than a smooth frame time.
-    /// </summary>
-    public Location? PickFast(Vector2 screen, Camera3D cam)
+    private static bool ClipRayAxis(float origin, float direction, float min, float max, ref float enter, ref float exit)
     {
-        var g = GroundPoint(screen, cam);
-        if (g == null) return null;
-        int px = (int)(g.Value.X * _map.Settings.PixelsPerUnit), py = (int)(g.Value.Z * _map.Settings.PixelsPerUnit);
-        return _game.World.LocationAtPixel(px, py);
+        if (MathF.Abs(direction) < 1e-7f) return origin >= min && origin <= max;
+        float a = (min - origin) / direction;
+        float b = (max - origin) / direction;
+        if (a > b) (a, b) = (b, a);
+        enter = Math.Max(enter, a);
+        exit = Math.Min(exit, b);
+        return exit >= enter;
     }
+
+    private static bool RayTriangle(Vector3 origin, Vector3 direction, Vector3 a, Vector3 b, Vector3 c, out float distance)
+    {
+        // Two-sided Moller-Trumbore ray/triangle intersection.
+        var edge1 = b - a;
+        var edge2 = c - a;
+        var p = Vector3.Cross(direction, edge2);
+        float det = Vector3.Dot(edge1, p);
+        if (MathF.Abs(det) < 1e-7f) { distance = 0; return false; }
+        float invDet = 1f / det;
+        var tvec = origin - a;
+        float u = Vector3.Dot(tvec, p) * invDet;
+        const float eps = 1e-5f;
+        if (u < -eps || u > 1f + eps) { distance = 0; return false; }
+        var q = Vector3.Cross(tvec, edge1);
+        float v = Vector3.Dot(direction, q) * invDet;
+        if (v < -eps || u + v > 1f + eps) { distance = 0; return false; }
+        distance = Vector3.Dot(edge2, q) * invDet;
+        return distance >= 0f;
+    }
+
+    /// <summary>
+    /// Compatibility alias for callers that previously requested an approximate sea-level pick.
+    /// Map-cell traversal is now bounded and inexpensive, so hover remains accurate while panning
+    /// over mountains instead of selecting a location behind the visible terrain.
+    /// </summary>
+    public Location? PickFast(Vector2 screen, Camera3D cam) => Pick(screen, cam);
 
     /// <summary>World position under the mouse on the ground plane (for camera dragging).</summary>
     public Vector3? GroundPoint(Vector2 screen, Camera3D cam)
@@ -667,10 +743,15 @@ public sealed unsafe class MapRenderer : IDisposable
         var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
         var cell = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
         _lut[LutWidth * _blockRows * 2 + index] = cell;
-        // upload just the single texel (row y = 2*blockRows, x = index % LutWidth)
+        // The flag rows start at 2*blockRows, then each row stores LutWidth locations.
+        // Upload to the same row/column as the updated texel in the CPU-side LUT; using only
+        // 2*blockRows writes every hover update into the first flag row and corrupts unrelated
+        // provinces (including their water/land bit) when location indices exceed LutWidth.
         var src = stackalloc Color[1];
         src[0] = cell;
-        Raylib.UpdateTextureRec(_lutTex, new Rectangle(index % LutWidth, _blockRows * 2, 1, 1), src);
+        int lutX = index % LutWidth;
+        int lutY = _blockRows * 2 + index / LutWidth;
+        Raylib.UpdateTextureRec(_lutTex, new Rectangle(lutX, lutY, 1, 1), src);
     }
 
     public void Dispose()

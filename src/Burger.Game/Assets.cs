@@ -16,6 +16,8 @@ public static unsafe class Assets
     public static bool CustomFont;
     private static readonly Dictionary<string, Texture2D> _textures = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<Country, (int Version, Texture2D Tex)> _flags = new();
+    // Party flags are keyed by party scope. A change of image path or party colour replaces the entry, so scripted changes show up at once.
+    private static readonly Dictionary<string, (string? Path, Rgb Color, Texture2D Tex, bool Generated)> _partyFlags = new(StringComparer.OrdinalIgnoreCase);
     private static readonly List<Font> _loadedFonts = new();
     private static string _root = "";
     private static string _fontKey = "";
@@ -26,9 +28,13 @@ public static unsafe class Assets
     public static void Init(string gameRoot, Burger.Core.Mechanics.ThemeDef? theme = null)
     {
         _root = gameRoot;
+        Media.Shutdown();
+        Media.Root = gameRoot;
         foreach (var t in _textures.Values) if (t.Id != 0) Raylib.UnloadTexture(t);
         _textures.Clear();
         _flags.Clear();
+        foreach (var f in _partyFlags.Values) if (f.Generated && f.Tex.Id != 0) Raylib.UnloadTexture(f.Tex);
+        _partyFlags.Clear();
         _fontKey = "";
         LoadFonts(theme);
     }
@@ -132,6 +138,59 @@ public static unsafe class Assets
         }
         _flags[c] = (c.FlagVersion, tex);
         return tex;
+    }
+
+    /// <summary>
+    /// The flag of a party: its image file when it names one that exists, otherwise a flag generated from the party colour.
+    /// Re-resolved whenever the path or colour changes, so it can be called every frame for whichever party is selected.
+    /// </summary>
+    public static Texture2D PartyFlag(string key, string? path, Rgb color)
+    {
+        if (_partyFlags.TryGetValue(key, out var cached) && cached.Path == path && cached.Color.Equals(color)) return cached.Tex;
+        if (cached.Generated && cached.Tex.Id != 0) Raylib.UnloadTexture(cached.Tex);
+
+        var loaded = Texture(path);
+        Texture2D tex;
+        bool generated = loaded == null;
+        if (loaded != null) tex = loaded.Value;
+        else
+        {
+            var img = GeneratedPartyFlag(key, color);
+            tex = Raylib.LoadTextureFromImage(img);
+            Raylib.UnloadImage(img);
+            Raylib.SetTextureFilter(tex, TextureFilter.Bilinear);
+        }
+        _partyFlags[key] = (path, color, tex, generated);
+        return tex;
+    }
+
+    private static Image GeneratedPartyFlag(string key, Rgb color)
+    {
+        var field = new Color(color.R, color.G, color.B, (byte)255);
+        var light = Raylib.ColorBrightness(field, 0.5f);
+        var dark = Raylib.ColorBrightness(field, -0.4f);
+        var img = Raylib.GenImageColor(96, 64, field);
+        // the design is picked by the key so each party keeps the same emblem between sessions
+        int style = key.Sum(ch => ch) % 3;
+        if (style == 0)
+        {
+            Raylib.ImageDrawRectangle(ref img, 0, 0, 96, 10, dark);
+            Raylib.ImageDrawRectangle(ref img, 0, 54, 96, 10, dark);
+            Raylib.ImageDrawCircle(ref img, 48, 32, 15, light);
+            Raylib.ImageDrawCircle(ref img, 48, 32, 9, field);
+        }
+        else if (style == 1)
+        {
+            Raylib.ImageDrawRectangle(ref img, 0, 0, 34, 64, dark);
+            Raylib.ImageDrawRectangle(ref img, 34, 0, 6, 64, light);
+        }
+        else
+        {
+            Raylib.ImageDrawRectangle(ref img, 0, 24, 96, 16, light);
+            Raylib.ImageDrawRectangle(ref img, 0, 0, 96, 6, dark);
+            Raylib.ImageDrawRectangle(ref img, 0, 58, 96, 6, dark);
+        }
+        return img;
     }
 
     public static Image GeneratedFlag(Country c)

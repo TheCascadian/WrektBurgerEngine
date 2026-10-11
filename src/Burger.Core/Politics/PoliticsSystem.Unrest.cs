@@ -220,6 +220,12 @@ public sealed partial class PoliticsSystem
         rp.Ruling = ideology;
         rp.Government = new List<string> { ideology };
         rp.Seats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { [ideology] = rp.TotalSeats };
+        InitializePartyPopularity(rebel, rp);
+        rp.RulingOrganization = PartiesOfIdeology(rebel, ideology)
+            .OrderByDescending(party => rp.PartyPopularity.GetValueOrDefault(party.Key)).Select(party => party.Key).FirstOrDefault() ?? ideology;
+        rp.GovernmentOrganizations = new List<string> { rp.RulingOrganization };
+        rp.PartySeats = DistributeLegacySeats(rebel, rp, rp.Seats);
+        rp.Seats = AggregatePartySeats(rebel, rp.PartySeats);
         _modsDirty.Add(rebel);
         AddPopularity(rebel, ideology, Math.Max(0, 0.65 - rp.Popularity.GetValueOrDefault(ideology)));
         // the supporters who left take part of the ideology's popularity with them
@@ -339,8 +345,12 @@ public sealed partial class PoliticsSystem
             foreach (var kv in rp.Popularity) op.Popularity[kv.Key] = kv.Value;
             foreach (var kv in rp.Laws) op.Laws[kv.Key] = kv.Value;
             op.Ministers.Clear();
-            SetRulingParty(origin, cw.Ideology, "revolution");
+            // Rebuild party-level state from the victorious ideology mix while preserving the parliament's size.
+            InitializePartyPopularity(origin, op);
             op.Seats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { [cw.Ideology] = op.TotalSeats };
+            op.PartySeats = DistributeLegacySeats(origin, op, op.Seats);
+            SetRulingParty(origin, cw.Ideology, "revolution");
+            op.Seats = AggregatePartySeats(origin, op.PartySeats);
             if (capital != null && capital.Controller == origin && (origin.Capital == null || origin.Capital.Controller != origin)) origin.Capital = capital;
             Revolutions++;
             _game.Notify($"The {origin.Name} Civil War is over: the revolution won and the {PartyName(origin, cw.Ideology)} rules {origin.Name}.", origin.IsPlayer ? NotificationKind.War : NotificationKind.Info);

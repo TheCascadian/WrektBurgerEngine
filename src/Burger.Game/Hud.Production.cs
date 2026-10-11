@@ -161,7 +161,8 @@ public sealed partial class Hud
             string stock = Fmt(G.Production.Stock(c, e.Key));
             var m = Gui.Measure(stock, 18, FontKind.Bold);
             Gui.Label(stock, box.X + box.Width - m.X - 10 * S, box.Y + 11 * S, 18, Gui.Gold, FontKind.Bold);
-            if (Gui.Hover(box)) Gui.Tooltip($"{e.Name}: {G.Production.Stock(c, e.Key):0} in stock\nMissing for divisions and training: {need:0}");
+            if (Gui.Hover(box)) Gui.Tooltip($"[icon:production][state:value] {e.Name}: {G.Production.Stock(c, e.Key):0} in stock\n" +
+                            $"[state:warning] Missing for divisions and training: {need:0}");
             sy += 46 * S;
         }
         Gui.EndScroll();

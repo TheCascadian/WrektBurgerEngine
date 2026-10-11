@@ -15,6 +15,7 @@ public static class Gui
 {
     // Theme colors (defaults below; interface/theme.txt or C# can change them)
     public static Color PanelBg, PanelBorder, PanelInner, PanelHeader, TopBar, Text, TextDim, Gold, Good, Bad;
+    public static Color TooltipNeutral, TooltipGood, TooltipBad, TooltipWarning, TooltipInfo, TooltipValue;
     public static Color ButtonBg, ButtonHover, ButtonDisabled, ButtonBorder, Accent, TooltipBg, MenuBar;
     public static bool Ornate = true;
     public static float TopBarHeight = 46, LeftMenuWidth = 78, LeftPanelWidth = 390, RightPanelWidth = 420;
@@ -22,6 +23,7 @@ public static class Gui
     private static int _texBorder = 12;
     // interface images by element name (theme textures = { ... }), with their 9-slice borders
     private static readonly Dictionary<string, (Texture2D Tex, int Border)> _skins = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, Texture2D> _tooltipIcons = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, int> DefaultBorders = new(StringComparer.OrdinalIgnoreCase)
     {
         ["panel"] = 12, ["menu_bar"] = 12, ["panel_header"] = 6, ["top_bar"] = 6, ["tooltip"] = 6, ["button"] = 6, ["button_hover"] = 6,
@@ -71,6 +73,12 @@ public static class Gui
         Gold = new(236, 200, 100, 255);
         Good = new(126, 214, 120, 255);
         Bad = new(236, 104, 92, 255);
+        TooltipNeutral = Text;
+        TooltipGood = Good;
+        TooltipBad = Bad;
+        TooltipWarning = Gold;
+        TooltipInfo = new(142, 196, 226, 255);
+        TooltipValue = Lighter(Gold, 0.12f);
         ButtonBg = new(56, 58, 64, 255);
         ButtonHover = new(84, 74, 52, 255);
         ButtonDisabled = new(40, 41, 45, 255);
@@ -103,6 +111,12 @@ public static class Gui
         Gold = Get("title", Gold);
         Good = Get("good", Good);
         Bad = Get("bad", Bad);
+        TooltipNeutral = Get("tooltip_neutral", Text);
+        TooltipGood = Get("tooltip_good", Good);
+        TooltipBad = Get("tooltip_bad", Bad);
+        TooltipWarning = Get("tooltip_warning", Gold);
+        TooltipInfo = Get("tooltip_info", TooltipInfo);
+        TooltipValue = Get("tooltip_value", Lighter(Gold, 0.12f));
         ButtonBg = Get("button", ButtonBg);
         ButtonHover = Get("button_hover", ButtonHover);
         Accent = Get("button_selected", Accent);
@@ -128,6 +142,18 @@ public static class Gui
             bool legacy = name is "panel" or "button" or "top_bar" && !theme.Textures.ContainsKey(name);
             int border = theme.TextureBorders.TryGetValue(name, out var b) ? b : legacy ? _texBorder : DefaultBorders.GetValueOrDefault(name, 4);
             _skins[name] = (tex.Value, border);
+        }
+        _tooltipIcons.Clear();
+        foreach (var icon in theme.TooltipIcons)
+        {
+            // Prefer the shipped subject icon over legacy theme mappings (which often
+            // point every subject at a broad menu icon).  Mods can still override it
+            // by adding a subject icon that is not in the shipped set, or by using a
+            // custom path when no exact asset exists.
+            var exact = $"gfx/interface/tooltips/{icon.Key.ToLowerInvariant()}.png";
+            var tex = Assets.Texture(exact) ?? Assets.Texture(icon.Value);
+            if (tex == null) { Burger.Core.Log.Warn($"Tooltip icon '{icon.Key}' not found: {exact} or {icon.Value}"); continue; }
+            _tooltipIcons[icon.Key] = tex.Value;
         }
         _panelTex = _skins.TryGetValue("panel", out var pt) ? pt.Tex : null;
         _buttonTex = _skins.TryGetValue("button", out var bt) ? bt.Tex : null;
@@ -494,6 +520,35 @@ public static class Gui
     public static void Image(Texture2D tex, Rectangle dst, Color? tint = null)
         => Raylib.DrawTexturePro(tex, new Rectangle(0, 0, tex.Width, tex.Height), dst, Vector2.Zero, 0, tint ?? Color.White);
 
+    private static readonly Dictionary<string, string> _iconAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["politics_overview"] = "politics", ["politics_organization"] = "organization", ["politics_law"] = "law",
+        ["faction"] = "organization", ["branch"] = "province", ["cabinet"] = "characters",
+        ["movement"] = "rebellion", ["effects"] = "information",
+    };
+    private static bool TryTooltipIcon(string subject, out Texture2D tex)
+    {
+        if (_tooltipIcons.TryGetValue(subject, out tex) && tex.Id != 0) return true;
+        string asset = _iconAliases.GetValueOrDefault(subject, subject);
+        if (_tooltipIcons.TryGetValue(asset, out tex) && tex.Id != 0) return true;
+        var loaded = Assets.Texture($"gfx/interface/tooltips/{asset.ToLowerInvariant()}.png");
+        if (loaded is { } icon)
+        {
+            _tooltipIcons[subject] = icon;
+            tex = icon;
+            return true;
+        }
+        tex = default;
+        return false;
+    }
+    /// <summary>Draws a theme icon or matching bundled tooltip icon in ordinary UI; returns false when neither exists.</summary>
+    public static bool Icon(string subject, Rectangle dst, Color? tint = null)
+    {
+        if (!TryTooltipIcon(subject, out var tex)) return false;
+        Image(tex, dst, tint);
+        return true;
+    }
+    public static bool HasIcon(string subject) => TryTooltipIcon(subject, out _);
     public static void Flag(Burger.Core.Model.Country c, Rectangle dst)
     {
         Image(Assets.Flag(c), dst);
@@ -543,92 +598,291 @@ public static class Gui
     public static bool WheelUsed => _wheelUsed;
 
     private enum TooltipTone { Neutral, Good, Bad, Warning, Info, Value }
-    private readonly record struct TooltipRow(string Text, TooltipTone Tone, bool Spacer = false);
+    private readonly record struct TooltipRow(string Text, TooltipTone Tone, string? Icon = null, bool Spacer = false);
 
     /// <summary>
-    /// Tooltip line markers: [+] beneficial, [-] adverse, [!] caution, [i] explanation,
-    /// [=] value/detail. Markers add shape and color without changing legacy plain text.
-    /// The first line is presented as the card title.
+    /// Row metadata: [icon:subject] selects an image from theme.tooltip_icons;
+    /// [state:neutral|good|bad|warning|info|value] selects its semantic color.
+    /// Legacy [+], [-], [!], [i], [=] state markers remain supported.
     /// </summary>
-    private static TooltipRow ParseTooltipRow(string line)
+    private static TooltipRow ParseTooltipRow(string line, string context, bool isTitle = false)
     {
-        if (line.Length == 0) return new TooltipRow("", TooltipTone.Neutral, true);
-        if (line.StartsWith("[+] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Good);
-        if (line.StartsWith("[-] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Bad);
-        if (line.StartsWith("[!] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Warning);
-        if (line.StartsWith("[i] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Info);
-        if (line.StartsWith("[=] ", StringComparison.Ordinal)) return new TooltipRow(line[4..], TooltipTone.Value);
-        return new TooltipRow(line, TooltipTone.Neutral);
+        if (line.Length == 0) return new TooltipRow("", TooltipTone.Neutral, Spacer: true);
+        TooltipTone tone = TooltipTone.Neutral;
+        bool stateSpecified = false;
+        string? icon = null;
+        while (line.StartsWith("[", StringComparison.Ordinal))
+        {
+            int close = line.IndexOf(']');
+            if (close <= 1) break;
+            string tag = line[1..close].Trim();
+            string key = tag.ToLowerInvariant();
+            if (key.StartsWith("icon:", StringComparison.Ordinal))
+            {
+                icon = tag[5..].Trim();
+                if (icon.Length == 0) break;
+            }
+            else
+            {
+                if (key is not ("state:neutral" or "neutral" or "state:good" or "+" or "good" or "state:bad" or "-" or "bad" or
+                    "state:warning" or "!" or "warning" or "state:info" or "i" or "info" or "state:value" or "=" or "value")) break;
+                tone = key switch
+                {
+                    "state:neutral" or "neutral" => TooltipTone.Neutral,
+                    "state:good" or "+" or "good" => TooltipTone.Good,
+                    "state:bad" or "-" or "bad" => TooltipTone.Bad,
+                    "state:warning" or "!" or "warning" => TooltipTone.Warning,
+                    "state:info" or "i" or "info" => TooltipTone.Info,
+                    "state:value" or "=" or "value" => TooltipTone.Value,
+                    _ => tone,
+                };
+                stateSpecified = true;
+            }
+            line = line[(close + 1)..].TrimStart(' ');
+        }
+        if (line.Length == 0) return new TooltipRow("", tone, icon, Spacer: true);
+        if (!stateSpecified) tone = InferTooltipTone(line, isTitle);
+        if (!HasTooltipIcon(icon)) icon = InferTooltipIcon(line, context);
+        return new TooltipRow(line, tone, icon);
+    }
+
+    private static bool HasTerm(string text, string term)
+    {
+        int at = 0;
+        while ((at = text.IndexOf(term, at, StringComparison.OrdinalIgnoreCase)) >= 0)
+        {
+            int end = at + term.Length;
+            bool left = at == 0 || !char.IsLetterOrDigit(text[at - 1]);
+            bool right = end == text.Length || !char.IsLetterOrDigit(text[end]);
+            if (left && right) return true;
+            at = end;
+        }
+        return false;
+    }
+
+    private static bool HasAnyTerm(string text, params string[] terms) => terms.Any(term => HasTerm(text, term));
+
+    /// <summary>Give every non-empty line a semantic state; explicit [state:...] always wins.</summary>
+    private static TooltipTone InferTooltipTone(string line, bool isTitle)
+    {
+        if (isTitle) return TooltipTone.Neutral;
+        if (HasAnyTerm(line, "loss", "losses", "lost", "shortage", "retreat", "retreating", "revolt", "failed", "damaged", "not a core", "cannot", "unable", "war exhaustion"))
+            return TooltipTone.Bad;
+        if (HasAnyTerm(line, "missing", "warning", "caution", "at risk", "may declare", "requires", "needs", "low supply"))
+            return TooltipTone.Warning;
+        if (HasAnyTerm(line, "gained", "gain", "increase", "increases", "increased", "grow", "grows", "growth", "improve", "improves", "good", "available", "accepted", "core state", "efficient"))
+            return TooltipTone.Good;
+        if (line.Any(char.IsDigit)) return TooltipTone.Value;
+        return TooltipTone.Info;
+    }
+
+    /// <summary>Resolve a specific stat/subject first, then its tooltip title, then a themed information asset.</summary>
+    private static string InferTooltipIcon(string line, string context)
+    {
+        string? fromLine = TooltipSubject(line);
+        if (fromLine != null && HasTooltipIcon(fromLine)) return fromLine;
+        string? fromContext = TooltipSubject(context);
+        if (fromContext != null && HasTooltipIcon(fromContext)) return fromContext;
+        return "information";
+    }
+
+    private static string? TooltipSubject(string text)
+    {
+        if (HasTerm(text, "glacier") || HasTerm(text, "tundra") || HasTerm(text, "jungle")) return "terrain";
+        if (HasTerm(text, "desert")) return "desert";
+        if (HasTerm(text, "forest")) return "forest";
+        if (HasTerm(text, "hills")) return "hills";
+        if (HasAnyTerm(text, "mountain", "mountains")) return "mountains";
+        if (HasTerm(text, "marsh")) return "marsh";
+        if (HasTerm(text, "plains")) return "plains";
+        if (HasAnyTerm(text, "ocean", "sea", "river", "terrain")) return "terrain";
+        if (HasAnyTerm(text, "fleet")) return "fleet";
+        if (HasAnyTerm(text, "ship", "ships", "navy", "naval", "dockyard", "port")) return "navy";
+        if (HasAnyTerm(text, "air base", "airbase", "air wing", "aircraft", "plane", "planes", "air force")) return "air";
+        if (HasAnyTerm(text, "strength", "max strength")) return "strength";
+        if (HasAnyTerm(text, "organisation", "organization")) return "organization";
+        if (HasTerm(text, "org")) return "org";
+        if (HasTerm(text, "manpower")) return "manpower";
+        if (HasTerm(text, "supply")) return "supply";
+        if (HasAnyTerm(text, "division", "divisions", "army", "attacker", "defender")) return "army";
+        if (HasAnyTerm(text, "war score", "war goal")) return "war_score";
+        if (HasAnyTerm(text, "loss", "losses")) return "losses";
+        if (HasTerm(text, "battle")) return "battle";
+        if (HasTerm(text, "combat")) return "combat";
+        if (HasAnyTerm(text, "war exhaustion", "war", "retreat", "occupation", "front line")) return "war";
+        if (HasAnyTerm(text, "population", "demographic")) return "population";
+        if (HasAnyTerm(text, "people", "culture", "religion", "colony", "colonies", "independence", "growth", "capacity", "migration")) return "population";
+        if (HasAnyTerm(text, "gold", "money")) return "gold";
+        if (HasAnyTerm(text, "cost", "price", "expense")) return "cost";
+        if (HasAnyTerm(text, "factory", "factories")) return "factory";
+        if (HasAnyTerm(text, "stockpile", "in stock", "stock")) return "stockpile";
+        if (HasAnyTerm(text, "production", "equipment", "consumer goods", "building", "construction", "tax", "efficiency", "resource", "output")) return "production";
+        if (HasAnyTerm(text, "technology", "research", "tech", "scientist")) return "technology";
+        if (HasAnyTerm(text, "minister", "character", "ruler", "leader", "portrait", "advisor", "adviser")) return "characters";
+        if (HasAnyTerm(text, "political power", "politics", "party", "election", "ideology", "diplomacy", "stability", "country", "support", "seat", "vote", "government", "independence movement")) return "politics";
+        if (HasAnyTerm(text, "decision", "focus", "event", "modifier", "trigger", "effect", "script", "mechanic")) return "decisions";
+        if (HasAnyTerm(text, "recruit", "training", "deploy")) return "recruit";
+        return null;
     }
 
     private static Color TooltipToneColor(TooltipTone tone) => tone switch
     {
-        TooltipTone.Good => Good,
-        TooltipTone.Bad => Bad,
-        TooltipTone.Warning => Gold,
-        TooltipTone.Info => new Color(142, 196, 226, 255),
-        TooltipTone.Value => Lighter(Gold, 0.12f),
-        _ => Text,
+        TooltipTone.Good => TooltipGood,
+        TooltipTone.Bad => TooltipBad,
+        TooltipTone.Warning => TooltipWarning,
+        TooltipTone.Info => TooltipInfo,
+        TooltipTone.Value => TooltipValue,
+        _ => TooltipNeutral,
     };
 
-    /// <summary>Small vector badges communicate row meaning in shape as well as color.</summary>
-    private static void DrawTooltipIcon(Vector2 center, TooltipTone tone)
+    // ------------------------------------------------------------------------ tooltip delta coloring
+    // Signed numbers in a tooltip row ("+5", "-2.5%") are deltas and are colored by sign and size.
+    // Unsigned numbers carry no delta, so they keep the row tone.
+
+    /// <summary>Magnitude at which a plain delta counts as drastic (opinion, gold, strength points).</summary>
+    private const double DrasticAbsoluteDelta = 50.0;
+
+    /// <summary>Magnitude at which a percent delta counts as drastic (percentage points).</summary>
+    private const double DrasticPercentDelta = 25.0;
+
+    /// <summary>Palette chosen for contrast against the dark tooltip background (about 16/16/20).</summary>
+    public static Color DeltaPositive = new(112, 214, 122, 255);
+    public static Color DeltaPositiveDrastic = new(26, 186, 74, 255);
+    public static Color DeltaNegative = new(240, 104, 104, 255);
+    public static Color DeltaNegativeDrastic = new(214, 30, 38, 255);
+    public static Color DeltaNeutral = new(196, 198, 204, 255);
+
+    // The sign must not follow a letter, digit or dot, so "1930-1936", "state-5" and "1.5-2" are not deltas.
+    private static readonly System.Text.RegularExpressions.Regex SignedNumber = new(
+        @"(?<![\p{L}\p{N}.])(?<sign>[+\-−])(?<num>\d[\d,]*(?:\.\d+)?)(?<pct>%?)",
+        System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    public static Color DeltaColor(double delta, bool isPercent)
     {
-        if (tone == TooltipTone.Neutral) return;
-        Color color = TooltipToneColor(tone);
-        float r = 5.5f * Scale;
-        if (tone == TooltipTone.Warning)
+        if (Math.Abs(delta) < 1e-9) return DeltaNeutral;
+        bool drastic = Math.Abs(delta) >= (isPercent ? DrasticPercentDelta : DrasticAbsoluteDelta);
+        if (delta > 0) return drastic ? DeltaPositiveDrastic : DeltaPositive;
+        return drastic ? DeltaNegativeDrastic : DeltaNegative;
+    }
+
+    /// <summary>Per-character colors for a row; characters outside a signed number get <paramref name="baseColor"/>.</summary>
+    private static Color[] ColorizeDeltas(string text, Color baseColor)
+    {
+        var colors = new Color[text.Length];
+        Array.Fill(colors, baseColor);
+        foreach (System.Text.RegularExpressions.Match m in SignedNumber.Matches(text))
         {
-            Raylib.DrawPoly(center, 3, r + 1 * Scale, 0, color);
-            Raylib.DrawLineEx(new Vector2(center.X, center.Y - 2.5f * Scale), new Vector2(center.X, center.Y + 1 * Scale), 1.4f * Scale, TooltipBg);
-            Raylib.DrawCircleV(new Vector2(center.X, center.Y + 3 * Scale), 0.7f * Scale, TooltipBg);
-            return;
+            string digits = m.Groups["num"].Value.Replace(",", "");
+            if (!double.TryParse(digits, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double magnitude)) continue;
+
+            double delta = m.Groups["sign"].Value == "+" ? magnitude : -magnitude;
+            Color c = DeltaColor(delta, m.Groups["pct"].Length > 0);
+            for (int i = m.Index; i < m.Index + m.Length; i++) colors[i] = c;
         }
-        Raylib.DrawCircleV(center, r, Darker(color, 0.62f));
-        Raylib.DrawCircleLines((int)center.X, (int)center.Y, r, color);
-        if (tone == TooltipTone.Good)
+        return colors;
+    }
+
+    /// <summary>
+    /// Same wrapping as <see cref="Wrapped"/> (so <see cref="WrappedHeight"/> still matches), but each
+    /// character keeps its own color. Lines are substrings of the source, so colors are indexed by offset.
+    /// </summary>
+    private static float WrappedColored(string text, float x, float y, float width, float size, Color baseColor)
+    {
+        float lineH = FontSize(size) * 1.2f;
+        float cy = y;
+        var colors = ColorizeDeltas(text, baseColor);
+        int paragraphStart = 0;
+        foreach (var para in text.Replace("\r", "").Split('\n'))
         {
-            Raylib.DrawLineEx(new Vector2(center.X - 2.8f * Scale, center.Y), new Vector2(center.X - 0.7f * Scale, center.Y + 2 * Scale), 1.5f * Scale, color);
-            Raylib.DrawLineEx(new Vector2(center.X - 0.7f * Scale, center.Y + 2 * Scale), new Vector2(center.X + 3 * Scale, center.Y - 2.5f * Scale), 1.5f * Scale, color);
+            string line = "";
+            int lineStart = paragraphStart, wordStart = paragraphStart;
+            foreach (var w in para.Split(' '))
+            {
+                string test = line.Length == 0 ? w : line + " " + w;
+                if (Measure(test, size).X > width && line.Length > 0)
+                {
+                    DrawColoredLine(line, lineStart, colors, x, cy, size);
+                    cy += lineH;
+                    line = w;
+                    lineStart = wordStart;
+                }
+                else line = test;
+                wordStart += w.Length + 1;
+            }
+            DrawColoredLine(line, lineStart, colors, x, cy, size);
+            cy += lineH;
+            paragraphStart += para.Length + 1;
         }
-        else if (tone == TooltipTone.Bad)
+        return cy - y;
+    }
+
+    private static void DrawColoredLine(string line, int offset, Color[] colors, float x, float y, float size)
+    {
+        int runStart = 0;
+        for (int i = 1; i <= line.Length; i++)
         {
-            Raylib.DrawLineEx(new Vector2(center.X - 2.2f * Scale, center.Y - 2.2f * Scale), new Vector2(center.X + 2.2f * Scale, center.Y + 2.2f * Scale), 1.4f * Scale, color);
-            Raylib.DrawLineEx(new Vector2(center.X + 2.2f * Scale, center.Y - 2.2f * Scale), new Vector2(center.X - 2.2f * Scale, center.Y + 2.2f * Scale), 1.4f * Scale, color);
+            bool runEnds = i == line.Length || !SameColor(colors[offset + i], colors[offset + runStart]);
+            if (!runEnds) continue;
+
+            // Measuring the prefix keeps kerning and spacing identical to a single Label call.
+            float runX = x + (runStart == 0 ? 0 : Measure(line[..runStart], size).X);
+            Label(line[runStart..i], runX, y, size, colors[offset + runStart]);
+            runStart = i;
         }
-        else if (tone == TooltipTone.Info)
-        {
-            Raylib.DrawLineEx(new Vector2(center.X, center.Y - 0.2f * Scale), new Vector2(center.X, center.Y + 2.8f * Scale), 1.4f * Scale, color);
-            Raylib.DrawCircleV(new Vector2(center.X, center.Y - 2.2f * Scale), 0.8f * Scale, color);
-        }
-        else
-        {
-            Raylib.DrawLineEx(new Vector2(center.X - 2.5f * Scale, center.Y - 1.2f * Scale), new Vector2(center.X + 2.5f * Scale, center.Y - 1.2f * Scale), 1.2f * Scale, color);
-            Raylib.DrawLineEx(new Vector2(center.X - 2.5f * Scale, center.Y + 1.2f * Scale), new Vector2(center.X + 2.5f * Scale, center.Y + 1.2f * Scale), 1.2f * Scale, color);
-        }
+    }
+
+    private static bool SameColor(Color a, Color b) => a.R == b.R && a.G == b.G && a.B == b.B && a.A == b.A;
+
+    private static bool HasTooltipIcon(string? subject) => subject != null && _tooltipIcons.ContainsKey(subject);
+
+    /// <summary>Draw the themed, subject-specific texture without 9-slice scaling.</summary>
+    private static void DrawTooltipIcon(string? subject, Rectangle cell, Color tint)
+    {
+        if (subject == null || !_tooltipIcons.TryGetValue(subject, out var tex)) return;
+        float available = Math.Max(1, Math.Min(cell.Width, cell.Height) - 2 * Scale);
+        float fit = Math.Min(available / tex.Width, available / tex.Height);
+        float width = tex.Width * fit, height = tex.Height * fit;
+        var dst = new Rectangle(cell.X + (cell.Width - width) / 2, cell.Y + (cell.Height - height) / 2, width, height);
+        Raylib.DrawTexturePro(tex, new Rectangle(0, 0, tex.Width, tex.Height), dst, Vector2.Zero, 0, tint);
     }
 
     private static void DrawTooltip(string text)
     {
         var lines = text.Replace("\r", "").Split('\n');
-        string title = lines.Length > 0 ? lines[0] : "";
-        var rows = lines.Skip(1).Select(ParseTooltipRow).ToList();
-        float pad = 12 * Scale, iconColumn = 19 * Scale, bodySize = 14;
+        string titleText = lines.Length > 0 ? lines[0] : "";
+        var titleRow = ParseTooltipRow(titleText, titleText, isTitle: true);
+        var rows = lines.Skip(1).Select(line => ParseTooltipRow(line, titleRow.Text)).ToList();
+        // Keep an actual safe margin around tooltips. Previously the last wrapped row could sit almost against
+        // the right border (and appear clipped after colored runs were drawn separately).
+        float pad = 16 * Scale, iconColumn = 20 * Scale, bodySize = 14;
         float screenW = Raylib.GetScreenWidth(), screenH = Raylib.GetScreenHeight();
-        float maxW = Math.Min(480 * Scale, screenW - 16 * Scale);
-        float measured = Measure(title, 17, FontKind.Bold).X;
-        foreach (var row in rows) measured = Math.Max(measured, Measure(row.Text, bodySize).X + (row.Tone == TooltipTone.Neutral ? 0 : iconColumn));
-        float w = Math.Min(maxW, Math.Max(190 * Scale, measured + 2 * pad));
-        float contentW = w - 2 * pad - iconColumn;
-        float titleH = WrappedHeight(title, w - 2 * pad, 17) + 2 * Scale;
+        float screenMargin = 8 * Scale;
+        float maxW = Math.Max(1, Math.Min(480 * Scale, screenW - 2 * screenMargin));
+        float titleIconW = HasTooltipIcon(titleRow.Icon) ? iconColumn : 0;
+        float measured = Measure(titleRow.Text, 17, FontKind.Bold).X + titleIconW;
+        foreach (var row in rows)
+        {
+            float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
+            measured = Math.Max(measured, Measure(row.Text, bodySize).X + rowIconW);
+        }
+        float w = Math.Min(maxW, Math.Max(Math.Min(190 * Scale, maxW), measured + 2 * pad));
+        float titleW = Math.Max(1, w - 2 * pad - titleIconW);
+        float titleH = WrappedHeight(titleRow.Text, titleW, 17) + 2 * Scale;
         float bodyH = 0;
-        foreach (var row in rows) bodyH += row.Spacer ? 5 * Scale : WrappedHeight(row.Text, contentW, bodySize) + 4 * Scale;
+        foreach (var row in rows)
+        {
+            if (row.Spacer) { bodyH += 5 * Scale; continue; }
+            float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
+            bodyH += WrappedHeight(row.Text, Math.Max(1, w - 2 * pad - rowIconW), bodySize) + 4 * Scale;
+        }
         float h = 10 * Scale + titleH + (rows.Count > 0 ? 7 * Scale + bodyH : 0) + 8 * Scale;
         float x = Mouse.X + 18 * Scale, y = Mouse.Y + 18 * Scale;
-        if (x + w > screenW - 4 * Scale) x = Mouse.X - w - 14 * Scale;
-        if (x < 4 * Scale) x = 4 * Scale;
-        if (y + h > screenH - 4 * Scale) y = Mouse.Y - h - 8 * Scale;
-        y = Math.Clamp(y, 4 * Scale, Math.Max(4 * Scale, screenH - h - 4 * Scale));
+        if (x + w > screenW - screenMargin) x = Mouse.X - w - 14 * Scale;
+        // Clamp after choosing a side of the pointer. The old left-edge-only correction could still
+        // let a wide tooltip overrun the right edge on narrow windows or high UI scales.
+        x = Math.Clamp(x, screenMargin, Math.Max(screenMargin, screenW - w - screenMargin));
+        if (y + h > screenH - screenMargin) y = Mouse.Y - h - 8 * Scale;
+        y = Math.Clamp(y, screenMargin, Math.Max(screenMargin, screenH - h - screenMargin));
         var r = new Rectangle(x, y, w, h);
         Raylib.DrawRectangleRec(new Rectangle(x + 3 * Scale, y + 4 * Scale, w, h), new Color(0, 0, 0, 115));
         if (!Skin("tooltip", r))
@@ -638,7 +892,10 @@ public static class Gui
             Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, 3 * Scale, r.Height), Gold);
         }
         float cy = y + 8 * Scale;
-        cy += Wrapped(title, x + pad, cy, w - 2 * pad, 17, Gold) + 2 * Scale;
+        Color titleColor = titleRow.Tone == TooltipTone.Neutral ? Gold : TooltipToneColor(titleRow.Tone);
+        if (titleIconW > 0) DrawTooltipIcon(titleRow.Icon, new Rectangle(x + pad, cy, iconColumn, FontSize(17)), titleColor);
+        float titleX = x + pad + titleIconW;
+        cy += Wrapped(titleRow.Text, titleX, cy, titleW, 17, titleColor) + 2 * Scale;
         if (rows.Count > 0)
         {
             Raylib.DrawLineEx(new Vector2(x + pad, cy + 2 * Scale), new Vector2(x + w - pad, cy + 2 * Scale), 1 * Scale, PanelInner);
@@ -647,10 +904,13 @@ public static class Gui
         foreach (var row in rows)
         {
             if (row.Spacer) { cy += 5 * Scale; continue; }
-            if (row.Tone != TooltipTone.Neutral) DrawTooltipIcon(new Vector2(x + pad + 5.5f * Scale, cy + FontSize(bodySize) * 0.58f), row.Tone);
-            float left = x + pad + (row.Tone == TooltipTone.Neutral ? 0 : iconColumn);
-            float used = Wrapped(row.Text, left, cy, w - (left - x) - pad, bodySize, TooltipToneColor(row.Tone));
+            float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
+            Color color = TooltipToneColor(row.Tone);
+            if (rowIconW > 0) DrawTooltipIcon(row.Icon, new Rectangle(x + pad, cy, iconColumn, FontSize(bodySize)), color);
+            float left = x + pad + rowIconW;
+            float used = WrappedColored(row.Text, left, cy, Math.Max(1, w - (left - x) - pad), bodySize, color);
             cy += used + 4 * Scale;
         }
     }
+
 }
