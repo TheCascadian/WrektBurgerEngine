@@ -244,7 +244,9 @@ public class AiSystem
         return ArmyMode.Hold;
     }
 
-    protected virtual void AssignGenerals(Country c, List<Army> armies)
+    protected virtual void AssignGenerals(Country c, List<Army> armies) => AssignGenerals(c, armies, new AiRng(Game, null));
+
+    protected virtual void AssignGenerals(Country c, List<Army> armies, AiRng rng)
     {
         var now = Game.World.Date;
         string stat = Game.Data.Defines.GeneralStat;
@@ -322,7 +324,7 @@ public class AiSystem
         // (a country's history is pursued every month, not only on the months its diplomats are busy)
         if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Pursuit(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } early) { Game.Diplomacy.Use(early.Action, c, early.Target); return; }
         if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Courtship(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } court) { Game.Diplomacy.Use(court.Action, c, court.Target); return; }
-        if (Game.Rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
+        if (rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
         Dictionary<string, (int Pass, int Pos)>? stats = DebugDiplomacy ? new() : null;
         var personality = Game.AiProfiles.PersonalityOf(c);
