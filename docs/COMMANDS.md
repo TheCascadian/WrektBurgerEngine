@@ -154,6 +154,14 @@ There is no conventional .NET test project in the repository; project validation
 
 `tools/burger.sh` applies one verified, non-merge upstream commit to a clean GitHub fork. It creates a new branch, never pushes, retries conflicts with `-X theirs`, and runs detected tests.
 
+The equivalent Bash entry point in this checkout is:
+
+```bash
+tools/git/burger.sh https://github.com/BurgerKingHotline/BurgerEngine.git FULL_40_CHARACTER_SHA
+```
+
+It delegates to `tools/merge.sh` and has the same behavior: it requires a clean worktree, validates the full commit SHA and fork relationship, rejects merge/root commits, creates an `auto-patch/<sha>-<timestamp>-<pid>` branch, attempts a normal cherry-pick, retries actual content conflicts with `-X theirs`, runs detected tests, never pushes, and restores the original branch if automatic application fails.
+
 ```bash
 tools/burger.sh
 gh auth status

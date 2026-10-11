@@ -8,6 +8,7 @@ projects/*/logs/
 _probe/
 _helper.bat
 burger.sh
+!tools/git/burger.sh
 WBE.sh
 .pyc
 .patch
