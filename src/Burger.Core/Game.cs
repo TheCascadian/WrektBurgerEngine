@@ -318,6 +318,31 @@ public sealed class Game
 
     /// <summary>Set to measure elapsed time and invocation counts for named profile scopes.</summary>
     public bool Profiling { get; set; }
+    public readonly record struct ProfileStat(double TotalMilliseconds, long Calls, double MaxMilliseconds, double P99Milliseconds, IReadOnlyList<int> WorstDays);
+    private sealed class ProfileCounter
+    {
+        private long _elapsedTicks;
+        private long _calls;
+        private readonly ConcurrentDictionary<int, long> _dailyTicks = new();
+        public void Add(int day, long ticks)
+        {
+            Interlocked.Add(ref _elapsedTicks, ticks);
+            Interlocked.Increment(ref _calls);
+            _dailyTicks.AddOrUpdate(day, _ => ticks, (_, old) => old + ticks);
+        }
+        public ProfileStat Snapshot()
+        {
+            var daily = _dailyTicks.Select(x => (Day: x.Key, Ms: x.Value * 1000.0 / System.Diagnostics.Stopwatch.Frequency)).OrderBy(x => x.Ms).ToArray();
+            int p = daily.Length == 0 ? 0 : Math.Min(daily.Length - 1, (int)Math.Ceiling(daily.Length * 0.99) - 1);
+            return new(Interlocked.Read(ref _elapsedTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
+                Interlocked.Read(ref _calls), daily.Length == 0 ? 0 : daily[^1].Ms, daily.Length == 0 ? 0 : daily[p].Ms,
+                daily.OrderByDescending(x => x.Ms).ThenBy(x => x.Day).Take(5).Select(x => x.Day).ToArray());
+        }
+    }
+    private readonly ConcurrentDictionary<string, ProfileCounter> _profile = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, ProfileStat> ProfileSnapshot() => _profile.ToDictionary(x => x.Key, x => x.Value.Snapshot(), StringComparer.Ordinal);
+    public void ClearProfile() => _profile.Clear();
+    public void ProfileCall(string name) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, 0);
     public readonly Dictionary<string, double> ProfileMs = new();
     /// <summary>The longest single call per system in milliseconds (what the player feels as a hitch).</summary>
     public readonly Dictionary<string, double> ProfileMaxMs = new();
@@ -326,10 +351,15 @@ public sealed class Game
     {
         if (!Profiling) { a(); return; }
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-        a();
-        double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-        ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
-        if (ms > ProfileMaxMs.GetValueOrDefault(name)) ProfileMaxMs[name] = ms;
+        try { a(); }
+        finally
+        {
+            long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
+            double ms = elapsed * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+            ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
+            if (ms > ProfileMaxMs.GetValueOrDefault(name)) ProfileMaxMs[name] = ms;
+            _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsed);
+        }
     }
     public void P(string name, string countryTag, Action a)
     {

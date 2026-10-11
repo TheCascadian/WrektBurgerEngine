@@ -310,6 +310,7 @@ public class AiSystem
     {
         if (rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
+        Dictionary<string, (int Pass, int Pos)>? stats = DebugDiplomacy ? new() : null;
         var personality = Game.AiProfiles.PersonalityOf(c);
         var profiles = Game.AiProfiles.Enabled ? Game.Rules.AiProfile : null;
         bool commodities = Game.Commodities.Enabled && Game.Commodities.Shortages(c).Count > 0;
@@ -324,6 +325,13 @@ public class AiSystem
                 bool visible = Game.Diplomacy.IsVisible(a, c, t);
                 if (!visible) continue;
                 if (a.AiWillDo != null) weight = Game.Script.EvalWeight(a.AiWillDo, Game.Diplomacy.ActionContext(a, c, t), 0);
+                if (stats != null)
+                {
+                    var s = stats.GetValueOrDefault(a.Key);
+                    s.Pass++;
+                    if (weight > 0) s.Pos++;
+                    stats[a.Key] = s;
+                }
                 if (profiles != null)
                 {
                     if (weight > 0) weight *= profiles.ActionFactor(Game, c, a.Key, t, personality);

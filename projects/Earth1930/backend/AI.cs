@@ -14,7 +14,7 @@
      /// a subject, regime change, liberating a people), each state going to the side member that fights for it (faction war
      /// goals), then other occupied land; never more than the war goals allow (max_demands).
      /// </summary>
-     public override PeaceOffer BuildDemands(War war, Country winner, Country loser, double score)
+     private PeaceOffer BuildDemandsLegacy(War war, Country winner, Country loser, double score)
      {
          var D = Game.Diplomacy;
          var rules = Game.Rules.Diplomacy;
@@ -126,8 +126,6 @@
              Try(new PeaceTerm { Type = PeaceTermType.Gold, Beneficiary = winner, Amount = Math.Min(loser.Gold, Math.Max(1, loser.LastIncome) * score / 4) });
          return offer;
      }
- }
-
     public override void MonthlyTick()
     {
         if (!Enabled) return;
