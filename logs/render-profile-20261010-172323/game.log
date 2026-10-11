@@ -1,3 +1,0 @@
-WARNING: GLFW: Error: 65550 Description: X11: Failed to open display :0
-WARNING: GLFW: Failed to initialize GLFW
-timeout: the monitored command dumped core

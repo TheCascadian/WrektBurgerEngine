@@ -597,10 +597,14 @@ public sealed unsafe class MapRenderer : IDisposable
         int hoverIdx = Hovered?.Index ?? -1, selIdx = Selected?.Index ?? -1;
         if (!Dirty && (hoverIdx != _lastHovered || selIdx != _lastSelected))
         {
-            foreach (int i in (_lastHovered, _lastSelected))
-                if (i >= 0 && i != hoverIdx && i != selIdx) UpdateLutFlags(i);
-            foreach (int i in (hoverIdx, selIdx))
-                if (i >= 0 && i != _lastHovered && i != _lastSelected) UpdateLutFlags(i);
+            if (_lastHovered >= 0 && _lastHovered != hoverIdx && _lastHovered != selIdx)
+                UpdateLutFlags(_lastHovered);
+            if (_lastSelected >= 0 && _lastSelected != hoverIdx && _lastSelected != selIdx)
+                UpdateLutFlags(_lastSelected);
+            if (hoverIdx >= 0 && hoverIdx != _lastHovered && hoverIdx != _lastSelected)
+                UpdateLutFlags(hoverIdx);
+            if (selIdx >= 0 && selIdx != _lastHovered && selIdx != _lastSelected)
+                UpdateLutFlags(selIdx);
         }
         _lastHovered = hoverIdx;
         _lastSelected = selIdx;

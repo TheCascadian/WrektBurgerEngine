@@ -30,6 +30,10 @@ public class AiSystem
 
     private CountryRng? _countryRng;
     private int _countryRngSeed;
+    // DailyTick and MonthlyTick run sequentially. Reuse their work buffer, but
+    // rebuild membership each time to observe existence/player changes while
+    // preserving the deterministic order of World.Countries.
+    private readonly List<Country> _activeAiCountries = new();
 
     /// <summary>Per-country deterministic random streams, seeded from the last seed passed to <see cref="ResetRng"/>.</summary>
     protected CountryRng RngStreams => _countryRng ??= new CountryRng(_countryRngSeed);
@@ -99,7 +103,8 @@ public class AiSystem
 
     private List<Country> ActiveAiCountries()
     {
-        var list = new List<Country>();
+        var list = _activeAiCountries;
+        list.Clear();
         foreach (var c in Game.World.Countries)
             if (c.Exists && !c.IsPlayer) list.Add(c);
         return list;

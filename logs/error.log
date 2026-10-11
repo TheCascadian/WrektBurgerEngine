@@ -1,9 +1,15 @@
-BurgerEngine log - 10/10/2026 5:20:46 PM
-[17:20:47] INFO: Loaded 13 C# script(s) (including the backend)
-[17:20:48] INFO: Province map 6144x3456
-[17:20:49] INFO: Map loaded: 6426 locations, 19086 borders
-[17:20:49] INFO: Game 'Earth1930' loaded in 2927 ms
-[17:20:59] INFO: PERF fps 54.3, frame 18.4 ms, simulation 10.4 ms/frame, 97.0 days/s
-[17:20:59] INFO: PERF systems (ms/day): 
-[17:20:59] INFO: PERF paths (per day): 
-[17:20:59] INFO: PERF world: 703 divisions, 121 armies, 0 wars, 0 battles
+BurgerEngine log - 10/10/2026 6:01:14 PM
+[18:01:15] INFO: Loaded 13 C# script(s) (including the backend)
+[18:01:16] INFO: Province map 6144x3456
+[18:01:17] INFO: Map loaded: 6426 locations, 19086 borders
+[18:01:17] INFO: Game 'Earth1930' loaded in 2906 ms
+[18:01:27] INFO: PERF fps 55.3, frame 18.1 ms, simulation 10.7 ms/frame, 103.9 days/s
+[18:01:27] INFO: PERF render frame p50/p95/p99 8.3/73.6/112.8ms n=364; avg FPS 36.3; alloc 61.3 KB/frame; GC Δ 239/131/17, pause 11.5 ms; input/pick p50/p95/p99 0.0/0.0/0.1ms; map p50/p95/p99 0.2/0.3/0.7ms; labels p50/p95/p99 0.4/0.6/0.7ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.1/0.3/0.7ms; fleets p50/p95/p99 0.0/0.1/0.4ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.1ms; ui p50/p95/p99 0.1/0.1/0.2ms; EndDrawing/flush+swap p50/p95/p99 7.4/8.2/8.2ms; simulation 10.7 ms/frame
+[18:01:27] INFO: PERF systems (ms/day): 
+[18:01:27] INFO: PERF paths (per day): 
+[18:01:27] INFO: PERF world: 669 divisions, 124 armies, 2 wars, 1 battles
+[18:01:37] INFO: PERF fps 23.9, frame 41.9 ms, simulation 40.2 ms/frame, 194.8 days/s
+[18:01:37] INFO: PERF render frame p50/p95/p99 33.4/74.6/89.9ms n=239; avg FPS 23.9; alloc 121.1 KB/frame; GC Δ 382/223/27, pause 1.2 ms; input/pick p50/p95/p99 0.0/0.0/0.0ms; map p50/p95/p99 0.2/0.3/0.4ms; labels p50/p95/p99 0.5/0.8/0.8ms; orders p50/p95/p99 0.0/0.0/0.0ms; units p50/p95/p99 0.3/0.5/0.6ms; fleets p50/p95/p99 0.1/0.1/0.2ms; air p50/p95/p99 0.0/0.0/0.0ms; hover p50/p95/p99 0.0/0.0/0.0ms; ui p50/p95/p99 0.1/1.3/1.7ms; EndDrawing/flush+swap p50/p95/p99 0.1/0.2/0.2ms; simulation 40.2 ms/frame
+[18:01:37] INFO: PERF systems (ms/day): Ai.MonthlyTick 1.22, Supply.DailyTick 0.93, Warfare.DailyTick 0.75, Warfare.Fronts 0.62, Fronts.Move 0.53, Warfare.HourlyTick 0.39, Ai.DailyTick 0.38, Air.DailyTick 0.36, Production.DailyTick 0.22, Population.MonthlyTick 0.22, Ai.Military 0.21, Economy.DailyTick 0.12
+[18:01:37] INFO: PERF paths (per day): Path.Failed 0.03ms, Path.Failed# 0.9, Path.Found 0.51ms, Path.Found# 5.2, Path.Reach 0.05ms, Path.Rejected# 0.3
+[18:01:37] INFO: PERF world: 824 divisions, 134 armies, 0 wars, 0 battles
