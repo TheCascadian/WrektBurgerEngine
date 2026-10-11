@@ -425,7 +425,8 @@ public static class Program
         }
         PrintFeatureStats(game);
         if (game.Profiling)
-            Console.WriteLine("  time per system (ms per simulated day): " + string.Join(", ", game.ProfileMs.OrderByDescending(kv => kv.Value).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
+            foreach (var entry in game.ProfileSnapshot().OrderByDescending(kv => kv.Value.TotalMilliseconds).ThenBy(kv => kv.Key, StringComparer.Ordinal))
+                Console.WriteLine($"  PROFILE {entry.Key} total_ms={entry.Value.TotalMilliseconds:0.000} calls={entry.Value.Calls} ms_per_day={entry.Value.TotalMilliseconds / days:0.000} calls_per_day={(double)entry.Value.Calls / days:0.000} max_day_ms={entry.Value.MaxMilliseconds:0.000} p99_day_ms={entry.Value.P99Milliseconds:0.000} worst_days={string.Join(',', entry.Value.WorstDays)}");
 
         if (selftest)
         {

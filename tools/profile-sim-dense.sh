@@ -27,19 +27,23 @@ python3 - "$OUT/profile.log" "$PROJECT" "$DAYS" "$RC" "$OUT" <<'PY'
 import re, sys
 from pathlib import Path
 p=Path(sys.argv[1]); log=p.read_text(errors='replace'); project=sys.argv[2]; days=int(sys.argv[3]); rc=int(sys.argv[4]); out=Path(sys.argv[5]); lines=log.splitlines()
-s=next((x.split(':',1)[1].strip() for x in lines if x.startswith('  time per system ')), '')
 items=[]
-for x in s.split(','):
- m=re.fullmatch(r'\s*(.*?)\s+([0-9]+(?:\.[0-9]+)?)\s*',x)
- if m: items.append((m.group(1),float(m.group(2))))
+for x in lines:
+ m=re.match(r'  PROFILE (.+) total_ms=([0-9.]+) calls=([0-9]+) ms_per_day=([0-9.]+) calls_per_day=([0-9.]+)',x)
+ if m: items.append((m.group(1),float(m.group(4)),int(m.group(3)),float(m.group(5))))
+if not items:
+ s=next((x.split(':',1)[1].strip() for x in lines if x.startswith('  time per system ')), '')
+ for x in s.split(','):
+  m=re.fullmatch(r'\s*(.*?)\s+([0-9]+(?:\.[0-9]+)?)\s*',x)
+  if m: items.append((m.group(1),float(m.group(2)),0,0.0))
 items.sort(key=lambda x:x[1],reverse=True)
-(out/'all-metrics.tsv').write_text('name\tper-day\ttype\n'+''.join(f'{n}\t{v/days:.6f}\t{"count/day" if n.endswith("#") else "ms/day"}\n' for n,v in items))
+(out/'all-metrics.tsv').write_text('name\tper-day\tcalls-per-day\ttype\n'+''.join(f'{n}\t{v:.6f}\t{c:.6f}\t{"count/day" if n.endswith("#") else "ms/day"}\n' for n,v,_,c in items))
 t=next((re.search(r'simulated\s+(\d+) days in\s+(\d+) ms',x) for x in lines if 'simulated ' in x and ' days in ' in x),None)
 world=next((x.strip() for x in lines if x.startswith('  simulated ')),'')
-time=[(n,v) for n,v in items if not n.endswith('#')]
-counts=[(n[:-1],v/days) for n,v in items if n.endswith('#')]
+time=[(n,v,c) for n,v,_,c in items if not n.endswith('#')]
+counts=[(n[:-1],c) for n,v,_,c in items if n.endswith('#')]
 r=[f'{project} | {days}d | exit {rc}', f'Total {t.group(2)} ms; {int(t.group(2))/days:.2f} ms/sim-day' if t else 'Total runtime unavailable',world[:240], 'TOP SCOPES ms/sim-day (nested scopes overlap):']
-r += [f'{i:2}. {v:.3f} {n}' for i,(n,v) in enumerate(time[:24],1)]
+r += [f'{i:2}. {v:.3f} {n} ({c:.1f} calls/day)' for i,(n,v,c) in enumerate(time[:24],1)]
 if counts: r += ['COUNTS/day: '+', '.join(f'{n} {v:.2f}' for n,v in counts[:8])]
 st=next((x.strip() for x in lines if x.startswith('OK -') or x.startswith('ERROR')),'')
 if st:r.append(st)

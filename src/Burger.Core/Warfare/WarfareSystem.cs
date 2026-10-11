@@ -283,11 +283,9 @@ public sealed class WarfareSystem
         if (!_game.Profiling) return FindPathCore(c, from, to, speed);
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         var path = FindPathCore(c, from, to, speed);
-        double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-        var pm = _game.ProfileMs;
         string k = path != null ? "Path.Found" : "Path.Failed";
-        pm[k] = pm.GetValueOrDefault(k) + ms;
-        pm[k + "#"] = pm.GetValueOrDefault(k + "#") + 1;
+        _game.ProfileElapsed(k, System.Diagnostics.Stopwatch.GetTimestamp() - t0);
+        _game.ProfileCall(k + "#");
         return path;
     }
 
@@ -301,7 +299,7 @@ public sealed class WarfareSystem
         {
             bool reach = true;
             _game.P("Path.Reach", () => reach = Reachable(c, from, to));
-            if (!reach) { if (_game.Profiling) _game.ProfileMs["Path.Rejected#"] = _game.ProfileMs.GetValueOrDefault("Path.Rejected#") + 1; return null; } // walled off by land we may not enter
+            if (!reach) { if (_game.Profiling) _game.ProfileCall("Path.Rejected#"); return null; } // walled off by land we may not enter
         }
         int n0 = _game.World.Locations.Count;
         if (_pfCost.Length != n0)

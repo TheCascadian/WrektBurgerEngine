@@ -1,4 +1,6 @@
 using F = Burger.Core.Modding.FeatureSet;
+using System.Collections.Concurrent;
+using System.Threading;
 using Burger.Core.AI;
 using Burger.Core.Characters;
 using Burger.Core.Data;
@@ -240,17 +242,49 @@ public sealed class Game
     // Time
     // =============================================================================================
 
-    /// <summary>Set to measure how long each system takes (milliseconds per system in <see cref="ProfileMs"/>).</summary>
+    /// <summary>Set to measure elapsed time and invocation counts for named profile scopes.</summary>
     public bool Profiling { get; set; }
-    public readonly Dictionary<string, double> ProfileMs = new();
+    public readonly record struct ProfileStat(double TotalMilliseconds, long Calls, double MaxMilliseconds, double P99Milliseconds, IReadOnlyList<int> WorstDays);
+    private sealed class ProfileCounter
+    {
+        private long _elapsedTicks;
+        private long _calls;
+        private readonly ConcurrentDictionary<int, long> _dailyTicks = new();
+        public void Add(int day, long elapsedTicks)
+        {
+            Interlocked.Add(ref _elapsedTicks, elapsedTicks);
+            Interlocked.Increment(ref _calls);
+            _dailyTicks.AddOrUpdate(day, _ => elapsedTicks, (_, existing) => existing + elapsedTicks);
+        }
+        public ProfileStat Snapshot()
+        {
+            var daily = _dailyTicks.Values.Select(t => t * 1000.0 / System.Diagnostics.Stopwatch.Frequency).OrderBy(v => v).ToArray();
+            double max = daily.Length == 0 ? 0 : daily[^1];
+            double p99 = daily.Length == 0 ? 0 : daily[Math.Min(daily.Length - 1, (int)Math.Ceiling(daily.Length * 0.99) - 1)];
+            var worstDays = _dailyTicks.Select(kv => (Day: kv.Key, Ms: kv.Value * 1000.0 / System.Diagnostics.Stopwatch.Frequency))
+                .OrderByDescending(x => x.Ms).ThenBy(x => x.Day).Take(5).Select(x => x.Day).ToArray();
+            return new(Interlocked.Read(ref _elapsedTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency,
+                Interlocked.Read(ref _calls), max, p99, worstDays);
+        }
+    }
+    private readonly ConcurrentDictionary<string, ProfileCounter> _profile = new(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, ProfileStat> ProfileSnapshot()
+    {
+        var snapshot = new Dictionary<string, ProfileStat>(_profile.Count, StringComparer.Ordinal);
+        foreach (var entry in _profile) snapshot[entry.Key] = entry.Value.Snapshot();
+        return snapshot;
+    }
+    public void ClearProfile() => _profile.Clear();
+    public void ProfileCall(string name) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, 0);
 
     public void P(string name, Action a)
     {
         if (!Profiling) { a(); return; }
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
-        a();
-        ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        try { a(); }
+        finally { _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, System.Diagnostics.Stopwatch.GetTimestamp() - t0); }
     }
+    public void ProfileElapsed(string name, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsedTicks);
 
     /// <summary>Advances the simulation by one hour.</summary>
     public void Tick()

@@ -102,10 +102,11 @@ public sealed class App
             if (Game != null)
         {
             int days = Math.Max(1, day - _perfDay);
-            Log.Info("PERF systems (ms/day): " + string.Join(", ", Game.ProfileMs.Where(kv => !kv.Key.StartsWith("Path.")).OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
-            Log.Info("PERF paths (per day): " + string.Join(", ", Game.ProfileMs.Where(kv => kv.Key.StartsWith("Path.")).OrderBy(kv => kv.Key).Select(kv => kv.Key.EndsWith("#") ? $"{kv.Key} {kv.Value / days:0.0}" : $"{kv.Key} {kv.Value / days:0.00}ms")));
+            var profile = Game.ProfileSnapshot();
+            Log.Info("PERF systems (ms/day): " + string.Join(", ", profile.Where(kv => !kv.Key.StartsWith("Path.")).OrderByDescending(kv => kv.Value.TotalMilliseconds).Select(kv => $"{kv.Key} {kv.Value.TotalMilliseconds / days:0.00}ms/{kv.Value.Calls / (double)days:0.0} calls max={kv.Value.MaxMilliseconds:0.00} p99={kv.Value.P99Milliseconds:0.00} worst={string.Join('/', kv.Value.WorstDays)}")));
+            Log.Info("PERF paths (per day): " + string.Join(", ", profile.Where(kv => kv.Key.StartsWith("Path.")).OrderBy(kv => kv.Key).Select(kv => $"{kv.Key} {kv.Value.TotalMilliseconds / days:0.00}ms/{kv.Value.Calls / (double)days:0.0} calls")));
             Log.Info($"PERF world: {Game.World.Divisions.Count} divisions, {Game.World.Armies.Count} armies, {Game.World.Wars.Count} wars, {Game.World.Battles.Count} battles");
-            Game.ProfileMs.Clear();
+            Game.ClearProfile();
             Game.Profiling = true;
         }
         _perfDay = day;
