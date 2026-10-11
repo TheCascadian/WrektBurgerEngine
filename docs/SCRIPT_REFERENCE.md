@@ -15,6 +15,7 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `culture`
 - `culture_group`
 - `date`
+- `enclave_held_by`
 - `exists`
 - `family`
 - `government`
@@ -38,7 +39,6 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `has_modifier`
 - `has_movement`
 - `has_non_aggression_pact`
-- `has_scope_data`
 - `has_trait`
 - `has_truce_with`
 - `has_variable`
@@ -62,7 +62,6 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `is_core_of`
 - `is_female`
 - `is_general`
-- `is_great_power`
 - `is_guaranteeing`
 - `is_heir`
 - `is_male`
@@ -96,9 +95,6 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `same_ideology`
 - `same_religion`
 - `same_religion_group`
-- `scope_data`
-- `scope_kind`
-- `scope_type`
 - `stronger_than`
 - `tag`
 - `terrain`
@@ -109,11 +105,9 @@ Compare in triggers (`gold >= 100`), or use as an argument (`add_gold = income`,
 
 - `accepted_share`
 - `age`
-- `army_size`
 - `charisma`
 - `expenses`
 - `faithful_share`
-- `feast_cost`
 - `finesse`
 - `fort`
 - `free_relations`
@@ -143,7 +137,6 @@ Compare in triggers (`gold >= 100`), or use as an argument (`add_gold = income`,
 - `popularity_fascist`
 - `popularity_neutrality`
 - `population`
-- `prestige`
 - `ruler_age`
 - `ruling_popularity`
 - `seats_communist`
@@ -152,7 +145,6 @@ Compare in triggers (`gold >= 100`), or use as an argument (`add_gold = income`,
 - `seats_neutrality`
 - `stability`
 - `tax`
-- `total_tax`
 - `war_exhaustion`
 - `war_score`
 - `year`
@@ -179,7 +171,6 @@ Used in `immediate`, `option`, `on_accept`, `effect` blocks. Control flow: `if`/
 - `add_political_power`
 - `add_pops`
 - `add_popularity`
-- `add_prestige`
 - `add_religious_claims`
 - `add_stability`
 - `add_stat`
@@ -208,7 +199,6 @@ Used in `immediate`, `option`, `on_accept`, `effect` blocks. Control flow: `if`/
 - `create_character`
 - `create_division`
 - `create_non_aggression_pact`
-- `create_scope`
 - `death`
 - `declare_war`
 - `divorce`
@@ -262,10 +252,8 @@ Used in `immediate`, `option`, `on_accept`, `effect` blocks. Control flow: `if`/
 - `set_owner`
 - `set_party_name`
 - `set_political_power`
-- `set_prestige`
 - `set_ruler`
 - `set_ruling_party`
-- `set_scope_parent`
 - `set_stability`
 - `set_stat`
 - `set_state_name`
@@ -347,7 +335,6 @@ Open the console in game with the ` key.
 - `own`
 - `politics`
 - `popularity`
-- `prestige`
 - `spawn`
 - `speed`
 - `t`
