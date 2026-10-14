@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-PROJECT=${1:-Earth1930}
+PROJECT=${1:-SampleGame}
 DAYS=${2:-365}
 OUT=${OUT:-"${TMPDIR:-/tmp}/burger-profile-dense-$(date +%Y%m%d-%H%M%S)"}
 if [[ $PROJECT == -h || $PROJECT == --help ]]; then

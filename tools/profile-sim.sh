@@ -4,7 +4,7 @@ set -euo pipefail
 # Deterministic, headless simulation profile. This measures the existing fixed
 # game.Tick() loop; it never skips ticks or changes scheduling.
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-PROJECT=${1:-Earth1930}
+PROJECT=${1:-SampleGame}
 DAYS=${2:-365}
 FOCUS=${FOCUS:-}
 OUT=${OUT:-"${TMPDIR:-/tmp}/burger-profile-sim-$(date +%Y%m%d-%H%M%S)"}
@@ -18,8 +18,8 @@ Usage: tools/profile-sim.sh [PROJECT] [DAYS]
 
 Runs the deterministic headless simulation with --profile.
 Examples:
-  tools/profile-sim.sh Earth1930 365
-  FOCUS=Ai.MonthlyTick tools/profile-sim.sh Earth1930 365
+  tools/profile-sim.sh SampleGame 365
+  FOCUS=Ai.MonthlyTick tools/profile-sim.sh SampleGame 365
   OUT=logs/sim-profile tools/profile-sim.sh SampleGame 60
 EOF
   exit 0

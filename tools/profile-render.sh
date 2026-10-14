@@ -3,7 +3,7 @@ set -euo pipefail
 
 # External evidence collector for terrain/shader/tree/VSync investigations.
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-PROJECT=${1:-Earth1930}; DURATION=${DURATION:-35}; SIZE=${SIZE:-1280x720}
+PROJECT=${1:-SampleGame}; DURATION=${DURATION:-35}; SIZE=${SIZE:-1280x720}
 OUT=${OUT:-"$ROOT/logs/render-profile-$(date +%Y%m%d-%H%M%S)"}
 mkdir -p "$OUT"; cd "$ROOT"
 export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"

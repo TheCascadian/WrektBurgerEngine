@@ -5,12 +5,12 @@
 # poses have not changed since it was made is skipped. -f makes them all again. Nothing is rendered unless named; "all" is every animated figure.
 #   tools/figure-gifs.sh -c fire soldier_sov          # just soldier_sov/fire.gif
 #   tools/figure-gifs.sh all                           # everything (only what changed)
-# Env: SIZE=480 (gif pixel size), OUT=dir, GAME=<game folder> (default projects/Earth1930/game, so its gfx/models/ figures are used),
+# Env: SIZE=480 (gif pixel size), OUT=dir, GAME=<game folder> (default projects/SampleGame/game, so its gfx/models/ figures are used),
 #      NOBUILD=1 skips the build.
 set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd); cd "$ROOT"
 export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-Major}"
-OUT=${OUT:-"$ROOT/assets/figure_gifs"}; SIZE=${SIZE:-480}; GAME=${GAME:-"$ROOT/projects/Earth1930/game"}
+OUT=${OUT:-"$ROOT/assets/figure_gifs"}; SIZE=${SIZE:-480}; GAME=${GAME:-"$ROOT/projects/SampleGame/game"}
 CLIPS=""; FORCE=""
 while getopts "c:f" o; do case $o in c) CLIPS=$OPTARG ;; f) FORCE=1 ;; *) exit 2 ;; esac; done
 shift $((OPTIND - 1))
