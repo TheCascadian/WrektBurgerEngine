@@ -80,3 +80,17 @@ Primary pages read so far (quotes are from the fetch results, not full license t
 | Getty TGN | getty.edu data-services page | The fetch returned only the page title. No license text was seen. | Unknown | Terms (earlier reported as ODC-By 1.0) and the required notice remain UNVERIFIED. |
 
 Not yet checked at all: DASI, Gazetteer of Ancient Arabia, Met, Cleveland, Art Institute, Smithsonian, Syriaca, Nomisma, PeriodO, Chengdu survey, GeoNames. Each needs its license page read and its attribution text recorded before any data from it is integrated.
+
+## 8. Second license pass (2026-10-14)
+| Source | Result | Attribution | Status |
+|---|---|---|---|
+| Syriaca | Page says "This work is licensed under a Creative Commons Attribution 4.0 International License (CC BY 4.0)." and "Copyright by the contributors. See 'How to Cite' for attribution information." | Follow its "How to Cite" page (not yet read) | Confirmed, citation text open |
+| GeoNames | Export page says "cc-by licence". "You should give credit to GeoNames when using data or web services with a link or another reference to GeoNames." | Link to geonames.org | Confirmed, CC BY version not stated |
+| PeriodO | Home page calls it a "public domain" gazetteer and links a license page that was not read. CC0 not confirmed | Unknown | UNVERIFIED |
+| Nomisma | Documentation URL returned only a directory index. No license seen | Unknown | UNVERIFIED |
+| Getty TGN | license URL returned 404 | Unknown | UNVERIFIED |
+| Met Open Access | Page was behind a bot-check and showed no license text | Unknown | UNVERIFIED |
+| DASI | Rate-limited (HTTP 429), nothing read | Unknown | UNVERIFIED |
+| CC BY 3.0 US legal code (for Pleiades) | URL returned 404, not read | n/a | UNVERIFIED |
+
+Remaining unread: Gazetteer of Ancient Arabia, Cleveland, Art Institute, Smithsonian, Chengdu survey. Rule applied: a source stays out of the build until its terms are read from a primary page.
