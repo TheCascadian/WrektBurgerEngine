@@ -79,12 +79,14 @@ public sealed partial class Hud
     private (string, Rgb) ClassInfo(string k) => G.Population.PopTypeByKey.TryGetValue(k, out var t) ? (t.Name, t.Color) : (k, Rgb.Gray);
 
     // ------------------------------------------------------------------------------------- population menu
+    private bool _popAllStates;
+
     private void DrawPopulationPanel()
     {
-        var player = G.World.Player;
+        var player = PoliticsSubject;
         var P = G.Population;
         if (player == null || !P.Enabled) { CloseLeft(); return; }
-        var r = LeftRect(2000);
+        var r = FitRect("pop");
         r.Width = 450 * S;
         Gui.Panel(r, "Population");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
@@ -93,8 +95,9 @@ public sealed partial class Hud
         double total = P.TotalOf(player);
         double growth = states.Sum(s => P.HasPops(s) ? P.Of(s).LastGrowth : 0);
         Gui.Label($"{People(total)} people", x, y, 18, Gui.Gold, FontKind.Bold);
-        string gtxt = $"{(growth >= 0 ? "+" : "-")}{People(Math.Abs(growth))} last month";
-        Gui.Label(gtxt, x + w - Gui.Measure(gtxt, 14).X, y + 3 * S, 14, growth >= 0 ? Gui.Good : Gui.Bad);
+        string gtxt = $"{(growth >= 0 ? "+" : "-")}{People(Math.Abs(growth))}";
+        float gw = Gui.Measure(gtxt, 14, FontKind.Bold).X + 24 * S;
+        Gui.Label(gtxt + " / month", x + w - Gui.Measure(gtxt + " / month", 14).X, y + 3 * S, 14, growth >= 0 ? Gui.Good : Gui.Bad);
         y += 28 * S;
         // the cultures, religions and classes below count the people outside our colonies
         var home = P.HomeStates(player).ToList();
@@ -108,19 +111,19 @@ public sealed partial class Hud
             y += 20 * S;
         }
         var cp = P.Of(player);
-        string ident = $"Culture: {P.Culture(cp.Culture)?.Name ?? "-"}" + (P.ReligionEnabled ? $"    Religion: {P.Religion(cp.Religion)?.Name ?? "-"}" : "");
-        Gui.Label(Gui.Fit(ident, w, 14), x, y, 14);
-        y += 20 * S;
+        Gui.Label(Gui.Fit($"{P.Culture(cp.Culture)?.Name ?? "-"}" + (P.ReligionEnabled ? $" · {P.Religion(cp.Religion)?.Name ?? "-"}" : ""), w, 14), x, y, 14);
+        y += 22 * S;
         var (acc, faith) = P.Shares(player);
-        string shares = $"Accepted cultures: {acc:P0} of the people" + (P.ReligionEnabled ? $"    State religion: {faith:P0}" : "");
-        Gui.Label(Gui.Fit(shares, w, 13), x, y, 13, Gui.TextDim);
-        if (Gui.Hover(new Rectangle(x, y, w, 18 * S)))
+        // only worth a line when something is off; the numbers stay in the tooltip of the line above
+        bool shares = acc < 0.99 || (P.ReligionEnabled && faith < 0.9);
+        if (shares) Gui.Label($"Accepted culture {acc:P0}" + (P.ReligionEnabled ? $" · state religion {faith:P0}" : ""), x, y, 13, acc >= 0.9 ? Gui.TextDim : Gui.Bad);
+        if (Gui.Hover(new Rectangle(x, y - 22 * S, w, shares ? 40 * S : 22 * S)))
             Gui.Tooltip("People of unaccepted cultures pay less tax, give less manpower and slowly take your culture.\n" +
                         (P.ReligionEnabled ? "People of other faiths pay a little less tax and slowly convert.\n" : "") +
                         "Both lower stability (with politics).\nCultures of your culture group count as accepted.");
-        y += 24 * S;
+        y += shares ? 24 * S : 4 * S;
 
-        Gui.Section("Cultures", x, y, w);
+        Gui.Section("Cultures", x, y, w, "ui_cultures");
         y += 26 * S;
         var cultures = P.Breakdown(home, p => p.Culture);
         float pr = 52 * S, listX = x + 2 * pr + 14 * S;
@@ -138,7 +141,7 @@ public sealed partial class Hud
             {
                 var reason = P.CannotAccept(player, key);
                 var (cost, cur) = P.AcceptCost(player);
-                if (Gui.Button(new Rectangle(x + w - 64 * S, y - 2 * S, 64 * S, 19 * S), "Accept", reason == null,
+                if (ActionButton(new Rectangle(x + w - 64 * S, y - 2 * S, 64 * S, 19 * S), "Accept", reason == null,
                         reason ?? $"Accept {name} culture: its people count as ours (full tax and manpower){(cost > 0 ? $"\nCost: {cost:0} {cur}" : "")}", false, 12))
                 {
                     var err = P.AcceptCulture(player, key);
@@ -150,7 +153,7 @@ public sealed partial class Hud
         y = Math.Max(y, pieTop + 2 * pr) + 10 * S;
         if (P.ReligionEnabled)
         {
-            Gui.Section("Religions", x, y, w);
+            Gui.Section("Religions", x, y, w, "ui_religions");
             y += 26 * S;
             var rel = P.Breakdown(home, p => p.Religion);
             pieTop = y;
@@ -168,7 +171,7 @@ public sealed partial class Hud
         }
         if (P.ClassesEnabled)
         {
-            Gui.Section("Social classes", x, y, w);
+            Gui.Section("Social classes", x, y, w, "ui_classes");
             y += 26 * S;
             ShareBar(new Rectangle(x, y, w, 16 * S), P.Breakdown(home, p => p.Type), ClassInfo, "Social classes");
             y += 26 * S;
@@ -176,7 +179,7 @@ public sealed partial class Hud
         if (P.ColonizationEnabled)
         {
             var colonies = P.ColoniesOf(player).ToList();
-            Gui.Section($"Colonies ({colonies.Count}/{P.MaxColonies(player)} colonists)", x, y, w);
+            Gui.Section($"Colonies ({colonies.Count}/{P.MaxColonies(player)} colonists)", x, y, w, "ui_colonies");
             y += 26 * S;
             if (colonies.Count == 0) { Gui.Label("Click an unowned state on the map to send colonists.", x, y, 13, Gui.TextDim); y += 22 * S; }
             foreach (var s in colonies)
@@ -184,7 +187,7 @@ public sealed partial class Hud
                 var sp = P.Of(s);
                 Gui.Label(Gui.Fit(s.DisplayName, w * 0.45f, 14), x, y, 14);
                 Gui.Bar(new Rectangle(x + w * 0.47f, y + 4 * S, w * 0.3f, 10 * S), (float)(sp.ColonyProgress / 100), new Color(110, 190, 90, 255));
-                if (Gui.Button(new Rectangle(x + w - 70 * S, y - 2 * S, 70 * S, 20 * S), "Abandon", true, "Call the colonists back", false, 12)) P.AbandonColony(s);
+                if (ActionButton(new Rectangle(x + w - 70 * S, y - 2 * S, 70 * S, 20 * S), "Abandon", true, "Call the colonists back", false, 12)) P.AbandonColony(s);
                 y += 22 * S;
             }
             y += 6 * S;
@@ -194,7 +197,7 @@ public sealed partial class Hud
             var moves = P.IndependenceOf(player).OrderByDescending(m => m.Progress).ToList();
             if (moves.Count > 0)
             {
-                Gui.Section("Independence movements", x, y, w);
+                Gui.Section("Independence movements", x, y, w, "ui_separatists");
                 y += 26 * S;
                 foreach (var m in moves.Take(4))
                 {
@@ -206,11 +209,11 @@ public sealed partial class Hud
                     Gui.Bar(bar, (float)(m.Progress / 100), new Color(200, 80, 70, 255));
                     if (Gui.Hover(bar)) Gui.Tooltip($"{m.Progress:0}% - at 100% they declare independence (and fight for it).\nAccepting their culture ends the movement.");
                     var why = P.CannotSuppressIndependence(m);
-                    if (Gui.Button(new Rectangle(x + w * 0.64f, y - 2 * S, w * 0.18f, 19 * S), "Suppress", why == null,
+                    if (ActionButton(new Rectangle(x + w * 0.64f, y - 2 * S, w * 0.18f, 19 * S), "Suppress", why == null,
                             why ?? $"Set the movement back ({P.SuppressIndependenceCost(m):0}); costs some stability. Each time costs more.", false, 11))
                         P.SuppressIndependence(m);
                     bool armed = _releaseArmed == m.Culture;
-                    if (Gui.Button(new Rectangle(x + w * 0.83f, y - 2 * S, w * 0.17f, 19 * S), armed ? "Sure?" : "Release", true,
+                    if (ActionButton(new Rectangle(x + w * 0.83f, y - 2 * S, w * 0.17f, 19 * S), armed ? "Sure?" : "Release", true,
                             $"Let their {n} states go in peace as an independent country" + (armed ? "\nClick again to confirm" : ""), armed, 11))
                     {
                         if (armed) { P.GrantIndependence(m); _releaseArmed = null; }
@@ -222,10 +225,17 @@ public sealed partial class Hud
             }
         }
         // most populous states
-        Gui.Section("States by population", x, y, w);
+        Gui.Section("States by population", x, y, w, "ui_states_pop");
         y += 26 * S;
         var list = states.Where(P.HasPops).OrderByDescending(P.TotalOf).ToList();
-        float top = Gui.BeginScroll("popstates", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), list.Count * 22 * S);
+        const int topN = 6;
+        if (list.Count > topN)
+        {
+            if (Gui.Button(new Rectangle(x + w - 110 * S, y - 26 * S, 110 * S, 20 * S), _popAllStates ? "Show top 6" : $"Show all {list.Count}", true, null, false, 12)) _popAllStates = !_popAllStates;
+            if (!_popAllStates) list = list.Take(topN).ToList();
+        }
+        FitEnd("pop", r, y + list.Count * 22 * S);
+        float top = Gui.BeginScroll("popstates", new Rectangle(x, y, w, Math.Min(list.Count * 22 * S, r.Y + r.Height - y - 10 * S)), list.Count * 22 * S);
         float ly = top;
         foreach (var s in list)
         {
@@ -234,8 +244,11 @@ public sealed partial class Hud
             var row = new Rectangle(x, ly, w - 10 * S, 20 * S);
             bool hover = Gui.Hover(row);
             if (hover) Raylib.DrawRectangleRec(row, new Color(255, 255, 255, 18));
-            Gui.Label(Gui.Fit(s.DisplayName, w * 0.5f, 14), x + 2 * S, ly + 1 * S, 14, s.Cores.Contains(player) ? Gui.Text : Gui.TextDim);
-            Gui.Label(People(sp.Total), x + w * 0.52f, ly + 1 * S, 14);
+            bool core = s.Cores.Contains(player);
+            if (core) Raylib.DrawRectangleRec(new Rectangle(x, ly + 2 * S, 3 * S, 16 * S), Gui.Gold);
+            Gui.Label(Gui.Fit(s.DisplayName, w * 0.5f, 14), x + 8 * S, ly + 1 * S, 14, core ? Gui.Text : Gui.TextDim);
+            string pt = People(sp.Total);
+            Gui.Label(pt, x + w * 0.66f - Gui.Measure(pt, 14, FontKind.Bold).X, ly + 1 * S, 14, Gui.Text, FontKind.Bold);
             Gui.Bar(new Rectangle(x + w * 0.70f, ly + 6 * S, w * 0.26f, 8 * S), (float)Math.Min(1, sp.Total / Math.Max(1, cap)), new Color(200, 170, 90, 255));
             if (hover)
             {
@@ -255,18 +268,40 @@ public sealed partial class Hud
     }
 
     /// <summary>People, colonization and gold buildings of a state (in the location panel). Returns the new y.</summary>
-    private float DrawStatePopulation(State st, float x, float y, float w)
+    /// <summary>The three largest pop groups of an owned state: what they want and how they react to the government.</summary>
+    private float DrawStateMoods(State st, float x, float y, float w)
+    {
+        if (st.Owner == null || !G.Politics.PopsEnabled) return y;
+        var moods = G.Politics.MoodsOf(st);
+        if (moods == null || moods.Count == 0) return y;
+        foreach (var pop in G.Population.Of(st).Pops.Where(q => q.Size > 0).OrderByDescending(q => q.Size).Take(3))
+        {
+            if (!moods.TryGetValue(Burger.Core.Politics.PoliticsSystem.PopKey(pop), out var m)) continue;
+            var tone = m.Reaction switch { "Approve" => Gui.Good, "Comply" => Gui.Text, "Disapprove" => Gui.Gold, _ => Gui.Bad };
+            var row = new Rectangle(x, y, w, 18 * S);
+            string line = $"{G.Politics.PopGroupName(pop)}: {m.Reaction} ({m.Opinion:+0;-0;0})";
+            Gui.Label(Gui.Fit(line, w, 13), x, y, 13, tone);
+            if (Gui.Hover(row))
+                Gui.Tooltip($"{G.Politics.PopGroupName(pop)} · {People(pop.Size)}\nWants: {Localisation.GetOrPretty(m.Objective)}\nOpinion {m.Opinion:0} · grievance {m.Grievance:0} · radicalism {m.Radicalism:0}"
+                    + (m.PreferredParty.Length > 0 ? $"\nLeans to: {G.Politics.PartyDisplayName(st.Owner, m.PreferredParty)}" : ""));
+            y += 18 * S;
+        }
+        return y + 2 * S;
+    }
+
+    private float DrawStatePopulation(State st, float x, float y, float w, bool header = true)
     {
         var P = G.Population;
         if (!P.Enabled) return y;
         var player = G.World.Player;
         var sp = P.Of(st);
-        Gui.Section("People", x, y, w);
-        y += 26 * S;
+        if (header) { Gui.Section("People", x, y, w, "ui_people"); y += 26 * S; }
         double cap = P.Capacity(st);
         Gui.Label($"{People(sp.Total)} people", x, y, 15, Gui.Gold);
-        string g = $"{(sp.LastGrowth >= 0 ? "+" : "-")}{People(Math.Abs(sp.LastGrowth))}/month, room for {People(cap)}";
-        Gui.Label(Gui.Fit(g, w - 130 * S, 13), x + 130 * S, y + 2 * S, 13, Gui.TextDim);
+        string g = $"{(sp.LastGrowth >= 0 ? "+" : "-")}{People(Math.Abs(sp.LastGrowth))}/month";
+        float gx = x + 110 * S;
+        Gui.Label(g, gx, y + 2 * S, 13, DeltaColor(sp.LastGrowth, 0.5));
+        Gui.Label($"room for {People(cap)}", gx + Gui.Measure(g, 13).X + 10 * S, y + 2 * S, 13, sp.Total >= cap ? Gui.Bad : Gui.TextDim);
         if (Gui.Hover(new Rectangle(x, y, w, 20 * S)))
             Gui.Tooltip("People grow towards the state's room (capacity); buildings and modifiers (pop_growth, pop_capacity) change both.\nTax and manpower grow with the people.");
         y += 22 * S;
@@ -290,6 +325,11 @@ public sealed partial class Hud
             string text = $"Mostly {major}" + (P.ReligionEnabled ? $", {P.Religion(P.MajorityReligion(st))?.Name}" : "");
             Gui.Label(Gui.Fit(text, w, 13), x, y, 13, Gui.TextDim);
             y += 20 * S;
+            y = DrawStateMoods(st, x, y, w);
+            // what the state and its people hold against whoever did it to them
+            var who = new List<Burger.Core.Memories.Subject> { Burger.Core.Memories.Subject.Of(st) };
+            who.AddRange(sp.Pops.Select(p => Burger.Core.Memories.Subject.Pop(st.ScopeKey, p.Culture, p.Religion, p.Type)));
+            y += DrawRememberedActs(G.Memory.Strongest(who, 4).ToList(), "The people remember", x, y, w);
         }
         // colonization of unowned land
         if (P.ColonizationEnabled && st.Owner == null && player != null)
@@ -320,14 +360,14 @@ public sealed partial class Hud
             var gold = P.GoldBuildings().ToList();
             if (gold.Count > 0)
             {
-                Gui.Section("Build", x, y, w);
+                Gui.Section("Build", x, y, w, "ui_build");
                 y += 26 * S;
                 float bx = x;
                 foreach (var b in gold)
                 {
                     int queued = P.GoldProjects.Count(p => p.State == st && p.Building == b);
                     string label = $"{b.Name} ({P.GoldCost(b):0})" + (queued > 0 ? $" +{queued}" : "");
-                    float bw = Math.Max(120 * S, Gui.Measure(label, 12).X + 16 * S);
+                    float bw = Math.Max(120 * S, Gui.Measure(label, 12).X + 16 * S + 24 * S);
                     if (bx + bw > x + w) { bx = x; y += 28 * S; }
                     var reason = P.CannotGoldBuild(player, b, st);
                     string tip = $"{b.Name}\n{b.Description}\nLevel {st.Buildings.GetValueOrDefault(b.Key)}/{b.MaxLevel}, {P.BuildMonths(b)} months to build, {P.GoldCost(b):0} gold" +
@@ -338,6 +378,7 @@ public sealed partial class Hud
                         var err = P.GoldBuild(player, b, st);
                         if (err != null) Ui.SetStatus(err);
                     }
+                    BuildingIcon(b.Key, new Rectangle(bx + 3 * S, y + 2 * S, 20 * S, 20 * S), reason != null);
                     bx += bw + 6 * S;
                 }
                 y += 30 * S;
@@ -349,8 +390,9 @@ public sealed partial class Hud
     // ------------------------------------------------------------------------------------- ledger
     private void DrawLedgerPanel()
     {
-        var r = RightRect(2000);
-        r.Width = Math.Max(r.Width, 620 * S);
+        bool noData = G.Statistics.Available.Count() == 0 || G.Statistics.Dates.Count < 2;
+        var r = RightRect(noData ? 70 * S : 2000);
+        r.Width = noData ? r.Width : Math.Max(r.Width, 620 * S);
         r.X = Raylib.GetScreenWidth() - r.Width - 8 * S;
         Gui.Panel(r, "Ledger");
         if (Gui.CloseButton(r)) { Ui.Right = RightPanel.None; return; }
@@ -371,6 +413,16 @@ public sealed partial class Hud
         // countries or the whole world
         if (Gui.Button(new Rectangle(x, y, 110 * S, 24 * S), "Countries", true, "The biggest countries and us", !_ledgerWorld, 13)) _ledgerWorld = false;
         if (Gui.Button(new Rectangle(x + 114 * S, y, 110 * S, 24 * S), "World", true, "The whole world (total, or average for levels like stability)", _ledgerWorld, 13)) _ledgerWorld = true;
+        // which charts to show
+        float tx = x + 240 * S;
+        foreach (var (key, label, tip) in new[] { ("trend", "Trend", "Line chart over time"), ("rank", "Ranking", "Bars of the latest values"), ("share", "Share", "Each country's slice of the total"), ("growth", "Growth", "Change over the last year, in percent") })
+        {
+            bool on = _ledgerShow.Contains(key);
+            float bw = Gui.Measure(label, 13).X + 26 * S;
+            if (Gui.Button(new Rectangle(tx, y, bw, 24 * S), (on ? "✓ " : "") + label, true, tip + (on ? " (shown)" : " (hidden)"), on, 13))
+            { if (on) _ledgerShow.Remove(key); else _ledgerShow.Add(key); }
+            tx += bw + 4 * S;
+        }
         y += 32 * S;
         var player = G.World.Player;
         var series = new List<(string Name, Rgb Color, List<double> Values, bool Mine)>();
@@ -399,7 +451,87 @@ public sealed partial class Hud
         }
         double max = series.SelectMany(s => s.Values).Where(v => !double.IsNaN(v)).DefaultIfEmpty(1).Max();
         if (max <= 0) max = 1;
-        var chart = new Rectangle(x + 46 * S, y, w - 50 * S, Math.Min(330 * S, r.Y + r.Height - y - 190 * S));
+        int extras = (_ledgerShow.Contains("rank") ? 1 : 0) + (_ledgerShow.Contains("share") ? 1 : 0) + (_ledgerShow.Contains("growth") ? 1 : 0);
+        bool trend = _ledgerShow.Contains("trend");
+        float chartH = trend ? Math.Clamp(r.Y + r.Height - y - 190 * S - extras * 120 * S, 120 * S, 330 * S) : 0;
+        var chart = new Rectangle(x + 46 * S, y, w - 50 * S, chartH);
+        if (trend) DrawLedgerTrend(chart, st, series, max);
+        // legend
+        y = chart.Y + chart.Height + (trend ? 24 * S : 0);
+        float colW = w / 3;
+        int k = 0;
+        foreach (var (name, colr, values, mine) in series)
+        {
+            float lx = x + (k % 3) * colW, lyy = y + (k / 3) * 22 * S;
+            Raylib.DrawRectangleRec(new Rectangle(lx, lyy + 5 * S, 14 * S, 6 * S), C(colr));
+            double v = values.LastOrDefault(t => !double.IsNaN(t));
+            Gui.Label(Gui.Fit($"{name} {LedgerFmt(v)}", colW - 22 * S, 13), lx + 20 * S, lyy, 13, mine ? Gui.Gold : Gui.Text);
+            k++;
+        }
+        y += (series.Count + 2) / 3 * 22 * S + 10 * S;
+        double Last(List<double> v) => v.LastOrDefault(t => !double.IsNaN(t));
+        if (_ledgerShow.Contains("rank"))
+        {
+            Gui.Section("Ranking", x, y, w, "ui_ranking"); y += 26 * S;
+            double top = series.Select(q => Last(q.Values)).DefaultIfEmpty(1).Max(); if (top <= 0) top = 1;
+            foreach (var q in series.OrderByDescending(q => Last(q.Values)).Take(8))
+            {
+                Gui.Label(Gui.Fit(q.Name, 130 * S, 13), x, y, 13, q.Mine ? Gui.Gold : Gui.Text);
+                var bar = new Rectangle(x + 138 * S, y + 3 * S, (w - 220 * S) * (float)Math.Max(0, Last(q.Values) / top), 10 * S);
+                Raylib.DrawRectangleRec(bar, C(q.Color));
+                Gui.Label(LedgerFmt(Last(q.Values)), bar.X + bar.Width + 6 * S, y, 13, Gui.TextDim);
+                y += 20 * S;
+            }
+            y += 8 * S;
+        }
+        if (_ledgerShow.Contains("share"))
+        {
+            Gui.Section("Share of the total", x, y, w, "ui_share"); y += 26 * S;
+            double tot = series.Sum(q => Math.Max(0, Last(q.Values)));
+            if (tot > 0 && !_ledgerWorld)
+            {
+                float sx = x;
+                foreach (var q in series.OrderByDescending(q => Last(q.Values)))
+                {
+                    double v = Math.Max(0, Last(q.Values));
+                    float sw = (float)(v / tot) * w;
+                    var seg = new Rectangle(sx, y, sw, 22 * S);
+                    Raylib.DrawRectangleRec(seg, C(q.Color));
+                    if (Gui.Hover(seg)) Gui.Tooltip($"{q.Name}\n{v / tot:P1} ({LedgerFmt(v)})");
+                    sx += sw;
+                }
+                y += 30 * S;
+            }
+            else { Gui.Label("Pick Countries to compare shares.", x, y, 13, Gui.TextDim); y += 24 * S; }
+            y += 6 * S;
+        }
+        if (_ledgerShow.Contains("growth"))
+        {
+            Gui.Section("Change over the last year", x, y, w, "ui_change"); y += 26 * S;
+            int n2 = st.Dates.Count;
+            int back = 0;
+            for (int j = n2 - 1; j >= 0; j--) { if (st.Dates[n2 - 1].TotalDays - st.Dates[j].TotalDays >= 360) { back = j; break; } }
+            float gx = x, gw = w / 2;
+            int gi = 0;
+            foreach (var q in series)
+            {
+                double a0 = back < q.Values.Count ? q.Values[back] : double.NaN, a1 = Last(q.Values);
+                if (double.IsNaN(a0) || a0 == 0) continue;
+                double ch = a1 / a0 - 1;
+                float cx2 = x + (gi % 2) * gw, cy2 = y + (gi / 2) * 20 * S;
+                Gui.Label(Gui.Fit(q.Name, gw - 80 * S, 13), cx2, cy2, 13, q.Mine ? Gui.Gold : Gui.Text);
+                string txt = $"{(ch >= 0 ? "+" : "")}{ch:P1}";
+                Gui.Label(txt, cx2 + gw - 12 * S - Gui.Measure(txt, 13, FontKind.Bold).X, cy2, 13, DeltaColor(ch, 0.0005), FontKind.Bold);
+                gi++;
+            }
+            y += (gi + 1) / 2 * 20 * S;
+        }
+    }
+
+    private readonly HashSet<string> _ledgerShow = new() { "trend", "rank" };
+
+    private void DrawLedgerTrend(Rectangle chart, Burger.Core.Mechanics.StatisticsSystem st, List<(string Name, Rgb Color, List<double> Values, bool Mine)> series, double max)
+    {
         Raylib.DrawRectangleRec(chart, new Color(0, 0, 0, 70));
         for (int i = 0; i <= 4; i++)
         {
@@ -432,18 +564,6 @@ public sealed partial class Hud
             Raylib.DrawLineEx(new Vector2(hx, chart.Y), new Vector2(hx, chart.Y + chart.Height), 1, new Color(255, 255, 255, 90));
             Gui.Tooltip(st.Dates[i].ToDisplay() + "\n" + string.Join("\n", series.Select(s => (s.Name, v: i < s.Values.Count ? s.Values[i] : double.NaN))
                 .Where(t => !double.IsNaN(t.v)).OrderByDescending(t => t.v).Select(t => $"{t.Name}: {LedgerFmt(t.v)}")));
-        }
-        // legend
-        y = chart.Y + chart.Height + 24 * S;
-        float colW = w / 3;
-        int k = 0;
-        foreach (var (name, colr, values, mine) in series)
-        {
-            float lx = x + (k % 3) * colW, lyy = y + (k / 3) * 22 * S;
-            Raylib.DrawRectangleRec(new Rectangle(lx, lyy + 5 * S, 14 * S, 6 * S), C(colr));
-            double v = values.LastOrDefault(t => !double.IsNaN(t));
-            Gui.Label(Gui.Fit($"{name} {LedgerFmt(v)}", colW - 22 * S, 13), lx + 20 * S, lyy, 13, mine ? Gui.Gold : Gui.Text);
-            k++;
         }
     }
 

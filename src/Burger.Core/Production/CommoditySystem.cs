@@ -48,7 +48,7 @@ public class CommodityRules
         var r = game.World.Relations;
         double p = game.Diplomacy.Opinion(seller, buyer);
         if (r.AreAllied(seller, buyer)) p += 100;
-        if (r.OverlordOf(buyer) == seller || r.OverlordOf(seller) == buyer) p += 150;
+        if (r.AreOverlordAndSubject(buyer, seller)) p += 150;
         return p;
     }
 

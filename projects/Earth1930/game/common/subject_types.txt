@@ -1,10 +1,12 @@
 # Subject relationships (Imperator style).
 #   income_share         part of the subject's income paid to the overlord
 #   joins_overlord_wars  the subject fights in its overlord's wars (only while its liberty desire is below 50)
+#   manpower_share       part of the subject's monthly manpower gain sent to the overlord (default 0)
+#   government           who decides its government: imposed (default; the overlord's ideology is forced on it), preferred (only favoured), free
 #   liberty_desire       base liberty desire (EU style, 0-100). Liberty desire also grows with the subject's strength and
 #                        size compared to the overlord, a bad opinion of it, a different ideology or culture group, the
 #                        overlord losing a war and the tribute; at 50 the subject may fight a War of Independence.
-client_state = { name = "Client State" income_share = 0.10 joins_overlord_wars = yes liberty_desire = 0 }
-tributary = { name = "Tributary" income_share = 0.25 joins_overlord_wars = no liberty_desire = 10 }
-dominion = { name = "Dominion" income_share = 0.0 joins_overlord_wars = yes liberty_desire = -25 counts_as_relation = no }
-colony = { name = "Colony or Raj" income_share = 0.15 joins_overlord_wars = yes liberty_desire = -40 counts_as_relation = no }
+client_state = { name = "Client State" income_share = 0.10 manpower_share = 0.10 joins_overlord_wars = yes liberty_desire = 0 }
+tributary = { name = "Tributary" income_share = 0.25 joins_overlord_wars = no liberty_desire = 10 government = preferred }
+dominion = { name = "Dominion" income_share = 0.0 joins_overlord_wars = yes liberty_desire = -25 counts_as_relation = no government = free }
+colony = { name = "Colony or Raj" income_share = 0.15 manpower_share = 0.20 joins_overlord_wars = yes liberty_desire = -40 counts_as_relation = no }

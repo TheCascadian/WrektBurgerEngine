@@ -58,7 +58,7 @@ public class AiProfileRules
         var alive = game.World.Countries.Where(x => x.Exists).ToList();
         int rank = alive.Count(x => game.Diplomacy.Strength(x) > strength);
         bool great = rank < d.Get("ai_great_powers", 9);
-        string ide = game.Politics.Enabled ? game.Politics.Of(c).Ruling : "";
+        string ide = game.RulingOf(c) ?? "";
         bool subject = game.World.Relations.OverlordOf(c) != null;
         if (subject) return "passive";
         return ide switch
@@ -113,10 +113,10 @@ public class AiProfileRules
         var D = game.Diplomacy;
         var R = game.World.Relations;
         double mine = D.Strength(c) + R.AlliesOf(c).Where(a => !game.World.AtWar(a, c)).Sum(a => D.Strength(a) * 0.6)
-                      + R.SubjectsOf(c).Sum(a => D.Strength(a) * 0.5);
+                      + D.SubjectStrength(c);
         // (the target's friends that are already fighting me are not new enemies: they are counted in what I am already facing)
         double theirs = D.Strength(target) + R.AlliesOf(target).Where(a => !game.World.AtWar(a, c)).Sum(a => D.Strength(a) * 0.6) + R.GuarantorsOf(target).Where(a => !game.World.AtWar(a, c)).Sum(a => D.Strength(a) * 0.5)
-                        + R.SubjectsOf(target).Sum(a => D.Strength(a) * 0.5);
+                        + D.SubjectStrength(target);
         if (game.World.WarsOf(c).Any()) mine *= 0.6; // a war already on
         double ratio = mine / Math.Max(1, theirs);
         double need = 1.25 / Math.Max(0.4, p.Trait("risk"));

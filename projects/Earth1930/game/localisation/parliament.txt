@@ -1,0 +1,3 @@
+# Seat descriptions. Tokens are filled once when a seat is filled, then cached.
+parliament_seat_default = "{name} sits for {province} for {party} ({faction}). Elected by {culture} {religion} voters. Notable trait: {trait}. Term ends {term_end}."
+parliament_seat_minority = "{name} sits for {province} for {party}, speaking for the {culture} {religion} people there. Term ends {term_end}."

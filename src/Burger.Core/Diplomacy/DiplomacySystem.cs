@@ -228,9 +228,10 @@ public sealed partial class DiplomacySystem
                 break;
             case ProposalKind.CallToArms:
                 if (p.War == null || !_game.World.Wars.Contains(p.War)) return;
-                if (accept) JoinWar(p.To, p.War, p.War.IsAttacker(p.From));
+                if (accept) { JoinWar(p.To, p.War, p.War.IsAttacker(p.From)); _game.Hub.RaiseCallAnswered(p.To, p.From, true); }
                 else
                 {
+                    _game.Hub.RaiseCallAnswered(p.To, p.From, false);
                     R.SetAlliance(p.To, p.From, false);
                     AddOpinion(p.From, p.To, "Refused call to arms", -50);
                     _game.Notify($"Alliance with {p.From.Name} broken.", NotificationKind.Bad);
@@ -308,6 +309,7 @@ public sealed partial class DiplomacySystem
         foreach (var ally in R.AlliesOf(attacker).ToList())
             CallToArms(war, attacker, ally, true);
 
+        _game.Hub.RaiseWarDeclared(attacker, defender, war);
         AddOpinion(defender, attacker, "Declared war on us", -100, 2);
         if (cb != null && cb.OthersOpinion != 0)
             foreach (var c in w.Countries.Where(c => c.Exists && c != attacker && c != defender))
@@ -350,9 +352,10 @@ public sealed partial class DiplomacySystem
             if (_game.Data.Defines.PauseOnEvent) _game.Clock.Paused = true;
             return;
         }
-        if (Rules.WillJoinWar(_game, ally, war, asAttacker, caller)) JoinWar(ally, war, asAttacker);
+        if (Rules.WillJoinWar(_game, ally, war, asAttacker, caller)) { JoinWar(ally, war, asAttacker); if (R.AreAllied(ally, caller)) _game.Hub.RaiseCallAnswered(ally, caller, true); }
         else if (R.AreAllied(ally, caller) && !(asAttacker && _game.Data.Defines.Get("offensive_calls_optional", 0) > 0)) // (with offensive_calls_optional, refusing to join an ally's aggression does not end the alliance)
         {
+            _game.Hub.RaiseCallAnswered(ally, caller, false);
             R.SetAlliance(ally, caller, false);
             AddOpinion(caller, ally, "Refused call to arms", -50);
             _game.NotifyPlayer($"{ally.Name} refused the call to arms of {caller.Name}.", NotificationKind.Diplomacy, caller, enemyLeader);
@@ -673,6 +676,7 @@ public sealed partial class DiplomacySystem
         newOwner.Capital ??= s.Locations.FirstOrDefault(l => l.IsLand);
         _game.Events.FireOnAction("on_state_transferred", newOwner, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s, ["old_owner"] = old });
         _game.Mods.Invoke(m => m.OnStateOwnerChanged(s, old, newOwner));
+        _game.Hub.RaiseStateTransferred(s, old, newOwner);
         _game.RaiseMapChanged();
     }
 

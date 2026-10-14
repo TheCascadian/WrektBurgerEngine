@@ -28,4 +28,6 @@ sultanate = { ruling_party = neutrality popularity = { neutrality = 70 democrati
 theocracy = { ruling_party = neutrality popularity = { neutrality = 75 democratic = 10 fascist = 8 communist = 7 } laws = { political_parties = restricted_parties press = state_press } }
 warlord_state = { ruling_party = neutrality popularity = { neutrality = 60 communist = 15 fascist = 13 democratic = 12 } laws = { political_parties = restricted_parties press = state_press } }
 colonial_government = { ruling_party = neutrality popularity = { neutrality = 70 democratic = 20 communist = 5 fascist = 5 } laws = { political_parties = restricted_parties } }
+dictatorship = { ruling_party = fascist popularity = { fascist = 60 neutrality = 20 communist = 10 democratic = 10 } laws = { political_parties = single_party press = propaganda_ministry } }
+authoritarian_state = { ruling_party = neutrality popularity = { neutrality = 60 democratic = 15 fascist = 15 communist = 10 } laws = { political_parties = restricted_parties press = state_press } }
 socialist_republic = { ruling_party = communist popularity = { communist = 80 neutrality = 10 democratic = 5 fascist = 5 } laws = { political_parties = single_party press = propaganda_ministry economy = partial_mobilisation } }

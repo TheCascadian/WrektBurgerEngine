@@ -50,6 +50,10 @@ public sealed class Character : IScope
     /// </summary>
     public Node? PortraitRules;
     public bool IsGeneral;
+    /// <summary>Culture, religion and class of the pop group a generated character came from (null for hand-written characters).</summary>
+    public string? Culture, Religion, PopType;
+    /// <summary>Key of the state this character comes from (null when unknown).</summary>
+    public string? HomeState;
     public VarStore Vars { get; } = new();
 
     public bool Alive => DeathDate == null;

@@ -1,3 +1,4 @@
+using Burger.Core.Memories;
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
@@ -80,16 +81,16 @@ public sealed partial class Hud
         var roles = new List<CharRole>();
         if (ch.IsRuler) roles.Add(new("Ruler", RulerTint, $"Rules {country.Name}"));
         if (ch.IsHeir) roles.Add(new("Heir", HeirTint, $"Heir to the throne of {country.Name}"));
+        if (G.Politics.Enabled)
+            foreach (var party in G.Politics.PartiesOf(country))
+                if (G.Politics.LeaderOf(party) == ch)
+                    roles.Add(new("Leader · " + G.Politics.PartyDisplayName(country, party.Key), C(G.Politics.PartyColor(party.Key)), "Leads " + G.Politics.PartyDisplayName(country, party.Key)));
         foreach (var army in G.World.Armies.Where(a => a.General == ch))
             roles.Add(new("General", GeneralTint, "Commands " + army.Name));
         if (G.Politics.CabinetEnabled)
             foreach (var pos in G.Politics.Positions)
                 if (G.Politics.MinisterOf(country, pos) == ch)
                     roles.Add(new(Localisation.Get(pos.Name), MinisterTint, $"Cabinet minister: {Localisation.Get(pos.Name)}\n{Localisation.Get(pos.Desc)}"));
-        if (G.Politics.Enabled)
-            foreach (var party in G.Politics.PartiesOf(country))
-                if (G.Politics.LeaderOf(party) == ch)
-                    roles.Add(new("Leader · " + G.Politics.PartyDisplayName(country, party.Key), C(G.Politics.PartyColor(party.Key)), "Leads " + G.Politics.PartyDisplayName(country, party.Key)));
         return roles;
     }
 
@@ -149,26 +150,46 @@ public sealed partial class Hud
         }
     }
 
+    /// <summary>
+    /// The characters worth listing: backbench parliamentarians are left out unless they hold a role (party leader, minister,
+    /// general, ruler, heir) or belong to the ruling family.
+    /// </summary>
+    private List<Character> NotableCharacters(Country country, GameDate now)
+    {
+        HashSet<Character>? seated = null;
+        if (G.Politics.Enabled)
+            seated = G.Politics.ParliamentOf(country).Seats.Where(s => s.Holder != null).Select(s => s.Holder!).ToHashSet();
+        bool Notable(Character c)
+        {
+            if (seated == null || !seated.Contains(c)) return true;
+            if (RolesOf(c, country).Count > 0) return true;
+            foreach (var head in new[] { country.Ruler, country.Heir })
+                if (head != null && (head.Spouse == c || head.Father == c || head.Mother == c || head.Children.Contains(c))) return true;
+            return false;
+        }
+        return G.World.CharactersOf(country).Where(Notable)
+            .OrderByDescending(c => c.IsRuler).ThenByDescending(c => c.IsHeir)
+            .ThenByDescending(c => G.World.Armies.Any(a => a.General == c))
+            .ThenBy(c => c.Family).ThenByDescending(c => c.Age(now)).ToList();
+    }
+
     // ---------------------------------------------------------------------------------------------- panel
     private void DrawCharactersPanel()
     {
         var player = G.World.Player;
-        if (player == null) { Ui.Left = LeftPanel.None; return; }
-        var country = _showForeignCharacters && Ui.SelectedCountry != null ? Ui.SelectedCountry : player;
+        var country = player == null ? Ui.SelectedCountry : _showForeignCharacters && Ui.SelectedCountry != null ? Ui.SelectedCountry : player;
+        if (country == null) { Ui.Left = LeftPanel.None; return; }
         var now = G.World.Date;
-        var chars = G.World.CharactersOf(country)
-            .OrderByDescending(c => c.IsRuler).ThenByDescending(c => c.IsHeir)
-            .ThenByDescending(c => G.World.Armies.Any(a => a.General == c))
-            .ThenBy(c => c.Family).ThenByDescending(c => c.Age(now)).ToList();
+        var chars = NotableCharacters(country, now);
 
         // Summaries first: the roster takes only the room its rows need, the dossier gets the rest.
-        bool foreignButton = Ui.SelectedCountry != null && Ui.SelectedCountry != player;
+        bool foreignButton = player != null && Ui.SelectedCountry != null && Ui.SelectedCountry != player;
         float rowStep = 50 * S;
         float screenRoom = Raylib.GetScreenHeight() - TopH - 20 * S - SubNavH;
         float rosterH = Math.Min(chars.Count * rowStep + 2 * S, Math.Max(150 * S, screenRoom * 0.34f));
         float chrome = 34 * S + (foreignButton ? 28 * S : 0) + rosterH + 22 * S;
         var r = LeftRect(chrome + _charDetailH + 12 * S);
-        Gui.Panel(r, $"Characters - {country.Name}");
+        Gui.Panel(r, SubNavH > 0 ? country.Name : $"Characters - {country.Name}");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 34 * S, w = r.Width - 20 * S;
         if (foreignButton)
@@ -236,7 +257,7 @@ public sealed partial class Hud
     }
 
     /// <summary>Draws the selected character's dossier starting at y and returns the height used.</summary>
-    private float DrawCharacterDossier(Character ch, Country country, float x, float y, float w, GameDate now, Country player)
+    private float DrawCharacterDossier(Character ch, Country country, float x, float y, float w, GameDate now, Country? player)
     {
         float start = y;
         var roles = RolesOf(ch, country);
@@ -351,7 +372,7 @@ public sealed partial class Hud
         y += DrawModifierList(ch, x, y, w);
 
         // ---- interactions (data-driven)
-        var actions = G.Diplomacy.ActionsFor(ActionTarget.Character).Where(a => G.Diplomacy.IsVisible(a, player, ch)).ToList();
+        var actions = player == null ? new List<Burger.Core.Model.ActionDef>() : G.Diplomacy.ActionsFor(ActionTarget.Character).Where(a => G.Diplomacy.IsVisible(a, player, ch)).ToList();
         if (actions.Count > 0)
         {
             Gui.Section("Interactions", x, y, w);
@@ -372,7 +393,52 @@ public sealed partial class Hud
             }
             y += (actions.Count + 1) / 2 * 30 * S;
         }
+        y += DrawRememberedActs(ch, "Remembered acts", x, y, w);
+        y += DrawRememberedActs(country, $"{country.Name} is remembered for", x, y, w);
         return y - start + 6 * S;
+    }
+
+    /// <summary>The most weighty acts a country, character, party or pop group is remembered for (the Memory), strongest first; nothing is drawn while it is empty.</summary>
+    private float DrawRememberedActs(Subject who, string title, float x, float y, float w)
+    {
+        return DrawRememberedActs(G.Memory.Of(who).OrderByDescending(G.Memory.Current).Take(5).ToList(), title, x, y, w);
+    }
+
+    /// <summary>Colour that marks everything the Memory shows, so remembered acts stand apart from the rest of a panel.</summary>
+    private static readonly Color MemoryAccent = new(176, 140, 224, 255);
+
+    /// <summary>Height of a memory block with <paramref name="rows"/> acts, with the gap after it (0 when there are none).</summary>
+    private float MemoryBlockHeight(int rows) => rows <= 0 ? 0 : (36 + 22 * rows + 4) * S;
+
+    /// <summary>
+    /// A boxed, tinted block with a violet edge: the title, one row per remembered act (good or bad marker, what was done and to whom,
+    /// and a bar for how heavily it still counts). Returns the height used, including the gap after it; nothing when there are no acts.
+    /// </summary>
+    private float DrawRememberedActs(List<MemoryEntry> acts, string title, float x, float y, float w)
+    {
+        if (acts.Count == 0) return 0;
+        float h = MemoryBlockHeight(acts.Count) - 4 * S;
+        var box = new Rectangle(x, y, w, h);
+        Gui.Card(box, new Color(46, 38, 62, 255));
+        Raylib.DrawRectangleRec(new Rectangle(x, y, 4 * S, h), MemoryAccent);
+        float tagW = Gui.Measure("MEMORY", 11, FontKind.Bold).X;
+        Gui.Label("MEMORY", x + w - tagW - 10 * S, y + 8 * S, 11, MemoryAccent, FontKind.Bold);
+        Gui.Label(Gui.Fit(title, w - tagW - 34 * S, 14, FontKind.Bold), x + 14 * S, y + 6 * S, 14, Gui.Text, FontKind.Bold);
+        float ry = y + 30 * S;
+        foreach (var e in acts)
+        {
+            var kind = G.Memory.Kind(e.Kind);
+            var tone = kind?.Good == true ? Gui.Good : Gui.Bad;
+            var row = new Rectangle(x + 8 * S, ry, w - 16 * S, 22 * S);
+            Raylib.DrawRectangleRec(new Rectangle(x + 14 * S, ry + 8 * S, 6 * S, 6 * S), tone);
+            float barW = 46 * S;
+            Gui.Label(Gui.Fit(G.Memory.Describe(e), w - barW - 52 * S, 13), x + 26 * S, ry + 3 * S, 13, tone);
+            Gui.Bar(new Rectangle(x + w - barW - 12 * S, ry + 8 * S, barW, 6 * S), (float)Math.Clamp(G.Memory.Current(e) / 5.0, 0.08, 1), tone);
+            if (Gui.Hover(row))
+                Gui.Tooltip(G.Memory.Describe(e) + (e.Note.Length > 0 ? "\n" + e.Note : "") + "\n" + (e.DecayPerYear > 0 ? "Fades with time." : "Never fades."));
+            ry += 22 * S;
+        }
+        return h + 4 * S;
     }
 
     private void DrawStatTile(Character ch, string stat, Rectangle t)

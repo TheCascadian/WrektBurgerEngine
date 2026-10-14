@@ -13,7 +13,7 @@ the real scenario carries no test media.
 ## How it works
 
 - `portrait = "path"` is the default image. A `.gif` animates while the character is selected in the Characters panel;
-  the roster list shows the still first frame. `.mp4` works too (needs `ffmpeg` and `ffprobe`; see `docs/MODDING.md`, Portraits).
+  the roster list shows the still first frame. `.mp4` works too (needs `ffmpeg` and `ffprobe`; see `docs/game/MODDING.md`, Portraits).
 - `portraits = { name = { image = "path" trigger = { ... } } }` is checked top to bottom each day; the first rule
   whose trigger holds supplies the image, otherwise `portrait` is used.
 - The `set_portrait` effect changes the default image from script.

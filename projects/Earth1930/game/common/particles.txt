@@ -1,0 +1,52 @@
+# Particle effects. One block per effect; any figure clip event, the console (`particle name`) or a script (`spawn_particles = name`) can show one by name.
+# Sizes, speeds and gravity are in metres at the scale of a soldier; the game scales them up with the figures.
+#
+#   name = {
+#       count     = 12                       # particles per burst
+#       life      = { 0.4 0.9 }              # seconds, min and max (one number: fixed)
+#       speed     = { 0.5 2.0 }              # metres per second
+#       size      = { 0.10 0.30 }            # width at birth and at death
+#       color     = { FFF4C0FF FF8020A0 00000000 }   # RRGGBB or RRGGBBAA, blended over the particle's life
+#       gravity   = 0                        # positive falls, negative rises
+#       drag      = 1.5                      # 0 = none, higher slows faster
+#       spread    = 25                       # degrees: half-angle of the cone about `direction`
+#       direction = forward                  # forward (the way a muzzle points) | up | out (all ways)
+#       additive  = yes                      # yes for light (flashes, sparks), no for smoke and dust
+#   }
+#
+# The engine's own effects (muzzle_flash, muzzle_smoke, dust_puff) are the defaults; define one with the same name to replace it.
+
+muzzle_flash = {
+    count = 6
+    life = { 0.05 0.10 }
+    speed = { 0.5 3.0 }
+    size = { 0.12 0.30 }
+    color = { FFF4C0FF FF9030B0 FF400000 }
+    spread = 20
+    direction = forward
+    additive = yes
+}
+
+muzzle_smoke = {
+    count = 5
+    life = { 0.8 1.6 }
+    speed = { 0.2 0.9 }
+    size = { 0.06 0.34 }
+    color = { C8C8C880 90909040 70707000 }
+    gravity = -0.25
+    drag = 1.5
+    spread = 30
+    direction = forward
+}
+
+dust_puff = {
+    count = 8
+    life = { 0.6 1.2 }
+    speed = { 0.3 1.2 }
+    size = { 0.10 0.45 }
+    color = { A08C6E90 8C785A00 }
+    gravity = -0.1
+    drag = 2
+    spread = 70
+    direction = up
+}

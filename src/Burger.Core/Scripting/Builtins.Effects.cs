@@ -29,6 +29,8 @@ public static partial class Builtins
         var R = w.Relations;
 
         // ------------------------------------------------------------------ generic
+        // shows an effect of common/particles.txt where the scope is: spawn_particles = dust_puff
+        s.RegisterEffect("spawn_particles", (ctx, n) => game.Particles.Request(n.Value ?? n.GetString("name") ?? "", ctx.This), (ctx, n) => null);
         s.RegisterEffect("set_flag", (ctx, n) => ctx.This?.Vars.SetFlag(n.Value ?? ""), (ctx, n) => null);
         s.RegisterEffect("set_country_flag", (ctx, n) => C(ctx.This)?.Vars.SetFlag(n.Value ?? ""), (ctx, n) => null);
         s.RegisterEffect("set_character_flag", (ctx, n) => ctx.This?.Vars.SetFlag(n.Value ?? ""), (ctx, n) => null);
@@ -165,10 +167,10 @@ public static partial class Builtins
             else Log.ErrorOnce("color:" + n.Location, "set_country_color needs a color like { 255 0 0 } or \"FF0000\"", n.Location);
         }, (ctx, n) => "Country color changes");
         s.RegisterEffect("reset_country_color", (ctx, n) => { if (NeedCountry(ctx, n) is { } c) { c.Color = c.DefaultColor; c.Vars.ClearFlag("color_scripted"); game.RefreshName(c); game.RaiseMapChanged(); } }, (ctx, n) => "Country color is reset");
-        EffectFn setFlagImage = (ctx, n) => { if (NeedCountry(ctx, n) is { } c) c.FlagPath = n.Value ?? c.DefaultFlagPath; };
+        EffectFn setFlagImage = (ctx, n) => { if (NeedCountry(ctx, n) is { } c) { c.FlagPath = n.Value ?? c.DefaultFlagPath; c.Vars.SetFlag("flag_scripted"); } };
         s.RegisterEffect("set_flag_image", setFlagImage, (ctx, n) => "Country flag changes");
         s.RegisterEffect("set_country_banner", setFlagImage, (ctx, n) => "Country flag changes");
-        s.RegisterEffect("reset_flag_image", (ctx, n) => { if (NeedCountry(ctx, n) is { } c) c.FlagPath = c.DefaultFlagPath; }, (ctx, n) => "Country flag is reset");
+        s.RegisterEffect("reset_flag_image", (ctx, n) => { if (NeedCountry(ctx, n) is { } c) { c.Vars.ClearFlag("flag_scripted"); game.RefreshName(c); } }, (ctx, n) => "Country flag is reset");
         s.RegisterEffect("set_government", (ctx, n) => { if (NeedCountry(ctx, n) is { } c) c.Government = n.Value ?? ""; },
             (ctx, n) => $"Government becomes {Localisation.GetOrPretty(n.Value ?? "")}");
         s.RegisterEffect("set_capital", (ctx, n) =>
@@ -242,7 +244,7 @@ public static partial class Builtins
             if (!game.Data.SubjectTypes.TryGetValue(type, out var st)) { Log.ErrorOnce("st:" + n.Location, $"Unknown subject type '{type}'", n.Location); return; }
             game.Diplomacy.MakeSubject(subject, overlord, st);
         }, (ctx, n) => $"{s.ArgScope(n, ctx)?.DisplayName} becomes our subject");
-        s.RegisterEffect("release_subject", (ctx, n) => { if (s.ArgCountry(n, ctx) is { } b) { R.ReleaseSubject(b); game.RaiseMapChanged(); } },
+        s.RegisterEffect("release_subject", (ctx, n) => { if (s.ArgCountry(n, ctx) is { } b) { game.Diplomacy.Release(b); game.RaiseMapChanged(); } },
             (ctx, n) => $"Release {s.ArgScope(n, ctx)?.DisplayName}");
         s.RegisterEffect("add_truce", (ctx, n) =>
         {

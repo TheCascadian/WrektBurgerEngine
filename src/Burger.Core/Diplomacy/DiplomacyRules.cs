@@ -16,13 +16,13 @@ public class DiplomacyRules
         var r = game.World.Relations;
         double v = 0;
         if (r.AreAllied(from, to)) v += 25;
-        if (r.OverlordOf(from) == to || r.OverlordOf(to) == from) v += 10;
+        if (r.AreOverlordAndSubject(from, to)) v += 10;
         if (r.IsGuaranteeing(to, from)) v += 15;
         if (game.World.AtWar(from, to)) v -= 100;
         if (r.HasTruce(from, to, game.World.Date)) v -= 10;
         // two countries of one people are rivals for the same nation (same_culture_opinion; not an overlord and its subject)
         if (game.Population.Enabled && r.OverlordOf(from) != to && r.OverlordOf(to) != from
-            && game.Population.Of(from).Culture is { } people && people == game.Population.Of(to).Culture)
+            && game.CultureOf(from) is { } people && people == game.CultureOf(to))
             v += game.Data.Defines.Get("same_culture_opinion", -60);
         v += game.Modifiers.Sum(to, "opinion");
         if (game.ScriptValues.TryEval("base_opinion", from, out var scripted,
@@ -270,7 +270,7 @@ public class DiplomacyRules
     /// </summary>
     public virtual bool PrefersRegimeChange(Game game, War war, Country winner, Country loser)
     {
-        if (!game.Politics.Enabled || game.Politics.Of(winner).Ruling == game.Politics.Of(loser).Ruling) return false;
+        if (game.SameRuling(winner, loser)) return false;
         uint h = unchecked((uint)(war.Id * 7919 + winner.Index * 104729 + loser.Index * 1299709) * 2654435761u);
         return (h >> 8) % 1000 < game.Data.Defines.Get("regime_change_instead_of_puppet", 0.5) * 1000;
     }
@@ -396,9 +396,11 @@ public class DiplomacyRules
         ld += Math.Min(30, 30 * ss / (os + 1));
         ld += Math.Min(15, 15 * subject.OwnedStates.Count / (double)Math.Max(1, overlord.OwnedStates.Count));
         ld -= game.Diplomacy.Opinion(subject, overlord) * 0.2;
-        if (game.Politics.Enabled && game.Politics.Of(subject).Ruling != game.Politics.Of(overlord).Ruling) ld += 10;
+        if (!game.SameRuling(subject, overlord)) ld += 10;
         var pop = game.Population;
         if (pop.Enabled && pop.Of(subject).Culture is { } a && pop.Of(overlord).Culture is { } b && pop.Culture(a)?.Group != pop.Culture(b)?.Group) ld += 15;
+        // people the overlord does not accept make a subject restless (liberty_unaccepted, 10 when none are accepted)
+        if (pop.Enabled) ld += (1 - pop.AcceptedShareFor(subject, overlord)) * game.Data.Defines.Get("liberty_unaccepted", 10);
         if (game.World.WarsOf(overlord).Any(w => w.ScoreFor(overlord) < -25)) ld += 15;
         ld += type.IncomeShare * 60;
         ld += game.Modifiers.Sum(subject, "liberty_desire");

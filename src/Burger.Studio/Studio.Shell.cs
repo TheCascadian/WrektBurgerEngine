@@ -107,8 +107,8 @@ public sealed partial class Studio
         }
         if (ImGui.BeginMenu("Help"))
         {
-            if (ImGui.MenuItem("Modding guide")) Engine.OpenInExplorer(Path.Combine(Engine.DocsDir, "MODDING.md"));
-            if (ImGui.MenuItem("Script reference")) Engine.OpenInExplorer(Path.Combine(Engine.DocsDir, "SCRIPT_REFERENCE.md"));
+            if (ImGui.MenuItem("Modding guide")) Engine.OpenInExplorer(Path.Combine(Engine.DocsDir, "game", "MODDING.md"));
+            if (ImGui.MenuItem("Script reference")) Engine.OpenInExplorer(Path.Combine(Engine.DocsDir, "game", "SCRIPT_REFERENCE.md"));
             if (ImGui.MenuItem("Engine README")) Engine.OpenInExplorer(Path.Combine(Engine.Root, "README.md"));
             ImGui.Separator();
             ImGui.MenuItem("Viewport: left click select, middle drag / WASD pan, wheel zoom", "", false, false);

@@ -11,6 +11,16 @@ namespace Burger.Runtime;
 public sealed partial class Hud
 {
     public int PoliticsTab;
+
+    /// <summary>The country the Politics panel shows: the player, or in observe_ui mode the selected country.</summary>
+    private Country? PoliticsSubject => G.World.Player ?? (Ui.ObserveUi && Ui.SelectedCountry is { Exists: true } sc ? sc : null);
+
+    /// <summary>A button that changes the game; while observing it only shows its state and cannot be pressed.</summary>
+    private bool ActionButton(Rectangle r, string text, bool enabled = true, string? tooltip = null, bool selected = false, float size = 17)
+    {
+        bool observing = G.World.Player == null;
+        return Gui.Button(r, text, enabled && !observing, observing ? "Read-only while observing" + (tooltip != null ? "\n" + tooltip : "") : tooltip, selected, size);
+    }
     private string? _cabinetPick;
 
     // Preserve parliament seat hover through the small gaps between rendered dots.
@@ -52,44 +62,54 @@ public sealed partial class Hud
 
     private void DrawPoliticsPanel()
     {
-        var player = G.World.Player;
+        var player = PoliticsSubject;
         var P = G.Politics;
         if (player == null || !P.Enabled) { CloseLeft(); return; }
         // Every tab sizes to its content; LeftRect caps it to the available screen height.
         var r = LeftRect(PoliticsPanelHeight(player));
         r.Width = 470 * S;
-        Gui.Panel(r, "Politics");
+        Gui.Panel(r, G.World.Player == null ? $"Politics · {player.Name} (observing)" : SubNavH > 0 ? "" : "Politics");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 6 * S, w = r.Width - 24 * S;
         var tabs = new List<(string Name, string Label, int Id, string Icon)>
         {
-            ("Overview", "Home", 0, "politics_overview"), ("Parties", "Orgs", 4, "politics_organization"),
+            ("Overview", "Overview", 0, "ui_overview"), ("Parties", "Parties", 4, "politics_organization"),
         };
-        if (P.LawsEnabled) tabs.Add(("Laws", "Laws", 1, "politics_law"));
-        if (P.CabinetEnabled) tabs.Add(("Cabinet", "Cab", 2, "cabinet"));
-        if (P.CivilWarsEnabled) tabs.Add(("Movements", "Move", 3, "movement"));
-        tabs.Add(("Effects", "FX", 6, "effects"));
+        if (P.LawsEnabled) tabs.Add(("Laws", "Laws", 1, "ui_laws"));
+        if (P.CabinetEnabled) tabs.Add(("Cabinet", "Cabinet", 2, "ui_cabinet"));
+        if (P.CivilWarsEnabled && (PoliticsTab == 3 || P.MovementsOf(player).Any())) tabs.Add(("Movements", "Movements", 3, "ui_movements"));
+        tabs.Add(("Effects", "Effects", 6, "ui_effects"));
         float tabGap = 4 * S, tabW = (w - (tabs.Count - 1) * tabGap) / tabs.Count, tabH = 32 * S;
         for (int i = 0; i < tabs.Count; i++)
         {
             var tab = tabs[i];
             var tr = new Rectangle(x + i * (tabW + tabGap), y, tabW, tabH);
-            bool hasIcon = Gui.HasIcon(tab.Icon);
             if (Gui.Button(tr, "", true, null, PoliticsTab == tab.Id, 10)) PoliticsTab = tab.Id;
-            float textX = tr.X + 3 * S;
-            float textW = tr.Width - 6 * S;
-            if (hasIcon)
-            {
-                float iconSize = Math.Min(19 * S, tabH - 6 * S);
-                Gui.Icon(tab.Icon, new Rectangle(tr.X + 4 * S, tr.Y + (tr.Height - iconSize) / 2, iconSize, iconSize));
-                textX += iconSize + 5 * S;
-                textW -= iconSize + 5 * S;
-            }
-            Gui.LabelCentered(Gui.Fit(tab.Label, textW, 14, FontKind.Bold), new Rectangle(textX, tr.Y, textW, tr.Height), 14,
+            float iconW = Gui.HasIcon(tab.Icon) && tr.Width > 70 * S ? 18 * S : 0;
+            float textX = tr.X + 3 * S + iconW;
+            float textW = tr.Width - 6 * S - iconW;
+            if (iconW > 0) Gui.Icon(tab.Icon, new Rectangle(tr.X + 4 * S, tr.Y + (tr.Height - 18 * S) / 2, 18 * S, 18 * S));
+            Gui.LabelCentered(Gui.Fit(tab.Label, textW, 13, FontKind.Bold), new Rectangle(textX, tr.Y, textW, tr.Height), 13,
                 PoliticsTab == tab.Id ? Color.White : Gui.Text, FontKind.Bold);
             if (Gui.Hover(tr)) Gui.Tooltip(tab.Name);
         }
         y += 37 * S;
+        if (PoliticsTab == 0)
+        {
+            // Overview sub-tabs: the chamber summary, or the individual seats
+            int subs = P.PopsEnabled ? 3 : 2;
+            float sw = (w - (subs - 1) * 4 * S) / subs;
+            string[] subNames = { "Chamber", "Seats", "People" };
+            string[] subTips = { "Parties, the seat chart and what needs attention.", "Every seat: who holds it, for which party and province, and until when.",
+                "What the people think: opinion, unrest, objectives and how they shift the vote." };
+            if (_overviewSub >= subs) _overviewSub = 0;
+            for (int i = 0; i < subs; i++)
+                if (Gui.Button(new Rectangle(x + i * (sw + 4 * S), y, sw, 26 * S), subNames[i], true, subTips[i], _overviewSub == i, 14))
+                    _overviewSub = i;
+            y += 31 * S;
+            if (_overviewSub == 1) { DrawParliamentTab(player, r, x, y, w); return; }
+            if (_overviewSub == 2) { DrawPeopleTab(player, r, x, y, w); return; }
+        }
         switch (PoliticsTab)
         {
             case 1: DrawLawsTab(player, r, x, y, w); break;
@@ -101,13 +121,13 @@ public sealed partial class Hud
         }
     }
 
-    private const string PoliticsMovementTooltip = "Excluded parties can form movements as support grows. Low stability speeds them up. At 100%, they revolt; without armies, this can become a coup. A shut-out majority may also trigger civil war.";
+    private const string PoliticsMovementTooltip = "Excluded parties form movements as support and grievance grow. Support alone never revolts: a movement also needs organisation, angry backers and a weak regime. Concessions ease grievance but embolden it; crackdowns can fail and are remembered.";
     private float PoliticsPanelHeight(Country c)
     {
         float w = (470 - 24) * S;
         float body = PoliticsTab switch
         {
-            0 => PoliticsOverviewContentHeight(c, w),
+            0 => 31 * S + (_overviewSub == 2 ? PeopleBodyHeight() : _overviewSub == 1 ? 29 * S + ParliamentPageSize * 30 * S + 40 * S : PoliticsOverviewContentHeight(c, w)),
             1 => 29 * S + Math.Max(24 * S, G.Politics.LawGroups.Where(g => G.Politics.IsGroupVisible(c, g)).Sum(g => LawGroupHeight(c, g, w))) + 12 * S,
             2 => CabinetPanelBodyHeight(c),
             3 => MovementsPanelBodyHeight(c, w),
@@ -121,8 +141,8 @@ public sealed partial class Hud
     {
         int count = G.Politics.PartyKeysOf(c).Count();
         if (count == 0) return 45 * S;
-        float list = Math.Max(90 * S, Math.Min(count, 4) * 45 * S);
-        return 29 * S + 30 * S + list + 8 * S + 212 * S + 8 * S;
+        float list = Math.Max(90 * S, Math.Min(count, 6) * 37 * S);
+        return 29 * S + 30 * S + list + 8 * S + 212 * S + MemoryBlockHeight(PartiesSelectedActs(c).Count) + 8 * S;
     }
     private float CabinetPanelBodyHeight(Country c)
     {
@@ -135,7 +155,7 @@ public sealed partial class Hud
     private float MovementsPanelBodyHeight(Country c, float w)
     {
         int count = G.Politics.MovementsOf(c).Count();
-        return 29 * S + (count == 0 ? 26 * S : count * 122 * S) + 12 * S;
+        return 29 * S + (count == 0 ? 26 * S : count * 158 * S) + 12 * S;
     }
     private float EffectsPanelBodyHeight(Country c)
     {
@@ -181,7 +201,7 @@ public sealed partial class Hud
     /// New political systems (factions, regional branches, pending laws) add a note here instead of adding tabs
     /// or buttons; <see cref="TargetTab"/> makes the line a shortcut to the tab with the detail.
     /// </summary>
-    private readonly record struct PoliticsNote(string Text, Color Tone, string Tooltip, int TargetTab);
+    private readonly record struct PoliticsNote(string Text, Color Tone, string Tooltip, int TargetTab, string? Icon = null);
 
     private List<PoliticsNote> CollectPoliticsNotes(Country c)
     {
@@ -194,31 +214,49 @@ public sealed partial class Hud
             string adjective = P.Ideology(m.Ideology)?.Adjective ?? m.Ideology;
             notes.Add(new PoliticsNote($"{adjective} movement at {m.Progress:0}%",
                 m.Progress >= 60 ? Gui.Bad : Gui.Gold,
-                $"{P.DemandText(m)}\nAt 100% they revolt. Click to open Movements.", 3));
+                $"{P.DemandText(m)}\nMobilised {m.Progress:0}%, organised {m.Organization:0}%, grievance {m.Grievance:0}. Click to open Movements.", 3, "ui_movements"));
         }
+
+        double cohesion = P.GovernmentCohesion(c);
+        if (cohesion < FactionNoteCohesion)
+        {
+            var angriest = p.GovernmentOrganizations.Select(k => G.World.GetGenericScope(k)).OfType<GenericScope>().Where(PoliticsSystem.IsParty)
+                .SelectMany(party => P.FactionsOf(party)).OrderByDescending(f => P.FactionGrievance(f) * P.FactionInfluence(f)).FirstOrDefault();
+            double infighting = P.InfightingStability(c);
+            notes.Add(new PoliticsNote($"Government divided: cohesion {cohesion:0}", cohesion < 30 ? Gui.Bad : Gui.Gold,
+                (angriest != null ? $"{angriest.DisplayName} is the most aggrieved (grievance {P.FactionGrievance(angriest):0})." : "Governing factions are restless.")
+                + (infighting < -0.05 ? $"\nInfighting costs {-infighting:0.#} stability." : "")
+                + "\nBelow " + P.CollapseCohesion.ToString("0") + $" the government may fall ({P.CollapseChance(c):P0} a month now). Click to open Parties.", 4, "ui_faction_split"));
+        }
+
+        var restless = P.GoverningFactions(c).Where(f => P.RestlessMonths(f) > 0 && P.CanSplinter(f)).OrderByDescending(f => P.RestlessMonths(f)).FirstOrDefault();
+        if (restless != null)
+            notes.Add(new PoliticsNote($"{restless.DisplayName} may break away", Gui.Bad,
+                $"Restless for {P.RestlessMonths(restless)} months at loyalty {P.FactionLoyalty(restless):0}: about {P.SplinterChance(c, restless):P0} a month it breaks away. Negotiate, favour it, or accept losing its share of the party's votes and seats. Click to open Parties.", 4, "ui_breakaway"));
 
         double stability = G.Rules.Politics.StabilityOf(G, c);
         if (stability < LowStabilityNote)
             notes.Add(new PoliticsNote($"Unstable: stability {stability:0}",
-                Gui.Bad, "Low stability feeds extremist support and movements. Click to open Effects.", 6));
+                Gui.Bad, "Low stability feeds extremist support and movements. Click to open Effects.", 6, "ui_unstable"));
 
         if (P.HoldsElections(c) && p.NextElection is { } next)
         {
             int days = next.TotalDays - G.World.Date.TotalDays;
             if (days >= 0 && days <= ElectionNoteDays)
                 notes.Add(new PoliticsNote(days == 0 ? "Election today" : $"Election in {days} days",
-                    Gui.Gold, $"Next election: {next.ToDisplay()}", -1));
+                    Gui.Gold, $"Next election: {next.ToDisplay()}", -1, "ui_election"));
         }
 
         int bannedWithSupport = p.PartyPopularity.Count(kv => kv.Value >= BannedSupportNote && P.IsPartyBanned(c, kv.Key));
         if (bannedWithSupport > 0)
             notes.Add(new PoliticsNote(bannedWithSupport == 1 ? "A banned party has real support" : $"{bannedWithSupport} banned parties have real support",
-                Gui.Text, "Banned parties with a large following are where movements start. Click to open Parties.", 4));
+                Gui.Text, "Banned parties with a large following are where movements start. Click to open Parties.", 4, "ui_banned"));
 
         return notes;
     }
 
     private const double LowStabilityNote = 35;
+    private const double FactionNoteCohesion = 55;
     private const int ElectionNoteDays = 120;
     private const double BannedSupportNote = 0.10;
 
@@ -244,7 +282,7 @@ public sealed partial class Hud
     private const float OverviewDisclosureHeight = 24;
     private const float OverviewColumnGap = 10;
     // A smaller chamber preserves the seat visualization without making Overview taller than the available panel.
-    private float OverviewChamberHeight(float w) => Math.Min(w * 0.32f, 145 * S);
+    private float OverviewChamberHeight(float w) => Math.Min(w * 0.37f, 168 * S);
 
     // Party key the pointer is over in the party list; read by the chamber on the next frame to light that party's seats.
     private string? _overviewListHoverKey;
@@ -308,7 +346,7 @@ public sealed partial class Hud
         }
         y += pulseH + 8 * S;
 
-        Gui.Section("Parliament", x, y, w);
+        Gui.Section("Parliament", x, y, w, "ui_parliament");
         y += 22 * S;
         // If the window is height-limited, flex the chart first instead of making the Overview scroll.
         float reserve = 3 * S + 28 * S + notesH + 22 * S + blockH + 6 * S;
@@ -318,6 +356,8 @@ public sealed partial class Hud
         string election = P.HoldsElections(c) && p.NextElection is { } nextElection
             ? $"Next election: {nextElection.ToDisplay()}" : "Elections not scheduled";
         if (p.LastElection is { } lastElection) election += $" · last {lastElection.ToDisplay()}";
+        float elW = Gui.Measure(election, 14).X;
+        if (elW + 24 * S < w) Gui.Icon("ui_election", new Rectangle(x + (w - elW) / 2 - 22 * S, y + 1 * S, 18 * S, 18 * S));
         Gui.LabelCentered(Gui.Fit(election, w, 14), new Rectangle(x, y, w, 20 * S), 14, Gui.TextDim);
         y += 22 * S + 6 * S;
 
@@ -335,7 +375,8 @@ public sealed partial class Hud
                     Gui.Tooltip(tip);
                 }
                 if (note.TargetTab >= 0 && Gui.Clicked(row)) PoliticsTab = note.TargetTab;
-                Raylib.DrawCircleV(new Vector2(x + 8 * S, y + 10 * S), 4 * S, note.Tone);
+                if (note.Icon == null || !Gui.Icon(note.Icon, new Rectangle(x + 1 * S, y + 2 * S, 16 * S, 16 * S)))
+                    Raylib.DrawCircleV(new Vector2(x + 8 * S, y + 10 * S), 4 * S, note.Tone);
                 Gui.Label(Gui.Fit(note.Text, w - 28 * S, 14), x + 18 * S, y + 2 * S, 14, note.Tone);
                 y += OverviewNoteRowHeight * S;
             }
@@ -343,7 +384,7 @@ public sealed partial class Hud
         }
 
         // Flex the two columns together; the complete party list lives in Organizations, never in an Overview scrollbar.
-        Gui.Section("Parties", x, y, w);
+        Gui.Section("Parties", x, y, w, "ui_parties");
         y += 22 * S;
         float columnW = (w - OverviewColumnGap * S) / 2;
         float rightX = x + columnW + OverviewColumnGap * S;
@@ -458,7 +499,10 @@ public sealed partial class Hud
         string ideologyLine = ideology?.Name ?? "Unaligned";
         if (rulingParty && !string.IsNullOrWhiteSpace(c.Government)) ideologyLine += " · " + Localisation.GetOrPretty(c.Government);
         Line(ideologyLine, 14, Gui.TextDim);
-        Line(seats > 0 ? $"{support:P0} support · {seats} seats" : $"{support:P0} support", 14, Gui.Text);
+        bool hasFactions = scope != null && P.FactionsOf(scope).Any();
+        double cohesion = hasFactions ? P.PartyCohesion(scope!) : 100;
+        Line((seats > 0 ? $"{support:P0} support · {seats} seats" : $"{support:P0} support") + (hasFactions ? $" · cohesion {cohesion:0}" : ""),
+            14, hasFactions && cohesion < 35 ? Gui.Bad : hasFactions && cohesion < 55 ? Gui.Gold : Gui.Text);
 
         if (Gui.Hover(card))
         {
@@ -466,9 +510,18 @@ public sealed partial class Hud
             lines.Add("Status: " + (banned ? "Banned" : rulingParty ? "Leads the government" : governing ? "In government" : "Opposition"));
             lines.Add($"Support: {support:P1} · Seats: {seats}");
             if (leader != null) lines.Add("Leader: " + leader.DisplayName);
+            if (scope != null)
+                foreach (var act in G.Memory.Of(Burger.Core.Memories.Subject.Of(scope)).OrderByDescending(G.Memory.Current).Take(3))
+                    lines.Add("Remembered: " + G.Memory.Describe(act));
             if (rulingParty && p.GovernmentOrganizations.Count > 1)
                 lines.Add("Coalition: " + string.Join(", ", p.GovernmentOrganizations.Where(g => !string.Equals(g, key, StringComparison.OrdinalIgnoreCase))
                     .Select(g => P.PartyDisplayName(c, g))));
+            if (hasFactions)
+            {
+                lines.Add($"Cohesion: {cohesion:0}/100");
+                foreach (var f in P.FactionsOf(scope!).OrderByDescending(P.FactionInfluence).Take(3))
+                    lines.Add($"  {f.DisplayName}: {P.FactionInfluence(f):P0} influence, loyalty {P.FactionLoyalty(f):0}, grievance {P.FactionGrievance(f):0}");
+            }
             if (!string.IsNullOrWhiteSpace(ideology?.Desc)) lines.Add(ideology!.Desc);
             lines.Add("Click to open Parties.");
             Gui.Tooltip(string.Join("\n", lines));
@@ -525,16 +578,19 @@ public sealed partial class Hud
         float dot = Math.Max(1.5f, Math.Min((outer - inner) / rows * 0.42f, outer * MathF.PI / Math.Max(1, counts[^1]) * 0.42f));
         dot = Math.Min(dot, edge - 1.5f * S);
 
-        var seatOwners = new List<(Vector2 Pos, string PartyKey)>();
+        var parliament = P.ParliamentOf(c);
+        var seatOwners = new List<(Vector2 Pos, string PartyKey, Seat? Seat)>();
         var order = p.PartySeats.Keys.OrderByDescending(k => p.PartySeats.GetValueOrDefault(k)).ToList();
         int si = 0;
         foreach (var key in order)
         {
             int cnt = p.PartySeats.GetValueOrDefault(key);
+            var partySeatList = parliament.Seats.Where(x => x.Party.Equals(key, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(x => x.State?.DisplayName, StringComparer.OrdinalIgnoreCase).ThenBy(x => x.Id, StringComparer.Ordinal).ToList();
             for (int k = 0; k < cnt && si < seats.Count; k++, si++)
                 // Keep the exact organization attached to each rendered seat so hover never
                 // falls back to the country's ruling party or an ideology-wide aggregate.
-                seatOwners.Add((seats[si].Pos, key));
+                seatOwners.Add((seats[si].Pos, key, k < partySeatList.Count ? partySeatList[k] : null));
         }
 
         // The parliament is composed of tiny seat dots; test the closest rendered seat rather
@@ -542,7 +598,7 @@ public sealed partial class Hud
         // makes dense parliaments practical to inspect without changing the rendered dot size.
         float hitRadius = Math.Max(dot + 2 * S, 5 * S);
         var hoveredSeat = seatOwners
-            .Select(seat => (seat.PartyKey, DistanceSquared: Vector2.DistanceSquared(Gui.Mouse, seat.Pos)))
+            .Select(seat => (seat.PartyKey, seat.Seat, seat.Pos, DistanceSquared: Vector2.DistanceSquared(Gui.Mouse, seat.Pos)))
             .Where(seat => seat.DistanceSquared <= hitRadius * hitRadius)
             .OrderBy(seat => seat.DistanceSquared)
             .FirstOrDefault();
@@ -562,10 +618,14 @@ public sealed partial class Hud
         }
 
         string? activeParty = pointerOverParliament ? _parliamentHoverPartyKey : null;
+        // the dot directly under the pointer gets its own ring and tooltip
+        var hitSeat = pointerOverParliament && hoveredSeat.Seat != null ? hoveredSeat.Seat : null;
+        if (pointerOverParliament && hoveredSeat.PartyKey != null && hoveredSeat.Pos != default)
+            Raylib.DrawRing(hoveredSeat.Pos, dot + 0.8f * S, dot + 2f * S, 0, 360, 36, new Color(255, 255, 255, 220));
         string? emphasis = activeParty ?? listHoverKey;
 
         // Seats: a faint shadow under the party colour; the selected party gets a thin light ring.
-        foreach (var (pos, key) in seatOwners)
+        foreach (var (pos, key, _) in seatOwners)
         {
             var col = C(P.PartyColor(key));
             bool dimmed = emphasis != null && !string.Equals(emphasis, key, StringComparison.OrdinalIgnoreCase);
@@ -589,7 +649,26 @@ public sealed partial class Hud
         }
         bool overHollow = showHollow && pointerOverParliament && Vector2.Distance(Gui.Mouse, center) < inner;
 
-        if (!string.IsNullOrEmpty(activeParty) && p.PartySeats.ContainsKey(activeParty))
+        if (hitSeat != null && hoveredSeat.PartyKey != null)
+        {
+            string key = hitSeat.Party;
+            bool gov = p.GovernmentOrganizations.Contains(key, StringComparer.OrdinalIgnoreCase);
+            var lines = new List<string> { hitSeat.Holder?.DisplayName ?? "Vacant seat", P.SeatText(hitSeat) };
+            string status = P.IsPartyBanned(c, key) ? "banned by current law"
+                : p.RulingOrganization.Equals(key, StringComparison.OrdinalIgnoreCase) ? "leads the government"
+                : gov ? "coalition partner" : "opposition";
+            lines.Add($"{P.PartyDisplayName(c, key)} · {status}");
+            if (hitSeat.Holder != null)
+            {
+                var term = P.TermMonths(c, hitSeat, hitSeat.Holder);
+                lines.Add($"Term: {term.Months} months, ends {hitSeat.TermEnd.ToDisplay()}"
+                    + string.Concat(term.Sources.Select(t => $"\n  {t.Source}: {t.Value:+0%;-0%}")));
+            }
+            if (hitSeat.State != null && P.MoodsOf(hitSeat.State) is { } moods && moods.TryGetValue(hitSeat.PopGroup, out var mood))
+                lines.Add($"Voters: {mood.Reaction}, opinion {mood.Opinion:+0;-0;0}, want {Localisation.GetOrPretty(mood.Objective)}");
+            Gui.Tooltip(string.Join("\n", lines));
+        }
+        else if (!string.IsNullOrEmpty(activeParty) && p.PartySeats.ContainsKey(activeParty))
         {
             string key = activeParty;
             int partySeats = p.PartySeats.GetValueOrDefault(key);
@@ -668,14 +747,16 @@ public sealed partial class Hud
         if (Gui.Hover(registerSummary)) Gui.Tooltip(summaryTip);
         y += 29 * S;
 
-        float detailsHeight = 212 * S;
+        var selectedActs = PartiesSelectedActs(c);
+        float actsH = MemoryBlockHeight(selectedActs.Count);
+        float detailsHeight = 212 * S + actsH;
         var detailsArea = new Rectangle(x, r.Y + r.Height - detailsHeight - 8 * S, w, detailsHeight);
         var listArea = new Rectangle(x, y, w, Math.Max(90 * S, detailsArea.Y - y - 8 * S));
-        PoliticsSection("Party register", "politics_organization", x, y, w);
+        PoliticsSection("Party register", "ui_register", x, y, w);
         y += 30 * S;
         listArea.Y = y;
         listArea.Height = Math.Max(90 * S, detailsArea.Y - y - 6 * S);
-        float rowHeight = 42 * S;
+        float rowHeight = 34 * S;
         float rowY = Gui.BeginScroll($"politics-parties-{c.Tag}", listArea, keys.Count * (rowHeight + 3 * S));
         foreach (var key in keys)
         {
@@ -698,15 +779,20 @@ public sealed partial class Hud
                     _politicsSelectedUnitKey = null;
                 _politicsSelectedPartyKey = key;
             }
-            Raylib.DrawRectangleRec(new Rectangle(x + 7 * S, rowY + 6 * S, 4 * S, rowHeight - 12 * S), C(P.PartyColor(key)));
+            Raylib.DrawRectangleRec(new Rectangle(x + 7 * S, rowY + 5 * S, 4 * S, rowHeight - 10 * S), C(P.PartyColor(key)));
             float textX = x + 16 * S;
-            if (OrgIcon("parties", key, new Rectangle(x + 15 * S, rowY + 8 * S, 26 * S, 26 * S))
-                || Gui.Icon("politics_organization", new Rectangle(x + 15 * S, rowY + 12 * S, 18 * S, 18 * S)))
+            if (OrgIcon("parties", key, new Rectangle(x + 15 * S, rowY + 4 * S, 26 * S, 26 * S))
+                || Gui.Icon("politics_organization", new Rectangle(x + 15 * S, rowY + 8 * S, 18 * S, 18 * S)))
                 textX = x + 46 * S;
             string supportLabel = $"{support:P0}";
             float supportW = Gui.Measure(supportLabel, 14).X;
-            Gui.Label(Gui.Fit(label, w - (textX - x) - supportW - 24 * S, 15, FontKind.Bold), textX, rowY + 11 * S, 15, banned ? Gui.TextDim : Gui.Text, FontKind.Bold);
-            Gui.Label(supportLabel, x + w - supportW - 12 * S, rowY + 11 * S, 14, governing ? Gui.Good : Gui.Gold);
+            // status first, so the register reads at a glance without hovering: who governs, who is shut out
+            string badge = banned ? "BANNED" : ruling ? "RULING" : governing ? "COALITION" : "";
+            float badgeW = badge.Length > 0 ? Gui.Measure(badge, 11, FontKind.Bold).X + 12 * S : 0;
+            Gui.Label(Gui.Fit(label, w - (textX - x) - supportW - badgeW - 24 * S, 15, FontKind.Bold), textX, rowY + 8 * S, 15, banned ? Gui.TextDim : Gui.Text, FontKind.Bold);
+            Gui.Label(supportLabel, x + w - supportW - 12 * S, rowY + 8 * S, 14, governing ? Gui.Good : Gui.Gold);
+            if (badge.Length > 0)
+                Gui.Label(badge, x + w - supportW - badgeW - 14 * S, rowY + 10 * S, 11, banned ? Gui.Bad : ruling ? Gui.Gold : Gui.Good, FontKind.Bold);
             rowY += rowHeight + 3 * S;
         }
         Gui.EndScroll();
@@ -732,15 +818,33 @@ public sealed partial class Hud
         if (_politicsSelectedUnitKey != null && selectedUnit == null)
             _politicsSelectedUnitKey = null;
 
-        PoliticsSection("Organization details", "politics_organization", x, detailsArea.Y, w);
+        PoliticsSection("Organization details", "ui_org_details", x, detailsArea.Y, w);
         float dy = detailsArea.Y + 30 * S;
+        float by = dy + 30 * S;
         if (selectedUnit != null)
         {
             // Factions and branches are inspectable entities, not just text in a tooltip.
-            if (Gui.Button(new Rectangle(x, dy, 78 * S, 27 * S), "← Back", true,
+            if (Gui.Button(new Rectangle(x, by, 78 * S, 27 * S), "← Back", true,
                     "Return to " + P.PartyDisplayName(c, selectedKey), false, 14))
                 _politicsSelectedUnitKey = null;
-            dy += 31 * S;
+            bool isFactionDetail = PoliticsSystem.IsPartyFaction(selectedUnit);
+            if (isFactionDetail)
+            {
+                var placateReason = P.CannotPlacate(c, selectedUnit);
+                double placateCost = G.Data.Defines.Get("faction_placate_cost", 40);
+                float bw = 92 * S, bx = x + w - bw * 3 - 4 * S;
+                if (ActionButton(new Rectangle(bx, by, bw, 27 * S), "Negotiate", placateReason == null,
+                        placateReason ?? $"Offer a compromise: costs {placateCost:0} {P.PowerName}, eases their grievance.", false, 14))
+                    { var err = P.Placate(c, selectedUnit); if (err != null) Ui.SetStatus(err); }
+                var favourReason = P.CannotFavour(c, selectedUnit);
+                if (ActionButton(new Rectangle(bx + bw + 2 * S, by, bw, 27 * S), "Favour", favourReason == null,
+                        favourReason ?? $"Back this faction: costs {P.FavourCost:0} {P.PowerName}. It gains influence in the party and eases its grievance; its rivals inside the party resent it.", false, 14))
+                    { var err = P.Favour(c, selectedUnit); if (err != null) Ui.SetStatus(err); }
+                var sidelineReason = P.CannotSideline(c, selectedUnit);
+                if (ActionButton(new Rectangle(bx + (bw + 2 * S) * 2, by, bw, 27 * S), "Sideline", sidelineReason == null,
+                        sidelineReason ?? $"Cut this faction down: costs {P.SidelineCost:0} {P.PowerName}. It counts for less in the party (and in law resistance) but gains grievance; if it stays disaffected it may break away.", false, 14))
+                    { var err = P.Sideline(c, selectedUnit); if (err != null) Ui.SetStatus(err); }
+            }
             bool isBranch = PoliticsSystem.IsPartyBranch(selectedUnit);
             string unitIcon = isBranch ? "branch" : "faction";
             float unitNameX = x;
@@ -755,6 +859,16 @@ public sealed partial class Hud
             Gui.Label(Gui.Fit(selectedUnit.DisplayName, unitNameRect.Width, 18, FontKind.Bold), unitNameX, dy, 18, Gui.Gold, FontKind.Bold);
             if (Gui.Hover(unitNameRect)) Gui.Tooltip(unitTip);
             dy += 29 * S;
+            dy += 33 * S;
+            if (!isBranch)
+            {
+                string standing = $"Influence {P.FactionInfluence(selectedUnit):P0} · Loyalty {P.FactionLoyalty(selectedUnit):0} · Grievance {P.FactionGrievance(selectedUnit):0}";
+                var standingRect = new Rectangle(x, dy, w, 20 * S);
+                Gui.Label(Gui.Fit(standing, w, 14), x, dy, 14, P.FactionLoyalty(selectedUnit) < 35 ? Gui.Bad : Gui.Text);
+                string wants = FactionWants(selectedUnit);
+                Gui.Label(Gui.Fit(wants, w, 14), x, dy + 20 * S, 14, Gui.TextDim);
+                if (Gui.Hover(new Rectangle(x, dy, w, 40 * S))) Gui.Tooltip(FactionTooltip(c, selectedUnit));
+            }
             if (isBranch)
             {
                 bool canOpenState = branchState?.Locations.FirstOrDefault() is not null;
@@ -773,19 +887,40 @@ public sealed partial class Hud
         {
             float partyNameX = x;
             if (OrgIcon("parties", selectedKey, new Rectangle(x, dy - 2 * S, 26 * S, 26 * S))) partyNameX += 31 * S;
-            Gui.Label(Gui.Fit(P.PartyDisplayName(c, selectedKey), w - (partyNameX - x), 17, FontKind.Bold), partyNameX, dy, 17, Gui.Gold, FontKind.Bold);
+            bool coalitionButton = selectedScope != null && c.IsPlayer && !selectedBanned && !selectedRuling;
+            Gui.Label(Gui.Fit(P.PartyDisplayName(c, selectedKey), w - (partyNameX - x) - (coalitionButton ? 150 * S : 0), 17, FontKind.Bold), partyNameX, dy, 17, Gui.Gold, FontKind.Bold);
+            if (coalitionButton)
+            {
+                var coalitionRect = new Rectangle(x + w - 146 * S, dy - 3 * S, 146 * S, 25 * S);
+                if (selectedGovernment)
+                {
+                    var why = P.CannotDismiss(c, selectedScope!);
+                    if (ActionButton(coalitionRect, "Leave coalition", why == null, why ?? "Drop this partner from the government: its ministers stand down and its factions resent it.", false, 14))
+                        { var err = P.Dismiss(c, selectedScope!); if (err != null) Ui.SetStatus(err); }
+                }
+                else
+                {
+                    var why = P.CannotInvite(c, selectedScope!);
+                    double cost = G.Data.Defines.Get("coalition_invite_cost", 50);
+                    if (ActionButton(coalitionRect, "Invite to government", why == null, why ?? $"Costs {cost:0} {P.PowerName}. Its seats count for the majority, and its factions will weigh on laws, the cabinet and cohesion.", false, 14))
+                        { var err = P.Invite(c, selectedScope!); if (err != null) Ui.SetStatus(err); }
+                }
+            }
             dy += 21 * S;
             var leader = P.LeaderOf(selectedScope);
-            string first = $"{selectedIdeology?.Name ?? "Unaligned"} · {selectedSupport:P0} · {selectedSeats} seats";
+            double cohesionValue = selectedScope != null ? P.PartyCohesion(selectedScope) : 100;
+            bool hasFactions = selectedScope != null && P.FactionsOf(selectedScope).Any();
+            string first = $"{selectedIdeology?.Name ?? "Unaligned"} · {selectedSupport:P0} · {selectedSeats} seats" + (hasFactions ? $" · cohesion {cohesionValue:0}" : "");
             var summary = new Rectangle(x, dy, w, 19 * S);
             Gui.Label(Gui.Fit(first, w - 24 * S, 14), x, dy, 14);
             var summaryInfo = new Rectangle(x + w - 19 * S, dy, 18 * S, 18 * S);
             if (!Gui.Icon("information", summaryInfo)) Gui.LabelCentered("i", summaryInfo, 14, Gui.Gold, FontKind.Bold);
             string status = selectedBanned ? "Banned" : selectedRuling ? "Government leader" : selectedGovernment ? "Coalition partner" : "Opposition";
-            string partyDetailsTip = $"Status: {status}\nLeader: {leader?.DisplayName ?? "Leader unknown"}\nSeats: {selectedSeats}/{seats} ({selectedSeatShare:P1})\nSupport: {selectedSupport:P1}";
+            string partyDetailsTip = $"Status: {status}\nLeader: {leader?.DisplayName ?? "Leader unknown"}\nSeats: {selectedSeats}/{seats} ({selectedSeatShare:P1})\nSupport: {selectedSupport:P1}" +
+                (hasFactions ? $"\nCohesion: {cohesionValue:0}/100 - a divided party loses up to {100 * G.Data.Defines.Get("party_division_votes", 0.25):0}% of its votes and, in government, stability." : "");
             if (Gui.Hover(summary)) Gui.Tooltip(partyDetailsTip);
             dy += 22 * S;
-            PoliticsSection($"Factions & branches · {units.Count}", "faction", x, dy, w);
+            PoliticsSection($"Factions & branches · {units.Count}", "ui_factions", x, dy, w);
             dy += 28 * S;
             if (units.Count == 0)
             {
@@ -794,7 +929,7 @@ public sealed partial class Hud
             else
             {
                 var unitArea = new Rectangle(x, dy, w, Math.Max(38 * S, detailsArea.Bottom() - dy - 5 * S));
-                const float unitRowHeightBase = 40;
+                const float unitRowHeightBase = 44;
                 float unitRowHeight = unitRowHeightBase * S;
                 float unitY = Gui.BeginScroll($"politics-units-{c.Tag}-{selectedKey}", unitArea, units.Count * (unitRowHeight + 3 * S));
                 foreach (var unit in units)
@@ -810,14 +945,96 @@ public sealed partial class Hud
                         _politicsSelectedUnitKey = unit.Key;
                     string unitIcon = isBranch ? "branch" : "faction";
                     float unitTextX = x + 5 * S;
-                    if (OrgIcon(isBranch ? "branches" : "factions", unit.Key, new Rectangle(unitTextX, unitY + 6 * S, 26 * S, 26 * S))
-                        || Gui.Icon(unitIcon, new Rectangle(unitTextX, unitY + 10 * S, 18 * S, 18 * S)))
+                    if (OrgIcon(isBranch ? "branches" : "factions", unit.Key, new Rectangle(unitTextX, unitY + 8 * S, 28 * S, 28 * S))
+                        || Gui.Icon(unitIcon, new Rectangle(unitTextX, unitY + 13 * S, 18 * S, 18 * S)))
                         unitTextX += 31 * S;
-                    Gui.Label(Gui.Fit(unit.DisplayName, w - (unitTextX - x) - 8 * S, 14, FontKind.Bold), unitTextX, unitY + 11 * S, 14, Gui.Text, FontKind.Bold);
+                    string moodLabel = "";
+                    if (!isBranch)
+                    {
+                        double loyalty = P.FactionLoyalty(unit), grievance = P.FactionGrievance(unit);
+                        moodLabel = $"{P.FactionInfluence(unit):P0}";
+                        var mood = loyalty < 35 ? Gui.Bad : loyalty < 55 ? Gui.Gold : Gui.Good;
+                        float moodW = Gui.Measure(moodLabel, 14).X;
+                        Gui.Label(moodLabel, x + w - moodW - 14 * S, unitY + 6 * S, 14, mood);
+                        moodLabel = "  ";
+                        if (Gui.Hover(unitRow)) Gui.Tooltip(FactionTooltip(c, unit));
+                    }
+                    Gui.Label(Gui.Fit(unit.DisplayName, w - (unitTextX - x) - (moodLabel.Length > 0 ? 56 : 8) * S, 14, FontKind.Bold), unitTextX, unitY + 6 * S, 14, Gui.Text, FontKind.Bold);
+                    // second line: what it is and who leads it (a faction's loyalty and grievance, a branch's state)
+                    string sub = isBranch
+                        ? $"Branch · {state?.DisplayName ?? "no state"}"
+                        : $"Faction · loyalty {P.FactionLoyalty(unit):0} · grievance {P.FactionGrievance(unit):0}";
+                    if (P.LeaderOf(unit) is { } unitLeader) sub += " · " + unitLeader.DisplayName;
+                    Gui.Label(Gui.Fit(sub, w - (unitTextX - x) - 12 * S, 12), unitTextX, unitY + 25 * S, 12, !isBranch && P.FactionGrievance(unit) >= 60 ? Gui.Bad : Gui.TextDim);
                     unitY += unitRowHeight + 3 * S;
                 }
                 Gui.EndScroll();
             }
+        }
+        if (actsH > 0)
+        {
+            string actsTitle = _politicsSelectedUnitKey != null ? $"{G.World.GetGenericScope(_politicsSelectedUnitKey)?.DisplayName} is remembered for" : $"{P.PartyDisplayName(c, selectedKey)} is remembered for";
+            DrawRememberedActs(selectedActs, actsTitle, x, detailsArea.Bottom() - actsH + 4 * S, w);
+        }
+    }
+
+    /// <summary>The acts the Parties tab shows under the details: the open faction or branch, else the selected party.</summary>
+    private List<Burger.Core.Memories.MemoryEntry> PartiesSelectedActs(Country c)
+    {
+        var P = G.Politics;
+        string? key = _politicsSelectedUnitKey != null && G.World.GetGenericScope(_politicsSelectedUnitKey) != null
+            ? _politicsSelectedUnitKey
+            : string.IsNullOrEmpty(_politicsSelectedPartyKey) ? P.Of(c).RulingOrganization : _politicsSelectedPartyKey;
+        return G.World.GetGenericScope(key) is { } scope
+            ? G.Memory.Of(Burger.Core.Memories.Subject.Of(scope)).OrderByDescending(G.Memory.Current).Take(3).ToList()
+            : new List<Burger.Core.Memories.MemoryEntry>();
+    }
+
+    // ------------------------------------------------------------------------------------- parliament
+    private const int ParliamentPageSize = 10;
+    private int _parliamentPage;
+    private int _overviewSub;
+
+    private void DrawParliamentTab(Country c, Rectangle r, float x, float y, float w)
+    {
+        var P = G.Politics;
+        var p = P.Of(c);
+        var par = P.ParliamentOf(c);
+        PoliticsSection($"Parliament ({par.Seats.Count} seats)", "ui_parliament", x, y, w);
+        y += 29 * S;
+        if (par.Seats.Count == 0)
+        {
+            Gui.Label("No seats yet.", x + 2 * S, y, 14, Gui.TextDim);
+            return;
+        }
+        var ordered = par.Seats.OrderBy(s => p.GovernmentOrganizations.Contains(s.Party, StringComparer.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(s => s.Party, StringComparer.OrdinalIgnoreCase).ThenBy(s => s.State?.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
+        int pages = (ordered.Count + ParliamentPageSize - 1) / ParliamentPageSize;
+        _parliamentPage = Math.Clamp(_parliamentPage, 0, pages - 1);
+        float rowH = 30 * S;
+        foreach (var seat in ordered.Skip(_parliamentPage * ParliamentPageSize).Take(ParliamentPageSize))
+        {
+            var row = new Rectangle(x, y, w, rowH - 2 * S);
+            bool gov = p.GovernmentOrganizations.Contains(seat.Party, StringComparer.OrdinalIgnoreCase);
+            Gui.Card(row, new Color(29, 31, 37, 255));
+            string holder = seat.Holder?.DisplayName ?? "Vacant";
+            Gui.Label(Gui.Fit(holder, w * 0.4f, 14, FontKind.Bold), row.X + 6 * S, row.Y + 5 * S, 14, gov ? Gui.Good : Gui.Text, FontKind.Bold);
+            Gui.Label(Gui.Fit(P.PartyDisplayName(c, seat.Party), w * 0.26f, 13), row.X + w * 0.42f, row.Y + 6 * S, 13, Gui.TextDim);
+            Gui.Label(Gui.Fit(seat.State?.DisplayName ?? "-", w * 0.2f, 13), row.X + w * 0.7f, row.Y + 6 * S, 13, Gui.TextDim);
+            if (Gui.Hover(row))
+            {
+                var term = seat.Holder != null ? P.TermMonths(c, seat, seat.Holder) : default;
+                string terms = term.Sources == null ? "" : "\nTerm: " + term.Months + " months" + string.Concat(term.Sources.Select(t => $"\n  {t.Source}: {t.Value:+0%;-0%}"));
+                Gui.Tooltip(P.SeatText(seat) + $"\n{(gov ? "Government" : "Opposition")}" + terms);
+            }
+            y += rowH;
+        }
+        y += 6 * S;
+        if (pages > 1)
+        {
+            if (Gui.Button(new Rectangle(x, y, 80 * S, 26 * S), "Prev", _parliamentPage > 0, null, false, 14)) _parliamentPage--;
+            if (Gui.Button(new Rectangle(x + w - 80 * S, y, 80 * S, 26 * S), "Next", _parliamentPage < pages - 1, null, false, 14)) _parliamentPage++;
+            Gui.LabelCentered($"{_parliamentPage + 1}/{pages}", new Rectangle(x + 80 * S, y, w - 160 * S, 26 * S), 14, Gui.TextDim);
         }
     }
 
@@ -860,7 +1077,7 @@ public sealed partial class Hud
             if (Gui.Hover(cell)) Gui.Tooltip(status[i].Tip);
         }
         y += statusH + 9 * S;
-        PoliticsSection("Net effects", "effects", x, y, w);
+        PoliticsSection("Net effects", "ui_effects", x, y, w);
         y += 24 * S;
         if (totals.Count == 0)
         {
@@ -894,7 +1111,7 @@ public sealed partial class Hud
             }
             else y += 6 * S;
         }
-        PoliticsSection($"Sources · {sources.Count}", "effects", x, y, w);
+        PoliticsSection($"Sources · {sources.Count}", "ui_sources", x, y, w);
         y += 24 * S;
         if (sources.Count == 0)
         {
@@ -943,7 +1160,7 @@ public sealed partial class Hud
             string groupTip = string.IsNullOrWhiteSpace(g.Desc) ? g.Name : $"{g.Name}\n{g.Desc}";
             float cooldownW = cd > 0 ? Math.Min(w * 0.34f, Gui.Measure($"{cd}d cooldown", 14).X + 8 * S) : 0;
             float sectionW = w - cooldownW - (cooldownW > 0 ? 8 * S : 0);
-            PoliticsSection(g.Name, "politics_law", x, ly, sectionW);
+            PoliticsSection(g.Name, "ui_laws", x, ly, sectionW);
             if (Gui.Hover(new Rectangle(x, ly, w - 4 * S, 24 * S))) Gui.Tooltip(groupTip);
             if (cd > 0) Gui.Label($"{cd}d cooldown", x + w - cooldownW, ly + 5 * S, 14, Gui.Gold);
             ly += 28 * S;
@@ -962,13 +1179,15 @@ public sealed partial class Hud
                              (law.SingleParty ? "\nOnly the ruling party is allowed; elections suspended" : law.SuspendsElections ? "\nElections suspended" : "");
                 if (!isCurrent)
                 {
-                    tip += $"\n\nCost: {law.Cost:0} {P.PowerName}";
+                    double lawCost = P.EnactCost(c, law);
+                    tip += $"\n\nCost: {lawCost:0} {P.PowerName}" + (lawCost > law.Cost + 0.5 ? $" ({law.Cost:0} + {lawCost - law.Cost:0} to defy your factions)" : "");
+                    foreach (var line in P.ExplainLaw(c, law)) tip += $"\n- {line}";
                     if (law.Allow != null)
                         foreach (var (text, ok) in G.Script.ExplainTrigger(law.Allow, G.Context(c))) tip += $"\n{(ok ? "[x]" : "[ ]")} {text}";
                     if (reason != null) tip += $"\n\nUnavailable: {reason}";
                 }
                 var button = new Rectangle(bx, ly, bw, bh);
-                if (Gui.Button(button, hasIcon ? "" : law.Name, isCurrent || reason == null, tip, isCurrent, 15) && !isCurrent)
+                if (ActionButton(button, hasIcon ? "" : law.Name, isCurrent || reason == null, tip, isCurrent, 15) && !isCurrent)
                 {
                     var err = P.Enact(c, law);
                     if (err != null) Ui.SetStatus(err);
@@ -985,6 +1204,38 @@ public sealed partial class Hud
         if (groups.Count == 0) Gui.Label("No law groups are available.", x + 2 * S, ly + 2 * S, 14, Gui.TextDim);
         Gui.EndScroll();
     }
+    private string CandidateAffiliation(Country c, Character ch)
+    {
+        var P = G.Politics;
+        string party = P.OrganizationOf(ch, c) is { } org ? P.PartyDisplayName(c, org) : P.Ideology(P.MinisterParty(ch))?.Name ?? "independent";
+        return P.FactionOfCharacter(ch) is { } faction ? $"{party}, {faction.DisplayName}" : party;
+    }
+
+    private string FactionWants(GenericScope faction)
+    {
+        var P = G.Politics;
+        string Names(IEnumerable<string> keys) => string.Join(", ", keys.Select(k => P.Laws.TryGetValue(k, out var l) ? l.Name : Localisation.GetOrPretty(k)));
+        var parts = new List<string>();
+        if (P.FactionLikes(faction).Count > 0) parts.Add("Wants " + Names(P.FactionLikes(faction)));
+        if (P.FactionDislikes(faction).Count > 0) parts.Add("Opposes " + Names(P.FactionDislikes(faction)));
+        if (P.FactionPost(faction) is { } post) parts.Add("Seeks " + (P.Positions.FirstOrDefault(x => x.Key == post)?.Name ?? post));
+        return parts.Count == 0 ? "No stated demands" : string.Join(" · ", parts);
+    }
+
+    private string FactionTooltip(Country c, GenericScope faction)
+    {
+        var P = G.Politics;
+        var (target, reasons) = P.LoyaltyOutlook(c, faction);
+        double standing = P.StandingGrievance(c, faction);
+        string tip = $"{faction.DisplayName}\nInfluence {P.FactionInfluence(faction):P0} of its party (weight x loyalty)\n" +
+                     $"Loyalty {P.FactionLoyalty(faction):0} heading to {target:0}; grievance {P.FactionGrievance(faction):0}" +
+                     (standing > 0 ? $" settling near {standing:0} while its party governs" : "") + "\n" + FactionWants(faction);
+        if (reasons.Count > 0) tip += "\nDrivers: " + string.Join(", ", reasons);
+        if (P.RestlessMonths(faction) > 0 && P.CanSplinter(faction))
+            tip += $"\nBreak-away risk: restless for {P.RestlessMonths(faction)} months, about {P.SplinterChance(c, faction):P0} a month that it founds its own party. A cabinet post makes it stay; being shut out speeds it up.";
+        return tip + "\nLaws it opposes raise grievance; cabinet posts for its members and Negotiate lower it.";
+    }
+
     private float LawGroupHeight(Country c, LawGroup g, float w)
     {
         var P = G.Politics;
@@ -1018,14 +1269,14 @@ public sealed partial class Hud
             float titleX = box.X + (hasIcon ? 34 : 8) * S;
             Gui.Label(Gui.Fit(pos.Name, box.Width - 140 * S, 17, FontKind.Bold), titleX, box.Y + 6 * S, 17, Gui.Gold, FontKind.Bold);
             var minister = P.MinisterOf(c, pos);
-            string who = minister == null ? "Vacant" : $"{minister.DisplayName} ({P.Ideology(P.MinisterParty(minister))?.Name}), {Localisation.GetOrPretty(pos.Stat)} {minister.GetStat(pos.Stat):0}";
+            string who = minister == null ? "Vacant" : $"{minister.DisplayName} ({CandidateAffiliation(c, minister)}), {Localisation.GetOrPretty(pos.Stat)} {minister.GetStat(pos.Stat):0}";
             Gui.Label(Gui.Fit(who, box.Width - 122 * S, 15), box.X + 8 * S, box.Y + 36 * S, 15, minister == null ? Gui.TextDim : Gui.Text);
             var effects = new Dictionary<string, double>(pos.Modifier);
             if (minister != null) foreach (var kv in pos.PerPoint) effects[kv.Key] = effects.GetValueOrDefault(kv.Key) + kv.Value * minister.GetStat(pos.Stat);
             if (Gui.Hover(box))
                 Gui.Tooltip($"{pos.Name}\nGood ministers have high {Localisation.GetOrPretty(pos.Stat)}.\nPer point: {string.Join(", ", pos.PerPoint.Select(kv => ModifierText(kv.Key, kv.Value)))}" +
                             (minister != null ? $"\n\nNow: {string.Join(", ", effects.Select(kv => ModifierText(kv.Key, kv.Value)))}" : ""));
-            if (Gui.Button(new Rectangle(box.X + box.Width - 108 * S, box.Y + 18 * S, 100 * S, 32 * S), minister == null ? "Appoint" : "Replace", true, $"Choose a minister ({pos.Cost:0} {P.PowerName})", _cabinetPick == pos.Key, 15))
+            if (ActionButton(new Rectangle(box.X + box.Width - 108 * S, box.Y + 18 * S, 100 * S, 32 * S), minister == null ? "Appoint" : "Replace", true, $"Choose a minister ({pos.Cost:0} {P.PowerName})", _cabinetPick == pos.Key, 15))
                 _cabinetPick = _cabinetPick == pos.Key ? null : pos.Key;
             cy += 74 * S;
             if (_cabinetPick == pos.Key)
@@ -1033,9 +1284,9 @@ public sealed partial class Hud
                 foreach (var candidate in P.Candidates(c, pos).Take(5))
                 {
                     var row = new Rectangle(x + 12 * S, cy, w - 12 * S, 32 * S);
-                    string text = $"{candidate.DisplayName} - {P.Ideology(P.MinisterParty(candidate))?.Name}, {Localisation.GetOrPretty(pos.Stat)} {candidate.GetStat(pos.Stat):0}, age {candidate.Age(G.World.Date)}";
+                    string text = $"{candidate.DisplayName} - {CandidateAffiliation(c, candidate)}, {Localisation.GetOrPretty(pos.Stat)} {candidate.GetStat(pos.Stat):0}, age {candidate.Age(G.World.Date)}";
                     var reason = P.CannotAppoint(c, pos, candidate);
-                    if (Gui.Button(row, Gui.Fit(text, row.Width - 12 * S, 14), reason == null, reason ?? $"Appoint for {pos.Cost:0} {P.PowerName}", false, 14))
+                    if (ActionButton(row, Gui.Fit(text, row.Width - 12 * S, 14), reason == null, reason ?? $"Appoint for {pos.Cost:0} {P.PowerName}" + (P.ExplainAppointment(c, pos, candidate) is { } why ? "\n" + why : ""), false, 14))
                     {
                         var err = P.Appoint(c, pos, candidate);
                         if (err != null) Ui.SetStatus(err); else _cabinetPick = null;
@@ -1052,7 +1303,7 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         var list = P.MovementsOf(c).ToList();
-        float contentH = 29 * S + (list.Count == 0 ? 26 * S : list.Count * 122 * S);
+        float contentH = 29 * S + (list.Count == 0 ? 26 * S : list.Sum(mv => 158 * S + mv.Groups.Count * 18 * S));
         var area = new Rectangle(x, y, w, Math.Max(70 * S, r.Bottom() - y - 9 * S));
         float cy = Gui.BeginScroll($"politics-movements-{c.Tag}", area, contentH);
         var help = new Rectangle(x + w - 22 * S, cy + 2 * S, 20 * S, 20 * S);
@@ -1068,25 +1319,68 @@ public sealed partial class Hud
         foreach (var movement in list)
         {
             var ideology = P.Ideology(movement.Ideology);
-            var box = new Rectangle(x, cy, w, 114 * S);
+            float gh = movement.Groups.Count * 18 * S;
+            var box = new Rectangle(x, cy, w, 150 * S + gh);
             Card(box, new Color(44, 36, 36, 255));
+            var ideoRect = new Rectangle(box.X + 6 * S, box.Y + 5 * S, 22 * S, 22 * S);
             Raylib.DrawRectangleRec(new Rectangle(box.X + 8 * S, box.Y + 10 * S, 16 * S, 16 * S), C(ideology?.Color ?? Rgb.Gray));
-            Gui.Label(Gui.Fit($"{ideology?.Adjective} movement", box.Width - 42 * S, 18, FontKind.Bold), box.X + 31 * S, box.Y + 5 * S, 18, Gui.Gold, FontKind.Bold);
-            Gui.Label(Gui.Fit(P.DemandText(movement), box.Width - 16 * S, 15), box.X + 8 * S, box.Y + 32 * S, 15);
-            var bar = new Rectangle(box.X + 8 * S, box.Y + 58 * S, box.Width - 16 * S, 12 * S);
-            Gui.Bar(bar, (float)(movement.Progress / 100), new Color(220, 90, 60, 255));
-            if (Gui.Hover(bar)) Gui.Tooltip($"{movement.Progress:0}% - at 100% they revolt. Support: {P.PopularityOf(c, movement.Ideology):P0}");
-            float by = box.Y + 78 * S;
-            float buttonGap = 10 * S, giveW = (w - buttonGap) * 0.42f, suppressW = w - buttonGap - giveW;
-            if (Gui.Button(new Rectangle(box.X + 8 * S, by, giveW - 8 * S, 30 * S), "Give in", true, P.DemandText(movement), false, 15)) P.GiveIn(movement);
+            if (Gui.HasIcon($"ui_ideo_{movement.Ideology}")) { Raylib.DrawRectangleRec(ideoRect, C(ideology?.Color ?? Rgb.Gray)); Gui.Icon($"ui_ideo_{movement.Ideology}", ideoRect); }
+            Gui.Label(Gui.Fit($"{ideology?.Adjective} movement - {P.MovementStage(movement)}", box.Width - 42 * S, 18, FontKind.Bold), box.X + 31 * S, box.Y + 5 * S, 18, Gui.Gold, FontKind.Bold);
+            Gui.Label(Gui.Fit(P.DemandText(movement), box.Width - 16 * S, 15), box.X + 8 * S, box.Y + 30 * S, 15);
+            float labelW = 100 * S;
+            var rows = new (string Label, double Value, Color Colour, string Tip)[]
+            {
+                ("Mobilised", movement.Progress, new Color(220, 90, 60, 255), $"{movement.Progress:0}%: strikes and marches. At 100% it can rise only if it is also organised, angry and the regime is weak."),
+                ("Organised", movement.Organization, new Color(90, 150, 220, 255), $"{movement.Organization:0}%: how much of its {P.PopularityOf(c, movement.Ideology):P0} support is organised. Support alone never revolts."),
+                ("Grievance", movement.Grievance, new Color(220, 170, 60, 255), "Why they are angry:\n" + string.Join("\n", P.MovementCauses(movement).Select(x => $"{(x.Value >= 0 ? "+" : "")}{x.Value:0}  {x.Cause}")) + "\nIt moves slowly, so it outlasts a single decision."),
+            };
+            float ry = box.Y + 52 * S;
+            foreach (var (label, value, colour, tip) in rows)
+            {
+                string rowIcon = label switch { "Mobilised" => "ui_mobilised", "Organised" => "ui_organised", _ => "ui_grievance" };
+                Gui.Icon(rowIcon, new Rectangle(box.X + 8 * S, ry - 3 * S, 15 * S, 15 * S));
+                Gui.Label(label, box.X + 26 * S, ry - 2 * S, 13, Gui.TextDim);
+                var bar = new Rectangle(box.X + 8 * S + labelW, ry, box.Width - 16 * S - labelW, 10 * S);
+                Gui.Bar(bar, (float)(value / 100), colour);
+                if (Gui.Hover(new Rectangle(box.X + 8 * S, ry - 3 * S, box.Width - 16 * S, 16 * S))) Gui.Tooltip(tip);
+                ry += 16 * S;
+            }
+            var forecast = P.MovementForecast(movement);
+            var forecastBox = new Rectangle(box.X + 8 * S, box.Y + 101 * S, box.Width - 16 * S, 16 * S);
+            Gui.Label(Gui.Fit(forecast[0], forecastBox.Width, 13), forecastBox.X, forecastBox.Y, 13, Gui.TextDim);
+            if (Gui.Hover(forecastBox)) Gui.Tooltip("What decides whether it can rise:\n" + string.Join("\n", forecast));
+            float gy = box.Y + 120 * S;
+            foreach (var grp in movement.Groups)
+            {
+                var gr = new Rectangle(box.X + 8 * S, gy, box.Width - 16 * S, 17 * S);
+                bool canMeet = P.CannotMeet(movement, grp.Key) == null;
+                if (Gui.Hover(gr)) { Raylib.DrawRectangleRec(gr, new Color(255, 255, 255, 14)); Gui.Tooltip(string.Join("\n", P.ExplainGroup(movement, grp))); }
+                if (canMeet && Gui.Clicked(gr)) { var err = P.MeetGroup(movement, grp.Key); if (err != null) Ui.SetStatus(err); }
+                Gui.Icon("ui_group_" + grp.Key, new Rectangle(gr.X, gr.Y + 1 * S, 15 * S, 15 * S));
+                Gui.Label(PoliticsSystem.GroupName(grp.Key), gr.X + 20 * S, gr.Y, 13, grp.Satisfaction < 0.35 ? Gui.Bad : Gui.TextDim);
+                var gb = new Rectangle(gr.X + labelW + 8 * S, gr.Y + 4 * S, gr.Width - labelW - 8 * S - 62 * S, 9 * S);
+                Gui.Bar(gb, (float)(grp.Strength / 100), grp.Satisfaction < 0.35 ? new Color(220, 90, 60, 255) : new Color(150, 150, 170, 255));
+                string sat = $"{grp.Satisfaction:P0} met";
+                Gui.Label(sat, gr.X + gr.Width - Gui.Measure(sat, 12).X, gr.Y + 1 * S, 12, Gui.TextDim);
+                gy += 18 * S;
+            }
+            float by = box.Y + 120 * S + gh, bw = (box.Width - 16 * S - 2 * 6 * S) / 3;
+            if (ActionButton(new Rectangle(box.X + 8 * S, by, bw, 28 * S), "Give in", true, P.DemandText(movement), false, 14)) P.GiveIn(movement);
+            var concedeReason = P.CannotConcede(movement);
+            if (ActionButton(new Rectangle(box.X + 8 * S + bw + 6 * S, by, bw, 28 * S), $"Concede ({P.ConcedeCost:0})", concedeReason == null,
+                    concedeReason ?? string.Join("\n", P.ExplainConcede(movement)), false, 14))
+            {
+                var err = P.Concede(movement);
+                if (err != null) Ui.SetStatus(err);
+            }
             var reason = P.CannotSuppress(movement);
-            if (Gui.Button(new Rectangle(box.X + giveW + buttonGap, by, suppressW - 8 * S, 30 * S), $"Suppress ({P.SuppressCost:0})", reason == null,
-                    reason ?? $"Set the movement back. Costs {P.SuppressCost:0} {P.PowerName} and some stability; martyrs make the ideology a little more popular.", false, 15))
+            if (ActionButton(new Rectangle(box.X + 8 * S + 2 * (bw + 6 * S), by, bw, 28 * S), $"Crack down ({P.SuppressCost:0})", reason == null,
+                    reason ?? string.Join("\n", P.ExplainSuppress(movement)), false, 14))
             {
                 var err = P.Suppress(movement);
                 if (err != null) Ui.SetStatus(err);
             }
-            cy += 122 * S;
+            cy += 158 * S + gh;
         }
         Gui.EndScroll();
     }

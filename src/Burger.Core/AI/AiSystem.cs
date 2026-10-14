@@ -250,11 +250,13 @@ public class AiSystem
     {
         var now = Game.World.Date;
         string stat = Game.Data.Defines.GeneralStat;
+        // political leaders lead parties, not armies: release them so a soldier takes the command
+        foreach (var army in armies.Where(a => a.General != null && Game.Politics.IsPartyLeader(a.General))) army.General = null;
         foreach (var army in armies.Where(a => a.General == null || !a.General.Alive))
         {
             var used = Game.World.Armies.Where(a => a.General != null).Select(a => a.General!).ToHashSet();
             var candidate = Game.World.CharactersOf(c)
-                .Where(ch => !used.Contains(ch) && ch.Age(now) >= Game.Data.Defines.AdultAge && !ch.IsRuler && !ch.Female)
+                .Where(ch => !used.Contains(ch) && ch.Age(now) >= Game.Data.Defines.AdultAge && !ch.IsRuler && !ch.Female && !Game.Politics.IsPartyLeader(ch))
                 .OrderByDescending(ch => ch.IsGeneral).ThenByDescending(ch => ch.GetStat(stat)).FirstOrDefault();
             if (candidate == null && !Game.Features.Has(FeatureSet.Characters)) continue; // no characters: armies have no generals
             candidate ??= Game.Characters.Generate(c, false, 35 + rng.Next(20));

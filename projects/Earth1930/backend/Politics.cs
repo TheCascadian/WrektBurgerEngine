@@ -2,7 +2,8 @@
 // how fast political movements grow and when shut-out ideologies start civil wars.
 //
 // This file is BACKEND code: it is compiled into your game's EXE and players cannot change it.
-// It starts as a copy of the engine's default. Edit anything you like; delete the file to use the engine default again.
+// It overrides only what Earth1930 does differently from the engine default (see the engine's rules class for the rest).
+// To change a rule, override its method here; delete the file to use the engine default again.
 
 /// <summary>Overridable rules for politics: how popularity drifts, who forms coalitions, how movements grow and when civil wars break out. Subclass and assign to <c>Game.Rules.Politics</c> (the politics feature puts a copy in backend/Politics.cs).</summary>
 public class GamePoliticsRules : PoliticsRules
@@ -133,13 +134,6 @@ public class GamePoliticsRules : PoliticsRules
         return drift;
     }
 
-    /// <summary>Stability of a country, 0-100 (the 'stability' resource; 50 if the game has none).</summary>
-    public override double StabilityOf(Game game, Country c)
-    {
-        var def = game.Resources.Defs.FirstOrDefault(r => string.Equals(r.Key, "stability", StringComparison.OrdinalIgnoreCase));
-        return def == null ? 50 : game.Resources.Get(c, def);
-    }
-
     /// <summary>
     /// Does a government that has lost the country fall into a snap election? When the most popular party is out of government with a clear
     /// lead (snap_election_lead, 8 points) and the last vote was over snap_election_months (12) ago: coalitions collapse, the president dissolves
@@ -164,18 +158,6 @@ public class GamePoliticsRules : PoliticsRules
     }
 
     /// <summary>
-    /// Wealth per person, compared between countries (<see cref="PoliticsSystem.WealthIndex"/>): monthly income per head
-    /// with the economy, else the tax value of its states per head.
-    /// </summary>
-    public override double WealthPerPerson(Game game, Country c)
-    {
-        double people = game.Population.Enabled ? game.Population.TotalOf(c) : c.OwnedStates.Count;
-        if (people <= 0) return 0;
-        double wealth = game.Features.Has(FeatureSet.Economy) && c.LastIncome > 0 ? c.LastIncome : c.OwnedStates.Sum(s => s.Tax);
-        return Math.Max(0, wealth) / people;
-    }
-
-    /// <summary>
     /// What moves a country's stability besides laws, ministers and buildings (points of stability_target, with the name
     /// shown in tooltips): poverty (poor countries are restless: poverty_stability, up to -25), prosperity, a government
     /// whose parties have under government_support_needed (40%) support, and core land held by others.
@@ -191,37 +173,12 @@ public class GamePoliticsRules : PoliticsRules
         if (support < need) list.Add(("Unpopular government", -(need - support) * 100 * d.Get("unpopular_government_stability", 0.6)));
         if (game.World.States.Any(s => s.Owner != null && s.Owner != c && s.Cores.Contains(c)))
             list.Add(("Core land in foreign hands", -d.Get("lost_cores_stability", 5)));
+        double strikes = game.Politics.MovementsOf(c).Sum(m => MovementDisruption(game, c, m));
+        if (strikes < -0.01) list.Add(("Strikes and protest", strikes));
         return list;
     }
 
-    /// <summary>
-    /// How close a country is to breaking apart (0-1): low stability, worse in a poor country, or really high war
-    /// exhaustion (above civil_war_exhaustion, 8 of 20). Makes civil wars likelier and coups rarer.
-    /// </summary>
-    public override double UnrestPressure(Game game, Country c)
-    {
-        double unstable = Math.Clamp((50 - StabilityOf(game, c)) / 50, 0, 1);
-        double poor = Math.Clamp(1 - game.Politics.WealthIndex(c), 0, 1);
-        double tired = game.Features.Has(FeatureSet.Diplomacy)
-            ? Math.Clamp((game.Diplomacy.WarExhaustion(c) - game.Data.Defines.Get("civil_war_exhaustion", 8)) / 8, 0, 1) : 0;
-        return Math.Clamp(Math.Max(unstable * (0.5 + poor), tired), 0, 1);
-    }
-
-    /// <summary>
-    /// Can an ideology that could win elections still take power by force (coup or civil war)? By default extremists,
-    /// in a democracy whose stability has fallen under democracy_coup_stability (25).
-    /// </summary>
-    public override bool CanSeizePower(Game game, Country c, IdeologyDef ideology)
-        => ideology.Extremist && StabilityOf(game, c) < game.Data.Defines.Get("democracy_coup_stability", 25);
-
-    /// <summary>
-    /// Can this ideology take government by winning an election? By default yes; with the define extremists_need_assent (1) the extremist ones cannot:
-    /// a fascist or communist party that wins the vote becomes a movement that demands power, and the ruling parties either give in (a coalition that
-    /// "appoints" it), suppress it, or face a revolt - a coup or a civil war.
-    /// </summary>
-    public override bool NeedsAssent(Game game, Country c, IdeologyDef ideology)
-        => game.Data.Defines.Get("extremists_need_assent", 0) > 0
-           && (ideology.Extremist || game.AiProfiles.Enabled && game.AiProfiles.PersonalityOf(c).Trait("civil_war_prone", 0) > 0.5); // (in a country split into two camps nobody takes the government from the other by the vote)
+ // (in a country split into two camps nobody takes the government from the other by the vote)
 
     /// <summary>
     /// Monthly chance an AI government gives in to a movement that demands power. Parties that would govern with it (WillGovernWith: the conservatives
@@ -241,6 +198,7 @@ public class GamePoliticsRules : PoliticsRules
         chance *= StabilityOf(game, c) < 40 ? 1.5 : 1;
         if (p.Ruling == "democratic") chance *= game.Data.Defines.Get("democracy_resilience", 1); // (the parliamentary democracies of the west did not hand over power; the profile trait appease overrides it)
         if (game.AiProfiles.Enabled) chance *= game.AiProfiles.PersonalityOf(c).Trait("appease"); // (profile trait appease: 1 = as usual, near 0 = never gives in)
+        chance *= 0.6 + 0.8 * Math.Clamp(m.Organization / 100, 0, 1); // (an organised movement cannot be waved away; a loose one can)
         return Math.Clamp(chance, 0, 0.8);
     }
 
@@ -261,60 +219,6 @@ public class GamePoliticsRules : PoliticsRules
         return Math.Min(1, v);
     }
 
-    /// <summary>Share of the vote of each ideology in an election (popularity with a little chance).</summary>
-    public override Dictionary<string, double> Votes(Game game, Country c)
-    {
-        var p = game.Politics.Of(c);
-        var votes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        double noise = game.Data.Defines.Get("election_noise", 0.03);
-        foreach (var kv in p.Popularity) votes[kv.Key] = Math.Max(0, kv.Value + (game.Rng.NextDouble() * 2 - 1) * noise);
-        double sum = votes.Values.Sum();
-        if (sum > 0) foreach (var k in votes.Keys.ToList()) votes[k] /= sum;
-        return votes;
-    }
-
-    /// <summary>
-    /// Votes of minority parties (population features): people of an unaccepted culture vote for its national party
-    /// (minority_party_turnout, 70%, of them) and people of a faith other than the state religion that make up at least
-    /// religious_party_min_share (10%) vote for a religious party (religious_party_turnout, 40%). Only people outside
-    /// colonies vote. Keys: culture:KEY and religion:KEY; values are shares of all votes.
-    /// </summary>
-    public override Dictionary<string, double> MinorityVotes(Game game, Country c)
-    {
-        var result = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        var pop = game.Population;
-        var d = game.Data.Defines;
-        var voters = c.OwnedStates.Where(s => pop.HasPops(s) && !pop.IsColony(s)).ToList();
-        double total = voters.Sum(pop.TotalOf);
-        if (total <= 0) return result;
-        double minShare = d.Get("minority_party_min_share", 0.03);
-        foreach (var (culture, size) in pop.Breakdown(voters, p => p.Culture))
-        {
-            double share = size / total;
-            if (share >= minShare && !pop.IsAccepted(c, culture)) result["culture:" + culture] = share * d.Get("minority_party_turnout", 0.7);
-        }
-        if (pop.ReligionEnabled && pop.Of(c).Religion is { } state)
-            foreach (var (religion, size) in pop.Breakdown(voters, p => p.Religion))
-            {
-                double share = size / total;
-                if (religion != state && share >= d.Get("religious_party_min_share", 0.1)) result["religion:" + religion] = share * d.Get("religious_party_turnout", 0.4);
-            }
-        return result;
-    }
-
-    /// <summary>True if the parties of these two ideologies govern together (both must accept each other).</summary>
-    public override bool WillGovernWith(Game game, Country c, IdeologyDef a, IdeologyDef b)
-        => a.Key == b.Key || (a.Coalition.Contains(b.Key) && b.Coalition.Contains(a.Key));
-
-    /// <summary>Monthly progress (points of 100) of a movement whose ideology has <paramref name="popularity"/> support.</summary>
-    public override double MovementProgress(Game game, Country c, Movement m, double popularity)
-    {
-        double threshold = game.Data.Defines.Get("movement_threshold", 0.25);
-        if (popularity < threshold) return -5;
-        double stability = StabilityOf(game, c);
-        return game.Data.Defines.Get("movement_speed", 0.5) * (popularity - threshold) * 100 * (1.5 - stability / 100.0);
-    }
-
     /// <summary>
     /// Monthly chance that a shut-out ideology with this much support takes power in a coup (no war).
     /// Likelier the more popular it is, the less popular the government is and the lower stability is.
@@ -332,64 +236,10 @@ public class GamePoliticsRules : PoliticsRules
         double ruling = game.Politics.Of(c).Popularity.GetValueOrDefault(game.Politics.Of(c).Ruling);
         double stability = StabilityOf(game, c);
         // (where the country is poor and unstable, or worn out by war, the struggle is fought out in a civil war instead)
-        return (1 - hold) * d.Get("coup_chance", 0.06) * (1 + (popularity - threshold) * 5) * (1.5 - ruling) * (1.5 - stability / 100.0) * (1 - 0.7 * UnrestPressure(game, c));
+        return (1 - hold) * d.Get("coup_chance", 0.06) * (1 + (popularity - threshold) * 5) * (1.5 - ruling) * (1.5 - stability / 100.0) * (1 - 0.7 * UnrestPressure(game, c)) * Math.Pow(MovementReadiness(game, c, game.Politics.MovementOf(c, ideology.Key)), 2) * 5;
     }
 
-    /// <summary>
-    /// Monthly chance that a shut-out ideology with this much support starts a civil war (HOI4 style). Under pressure
-    /// (<see cref="UnrestPressure"/>: unstable and poor, or worn out by war) it needs less support (civil_war_threshold
-    /// 50%, down to 20%) and strikes far more often.
-    /// </summary>
-    public override double CivilWarChance(Game game, Country c, IdeologyDef ideology, double popularity)
-    {
-        double pressure = UnrestPressure(game, c);
-        double threshold = game.Data.Defines.Get("civil_war_threshold", 0.5) - 0.3 * pressure;
-        if (popularity < threshold) return 0;
-        return game.Data.Defines.Get("civil_war_chance", 0.08) * (0.5 + (popularity - threshold) * 2) * (0.5 + 3 * pressure);
-    }
-
-    /// <summary>
-    /// True if a revolt turns into a civil war, false if it is a coup: a government that still has real support
-    /// (civil_war_loyal_share, 20%) fights; an unpopular one is simply pushed aside.
-    /// </summary>
-    public override bool RevoltIsCivilWar(Game game, Country c, string ideology, double popularity)
-    {
-        var p = game.Politics.Of(c);
-        double loyal = p.Government.Sum(g => p.Popularity.GetValueOrDefault(g));
-        // (a country split down the middle - the profile trait civil_war_prone - fights it out as long as the government keeps some of the country behind it)
-        if (game.AiProfiles.Enabled && game.AiProfiles.PersonalityOf(c).Trait("civil_war_prone", 0) > 0.5 && loyal >= 0.15) return true;
-        // (in a country whose history was one of coups, not wars - the profile trait coup_only - the army simply changes sides)
-        if (game.AiProfiles.Enabled && game.AiProfiles.PersonalityOf(c).Trait("coup_only", 0) > 0.5) return false;
-        // (a movement that has clearly outgrown the government - 40% and a third more than it - does not need a war: the army and the officials go over to it)
-        if (popularity >= game.Data.Defines.Get("coup_outgrown_share", 0.5) && popularity > loyal * game.Data.Defines.Get("coup_outgrown_ratio", 1.6)) return false;
-        return loyal >= game.Data.Defines.Get("civil_war_loyal_share", 0.2) && popularity < game.Data.Defines.Get("coup_above", 0.75);
-    }
-
-    /// <summary>Share of the country (states, divisions, treasury) that joins the rebels: the ideology's support.</summary>
-    public override double CivilWarShare(Game game, Country c, string ideology, double popularity)
-        => Math.Clamp(popularity * (game.AiProfiles.Enabled && game.Politics.Ideology(ideology)?.Extremist == true ? game.AiProfiles.PersonalityOf(c).Trait("rebel_share", 1) : 1), 0.1, 0.9); // (the profile trait rebel_share: the army sided with the rebels)
-
-    /// <summary>
-    /// Who has won a civil war: true = the old government, false = the rebels, null = not decided. A side that is beaten
-    /// (lost its capital and most of its land) has lost; otherwise a side far ahead in war score for civil_war_decisive_months (3)
-    /// wins (score gap civil_war_decisive_score, 40), a side clearly ahead after civil_war_stalemate_months (18) wins (gap 15),
-    /// and no civil war goes on longer than civil_war_max_months (36): the side ahead takes the country, the government if even.
-    /// </summary>
-    public override bool? CivilWarVerdict(Game game, CivilWar cw, bool originBeaten, bool rebelBeaten)
-    {
-        if (rebelBeaten) return true;
-        if (originBeaten) return false;
-        var d = game.Data.Defines;
-        double score = cw.War.ScoreFor(cw.Origin);
-        int months = (game.World.Date.TotalDays - cw.War.StartDate.TotalDays) / 30;
-        if (months >= d.Get("civil_war_decisive_months", 3) && Math.Abs(score) >= d.Get("civil_war_decisive_score", 40)) return score > 0;
-        if (months >= d.Get("civil_war_stalemate_months", 18) && Math.Abs(score) >= 15) return score > 0;
-        if (months >= d.Get("civil_war_max_months", 36)) return score >= 0;
-        return null;
-    }
-
-    /// <summary>Years after a coup or civil war before the next one can start.</summary>
-    public override double CalmYears(Game game, Country c) => game.Data.Defines.Get("revolt_calm_years", 5);
+ // (the profile trait rebel_share: the army sided with the rebels)
 }
 
 /// <summary>Installs the politics rules.</summary>

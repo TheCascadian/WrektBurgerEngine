@@ -35,7 +35,8 @@ public sealed class WarfareSystem
 
     public bool IsHostile(Country a, Country b) => a != b && _game.World.AtWar(a, b);
 
-    public bool CanEnter(Country c, Location l) => Rules.CanEnter(_game, c, l);
+    /// <summary>May the country's forces enter this location? A demilitarized zone is closed whatever a game's own rules say.</summary>
+    public bool CanEnter(Country c, Location l) => l.State?.Demilitarized != true && Rules.CanEnter(_game, c, l);
 
     public IReadOnlyList<Division> DivisionsAt(Location l)
         => _byLocation.TryGetValue(l, out var list) ? list : (IReadOnlyList<Division>)Array.Empty<Division>();
@@ -396,6 +397,23 @@ public sealed class WarfareSystem
         foreach (var d in army.Divisions) { d.FrontPost = null; OrderMove(d, target); }
     }
 
+    /// <summary>
+    /// Adds a stop to the end of a division's route (shift + right click): it walks its current path, then on to this location.
+    /// With nothing to walk it is an ordinary order. Returns false if the location cannot be reached from the end of the route.
+    /// </summary>
+    public bool QueueMove(Division d, Location target)
+    {
+        if (d.Retreating || d.Path.Count == 0) return OrderMove(d, target);
+        if (d.Battle != null && d.AttackTarget == null) return false;
+        var end = d.Path[^1];
+        if (end == target) return true;
+        var path = FindPath(d.Owner, end, target, d.Stat("speed", 4));
+        if (path == null) return false;
+        d.Path.AddRange(path);
+        d.ManualOrder = true;
+        return true;
+    }
+
     public void StopDivision(Division d)
     {
         if (d.Battle != null && d.AttackTarget != null) LeaveBattleAsAttacker(d);
@@ -416,6 +434,7 @@ public sealed class WarfareSystem
         l.SiegeProgress = 0;
         l.Sieger = null;
         _game.Mods.Invoke(m => m.OnLocationControllerChanged(l, old, c));
+        if (old != null && c != null) _game.Hub.RaiseLocationOccupied(l, old, c);
         if (!silent && c != null)
         {
             _game.Events.FireOnAction("on_location_occupied", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase)
@@ -444,6 +463,7 @@ public sealed class WarfareSystem
 
     public void HourlyTick()
     {
+        RouteOutOfDemilitarized();
         MoveDivisions();
         var model = _game.Combat.Current(_game);
         foreach (var b in _game.World.Battles.ToList())
@@ -482,7 +502,7 @@ public sealed class WarfareSystem
             if (d.Battle != null || d.Path.Count == 0) continue;
             var next = d.Path[0];
             var adj = d.Location.AdjacencyTo(next);
-            bool allowed = next.IsWater ? _game.Navy.Enabled && _game.Navy.CanCarry(d) : CanEnter(d.Owner, next);
+            bool allowed = next.IsWater ? _game.Navy.Enabled && _game.Navy.CanCarry(d) : CanEnter(d.Owner, next) || (InDemilitarized(d.Location) && InDemilitarized(next) && next.IsPassable); // (a division walking out may cross zone to zone)
             if (adj == null || !allowed)
             {
                 d.Path.Clear();
@@ -690,12 +710,77 @@ public sealed class WarfareSystem
             if (d.Battle != null && !_game.World.Battles.Contains(d.Battle)) { d.Battle = null; d.AttackTarget = null; }
     }
 
-    /// <summary>Sends divisions standing where they are no longer allowed back to their own land.</summary>
-    public void EvacuateTrespassers()
+    private static bool InDemilitarized(Location l) => !l.IsWater && l.State?.Demilitarized == true;
+
+    /// <summary>
+    /// A division standing in a demilitarized zone (raised there, loaded there, caught by a new treaty) is ordered to walk to the closest
+    /// location outside every zone that it may enter, preferring land that is not hostile. Checked every hour; one already walking out is left alone.
+    /// </summary>
+    public void RouteOutOfDemilitarized()
     {
         foreach (var d in _game.World.Divisions.ToList())
         {
-            if (d.Location.IsWater || CanEnter(d.Owner, d.Location)) continue;
+            if (!InDemilitarized(d.Location)) continue;
+            if (d.Path.Count > 0 && d.Path.Last() is { } last && !InDemilitarized(last) && CanEnter(d.Owner, last)) continue;
+            var exit = PathOutOfDemilitarized(d);
+            if (exit == null)
+            {
+                var home = NearestOwnLocation(d.Owner, d.Location);
+                if (home == null || InDemilitarized(home)) { DestroyDivision(d); continue; }
+                if (d.Battle != null) LeaveBattleAsAttacker(d);
+                d.Battle = null; d.Path.Clear(); d.Retreating = false; d.ManualOrder = false;
+                Teleport(d, home);
+                continue;
+            }
+            if (d.Battle != null) LeaveBattleAsAttacker(d);
+            d.Battle = null; d.AttackTarget = null;
+            d.Retreating = false;
+            d.ManualOrder = false;
+            if (d.Path.Count == 0 || d.Path[0] != exit[0]) d.MoveProgress = 0;
+            d.Path = exit;
+        }
+    }
+
+    // breadth first over land, through zone locations, to the nearest location outside any zone that is not hostile ground
+    private List<Location>? PathOutOfDemilitarized(Division d)
+    {
+        var from = new Dictionary<Location, Location?> { [d.Location] = null };
+        var q = new Queue<Location>();
+        q.Enqueue(d.Location);
+        Location? fallback = null;
+        while (q.Count > 0)
+        {
+            var l = q.Dequeue();
+            if (!InDemilitarized(l))
+            {
+                bool friendly = l.Controller == null || l.Controller == d.Owner || !IsHostile(d.Owner, l.Controller);
+                if (friendly) { fallback = l; break; }
+                fallback ??= l;
+                continue; // (do not walk on through enemy land)
+            }
+            foreach (var a in l.Neighbors)
+            {
+                var n = a.To;
+                if (n.IsWater || !n.IsPassable || from.ContainsKey(n)) continue;
+                if (!InDemilitarized(n) && !CanEnter(d.Owner, n)) continue;
+                from[n] = l;
+                q.Enqueue(n);
+            }
+        }
+        if (fallback == null) return null;
+        var path = new List<Location>();
+        for (var c = fallback; c != null && c != d.Location; c = from[c]) path.Add(c);
+        path.Reverse();
+        return path.Count > 0 ? path : null;
+    }
+
+    /// <summary>Sends divisions standing where they are no longer allowed back to their own land.</summary>
+    public void EvacuateTrespassers()
+    {
+        RouteOutOfDemilitarized();
+        foreach (var d in _game.World.Divisions.ToList())
+        {
+            if (d.Location.IsWater || InDemilitarized(d.Location) || CanEnter(d.Owner, d.Location)) continue;
             var home = NearestOwnLocation(d.Owner, d.Location);
             if (home == null) { DestroyDivision(d); continue; }
             if (d.Battle != null) LeaveBattleAsAttacker(d);

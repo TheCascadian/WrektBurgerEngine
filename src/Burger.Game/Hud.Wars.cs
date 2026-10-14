@@ -15,48 +15,121 @@ public sealed partial class Hud
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
         var wars = G.World.Wars.OrderByDescending(war => player != null && war.Involves(player)).ToList();
         if (wars.Count == 0) Gui.Label("The world is at peace.", x, y, 16, Gui.TextDim);
-        float cardH = 200 * S;
-        float top = Gui.BeginScroll("wars", new Rectangle(x, y, w, r.Height - 46 * S), wars.Count * (cardH + 8 * S));
+        float CardH(War wr) => (212 + Math.Clamp(wr.Goals.Count, 1, 3) * 16 + 10 + (player != null && wr.Involves(player) ? 32 : 0)) * S;
+        float top = Gui.BeginScroll("wars", new Rectangle(x, y, w, r.Height - 46 * S), wars.Sum(wr => CardH(wr) + 8 * S));
         float wy = top;
         foreach (var war in wars)
         {
             bool mine = player != null && war.Involves(player);
+            float cardH = CardH(war);
             var box = new Rectangle(x, wy, w - 8 * S, cardH);
-            Card(box, mine ? new Color(64, 36, 30, 255) : new Color(36, 38, 44, 255), mine);
-            Gui.Label(Gui.Fit(war.Name, w - 20 * S, 16, FontKind.Bold), x + 6, wy + 4, 16, Gui.Gold, FontKind.Bold);
-            Gui.Label($"Since {war.StartDate.ToDisplay()}", x + 6, wy + 24 * S, 13, Gui.TextDim);
-            Gui.Label(Gui.Fit("Attackers: " + string.Join(", ", war.Attackers.Select(c => c.Tag)), w - 20 * S, 14), x + 6, wy + 42 * S, 14);
-            Gui.Label(Gui.Fit("Defenders: " + string.Join(", ", war.Defenders.Select(c => c.Tag)), w - 20 * S, 14), x + 6, wy + 60 * S, 14);
-            // war goals (the attacker's, then allies' own goals)
-            string goals = war.Goals.Count == 0 ? "No war goal" : string.Join("; ", war.Goals.Select(g => $"{g.Holder.Tag}: {Localisation.Get(g.CasusBelli.Name)}"));
-            var gr = new Rectangle(x + 6, wy + 78 * S, w - 24 * S, 18 * S);
-            Gui.Label(Gui.Fit("Goals: " + goals, gr.Width, 13), gr.X, gr.Y, 13, Gui.Text);
-            if (Gui.Hover(gr))
-                Gui.Tooltip(string.Join("\n", war.Goals.Select(g => $"{g.Holder.Name} - {Localisation.Get(g.CasusBelli.Name)} against {g.Target.Name}: " +
-                    $"{G.Diplomacy.GoalStates(g).Count} goal states, matching demands cost {g.CasusBelli.GoalCostMultiplier:P0}" +
-                    (g.CasusBelli.TickingWarScore ? ", holding them adds war score" : ""))) + (war.Goals.Count > 0 ? "\n\nAllies that join add their own war goals." : ""));
-            // war score bar: center = 0
-            var bar = new Rectangle(x + 6, wy + 100 * S, w - 24 * S, 14 * S);
-            Raylib.DrawRectangleRec(bar, new Color(20, 20, 20, 255));
-            float score = (float)war.WarScore / 100f;
+            Card(box, mine ? new Color(52, 34, 32, 255) : new Color(34, 36, 42, 255), mine);
+            float ix = x + 10 * S, iw = w - 28 * S;
+            Color atkCol = C(war.AttackerLeader.Color), defCol = C(war.DefenderLeader.Color);
+            // header: name left, start date right
+            string since = war.StartDate.ToDisplay();
+            float sinceW = Gui.Measure(since, 13).X;
+            Gui.Label(Gui.Fit(war.Name, iw - sinceW - 10 * S, 16, FontKind.Bold), ix, wy + 6 * S, 16, Gui.Gold, FontKind.Bold);
+            Gui.Label(since, ix + iw - sinceW, wy + 8 * S, 13, Gui.TextDim);
+            Raylib.DrawRectangle((int)ix, (int)(wy + 29 * S), (int)iw, 1, new Color(255, 255, 255, 28));
+            // sides
+            float ry = wy + 36 * S;
+            foreach (var (label, col, members, leader) in new[] { ("ATTACK", atkCol, war.Attackers, war.AttackerLeader), ("DEFEND", defCol, war.Defenders, war.DefenderLeader) })
+            {
+                Raylib.DrawRectangle((int)ix, (int)(ry + 2 * S), (int)(4 * S), (int)(14 * S), col);
+                Gui.Label(label, ix + 10 * S, ry + 2 * S, 12, Gui.TextDim, FontKind.Bold);
+                float fw = 24 * S, fh = 16 * S, fx = ix + 66 * S, avail = iw - 66 * S;
+                int fit = Math.Max(1, (int)(avail / (fw + 4 * S)));
+                var list = members.OrderByDescending(c => c == leader).ToList();
+                bool more = list.Count > fit;
+                int shown = more ? fit - 1 : list.Count;
+                for (int i = 0; i < shown; i++)
+                {
+                    var c = list[i];
+                    var fr = new Rectangle(fx + i * (fw + 4 * S), ry + 1 * S, fw, fh);
+                    Gui.Flag(c, fr);
+                    Raylib.DrawRectangleLinesEx(fr, c == leader ? 2 : 1, c == leader ? Gui.Gold : new Color(0, 0, 0, 160));
+                    if (Gui.Hover(fr))
+                    {
+                        var goal = war.Goals.Where(g => g.Holder == c).Select(g => Localisation.Get(g.CasusBelli.Name)).FirstOrDefault();
+                        Gui.Tooltip($"{c.Name} ({c.Tag})\n{(c == leader ? "War leader" : "Ally")} - {label.ToLower().Replace("attack", "attacking").Replace("defend", "defending")}" +
+                            $"\nExhaustion: {G.Diplomacy.WarExhaustion(c):0.0}" + (goal != null ? $"\nWar goal: {goal}" : "") + (c == player ? "\nThis is you" : ""));
+                    }
+                }
+                if (more)
+                {
+                    var mr = new Rectangle(fx + shown * (fw + 4 * S), ry, fw + 10 * S, fh);
+                    Gui.Label($"+{list.Count - shown}", mr.X + 2, ry + 1 * S, 14, Gui.TextDim, FontKind.Bold);
+                    if (Gui.Hover(mr)) Gui.Tooltip(string.Join("\n", list.Skip(shown).Select(c => c.Name)));
+                }
+                ry += 20 * S;
+            }
+            // war score bar: centre = 0, attacker side fills right, defender side fills left
+            string aTag = war.AttackerLeader.Tag, dTag = war.DefenderLeader.Tag;
+            Gui.Icon("ui_war_score", new Rectangle(ix, wy + 78 * S, 14 * S, 14 * S));
+            Gui.Label("WAR SCORE", ix + 18 * S, wy + 80 * S, 11, Gui.TextDim, FontKind.Bold);
+            var bar = new Rectangle(ix, wy + 96 * S, iw, 16 * S);
+            Raylib.DrawRectangleRec(bar, new Color(18, 19, 22, 255));
+            float score = Math.Clamp((float)war.WarScore / 100f, -1f, 1f);
             float mid = bar.X + bar.Width / 2;
             var fill = score >= 0 ? new Rectangle(mid, bar.Y, bar.Width / 2 * score, bar.Height) : new Rectangle(mid + bar.Width / 2 * score, bar.Y, -bar.Width / 2 * score, bar.Height);
-            Raylib.DrawRectangleRec(fill, score >= 0 ? C(war.AttackerLeader.Color) : C(war.DefenderLeader.Color));
+            Raylib.DrawRectangleRec(fill, score >= 0 ? atkCol : defCol);
+            Raylib.DrawRectangleLinesEx(bar, 1, new Color(255, 255, 255, 40));
             Raylib.DrawLine((int)mid, (int)bar.Y - 2, (int)mid, (int)(bar.Y + bar.Height + 2), Color.White);
-            string ws = mine ? $"War score for us: {war.ScoreFor(player!):0}" : $"War score (attacker): {war.WarScore:0}";
-            Gui.Label(ws, x + 6, wy + 116 * S, 14, mine && war.ScoreFor(player!) < 0 ? Gui.Bad : Gui.Text);
-            if (Gui.Hover(bar)) Gui.Tooltip($"Occupation, battles and holding the war goal decide the war score.\nBattle score (attacker): {war.BattleScore:0.0} (capped at {G.Data.Defines.WarScoreBattleCap:0})\nWar goal held (attacker): {war.TickingScore:+0;-0;0}");
-            // exhaustion of the two leaders and stalemate
+            // numbers: attacker's end shows its lead, defender's end the other way
+            double wsA = war.WarScore;
+            Gui.Label($"{dTag} {Math.Max(0, -wsA):0}", bar.X + 4, bar.Y + 1 * S, 13, Color.White, FontKind.Bold);
+            string rtxt = $"{aTag} {Math.Max(0, wsA):0}";
+            Gui.Label(rtxt, bar.X + bar.Width - Gui.Measure(rtxt, 13, FontKind.Bold).X - 4, bar.Y + 1 * S, 13, Color.White, FontKind.Bold);
+            string verdict; Color vcol;
+            double mineScore = mine ? war.ScoreFor(player!) : wsA;
+            if (Math.Abs(wsA) < 5) { verdict = "Undecided - neither side is ahead"; vcol = Gui.TextDim; }
+            else if (mine) { verdict = mineScore > 0 ? $"We are winning by {mineScore:0}" : $"We are losing by {-mineScore:0}"; vcol = mineScore > 0 ? Gui.Good : Gui.Bad; }
+            else { verdict = wsA > 0 ? $"Attackers ({aTag}) ahead by {wsA:0}" : $"Defenders ({dTag}) ahead by {-wsA:0}"; vcol = Gui.Text; }
+            Gui.Label(verdict, ix, wy + 116 * S, 14, vcol, FontKind.Bold);
+            var sr = new Rectangle(ix, wy + 80 * S, iw, 50 * S);
+            if (Gui.Hover(sr)) Gui.Tooltip($"War score runs from -100 to +100. At +100 the attacker can demand everything.\nOccupation, battles and holding the war goal decide it.\nBattle score (attacker): {war.BattleScore:0.0} (capped at {G.Data.Defines.WarScoreBattleCap:0})\nWar goal held (attacker): {war.TickingScore:+0;-0;0}");
+            // exhaustion: one mini bar per leader
             int still = (G.World.Date.TotalDays - war.LastChangeDay) / 30;
-            string ex = $"Exhaustion: {war.AttackerLeader.Tag} {G.Diplomacy.WarExhaustion(war.AttackerLeader):0.0}  {war.DefenderLeader.Tag} {G.Diplomacy.WarExhaustion(war.DefenderLeader):0.0}" +
-                        (still >= 6 ? $"   front still for {still} months" : "");
-            var er = new Rectangle(x + 6, wy + 136 * S, w - 24 * S, 18 * S);
-            Gui.Label(Gui.Fit(ex, er.Width, 13), er.X, er.Y, 13, still >= 12 ? Gui.Bad : Gui.TextDim);
-            if (Gui.Hover(er)) Gui.Tooltip("War exhaustion (0-20) grows while at war, with enemy occupation, losses in battle and a front that does not move.\nIt lowers stability, manpower and political power, and makes countries accept peace sooner.");
+            double maxEx = G.Diplomacy.MaxWarExhaustion;
+            Gui.Icon("ui_exhaustion", new Rectangle(ix, wy + 136 * S, 14 * S, 14 * S));
+            Gui.Label("EXHAUSTION", ix + 18 * S, wy + 138 * S, 11, Gui.TextDim, FontKind.Bold);
+            float colW = (iw - 12 * S) / 2;
+            int ci = 0;
+            foreach (var (tag, ex, col) in new[] { (aTag, G.Diplomacy.WarExhaustion(war.AttackerLeader), atkCol), (dTag, G.Diplomacy.WarExhaustion(war.DefenderLeader), defCol) })
+            {
+                float cx = ix + ci++ * (colW + 12 * S);
+                Gui.Label($"{tag} {ex:0.0}", cx, wy + 152 * S, 13, ex >= maxEx * 0.5 ? Gui.Bad : Gui.Text);
+                var eb = new Rectangle(cx, wy + 170 * S, colW, 6 * S);
+                Raylib.DrawRectangleRec(eb, new Color(18, 19, 22, 255));
+                Raylib.DrawRectangleRec(new Rectangle(eb.X, eb.Y, eb.Width * (float)Math.Clamp(ex / maxEx, 0, 1), eb.Height), ex >= maxEx * 0.5 ? Gui.Bad : col);
+            }
+            var er = new Rectangle(ix, wy + 138 * S, iw, 40 * S);
+            if (Gui.Hover(er)) Gui.Tooltip($"War exhaustion (0-{maxEx:0}) grows while at war, with enemy occupation, losses in battle and a front that does not move.\nIt lowers stability, manpower and political power, and makes countries accept peace sooner.\nBars turn red past half.");
+            if (still >= 6) Gui.Icon("ui_stalemate", new Rectangle(ix, wy + 179 * S, 14 * S, 14 * S));
+            if (still >= 6) Gui.Label($"Front has not moved for {still} months", ix + 18 * S, wy + 180 * S, 12, still >= 12 ? Gui.Bad : Gui.TextDim);
+            // war goals: one line per goal, holder's flag first
+            Gui.Icon("ui_war_goals", new Rectangle(ix, wy + 194 * S, 14 * S, 14 * S));
+            Gui.Label("WAR GOALS", ix + 18 * S, wy + 196 * S, 11, Gui.TextDim, FontKind.Bold);
+            if (war.Goals.Count == 0) Gui.Label("No war goal set", ix, wy + 212 * S, 13, Gui.TextDim);
+            for (int i = 0; i < Math.Min(war.Goals.Count, 3); i++)
+            {
+                var g = war.Goals[i];
+                float gy = wy + (212 + i * 16) * S;
+                if (i == 2 && war.Goals.Count > 3) { Gui.Label($"+{war.Goals.Count - 2} more war goals", ix, gy, 13, Gui.TextDim); break; }
+                var fr = new Rectangle(ix, gy + 1 * S, 20 * S, 13 * S);
+                Gui.Flag(g.Holder, fr);
+                Raylib.DrawRectangleLinesEx(fr, 1, new Color(0, 0, 0, 160));
+                var line = new Rectangle(ix, gy, iw, 16 * S);
+                Gui.Label(Gui.Fit($"{Localisation.Get(g.CasusBelli.Name)} vs {g.Target.Tag}  ({G.Diplomacy.GoalStates(g).Count} states)", iw - 28 * S, 13), ix + 26 * S, gy, 13, Gui.Text);
+                if (Gui.Hover(line))
+                    Gui.Tooltip($"{g.Holder.Name} - {Localisation.Get(g.CasusBelli.Name)} against {g.Target.Name}\n{G.Diplomacy.GoalStates(g).Count} goal states; matching demands cost {g.CasusBelli.GoalCostMultiplier:P0}" +
+                        (g.CasusBelli.TickingWarScore ? "\nHolding them adds war score." : "") + "\nAllies that join add their own war goals.");
+            }
             if (mine)
             {
                 var enemyLeader = war.EnemyLeaderOf(player!);
-                if (Gui.Button(new Rectangle(x + 6, wy + 160 * S, 160 * S, 24 * S), "Negotiate peace", !war.Vars.HasFlag("civil_war"),
+                if (Gui.Button(new Rectangle(ix, wy + cardH - 34 * S, 150 * S, 24 * S), "Negotiate peace", !war.Vars.HasFlag("civil_war"),
                         war.Vars.HasFlag("civil_war") ? "A civil war ends only when one side is defeated" : $"Send a peace offer to {enemyLeader.Name}", false, 14))
                     OpenPeace(war, enemyLeader);
             }

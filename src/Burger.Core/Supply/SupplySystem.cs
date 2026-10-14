@@ -23,7 +23,7 @@ public class SupplyRules
         if (ctrl == null) return false;
         if (ctrl == c) return true;
         var r = game.World.Relations;
-        return r.AreAllied(c, ctrl) || r.OverlordOf(c) == ctrl || r.OverlordOf(ctrl) == c || r.HasAccess(c, ctrl) && !game.World.AtWar(c, ctrl);
+        return r.AreAllied(c, ctrl) || r.AreOverlordAndSubject(c, ctrl) || r.HasAccess(c, ctrl) && !game.World.AtWar(c, ctrl);
     }
 
     /// <summary>Cost of carrying supply into a location (1 = one normal step; rough terrain costs more, infrastructure less).</summary>

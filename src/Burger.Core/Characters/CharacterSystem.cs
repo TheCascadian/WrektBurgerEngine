@@ -278,6 +278,7 @@ public sealed class CharacterSystem
         bool wasRuler = country != null && country.Ruler == c;
         if (country != null && country.Heir == c) country.Heir = null;
         _game.Mods.Invoke(m => m.OnCharacterDied(c));
+        _game.Hub.RaiseCharacterDied(c, reason);
         _game.Events.FireOnAction("on_character_death", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["country"] = country });
         if (wasRuler && country != null)
         {
@@ -299,6 +300,7 @@ public sealed class CharacterSystem
         country.Ruler = newRuler;
         if (country.Heir == newRuler) country.Heir = null;
         country.Heir ??= _game.Rules.Characters.ChooseHeir(_game, country);
+        _game.Hub.RaiseRulerChanged(country, old, newRuler);
         _game.Events.FireOnAction("on_new_ruler", country, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase)
         {
             ["new_ruler"] = newRuler,

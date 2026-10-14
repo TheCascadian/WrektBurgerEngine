@@ -51,6 +51,9 @@ public sealed partial class Hud
         if (Raylib.IsKeyPressed(KeyboardKey.H) && (Has(FeatureSet.Military) || Has(FeatureSet.Navy))) MapOverlay.ShowUnits = !MapOverlay.ShowUnits;
         if (Raylib.IsKeyPressed(KeyboardKey.G) && G.Focus.Enabled && G.World.Player != null) ToggleLeft(LeftPanel.Focus);
         if (Raylib.IsKeyPressed(KeyboardKey.T) && G.Tech.Enabled && G.World.Player != null) ToggleLeft(LeftPanel.Technology);
+        if (G.World.Player == null && Raylib.IsKeyPressed(KeyboardKey.F7)) ToggleObserveUi();
+        if (G.World.Player == null && Ui.ObserveUi && Raylib.IsKeyPressed(KeyboardKey.O) && G.Politics.Enabled) ToggleLeft(LeftPanel.Politics);
+        if (G.World.Player == null && Ui.ObserveUi && Raylib.IsKeyPressed(KeyboardKey.U) && G.Population.Enabled) ToggleLeft(LeftPanel.Population);
         if (G.World.Player != null)
         {
             if (Raylib.IsKeyPressed(KeyboardKey.F1) && Has(FeatureSet.Military)) ToggleLeft(LeftPanel.Military);
@@ -205,12 +208,13 @@ public sealed partial class Hud
         if (Ui.SelectedDivisions.Count > 0)
         {
             int ok = 0;
+            bool queue = Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift);
             foreach (var d in Ui.SelectedDivisions)
             {
                 if (d.Army != null && d.Army.FrontEnemy != null) d.FrontPost = null;
-                if (G.Warfare.OrderMove(d, loc)) ok++;
+                if (queue ? G.Warfare.QueueMove(d, loc) : G.Warfare.OrderMove(d, loc)) ok++;
             }
-            Ui.SetStatus(ok > 0 ? $"{ok} division(s) moving to {loc.DisplayName}" : $"No path to {loc.DisplayName}");
+            Ui.SetStatus(ok > 0 ? $"{ok} division(s) {(queue ? "will then go on to" : "moving to")} {loc.DisplayName}" : $"No path to {loc.DisplayName}");
         }
         else if (Ui.SelectedArmy != null)
         {
@@ -298,7 +302,7 @@ public sealed partial class Hud
         DrawProposals();
         DrawEvents();
         if (Ui.ConsoleOpen) DrawConsole();
-        if (Ui.SaveMenuOpen) DrawSaveMenu();
+        if (Ui.SaveMenuOpen) DrawSaveMenu(); else _saveCacheValid = false;
         if (Ui.PauseMenuOpen) DrawPauseMenu();
     }
 
@@ -327,12 +331,12 @@ public sealed partial class Hud
             if (Has(FeatureSet.Economy))
             {
                 double net = player.LastIncome - player.LastExpenses;
-                Stat(ref x, "Gold", $"{player.Gold:0}", $"{(net >= 0 ? "+" : "")}{net:0.0}",
+                Stat(ref x, "Gold", Num(player.Gold), $"{(net >= 0 ? "+" : "")}{Num(net, 1)}",
                     $"Treasury: {player.Gold:0.0}\nIncome: +{player.LastIncome:0.0}/month\nArmy upkeep: -{player.LastExpenses:0.0}/month", net >= 0 ? Gui.Good : Gui.Bad);
-                Stat(ref x, "Manpower", $"{player.Manpower:0}", $"+{player.LastManpowerGain:0}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
+                Stat(ref x, "Manpower", Num(player.Manpower), $"+{Num(player.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
             }
             if (Has(FeatureSet.Military) && !Has(FeatureSet.Economy))
-                Stat(ref x, "Manpower", $"{player.Manpower:0}", $"+{player.LastManpowerGain:0}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
+                Stat(ref x, "Manpower", Num(player.Manpower), $"+{Num(player.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
             if (Has(FeatureSet.Production))
             {
                 int civ = G.Production.CivilianFactories(player), mil = G.Production.MilitaryFactories(player), dock = G.Production.Dockyards(player);
@@ -349,8 +353,7 @@ public sealed partial class Hud
         }
         else
         {
-            Gui.LabelShadow("Observer mode", x, 10 * S, 20, Gui.Gold, FontKind.Header);
-            x += 170 * S;
+            x = DrawObserverTopBar(x, sw - 560 * S);
         }
 
         // right side: date, speed and the world-wide buttons
@@ -415,14 +418,45 @@ public sealed partial class Hud
         x += 6 * S;
     }
 
+    /// <summary>Compact number: 12.3K, 4.56M, 1.2B (small values keep their digits).</summary>
+    public static string Num(double v, int decimals = 0)
+    {
+        double a = Math.Abs(v);
+        if (a >= 1e9) return $"{v / 1e9:0.##}B";
+        if (a >= 1e6) return $"{v / 1e6:0.##}M";
+        if (a >= 1e4) return $"{v / 1e3:0.#}K";
+        return v.ToString(decimals > 0 ? "F" + decimals : "0");
+    }
+
+    private static string? StatIcon(string label) => label.ToLowerInvariant() switch
+    {
+        "gold" => "gold", "manpower" => "manpower", "factories" => "factory", "divisions" => "army",
+        "political power" => "politics", "stability" => "legitimacy", _ => null,
+    };
+
     private void Stat(ref float x, string label, string value, string sub, string tooltip, Color subColor)
     {
-        float w = Math.Max(92 * S, Math.Max(Gui.Measure(label, 13).X, Gui.Measure(value, 18, FontKind.Bold).X + Gui.Measure(sub, 13).X + 6 * S) + 14 * S);
+        string? icon = StatIcon(label);
+        bool hasIcon = icon != null && Gui.HasIcon(icon);
+        float iconW = hasIcon ? 22 * S : 0;
+        float vw = Gui.Measure(value, 18, FontKind.Bold).X, sw = sub.Length > 0 ? Gui.Measure(sub, 13).X + 5 * S : 0;
+        float w = hasIcon ? iconW + 4 * S + vw + sw + 14 * S : Math.Max(92 * S, Math.Max(Gui.Measure(label, 13).X, vw + sw) + 14 * S);
         var r = new Rectangle(x, 4 * S, w, 38 * S);
-        Gui.Label(label, x, 4 * S, 13, Gui.TextDim);
-        Gui.Label(value, x, 19 * S, 18, Gui.Text, FontKind.Bold);
-        if (sub.Length > 0) Gui.Label(sub, x + Gui.Measure(value, 18, FontKind.Bold).X + 5 * S, 22 * S, 13, subColor);
-        if (Gui.Hover(r)) Gui.Tooltip(tooltip);
+        float tx = x;
+        if (hasIcon)
+        {
+            Gui.Icon(icon!, new Rectangle(x, 12 * S, iconW, iconW));
+            tx += iconW + 4 * S;
+            Gui.Label(value, tx, 12 * S, 18, Gui.Text, FontKind.Bold);
+            if (sub.Length > 0) Gui.Label(sub, tx + vw + 5 * S, 15 * S, 13, subColor);
+        }
+        else
+        {
+            Gui.Label(label, x, 4 * S, 13, Gui.TextDim);
+            Gui.Label(value, x, 19 * S, 18, Gui.Text, FontKind.Bold);
+            if (sub.Length > 0) Gui.Label(sub, x + vw + 5 * S, 22 * S, 13, subColor);
+        }
+        if (Gui.Hover(r)) Gui.Tooltip(hasIcon ? label + "\n" + tooltip : tooltip);
         x += w;
     }
 
@@ -454,12 +488,12 @@ public sealed partial class Hud
         var custom = G.Interface.MapModes;
         bool fogToggle = Has(FeatureSet.FogOfWar);
         bool unitsToggle = Has(FeatureSet.Military) || Has(FeatureSet.Navy);
-        int total = modes.Count + custom.Count + (fogToggle ? 1 : 0) + (unitsToggle ? 1 : 0);
-        float bw = 84 * S, gap = 3 * S, pad = 6 * S;
-        float maxW = Raylib.GetScreenWidth() * 0.5f;
-        if (total * (bw + gap) + 2 * pad > maxW) bw = Math.Max(54 * S, (maxW - 2 * pad) / total - gap);
-        float w = total * (bw + gap) - gap + 2 * pad;
-        var r = new Rectangle(Raylib.GetScreenWidth() - w - 8 * S, Raylib.GetScreenHeight() - MapModeBarH - 8 * S, w, MapModeBarH);
+        int sw = Raylib.GetScreenWidth(), sh = Raylib.GetScreenHeight();
+        string current = Map.CustomMode != null ? Map.CustomMode.Name : modes.FirstOrDefault(m => m.Mode == Map.Mode).Name ?? Map.Mode.ToString();
+        float bw = 74 * S, gap = 3 * S, pad = 6 * S, modeW = 150 * S;
+        int toggles = (fogToggle ? 1 : 0) + (unitsToggle ? 1 : 0);
+        float w = toggles * (bw + gap) + modeW + 2 * pad;
+        var r = new Rectangle(sw - w - 8 * S, sh - MapModeBarH - 8 * S, w, MapModeBarH);
         Gui.Block(r);
         Gui.Frame(r, Gui.MenuBar, false, "menu_bar");
         float x = r.X + pad, y = r.Y + 5 * S, h = r.Height - 10 * S;
@@ -476,19 +510,36 @@ public sealed partial class Hud
                 MapOverlay.ShowUnits = !MapOverlay.ShowUnits;
             x += bw + gap;
         }
-        foreach (var (name, mode) in modes)
-        {
-            if (Gui.Button(new Rectangle(x, y, bw, h), name, true, MapModeHelp(mode), Map.CustomMode == null && Map.Mode == mode, 14))
-            { Map.Mode = mode; Map.CustomMode = null; Map.Dirty = true; }
-            x += bw + gap;
-        }
+        var toggle = new Rectangle(x, y, modeW, h);
+        if (Gui.Button(toggle, "", true, "Choose what the map shows (Tab cycles)", _mapModesOpen, 14)) _mapModesOpen = !_mapModesOpen;
+        Gui.Label(Gui.Fit("Map: " + current, modeW - 30 * S, 14), toggle.X + 8 * S, toggle.Y + (h - Gui.FontSize(14)) / 2, 14, Gui.Text, FontKind.Bold);
+        // open/close chevron
+        float cx = toggle.X + modeW - 14 * S, cy = toggle.Y + h / 2, cs = 4 * S;
+        if (_mapModesOpen) Raylib.DrawTriangle(new Vector2(cx - cs, cy + cs / 2), new Vector2(cx + cs, cy + cs / 2), new Vector2(cx, cy - cs / 2 - 1), Gui.Gold);
+        else Raylib.DrawTriangle(new Vector2(cx - cs, cy - cs / 2), new Vector2(cx, cy + cs / 2 + 1), new Vector2(cx + cs, cy - cs / 2), Gui.Gold);
+        if (!_mapModesOpen) return;
+
+        // the open menu: map modes in a grid above the bar
+        var all = modes.Select(m => (m.Name, (Action)(() => { Map.Mode = m.Mode; Map.CustomMode = null; Map.Dirty = true; }), Map.CustomMode == null && Map.Mode == m.Mode, MapModeHelp(m.Mode))).ToList();
         foreach (var m in custom)
         {
-            string legend = $"{m.Name}: values {m.Min:0.##} to {m.Max:0.##}\nLow color: RGB {m.LowColor.R}, {m.LowColor.G}, {m.LowColor.B}\nHigh color: RGB {m.HighColor.R}, {m.HighColor.G}, {m.HighColor.B}";
-            if (Gui.Button(new Rectangle(x, y, bw, h), m.Name, true, legend, Map.CustomMode == m, 14)) { Map.CustomMode = m; Map.Dirty = true; }
-            x += bw + gap;
+            var cm = m;
+            all.Add((cm.Name, () => { Map.CustomMode = cm; Map.Dirty = true; }, Map.CustomMode == cm,
+                $"{cm.Name}: values {cm.Min:0.##} to {cm.Max:0.##}\nLow color: RGB {cm.LowColor.R}, {cm.LowColor.G}, {cm.LowColor.B}\nHigh color: RGB {cm.HighColor.R}, {cm.HighColor.G}, {cm.HighColor.B}"));
+        }
+        int cols = 3, rows = (all.Count + cols - 1) / cols;
+        float cw = 92 * S, ch = 26 * S;
+        var pr = new Rectangle(r.X + r.Width - (cols * (cw + gap) - gap + 2 * pad), r.Y - 4 * S - (rows * (ch + gap) - gap + 2 * pad), cols * (cw + gap) - gap + 2 * pad, rows * (ch + gap) - gap + 2 * pad);
+        Gui.Block(pr);
+        Gui.Frame(pr, Gui.MenuBar, false, "menu_bar");
+        for (int i = 0; i < all.Count; i++)
+        {
+            var br = new Rectangle(pr.X + pad + (i % cols) * (cw + gap), pr.Y + pad + (i / cols) * (ch + gap), cw, ch);
+            if (Gui.Button(br, all[i].Name, true, all[i].Item4, all[i].Item3, 14)) { all[i].Item2(); _mapModesOpen = false; }
         }
     }
+
+    private bool _mapModesOpen;
 
     private string MapModeHelp(MapMode mode) => mode switch
     {

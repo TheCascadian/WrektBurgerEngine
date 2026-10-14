@@ -16,8 +16,8 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) { Ui.Left = LeftPanel.None; return; }
-        var r = LeftRect(2000);
-        Gui.Panel(r, "Military");
+        var r = FitRect("army");
+        Gui.Panel(r, "");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
 
@@ -34,48 +34,83 @@ public sealed partial class Hud
         y += 26 * S;
 
         bool plans = G.Features.Has(Burger.Core.Modding.FeatureSet.BattlePlans);
-        float armyH = (plans ? 138 : 112) * S;
-        float listH = Math.Max(120 * S, r.Y + r.Height - y - 50 * S);
-        float top = Gui.BeginScroll("armies", new Rectangle(x, y, w, listH), armies.Count * (armyH + 6 * S) + (unassigned.Count > 0 ? 40 * S : 0));
+        float armyBase = 96 * S, armyPlan = plans ? 26 * S : 0, armyAdd = Ui.SelectedDivisions.Count > 0 ? 24 * S : 0;
+        float HeightOf(Army a) => armyBase + (Ui.SelectedArmy == a ? armyPlan : 0) + armyAdd;
+        float contentH = armies.Sum(a => HeightOf(a) + 6 * S) + (unassigned.Count > 0 ? 40 * S : 0);
+        float listH = Math.Max(60 * S, Math.Min(contentH, r.Y + r.Height - y - 50 * S));
+        FitEnd("army", r, y + contentH + 8 * S + 30 * S);
+        float top = Gui.BeginScroll("armies", new Rectangle(x, y, w, listH), contentH);
         float ay = top;
         foreach (var army in armies)
         {
+            float armyH = HeightOf(army);
             var box = new Rectangle(x, ay, w - 8 * S, armyH);
             bool sel = Ui.SelectedArmy == army;
             Card(box, sel ? new Color(70, 58, 34, 255) : new Color(36, 38, 44, 255), sel);
-            Gui.Label(army.Name, x + 6, ay + 4, 16, Gui.Gold, FontKind.Bold);
-            string general = army.General != null ? $"{army.General.DisplayName} ({Localisation.GetOrPretty(G.Data.Defines.GeneralStat)} {army.General.GetStat(G.Data.Defines.GeneralStat):0})" : "No general";
+            bool attacking = army.Mode == ArmyMode.Offensive && army.FrontEnemy != null;
+            Stripe(box, attacking ? Gui.Bad : army.FrontEnemy != null ? Gui.Gold : new Color(90, 96, 108, 255));
+            Gui.Label(army.Name, x + 10 * S, ay + 4, 16, Gui.Gold, FontKind.Bold);
             bool chars = G.Features.Has(Burger.Core.Modding.FeatureSet.Characters);
-            if (chars || army.General != null) Gui.Label(general, x + 6, ay + 24 * S, 14, army.General != null ? Gui.Text : Gui.Bad);
+            if (chars || army.General != null)
+            {
+                string general = army.General != null ? $"{army.General.DisplayName}  {army.General.GetStat(G.Data.Defines.GeneralStat):0}" : "No general";
+                Gui.Label(Gui.Fit(general, w * 0.7f, 14), x + 10 * S, ay + 24 * S, 14, army.General != null ? Gui.Text : Gui.Bad);
+                if (Gui.Hover(new Rectangle(x + 10 * S, ay + 24 * S, w * 0.6f, 18 * S)))
+                    Gui.Tooltip(army.General != null ? $"General: {army.General.DisplayName}\n{Localisation.GetOrPretty(G.Data.Defines.GeneralStat)}: {army.General.GetStat(G.Data.Defines.GeneralStat):0}" : "This army has no general. Click 'General' to choose one.");
+            }
             double str = army.Divisions.Count == 0 ? 0 : army.Divisions.Average(d => d.StrengthFraction);
-            Gui.Label($"{army.Divisions.Count} div.  str {str:P0}", x + w - 160 * S, ay + 4, 14, Gui.TextDim);
-            string front = army.Mode == ArmyMode.Fallback && army.Fallback.Count > 0 ? $"Holding the fallback line ({army.Fallback.Count} locations)"
-                : army.FrontEnemy != null ? $"Front vs {army.FrontEnemy.Name} - {(army.Mode == ArmyMode.Offensive ? "OFFENSIVE" + (army.Objective != null ? $" towards {army.Objective.DisplayName}" : "") : "Hold")}"
-                : army.MoveTarget != null ? $"Moving to {army.MoveTarget.DisplayName}" : "No orders";
-            Gui.Label(front, x + 6, ay + 42 * S, 14, army.Mode == ArmyMode.Offensive && army.FrontEnemy != null ? Gui.Bad : Gui.TextDim);
+            string stat = $"{army.Divisions.Count} div. · {str:P0}";
+            Gui.Label(stat, x + w - 16 * S - Gui.Measure(stat, 14).X, ay + 4, 14, str < 0.5 ? Gui.Bad : Gui.TextDim);
+            Gui.Bar(new Rectangle(x + w - 16 * S - 90 * S, ay + 24 * S, 90 * S, 7 * S), (float)str, str < 0.5 ? Gui.Bad : Gui.Good);
+            if (Gui.Hover(new Rectangle(x + w - 160 * S, ay + 2, 150 * S, 30 * S))) Gui.Tooltip($"{army.Divisions.Count} divisions\nAverage strength {str:P0}");
+            // orders line: a flag for the front, a pictogram for what the army is doing
+            float fy = ay + 44 * S;
+            if (army.Mode == ArmyMode.Fallback && army.Fallback.Count > 0)
+                Gui.Label($"Fallback line ({army.Fallback.Count} locations)", x + 10 * S, fy, 14, Gui.TextDim);
+            else if (army.FrontEnemy != null)
+            {
+                float fx0 = x + 10 * S + FlagChip(army.FrontEnemy, x + 10 * S, fy, 15 * S, attacking ? Gui.Bad : null, "Front against this country");
+                Gui.Label(attacking ? "Attack" + (army.Objective != null ? " > " + army.Objective.DisplayName : "") : "Hold the front", fx0, fy, 14, attacking ? Gui.Bad : Gui.TextDim);
+            }
+            else if (army.MoveTarget != null) Gui.Label("Moving to " + army.MoveTarget.DisplayName, x + 10 * S, fy, 14, Gui.TextDim);
+            else Gui.Label("No orders", x + 10 * S, fy, 14, Gui.TextDim);
+            if (army.Divisions.Count > 0)
+            {
+                double sup = army.Divisions.Average(d => d.Supply);
+                string where = $"{army.Divisions[0].Location.DisplayName} · supply {sup:P0}";
+                Gui.Label(Gui.Fit(where, w * 0.45f, 13), x + w - 40 * S - Math.Min(w * 0.45f, Gui.Measure(where, 13).X), fy + 1 * S, 13, sup < 0.5 ? Gui.Bad : Gui.TextDim);
+            }
 
-            float bx = x + 6, by = ay + 64 * S, bh = 22 * S;
-            float k = (w - 8 * S - 12 - 16 * S) / (370 * S); // fit the 5 buttons into the panel width
-            if (Gui.Button(new Rectangle(bx, by, 62 * S * k, bh), "Select", true, "Select this army (right-click the map to move it)", sel, 13))
+            // one row of three buttons; clicking the name selects the army, x disbands it
+            var head = new Rectangle(x, ay, w - 60 * S, 22 * S);
+            if (Gui.Hover(head)) Gui.Tooltip("Select this army (right-click the map to move it)");
+            if (Gui.Clicked(head))
             {
                 Ui.SelectedArmy = army;
                 Ui.SelectedDivisions.Clear();
                 Ui.SelectedDivisions.AddRange(army.Divisions);
                 if (army.Divisions.Count > 0) Cam.LookAt(Map.LocationPos(army.Divisions[0].Location));
             }
-            bx += 62 * S * k + 4 * S;
-            if (Gui.Button(new Rectangle(bx, by, 72 * S * k, bh), "General", chars, chars ? "Choose the general leading this army" : "Generals need the characters feature", Ui.ChoosingGeneralFor == army, 13))
+            if (Gui.ConfirmButton("disband-" + army.Name, new Rectangle(x + w - 8 * S - 26 * S, ay + 40 * S, 22 * S, 20 * S), "x", true, "Disband the army (divisions stay). Click twice.", 13))
+            {
+                if (Ui.SelectedArmy == army) Ui.SelectedArmy = null;
+                G.Warfare.DisbandArmy(army);
+                Gui.EndScroll();
+                return;
+            }
+            float bh = 22 * S, gapB = 4 * S, bw3 = (w - 8 * S - 20 * S - 2 * gapB) / 3, bx = x + 10 * S, by = ay + 66 * S;
+            if (Gui.Button(new Rectangle(bx, by, bw3, bh), "General", chars, chars ? "Choose the general leading this army" : "Generals need the characters feature", Ui.ChoosingGeneralFor == army, 13))
                 Ui.ChoosingGeneralFor = Ui.ChoosingGeneralFor == army ? null : army;
-            bx += 72 * S * k + 4 * S;
+            bx += bw3 + gapB;
             bool picking = Ui.PlanArmy == army && Ui.Tool == PlanTool.PickFront;
-            string frontLabel = picking ? "Pick on map" : army.FrontEnemy == null ? "Front: none" : "Front: " + army.FrontEnemy.Tag;
-            if (Gui.Button(new Rectangle(bx, by, 96 * S * k, bh), frontLabel, enemies.Count > 0,
+            string frontLabel = picking ? "Pick on map" : army.FrontEnemy == null ? "Front" : army.FrontEnemy.Tag;
+            if (Gui.Button(new Rectangle(bx, by, bw3, bh), frontLabel, enemies.Count > 0,
                     enemies.Count > 0 ? "Click, then click the country on the map this army holds a front against (an enemy or a neighbour at peace).\nClick your own land to remove the front." : "You have no neighbours or enemies", picking, 13))
                 TogglePlanTool(army, PlanTool.PickFront);
-            bx += 96 * S * k + 4 * S;
+            bx += bw3 + gapB;
             string modeLabel = army.Mode switch { ArmyMode.Offensive => "Attack", ArmyMode.Fallback => "Fallback", _ => "Hold" };
             bool canFallback = plans && army.Fallback.Count > 0;
-            if (Gui.Button(new Rectangle(bx, by, 80 * S * k, bh), modeLabel, army.FrontEnemy != null || canFallback,
+            if (Gui.Button(new Rectangle(bx, by, bw3, bh), modeLabel, army.FrontEnemy != null || canFallback,
                     "Click to change:\nHold: defend the front line\nAttack: divisions attack along the front" + (plans ? " (towards the arrow's objective if drawn)\nFallback: hold the fallback line" : " (the weakest enemy locations)"),
                     army.Mode == ArmyMode.Offensive, 13))
             {
@@ -87,33 +122,25 @@ public sealed partial class Hud
                 };
                 G.Warfare.SetMode(army, next);
             }
-            bx += 80 * S * k + 4 * S;
-            if (Gui.Button(new Rectangle(bx, by, 60 * S * k, bh), "Disband", true, "Remove the army (divisions stay)", false, 13))
+            float ry = ay + 92 * S;
+            if (plans && sel)
             {
-                if (Ui.SelectedArmy == army) Ui.SelectedArmy = null;
-                G.Warfare.DisbandArmy(army);
-                Gui.EndScroll();
-                return;
-            }
-            float ry = ay + 88 * S;
-            if (plans)
-            {
-                // battle plan: draw a front segment, an offensive arrow and a fallback line on the map
-                float px = x + 6, pw = (w - 8 * S - 12 - 12 * S) / 4;
+                // battle plan tools only for the selected army: four equal buttons
+                float pw = (w - 8 * S - 20 * S - 3 * gapB) / 4, px = x + 10 * S;
                 bool planning = Ui.PlanArmy == army;
-                if (Gui.Button(new Rectangle(px, ry, pw, bh), army.FrontLimit.Count > 0 ? $"Front ({army.FrontLimit.Count})" : "Draw front", army.FrontEnemy != null,
+                if (Gui.Button(new Rectangle(px, ry, pw, bh), army.FrontLimit.Count > 0 ? $"Front ({army.FrontLimit.Count})" : "Front line", army.FrontEnemy != null,
                         army.FrontEnemy != null ? "Click border locations on the map to limit the front to that part of the border (click again to remove)" : "Pick an enemy with 'Front' first", planning && Ui.Tool == PlanTool.Front, 12))
                     TogglePlanTool(army, PlanTool.Front);
-                px += pw + 4 * S;
+                px += pw + gapB;
                 if (Gui.Button(new Rectangle(px, ry, pw, bh), army.Objective != null ? "Arrow: set" : "Arrow", army.FrontEnemy != null,
                         army.Objective != null ? $"Offensive objective: {army.Objective.DisplayName}\nClick to draw a new arrow" : "Click an enemy location as the offensive objective; set the army to Attack to execute", planning && Ui.Tool == PlanTool.Arrow, 12))
                     TogglePlanTool(army, PlanTool.Arrow);
-                px += pw + 4 * S;
-                if (Gui.Button(new Rectangle(px, ry, pw, bh), army.Fallback.Count > 0 ? $"Fallback ({army.Fallback.Count})" : "Fallback", true,
+                px += pw + gapB;
+                if (Gui.Button(new Rectangle(px, ry, pw, bh), army.Fallback.Count > 0 ? $"Retreat ({army.Fallback.Count})" : "Retreat", true,
                         "Click your own locations to draw a fallback line (click again to remove); set the army to Fallback to hold it", planning && Ui.Tool == PlanTool.Fallback, 12))
                     TogglePlanTool(army, PlanTool.Fallback);
-                px += pw + 4 * S;
-                if (Gui.Button(new Rectangle(px, ry, pw, bh), "Clear plan", army.FrontLimit.Count > 0 || army.Objective != null || army.Fallback.Count > 0, "Remove the drawn front, arrow and fallback line", false, 12))
+                px += pw + gapB;
+                if (Gui.Button(new Rectangle(px, ry, pw, bh), "Clear", army.FrontLimit.Count > 0 || army.Objective != null || army.Fallback.Count > 0, "Remove the drawn front, arrow and fallback line", false, 12))
                 {
                     army.FrontLimit.Clear();
                     army.Objective = null;

@@ -865,6 +865,7 @@ faction_eng_labour_left = {
 	name = "faction_eng_labour_left_name"
 	legacy_name = "Independent Labour Left"
 	parent = generic:party_eng_democratic
+	data = { hardline = 0.05 tolerance = 1.25 weight = 1 likes = "volunteer_only civilian_economy equal_rights" dislikes = "extensive_conscription propaganda_ministry" }
 }
 
 faction_eng_labour_unions = {
@@ -872,6 +873,7 @@ faction_eng_labour_unions = {
 	name = "faction_eng_labour_unions_name"
 	legacy_name = "Labour trade-union group"
 	parent = generic:party_eng_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 2 likes = "civilian_economy free_press" dislikes = "service_by_requirement state_press" }
 }
 
 faction_fra_radicals = {
@@ -879,6 +881,7 @@ faction_fra_radicals = {
 	name = "faction_fra_radicals_name"
 	legacy_name = "Radical Party organisation"
 	parent = generic:party_fra_democratic
+	data = { hardline = 0.05 tolerance = 1.25 weight = 1 likes = "free_press multi_party" dislikes = "state_press propaganda_ministry" }
 }
 
 faction_ger_spd = {
@@ -886,6 +889,7 @@ faction_ger_spd = {
 	name = "faction_ger_spd_name"
 	legacy_name = "Social Democratic Party (SPD)"
 	parent = generic:party_ger_democratic
+	data = { hardline = 0.05 tolerance = 1.25 weight = 2 likes = "free_press multi_party civilian_economy" dislikes = "single_party propaganda_ministry" }
 }
 
 faction_ger_centre = {
@@ -893,6 +897,7 @@ faction_ger_centre = {
 	name = "faction_ger_centre_name"
 	legacy_name = "Centre Party (Zentrum)"
 	parent = generic:party_ger_democratic
+	data = { hardline = 0.05 tolerance = 1.25 weight = 1 likes = "tolerance multi_party" dislikes = "single_party forced_assimilation" }
 	data = { leader = heinrich_bruening }
 }
 
@@ -901,6 +906,7 @@ faction_ger_nazi_leadership = {
 	name = "faction_ger_nazi_leadership_name"
 	legacy_name = "Hitler-aligned leadership circle"
 	parent = generic:party_ger_fascist
+	data = { hardline = 0.95 tolerance = 0.7 weight = 2 likes = "extensive_conscription total_mobilisation propaganda_ministry single_party" dislikes = "free_press equal_rights" }
 	data = { leader = adolf_hitler }
 }
 
@@ -909,6 +915,7 @@ faction_ger_kpd = {
 	name = "faction_ger_kpd_name"
 	legacy_name = "KPD central organisation"
 	parent = generic:party_ger_communist
+	data = { hardline = 0.9 tolerance = 0.7 weight = 1 likes = "single_party total_mobilisation" dislikes = "free_press" }
 	data = { leader = ernst_thaelmann }
 }
 
@@ -917,6 +924,7 @@ faction_sov_stalin_majority = {
 	name = "faction_sov_stalin_majority_name"
 	legacy_name = "Stalin-aligned party majority"
 	parent = generic:party_sov_communist
+	data = { hardline = 0.95 tolerance = 0.7 weight = 3 likes = "single_party total_mobilisation propaganda_ministry" dislikes = "free_press tolerance" }
 	data = { leader = joseph_stalin }
 }
 
@@ -925,6 +933,7 @@ faction_sov_left_opposition = {
 	name = "faction_sov_left_opposition_name"
 	legacy_name = "Left Opposition (exiled)"
 	parent = generic:party_sov_communist
+	data = { hardline = 0.05 tolerance = 1.25 weight = 1 likes = "multi_party equal_rights" dislikes = "single_party state_press" }
 	data = { leader = leon_trotsky }
 }
 
@@ -933,6 +942,7 @@ faction_usa_republican_regulars = {
 	name = "faction_usa_republican_regulars_name"
 	legacy_name = "Republican regulars"
 	parent = generic:party_usa_democratic
+	data = { hardline = 0.05 tolerance = 1.25 weight = 2 likes = "civilian_economy free_press" dislikes = "total_mobilisation state_press" }
 	data = { leader = herbert_hoover }
 }
 
@@ -941,6 +951,7 @@ faction_usa_progressive_republicans = {
 	name = "faction_usa_progressive_republicans_name"
 	legacy_name = "Progressive Republicans"
 	parent = generic:party_usa_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "equal_rights tolerance" dislikes = "discrimination" }
 }
 
 faction_usa_southern_democrats = {
@@ -948,6 +959,7 @@ faction_usa_southern_democrats = {
 	name = "faction_usa_southern_democrats_name"
 	legacy_name = "Southern Democratic bloc"
 	parent = generic:party_usa_neutrality
+	data = { hardline = 0.6 tolerance = 1.0 weight = 1 likes = "discrimination civilian_economy" dislikes = "equal_rights" }
 }
 
 faction_ita_fascist_council = {
@@ -955,6 +967,7 @@ faction_ita_fascist_council = {
 	name = "faction_ita_fascist_council_name"
 	legacy_name = "Fascist Grand Council"
 	parent = generic:party_ita_fascist
+	data = { hardline = 0.9 tolerance = 0.7 weight = 2 likes = "restricted_parties state_press" dislikes = "free_press" }
 	data = { leader = benito_mussolini }
 }
 
@@ -963,6 +976,7 @@ faction_ita_squadristi = {
 	name = "faction_ita_squadristi_name"
 	legacy_name = "Squadristi and Blackshirt networks"
 	parent = generic:party_ita_fascist
+	data = { hardline = 0.95 tolerance = 0.7 weight = 1 likes = "single_party total_mobilisation forced_assimilation" dislikes = "multi_party tolerance" }
 }
 
 faction_jap_kodoha = {
@@ -970,6 +984,7 @@ faction_jap_kodoha = {
 	name = "faction_jap_kodoha_name"
 	legacy_name = "Kōdōha (Imperial Way faction)"
 	parent = generic:party_jap_fascist
+	data = { hardline = 0.95 tolerance = 0.7 weight = 1 likes = "total_mobilisation single_party forced_assimilation" dislikes = "multi_party" }
 }
 
 faction_jap_toseiha = {
@@ -977,6 +992,7 @@ faction_jap_toseiha = {
 	name = "faction_jap_toseiha_name"
 	legacy_name = "Tōseiha (Control faction)"
 	parent = generic:party_jap_fascist
+	data = { hardline = 0.9 tolerance = 0.7 weight = 2 likes = "war_economy restricted_parties" dislikes = "civilian_economy" }
 	data = { leader = hideki_tojo }
 }
 
@@ -985,6 +1001,7 @@ faction_chi_kmt_right = {
 	name = "faction_chi_kmt_right_name"
 	legacy_name = "Whampoa military-political network"
 	parent = generic:party_chi_neutrality
+	data = { hardline = 0.9 tolerance = 0.7 weight = 2 likes = "war_economy restricted_parties" dislikes = "multi_party" }
 	data = { leader = chiang_kai_shek }
 }
 
@@ -993,6 +1010,7 @@ faction_chi_ccp_rural = {
 	name = "faction_chi_ccp_rural_name"
 	legacy_name = "Rural revolutionary base networks"
 	parent = generic:party_chi_communist
+	data = { hardline = 0.7 tolerance = 0.7 weight = 1 likes = "single_party total_mobilisation" dislikes = "restricted_parties" }
 	data = { leader = mao_zedong }
 }
 
@@ -1001,6 +1019,7 @@ faction_pol_sanacja_colonels = {
 	name = "faction_pol_sanacja_colonels_name"
 	legacy_name = "Sanacja's colonels' circle"
 	parent = generic:party_pol_neutrality
+	data = { hardline = 0.9 tolerance = 0.7 weight = 1 likes = "restricted_parties war_economy" dislikes = "multi_party" }
 }
 
 faction_spa_alfonsine = {
@@ -1008,6 +1027,7 @@ faction_spa_alfonsine = {
 	name = "faction_spa_alfonsine_name"
 	legacy_name = "Alfonsine monarchists"
 	parent = generic:party_spa_neutrality
+	data = { hardline = 0.5 tolerance = 1.0 weight = 1 likes = "restricted_parties tolerance" dislikes = "single_party equal_rights" }
 	data = { leader = alfonso_xiii }
 }
 
@@ -1016,6 +1036,7 @@ faction_aus_heimwehr = {
 	name = "faction_aus_heimwehr_name"
 	legacy_name = "Heimwehr organisation"
 	parent = generic:party_aus_fascist
+	data = { hardline = 0.9 tolerance = 0.7 weight = 2 likes = "restricted_parties state_press" dislikes = "multi_party" }
 }
 
 faction_aus_nazis = {
@@ -1023,6 +1044,7 @@ faction_aus_nazis = {
 	name = "faction_aus_nazis_name"
 	legacy_name = "Austrian National Socialists"
 	parent = generic:party_aus_fascist
+	data = { hardline = 0.95 tolerance = 0.7 weight = 1 likes = "single_party forced_assimilation extensive_conscription" dislikes = "tolerance free_press" }
 }
 
 faction_cze_agrarians = {
@@ -1030,6 +1052,7 @@ faction_cze_agrarians = {
 	name = "faction_cze_agrarians_name"
 	legacy_name = "Agrarian Party"
 	parent = generic:party_cze_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 2 likes = "civilian_economy tolerance" dislikes = "total_mobilisation" }
 }
 
 faction_cze_social_democrats = {
@@ -1037,6 +1060,7 @@ faction_cze_social_democrats = {
 	name = "faction_cze_social_democrats_name"
 	legacy_name = "Social Democratic Party"
 	parent = generic:party_cze_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "equal_rights civilian_economy" dislikes = "discrimination" }
 }
 
 faction_bel_catholic = {
@@ -1044,6 +1068,7 @@ faction_bel_catholic = {
 	name = "faction_bel_catholic_name"
 	legacy_name = "Catholic political wing"
 	parent = generic:party_bel_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 2 likes = "tolerance civilian_economy" dislikes = "forced_assimilation" }
 }
 
 faction_bel_liberal = {
@@ -1051,6 +1076,7 @@ faction_bel_liberal = {
 	name = "faction_bel_liberal_name"
 	legacy_name = "Liberal political wing"
 	parent = generic:party_bel_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "free_press equal_rights" dislikes = "state_press" }
 }
 
 faction_hol_catholic = {
@@ -1058,6 +1084,7 @@ faction_hol_catholic = {
 	name = "faction_hol_catholic_name"
 	legacy_name = "Catholic parliamentary parties"
 	parent = generic:party_hol_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 2 likes = "tolerance civilian_economy" dislikes = "forced_assimilation" }
 }
 
 faction_hol_liberal = {
@@ -1065,6 +1092,7 @@ faction_hol_liberal = {
 	name = "faction_hol_liberal_name"
 	legacy_name = "Liberal parliamentary wing"
 	parent = generic:party_hol_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "free_press equal_rights" dislikes = "state_press" }
 }
 
 faction_fin_agrarians = {
@@ -1072,6 +1100,7 @@ faction_fin_agrarians = {
 	name = "faction_fin_agrarians_name"
 	legacy_name = "Agrarian League"
 	parent = generic:party_fin_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 2 likes = "civilian_economy volunteer_only" dislikes = "total_mobilisation" }
 }
 
 faction_fin_social_democrats = {
@@ -1079,6 +1108,7 @@ faction_fin_social_democrats = {
 	name = "faction_fin_social_democrats_name"
 	legacy_name = "Social Democratic Party"
 	parent = generic:party_fin_democratic
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "equal_rights free_press" dislikes = "single_party" }
 }
 
 faction_swe_farmers = {
@@ -1086,6 +1116,7 @@ faction_swe_farmers = {
 	name = "faction_swe_farmers_name"
 	legacy_name = "Farmers and agrarian interests"
 	parent = generic:party_swe_neutrality
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "civilian_economy volunteer_only" dislikes = "total_mobilisation" }
 }
 
 faction_ire_fianna_fail = {
@@ -1093,6 +1124,7 @@ faction_ire_fianna_fail = {
 	name = "faction_ire_fianna_fail_name"
 	legacy_name = "Anti-Treaty republican wing"
 	parent = generic:party_ire_neutrality
+	data = { hardline = 0.1 tolerance = 1.25 weight = 1 likes = "volunteer_only tolerance" dislikes = "extensive_conscription" }
 }
 
 branch_eng_labour_midlands = {

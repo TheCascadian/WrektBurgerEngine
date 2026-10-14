@@ -27,11 +27,12 @@ public sealed partial class Studio
     private readonly HashSet<State> _pendingStates = new();
     private bool _painting;
     private Location? _hoverLoc;
+    private string? _loadedSave;
 
     private static readonly string[] BaseModes = { "Political", "Terrain", "States", "Diplomacy", "Locations" };
 
     /// <summary>Loads the world from the saved files (asks to save map files first).</summary>
-    public void LoadWorld(bool askSave = true)
+    public void LoadWorld(bool askSave = true, string? savePath = null)
     {
         if (Store == null) return;
         var dirty = Store.DirtyFiles.Where(f => !f.EndsWith(".cs")).ToList();
@@ -40,8 +41,8 @@ public sealed partial class Studio
             ShowChoice("Reload world", "The world is loaded from the saved files. Save changes first?\n\n" + string.Join("\n", dirty.Take(12)),
                 new[] { "Save and reload", "Reload without saving", "Cancel" }, i =>
                 {
-                    if (i == 0) { SaveAll(); LoadWorld(false); }
-                    else if (i == 1) LoadWorld(false);
+                    if (i == 0) { SaveAll(); LoadWorld(false, savePath); }
+                    else if (i == 1) LoadWorld(false, savePath);
                 });
             return;
         }
@@ -52,6 +53,8 @@ public sealed partial class Studio
         {
             Log.Clear();
             var g = Game.Load(Store.GameDir, compileScripts: false, seed: 1);
+            if (savePath != null) Burger.Core.Save.SaveGame.Load(g, savePath);
+            _loadedSave = savePath == null ? null : Path.GetFileName(savePath);
             Assets.Init(g.Data.Root);
             _world = g;
             _renderer = new MapRenderer(g);
@@ -61,7 +64,7 @@ public sealed partial class Studio
             _worldStale = false;
             _worldOwnFiles.Clear();
             var w = g.World;
-            SetStatus($"World loaded: {w.Locations.Count} locations, {w.States.Count} states, {w.Countries.Count} countries" +
+            SetStatus($"{(savePath == null ? "World" : "Save " + _loadedSave)} loaded: {w.Locations.Count} locations, {w.States.Count} states, {w.Countries.Count} countries" +
                       (Log.ErrorCount > 0 ? $" ({Log.ErrorCount} errors - press Check)" : ""));
             // keep the selection pointing at the new objects
             if (Selected is SelLocation sl) Selected = w.GetLocation(sl.Loc.Key) is { } nl ? new SelLocation { Loc = nl } : null;
@@ -152,6 +155,19 @@ public sealed partial class Studio
         ImGui.SameLine();
         if (ImGui.Button("Reload world")) LoadWorld();
         Ui.Tip("Load the map, states and countries again from the saved files");
+        ImGui.SameLine();
+        if (ImGui.Button("Load save...")) ImGui.OpenPopup("##loadsave");
+        Ui.Tip("Open a saved game (the project's saves folder) in the editor to inspect and edit its world");
+        if (ImGui.BeginPopup("##loadsave"))
+        {
+            string dir = Path.Combine(Store!.ProjectDir, "saves");
+            var saves = Directory.Exists(dir) ? Directory.GetFiles(dir, "*.sav").OrderByDescending(File.GetLastWriteTimeUtc).ToList() : new List<string>();
+            if (saves.Count == 0) Ui.T("No saves in " + dir, Ui.Dim);
+            foreach (var f in saves)
+                if (ImGui.Selectable(Path.GetFileNameWithoutExtension(f) + "  " + File.GetLastWriteTime(f).ToString("yyyy-MM-dd HH:mm"))) LoadWorld(true, f);
+            ImGui.EndPopup();
+        }
+        if (_loadedSave != null) { ImGui.SameLine(); Ui.T("save: " + _loadedSave, Ui.Gold); }
         if (_worldStale) { ImGui.SameLine(); Ui.T("map files changed - reload to see them", Ui.Yellow); }
         if (_tool == 1)
         {

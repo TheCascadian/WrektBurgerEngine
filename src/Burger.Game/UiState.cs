@@ -31,6 +31,8 @@ public sealed class UiState
 {
     public Location? SelectedLocation;
     public Country? SelectedCountry;
+    /// <summary>observe_ui: while observing (no player), the political panels show the selected country, read-only.</summary>
+    public bool ObserveUi;
     public Character? SelectedCharacter;
     public readonly List<Division> SelectedDivisions = new();
     public Army? SelectedArmy;

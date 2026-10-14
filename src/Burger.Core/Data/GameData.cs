@@ -45,6 +45,9 @@ public sealed class GameData
     public readonly Dictionary<string, SubjectType> SubjectTypes = new(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<string, OnAction> OnActions = new(StringComparer.OrdinalIgnoreCase);
     public NameList DefaultNames = new();
+    /// <summary>Name lists for one culture or religion (blocks other than <c>default</c> in <c>common/name_lists</c>, or blocks with <c>culture =</c> / <c>religion =</c>).</summary>
+    public Dictionary<string, NameList> CultureNames = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, NameList> ReligionNames = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Absolute path of a file inside the game folder.</summary>
     public string PathOf(string relative) => Path.GetFullPath(Path.Combine(Root, relative.Replace('\\', '/').TrimStart('/')));

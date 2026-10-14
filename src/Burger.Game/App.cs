@@ -1,5 +1,6 @@
 using System.Numerics;
 using Burger.Core;
+using Burger.Core.Figures;
 using Burger.Core.Map;
 using Burger.Core.Model;
 using Burger.Core.Save;
@@ -16,6 +17,8 @@ public sealed class App
     public MapRenderer? Renderer { get; private set; }
     public CameraController? Camera { get; private set; }
     public MapOverlay? Overlay { get; private set; }
+    public MapFigures? Figures { get; private set; }
+    public MapParticles? Particles { get; private set; }
     public UiState Ui { get; private set; } = new();
     private Hud? _hud;
 
@@ -86,6 +89,8 @@ public sealed class App
             }
         }
         Renderer?.Dispose();
+        Figures?.Dispose();
+        Particles?.Dispose();
         Media.Shutdown();
         Raylib.CloseWindow();
     }
@@ -139,6 +144,10 @@ public sealed class App
         DrawLoading("Loading...");
         Renderer?.Dispose();
         Renderer = null;
+        Figures?.Dispose();
+        Figures = null;
+        Particles?.Dispose();
+        Particles = null;
         Game = null;
         Ui = new UiState();
         Log.Clear();
@@ -149,6 +158,8 @@ public sealed class App
         {
             var game = Burger.Core.Game.Load(_gameRoot, compileScripts: true);
             Game = game;
+            game.HistoricalBias = _opt.Bias ?? UserSettings.EffectiveBias;
+            game.Ai.Enabled = !UserSettings.AiDisabled;
             Raylib.SetWindowTitle(game.Data.Info.Name);
             if (!string.IsNullOrEmpty(game.Data.Info.Icon))
             {
@@ -166,6 +177,25 @@ public sealed class App
             Renderer = new MapRenderer(game);
             Camera = new CameraController(Renderer);
             Overlay = new MapOverlay(game, Renderer);
+            Particles = new MapParticles(game, Renderer);
+            Figures = new MapFigures(game, Renderer) { Particles = Particles };
+            game.Commands.Register("soldier_gag", "soldier_gag [scratch|pick_nose|scratch_pick_nose|fire|fire_side|fire_aggressive|off] - standing soldiers do a silly idle", args =>
+            {
+                string name = args.Length > 0 ? args[0].ToLowerInvariant() : "";
+                if (name is "" or "off" or "none") { MapFigures.StandingGag = null; return "Soldiers stand normally"; }
+                if (!HumanMale.Gags.Contains(name) && !name.StartsWith(HumanMale.Fire)) return "Unknown gag. Try: " + string.Join(", ", HumanMale.Gags) + ", " + HumanMale.Fire + ", off";
+                MapFigures.StandingGag = name;
+                return "Standing soldiers: " + name;
+            });
+            game.Commands.Register("particle", "particle [name] [count] - shows an effect of common/particles.txt at the camera target (no name: lists them)", args =>
+            {
+                if (args.Length == 0) return string.Join(", ", game.Particles.All.Select(p => p.Key).OrderBy(k => k));
+                if (Particles == null) return "No map";
+                if (game.Particles.Find(args[0]) == null) return "Unknown effect. Try: " + string.Join(", ", game.Particles.All.Select(p => p.Key).OrderBy(k => k));
+                int n = args.Length > 1 && int.TryParse(args[1], out var c) ? Math.Clamp(c, 1, 50) : 1;
+                for (int i = 0; i < n; i++) game.Particles.Request(args[0]);
+                return $"{args[0]} x{n}";
+            });
             _hud = new Hud(this);
             _menuSelection = game.World.GetCountry(game.Data.Info.DefaultTag) ?? game.World.Countries.FirstOrDefault(c => c.Playable && c.Exists);
             if (_menuSelection?.Capital != null) Camera.LookAt(Renderer.LocationPos(_menuSelection.Capital), Camera.MaxDistance * 0.5f);
@@ -280,10 +310,37 @@ public sealed class App
     // ===============================================================================================
     // Saves
     // ===============================================================================================
+    // The menu asks every frame; scanning the folder and opening each save to read its header that often made it crawl.
+    private List<string>? _saveListCache;
+    private double _saveListTime;
+    private readonly Dictionary<string, (DateTime Stamp, string Label)> _saveLabels = new();
+
     public List<string> ListSaves()
     {
-        if (!Directory.Exists(SavesDir)) return new List<string>();
-        return Directory.GetFiles(SavesDir, "*.sav").OrderByDescending(File.GetLastWriteTimeUtc).ToList();
+        double now = Raylib.GetTime();
+        if (_saveListCache != null && now - _saveListTime < 2) return _saveListCache;
+        _saveListTime = now;
+        if (!Directory.Exists(SavesDir)) return _saveListCache = new List<string>();
+        return _saveListCache = Directory.GetFiles(SavesDir, "*.sav").OrderByDescending(File.GetLastWriteTimeUtc).ToList();
+    }
+
+    private string SaveLabel(string path)
+    {
+        var stamp = File.GetLastWriteTimeUtc(path);
+        if (_saveLabels.TryGetValue(path, out var hit) && hit.Stamp == stamp) return hit.Label;
+        var (_, date, player) = SaveGame.Peek(path);
+        string label = $"{Path.GetFileNameWithoutExtension(path)}  ({player}, {date})";
+        _saveLabels[path] = (stamp, label);
+        return label;
+    }
+
+    private static string ShortPath(string path, int max = 56)
+    {
+        if (path.Length <= max) return path;
+        string name = Path.GetFileName(path);
+        string dir = Path.GetFileName(Path.GetDirectoryName(path) ?? "");
+        string tail = dir.Length > 0 ? $"{dir}/{name}" : name;
+        return tail.Length + 2 <= max ? ".../" + tail : "..." + name[Math.Max(0, name.Length - (max - 3))..];
     }
 
     public string SaveAs(string? name)
@@ -292,7 +349,8 @@ public sealed class App
         try
         {
             Directory.CreateDirectory(SavesDir);
-            name ??= $"{Game.World.Player?.Tag ?? "observer"}_{Game.World.Date.Year}_{Game.World.Date.Month:00}_{Game.World.Date.Day:00}";
+            _saveListCache = null;
+            name ??= $"{Game.World.Player?.Tag ?? "observer"}_{Game.World.Date.Year}-{Game.World.Date.Month:00}-{Game.World.Date.Day:00}_{DateTime.Now:yyyyMMdd-HHmmss}";
             string path = Path.Combine(SavesDir, name + ".sav");
             SaveGame.Save(Game, path);
             return $"Saved {Path.GetFileName(path)}";
@@ -338,6 +396,13 @@ public sealed class App
         Raylib.ClearBackground(new Color(12, 22, 38, 255));
         Raylib.BeginMode3D(cam);
         Renderer!.Draw(cam, (float)Raylib.GetTime());
+        if (_screen == AppScreen.Playing && Figures != null)
+        {
+            Overlay!.CounterBelowFigure = Figures.Visible(cam);
+            float fdt = Math.Min(Raylib.GetFrameTime(), 0.1f);
+            Figures.Draw(cam, fdt);
+            if (Particles != null) { Particles.Update(fdt, cam); Particles.Draw(cam); }
+        }
         Raylib.EndMode3D();
     }
 
@@ -658,8 +723,7 @@ public sealed class App
         float y = top;
         foreach (var path in saves)
         {
-            var (_, date, player) = SaveGame.Peek(path);
-            if (Gui.Button(new Rectangle(r.X + 10, y, w - 34, 34 * s), $"{Path.GetFileNameWithoutExtension(path)}  ({player}, {date})", true, path, false, 15))
+            if (Gui.Button(new Rectangle(r.X + 10, y, w - 34, 34 * s), SaveLabel(path), true, ShortPath(path), false, 15))
             {
                 Gui.EndScroll();
                 Ui.SaveMenuOpen = false;

@@ -126,6 +126,10 @@ public static class SaveGame
             if (ch.Portrait != null) n.Add("portrait", ch.Portrait, true);
             if (ch.PortraitRules != null) n.Add(ch.PortraitRules.Clone());
             n.Add("general", ch.IsGeneral ? "yes" : "no");
+            if (ch.Culture != null) n.Add("culture", ch.Culture);
+            if (ch.Religion != null) n.Add("religion", ch.Religion);
+            if (ch.PopType != null) n.Add("pop_type", ch.PopType);
+            if (ch.HomeState != null) n.Add("home_state", ch.HomeState);
             WriteVars(n.AddBlock("vars"), ch.Vars);
         }
 
@@ -462,6 +466,10 @@ public static class SaveGame
                 Portrait = n.GetString("portrait"),
                 PortraitRules = n.Get("portraits")?.Clone(),
                 IsGeneral = n.GetBool("general"),
+                Culture = n.GetString("culture"),
+                Religion = n.GetString("religion"),
+                PopType = n.GetString("pop_type"),
+                HomeState = n.GetString("home_state"),
             };
             if (n.Has("death")) { ch.DeathDate = GameDate.Parse(n.GetString("death")!, w.Date); ch.DeathReason = n.GetString("death_reason", "")!; }
             foreach (var t in n.GetList("traits")) if (data.Traits.TryGetValue(t, out var tr)) ch.Traits.Add(tr);

@@ -32,6 +32,8 @@ public sealed partial class PoliticsSystem
     {
         _game = game;
         game.SaveSections.Add(new SaveSection { Name = "politics", Write = Save, Read = LoadSave, Reset = ResetRuntime });
+        game.SaveSections.Add(new SaveSection { Name = "pop_politics", Write = SavePopMoods, Read = LoadPopMoods, Reset = () => { _moods.Clear(); _popSummary.Clear(); } });
+        game.SaveSections.Add(new SaveSection { Name = "parliament", Write = SaveParliaments, Read = LoadParliaments, Reset = () => _parliaments.Clear() });
         RegisterScript();
     }
 
@@ -160,6 +162,7 @@ public sealed partial class PoliticsSystem
         // modifier keys this system can provide (so Sum() skips the lookup for every other key)
         foreach (var i in Ideologies) foreach (var k in i.Modifier.Keys) _modifierKeys.Add(k);
         _modifierKeys.Add("stability_target"); // rule StabilitySources
+        _modifierKeys.Add("parliament_term"); // rule ParliamentTermModifiers
         foreach (var l in Laws.Values) foreach (var k in l.Modifier.Keys) _modifierKeys.Add(k);
         foreach (var p in Positions) { foreach (var k in p.Modifier.Keys) _modifierKeys.Add(k); foreach (var k in p.PerPoint.Keys) _modifierKeys.Add(k); }
     }
@@ -334,8 +337,15 @@ public sealed partial class PoliticsSystem
     /// <summary>Color of a party: its ideology, or the culture/religion of a minority party.</summary>
     public Rgb PartyColor(string key)
     {
-        if (_game.World.GetGenericScope(key) is { } party && IsParty(party)
-            && Ideology(IdeologyOfParty(party)) is { } partyIdeology) return partyIdeology.Color;
+        if (_game.World.GetGenericScope(key) is { } party && IsParty(party))
+        {
+            // a party may carry its own colour (a splinter party does, so its flag differs from the party it left)
+            if (party.Attributes.TryGetValue("color", out var raw)
+                && raw.Split(' ', StringSplitOptions.RemoveEmptyEntries) is { Length: 3 } rgb
+                && int.TryParse(rgb[0], out var cr) && int.TryParse(rgb[1], out var cg) && int.TryParse(rgb[2], out var cb))
+                return new Rgb(cr, cg, cb);
+            if (Ideology(IdeologyOfParty(party)) is { } partyIdeology) return partyIdeology.Color;
+        }
         if (Ideology(key) is { } i) return i.Color;
         string k = key[(key.IndexOf(':') + 1)..];
         if (key.StartsWith("culture:", StringComparison.OrdinalIgnoreCase)) return _game.Population.Culture(k)?.Color ?? Rgb.Gray;
@@ -438,11 +448,17 @@ public sealed partial class PoliticsSystem
             double scale = minShare / Math.Max(1e-9, minority.Values.Sum());
             foreach (var kv in minority) votes[kv.Key] = kv.Value * scale;
         }
+        // what the people lean to (culture, religion, class, mood) shifts each party's vote
+        var popMult = PopVoteMultipliers(c, votes.Keys);
+        foreach (var kv in popMult) if (votes.ContainsKey(kv.Key)) votes[kv.Key] *= kv.Value;
+        double voteSum = votes.Values.Sum();
+        if (voteSum > 0) foreach (var k in votes.Keys.ToList()) votes[k] /= voteSum;
         p.PartySeats = PartySeatsFrom(c, p, votes);
         p.Seats = AggregatePartySeats(c, p.PartySeats);
         p.LastElection = _game.World.Date;
         p.NextElection = _game.World.Date.AddMonths(ElectionMonths());
         ElectionsHeld++;
+        ParliamentElection(c);
         var before0 = p.Government.ToList();
         // (an ideology that needs assent - see PoliticsRules.NeedsAssent - cannot take government by the vote; it becomes a movement instead)
         bool Allowed(string k) => before0.Contains(k, StringComparer.OrdinalIgnoreCase) || Ideology(k) is not { } ik || !Rules.NeedsAssent(_game, c, ik);
@@ -465,6 +481,7 @@ public sealed partial class PoliticsSystem
         string before = p.Ruling;
         string beforeOrganization = p.RulingOrganization;
         SetGovernment(c, gov, "election", organizationCoalition);
+        if (p.PartySeats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => kv.Key).FirstOrDefault() is { } topParty) _game.Hub.RaiseElectionHeld(c, topParty);
         if (c.IsPlayer || before != p.Ruling || !beforeOrganization.Equals(p.RulingOrganization, StringComparison.OrdinalIgnoreCase))
         {
             string result = string.Join(", ", p.PartySeats.Where(kv => kv.Value > 0).OrderByDescending(kv => kv.Value).Select(kv => $"{PartyName(c, kv.Key)} {kv.Value}"));
@@ -475,6 +492,22 @@ public sealed partial class PoliticsSystem
     }
 
     /// <summary>Puts an ideology's party in power alone (coups, revolutions, scripts).</summary>
+    /// <summary>
+    /// Reaction to a country becoming (or staying) a subject: puts the overlord's ideology in power as far as the subject type
+    /// allows (<see cref="PoliticsRules.SubjectGovernment"/>), with some extra support for it.
+    /// </summary>
+    public void FollowOverlord(Country subject, Country overlord, double popularity)
+    {
+        var rel = _game.World.Relations;
+        if (!Enabled || rel.SubjectTypeOf(subject) is not { } type) return;
+        var policy = Rules.SubjectGovernment(_game, subject, overlord, type);
+        if (policy == SubjectControl.Free) return;
+        string want = Of(overlord).Ruling;
+        if (string.IsNullOrEmpty(want) || string.Equals(Of(subject).Ruling, want, StringComparison.OrdinalIgnoreCase)) return;
+        if (policy == SubjectControl.Imposed) SetRulingParty(subject, want, "overlord");
+        if (popularity > 0) AddPopularity(subject, want, popularity);
+    }
+
     public void SetRulingParty(Country c, string ideology, string reason = "")
     {
         if (!IdeologyByKey.ContainsKey(ideology)) return;
@@ -514,14 +547,23 @@ public sealed partial class PoliticsSystem
         if (!ideologyChanged && !organizationChanged) return;
         if (Environment.GetEnvironmentVariable("BURGER_GOV_LOG") is { } gl && gl.Equals(c.Tag, StringComparison.OrdinalIgnoreCase)) Console.WriteLine($"GOV {_game.World.Date.ToDisplay()} {c.Tag}: {old} -> {p.Ruling} ({reason}) stab {Rules.StabilityOf(_game, c):0} pop {string.Join("/", p.Popularity.Select(kv => $"{kv.Value:P0}"))}");
         if (ideologyChanged) GovernmentChanges++;
+        if (organizationChanged) _game.Hub.RaiseRulingPartyChanged(c, oldOrganization, p.RulingOrganization, reason);
+        // the new ruling party's leader takes over as the country's ruler
+        if (organizationChanged && _game.World.GetGenericScope(p.RulingOrganization) is { } rulingScope
+            && LeaderOf(rulingScope) is { Alive: true } leader && (leader.Country == c || leader.Country == null))
+            _game.Characters.SetRuler(c, leader);
         var ideology = Ideology(p.Ruling)!;
-        if (ideology.Government != null) c.Government = ideology.Government;
-        _game.RefreshName(c); // country_names follow the government
+        // the government word follows the ruling ideology, unless the current one already is a form of that ideology's rule
+        // (a constitutional monarchy stays one while the democrats govern; a 'republic' does not outlive its fascist takeover)
+        if (ideology.Government != null && !(Governments.GetValueOrDefault(c.Government) is { } word
+                && string.Equals(word.Ruling, p.Ruling, StringComparison.OrdinalIgnoreCase)))
+            c.Government = ideology.Government;
+        _game.Hub.RaiseGovernmentChanged(c, old); // (country_names follow the government)
         if (!HoldsElections(c, p)) p.NextElection = null;
         else p.NextElection ??= _game.World.Date.AddMonths(ElectionMonths());
         // ministers of parties that left the government step down
         foreach (var kv in p.Ministers.ToList())
-            if (!p.Government.Contains(MinisterParty(kv.Value) ?? "", StringComparer.OrdinalIgnoreCase)) p.Ministers.Remove(kv.Key);
+            if (!PartyInGovernmentOf(c, kv.Value)) p.Ministers.Remove(kv.Key);
         if (_game.World.Player != null)
         {
             string how = reason switch { "election" => "after an election", "revolution" => "after a revolution", "coup" => "in a coup", "overlord" => "backed by its overlord", _ => "" };
@@ -566,6 +608,7 @@ public sealed partial class PoliticsSystem
         if (LawsEnabled)
             foreach (var kv in p.Laws)
                 if (Laws.TryGetValue(kv.Value, out var l)) foreach (var m in l.Modifier) list.Add((l.Name, m.Key, m.Value));
+        foreach (var source in FactionModifierSources(c)) list.Add(source);
         if (CabinetEnabled)
             foreach (var pos in Positions)
             {
@@ -651,7 +694,13 @@ public sealed partial class PoliticsSystem
                 if (p.Popularity.ContainsKey(kv.Key)) p.Popularity[kv.Key] = Math.Max(0, p.Popularity[kv.Key] + kv.Value / 100.0);
             Normalize(p);
             SyncPartyPopularityToIdeologies(c, p);
-            if (HoldsElections(c, p) && !InCivilWar(c) && Rules.CallsSnapElection(_game, c)) HoldElection(c);
+            FactionMonthly(c);
+            // a government whose party has torn itself apart goes back to the voters (after the usual snap-election interval)
+            bool collapsed = GovernmentCollapsed(c) && (p.LastElection is not { } lastVote
+                || _game.World.Date.TotalDays - lastVote.TotalDays >= Def("snap_election_months", 12) * 30);
+            if (HoldsElections(c, p) && !InCivilWar(c) && (collapsed || Rules.CallsSnapElection(_game, c))) HoldElection(c);
+            PopReactionMonthly(c);
+            ParliamentMonthly(c);
             // ministers who died or left the country leave the cabinet
             foreach (var kv in p.Ministers.ToList())
                 if (!kv.Value.Alive || kv.Value.Country != c) { p.Ministers.Remove(kv.Key); _modsDirty.Add(c); }
@@ -709,6 +758,16 @@ public sealed partial class PoliticsSystem
             n.Add("progress", F(m.Progress));
             n.Add("started", m.Started.ToScript());
             if (m.Warned) n.Add("warned", "yes");
+            n.Add("organization", F(m.Organization));
+            n.Add("grievance", F(m.Grievance));
+            if (m.Concessions > 0.01) n.Add("concessions", F(m.Concessions));
+            if (m.Crackdowns > 0.01) n.Add("crackdowns", F(m.Crackdowns));
+            if (m.Heat > 0.01) n.Add("heat", F(m.Heat));
+            foreach (var g in m.Groups)
+            {
+                var gn = n.AddBlock("group");
+                gn.Add("key", g.Key); gn.Add("strength", F(g.Strength)); gn.Add("satisfaction", F(g.Satisfaction));
+            }
         }
         var rv = root.AddBlock("revolts");
         foreach (var kv in _revolts) rv.Add(kv.Key.Tag, kv.Value.ToString(CultureInfo.InvariantCulture));
@@ -773,6 +832,14 @@ public sealed partial class PoliticsSystem
                 Progress = n.GetDouble("progress"),
                 Started = GameDate.Parse(n.GetString("started") ?? "", w.Date),
                 Warned = n.GetBool("warned"),
+                // (saves from before movements had organisation and grievance: what the old progress implied)
+                Organization = n.Has("organization") ? n.GetDouble("organization") : Math.Min(100, n.GetDouble("progress") * 0.8 + 20),
+                Grievance = n.Has("grievance") ? n.GetDouble("grievance") : Math.Min(100, n.GetDouble("progress") * 0.6 + 25),
+                Concessions = n.GetDouble("concessions"),
+                Crackdowns = n.GetDouble("crackdowns"),
+                Heat = n.GetDouble("heat"),
+                Groups = n.GetAll("group").Select(gn => new InterestGroup { Key = gn.GetString("key", "")!, Strength = gn.GetDouble("strength"), Satisfaction = gn.Has("satisfaction") ? gn.GetDouble("satisfaction") : 0.5 })
+                    .Where(g => g.Key.Length > 0).ToList(),
             });
         }
         foreach (var rv in root.Get("revolts")?.All ?? Enumerable.Empty<Node>())

@@ -65,6 +65,8 @@ public sealed class Country : IScope
         }
     }
     public int FlagVersion;
+    /// <summary>Flag images for other governments and dependencies (country_flags in the definition), same keys as <see cref="NameVariants"/>.</summary>
+    public Dictionary<string, string> FlagVariants = new(StringComparer.OrdinalIgnoreCase);
     public string DefaultFlagPath = "";
 
     public Location? Capital;

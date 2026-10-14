@@ -164,57 +164,15 @@ public static unsafe class Assets
         return tex;
     }
 
-    private static Image GeneratedPartyFlag(string key, Rgb color)
-    {
-        var field = new Color(color.R, color.G, color.B, (byte)255);
-        var light = Raylib.ColorBrightness(field, 0.5f);
-        var dark = Raylib.ColorBrightness(field, -0.4f);
-        var img = Raylib.GenImageColor(96, 64, field);
-        // the design is picked by the key so each party keeps the same emblem between sessions
-        int style = key.Sum(ch => ch) % 3;
-        if (style == 0)
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 0, 96, 10, dark);
-            Raylib.ImageDrawRectangle(ref img, 0, 54, 96, 10, dark);
-            Raylib.ImageDrawCircle(ref img, 48, 32, 15, light);
-            Raylib.ImageDrawCircle(ref img, 48, 32, 9, field);
-        }
-        else if (style == 1)
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 0, 34, 64, dark);
-            Raylib.ImageDrawRectangle(ref img, 34, 0, 6, 64, light);
-        }
-        else
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 24, 96, 16, light);
-            Raylib.ImageDrawRectangle(ref img, 0, 0, 96, 6, dark);
-            Raylib.ImageDrawRectangle(ref img, 0, 58, 96, 6, dark);
-        }
-        return img;
-    }
+    private static Image GeneratedPartyFlag(string key, Rgb color) => FlagImage(FlagGenerator.Render(key, color, FlagKind.Party));
 
-    public static Image GeneratedFlag(Country c)
+    /// <summary>The fallback flag for a country with no image file: seeded by its tag, so it is the same every session.</summary>
+    public static Image GeneratedFlag(Country c) => FlagImage(FlagGenerator.Render(c.Tag, c.Color, FlagKind.Nation));
+
+    private static Image FlagImage(byte[] rgba)
     {
-        var col = new Color(c.Color.R, c.Color.G, c.Color.B, (byte)255);
-        var light = Raylib.ColorBrightness(col, 0.45f);
-        var dark = Raylib.ColorBrightness(col, -0.45f);
-        var img = Raylib.GenImageColor(96, 64, col);
-        int style = c.Tag.Sum(ch => ch) % 3;
-        if (style == 0)
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 0, 32, 64, dark);
-            Raylib.ImageDrawRectangle(ref img, 64, 0, 32, 64, light);
-        }
-        else if (style == 1)
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 0, 96, 21, light);
-            Raylib.ImageDrawRectangle(ref img, 0, 43, 96, 21, dark);
-        }
-        else
-        {
-            Raylib.ImageDrawRectangle(ref img, 0, 26, 96, 12, light);
-            Raylib.ImageDrawRectangle(ref img, 30, 0, 12, 64, light);
-        }
+        var img = Raylib.GenImageColor(FlagGenerator.Width, FlagGenerator.Height, Color.White);
+        rgba.CopyTo(new Span<byte>((void*)img.Data, rgba.Length));
         return img;
     }
 

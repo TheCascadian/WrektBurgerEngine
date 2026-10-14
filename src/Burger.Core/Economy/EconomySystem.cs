@@ -95,6 +95,15 @@ public sealed class EconomySystem
             if (gold) c.Gold += income[c] - c.LastExpenses;
             if (military) c.Manpower += c.LastManpowerGain;
         }
+        // subjects of a type with manpower_share send that part of their monthly gain to the overlord
+        if (military)
+            foreach (var (subject, (overlord, type)) in w.Relations.Subjects)
+            {
+                if (type.ManpowerShare <= 0 || !subject.Exists || !overlord.Exists) continue;
+                double sent = Math.Min(subject.Manpower, Math.Max(0, subject.LastManpowerGain) * type.ManpowerShare);
+                subject.Manpower -= sent;
+                overlord.Manpower += sent;
+            }
     }
 
     public void DailyTick()

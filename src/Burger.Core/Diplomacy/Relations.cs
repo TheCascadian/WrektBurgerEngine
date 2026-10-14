@@ -56,6 +56,17 @@ public sealed class Relations
     // ------------------------------------------------------------------ subjects
     public Country? OverlordOf(Country c) => Subjects.TryGetValue(c, out var s) ? s.Overlord : null;
     public SubjectType? SubjectTypeOf(Country c) => Subjects.TryGetValue(c, out var s) ? s.Type : null;
+    /// <summary>True if one of the two is the other's overlord (either way round).</summary>
+    public bool AreOverlordAndSubject(Country a, Country b) => OverlordOf(a) == b || OverlordOf(b) == a;
+    public bool IsSubject(Country c) => Subjects.ContainsKey(c);
+    /// <summary>The country at the top of the chain of overlords above <paramref name="c"/> (itself if it is nobody's subject).</summary>
+    public Country TopOverlord(Country c)
+    {
+        for (int i = 0; i < 8 && OverlordOf(c) is { } o && o != c; i++) c = o;
+        return c;
+    }
+    /// <summary>The country and its subjects.</summary>
+    public IEnumerable<Country> BlocOf(Country c) => SubjectsOf(c).Prepend(c);
     public IEnumerable<Country> SubjectsOf(Country c) => Subjects.Where(kv => kv.Value.Overlord == c).Select(kv => kv.Key);
     public void SetSubject(Country subject, Country overlord, SubjectType type) => Subjects[subject] = (overlord, type);
     public void ReleaseSubject(Country subject) => Subjects.Remove(subject);

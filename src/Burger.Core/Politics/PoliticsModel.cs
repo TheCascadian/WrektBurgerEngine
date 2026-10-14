@@ -140,6 +140,9 @@ public sealed class CountryPolitics
     public int CalmUntilDay = int.MinValue;
 }
 
+/// <summary>Who decides the government of a subject (rule SubjectGovernment).</summary>
+public enum SubjectControl { Imposed, Preferred, Free }
+
 public enum MovementDemand
 {
     /// <summary>Lift the ban on the ideology's party (change to <see cref="Movement.TargetLaw"/>).</summary>
@@ -163,6 +166,33 @@ public sealed class Movement
     public GameDate Started;
     /// <summary>The player has been told it is about to revolt (on_movement_ultimatum fired).</summary>
     public bool Warned;
+    /// <summary>0-100. How much of the movement's support is organised (cells, unions, press, arms). Support alone never revolts.</summary>
+    public double Organization;
+    /// <summary>0-100. Persistent grievance of its supporters; drifts slowly toward what exclusion, hardship and past repression justify.</summary>
+    public double Grievance;
+    /// <summary>Memory of concessions made to it (decays slowly): they ease grievance but legitimise and embolden it.</summary>
+    public double Concessions;
+    /// <summary>Memory of crackdowns on it (decays slowly): they cut organisation now, and feed grievance and martyrs later.</summary>
+    public double Crackdowns;
+    /// <summary>Months in a row it had the strength to revolt but no opening (shown as a warning; not saved).</summary>
+    public int Stalled;
+    /// <summary>0-100. Recent violence and disorder (riots, bombings, mutinies); it eats stability and fades by itself.</summary>
+    public double Heat;
+    /// <summary>The interest groups that came out with the movement: what they want more of (freedom, security, a larger army). Not laws.</summary>
+    public List<InterestGroup> Groups = new();
+}
+
+/// <summary>
+/// A pressure group inside a movement. It spawns only with a movement and wants something the state can give or deny: more
+/// <c>freedom</c>, more <c>security</c> or a larger <c>army</c>. Unmet, its strength grows and the movement turns aggressive.
+/// </summary>
+public sealed class InterestGroup
+{
+    public string Key = "";
+    /// <summary>0-100. How much of the movement's push this group carries.</summary>
+    public double Strength;
+    /// <summary>0-1. How far the state currently gives it what it wants (drifts toward what the country is actually like).</summary>
+    public double Satisfaction = 0.5;
 }
 
 /// <summary>A running civil war between a country and the rebels that split from it.</summary>

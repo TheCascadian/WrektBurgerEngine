@@ -122,7 +122,7 @@ public sealed partial class DiplomacySystem
     /// </summary>
     public double RemilitarizationOdds(Country c)
     {
-        double Side(Country x) => Strength(x) + R.AlliesOf(x).Sum(a => Strength(a) * 0.6) + R.SubjectsOf(x).Sum(a => Strength(a) * 0.5);
+        double Side(Country x) => Strength(x) + R.AlliesOf(x).Sum(a => Strength(a) * 0.6) + SubjectStrength(x);
         double mine = Side(c);
         double worst = 1;
         var opponents = new HashSet<Country>();

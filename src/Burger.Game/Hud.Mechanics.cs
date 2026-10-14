@@ -48,7 +48,7 @@ public sealed partial class Hud
             string fmt = d.Decimals > 0 ? "F" + d.Decimals : "0";
             string tip = $"{Localisation.Get(d.Name)}: {v.ToString(fmt)}" + (d.Min != null || d.Max != null ? $" (range {d.Min?.ToString() ?? "-"} to {d.Max?.ToString() ?? "-"})" : "") +
                          $"\nMonthly change: {(ch >= 0 ? "+" : "")}{ch:0.##}" + (d.Desc.Length > 0 ? "\n\n" + Localisation.Get(d.Desc) : "");
-            Stat(ref x, Localisation.Get(d.Name), v.ToString(fmt), $"{(ch >= 0 ? "+" : "")}{ch:0.#}", tip, ch >= 0 ? Gui.Good : Gui.Bad);
+            Stat(ref x, Localisation.Get(d.Name), Num(v, d.Decimals), $"{(ch >= 0 ? "+" : "")}{Num(ch, 1)}", tip, ch >= 0 ? Gui.Good : Gui.Bad);
         }
     }
 
@@ -57,34 +57,42 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) { Ui.Left = LeftPanel.None; return; }
-        var r = LeftRect(2000);
+        var r = FitRect("decisions");
         Gui.Panel(r, "Decisions");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
         var list = G.Decisions.Defs.Values.Where(d => G.Decisions.IsVisible(d, player))
             .OrderByDescending(d => G.Decisions.CanTake(d, player)).ThenBy(d => d.Category).ThenBy(d => d.Name).ToList();
         if (list.Count == 0) { Gui.Label("No decisions available right now.", x, y, 15, Gui.TextDim); return; }
-        float rowH = 64 * S;
-        float top = Gui.BeginScroll("decisions", new Rectangle(x, y, w, r.Height - 46 * S), list.Count * (rowH + 6 * S));
+        float pad = 10 * S, textW = w - 8 * S - 2 * pad, footH = 30 * S, gap = 6 * S;
+        // each card sizes itself: title line, wrapped description, then a footer with requirements and the button
+        var heights = list.Select(d => 28 * S + Gui.WrappedHeight(Localisation.Get(d.Desc), textW, 13) + 4 * S + footH + 4 * S).ToList();
+        float need = heights.Sum() + gap * list.Count;
+        FitEnd("decisions", r, y + need);
+        float top = Gui.BeginScroll("decisions", new Rectangle(x, y, w, Math.Min(need, r.Height - 46 * S)), need);
         float dy = top;
-        foreach (var d in list)
+        for (int i = 0; i < list.Count; i++)
         {
-            var box = new Rectangle(x, dy, w - 8 * S, rowH);
+            var d = list[i];
+            var box = new Rectangle(x, dy, w - 8 * S, heights[i]);
             bool can = G.Decisions.CanTake(d, player);
             Card(box, can ? new Color(48, 58, 40, 255) : new Color(36, 38, 44, 255), can);
-            Gui.Label(Localisation.Get(d.Name), x + 8 * S, dy + 5 * S, 16, can ? Gui.Gold : Gui.Text, FontKind.Bold);
-            string desc = Localisation.Get(d.Desc);
-            if (desc.Length > 70) desc = desc[..67] + "...";
-            Gui.Label(desc, x + 8 * S, dy + 26 * S, 13, Gui.TextDim);
             var reqs = G.Decisions.Requirements(d, player);
             var effects = G.Decisions.DescribeEffect(d, player);
+            Stripe(box, can ? Gui.Good : new Color(90, 96, 108, 255));
+            float tx = x + pad;
+            Gui.Label(Gui.Fit(Localisation.Get(d.Name), textW, 16, FontKind.Bold), tx, dy + 5 * S, 16, can ? Gui.Gold : Gui.Text, FontKind.Bold);
+            float below = dy + 28 * S + Gui.Wrapped(Localisation.Get(d.Desc), tx, dy + 28 * S, textW, 13, Gui.TextDim) + 4 * S;
+            int met = reqs.Count(q => q.Ok);
+            float fy = below + (footH - 14 * S) / 2 - 2 * S;
+            if (reqs.Count > 0) Gui.Label($"Requirements {met}/{reqs.Count}", tx, fy, 13, met == reqs.Count ? Gui.Good : Gui.Bad);
             string tip = Localisation.Get(d.Desc) +
                          (reqs.Count > 0 ? "\n\nRequirements:\n" + string.Join("\n", reqs.Select(q => (q.Ok ? "[OK] " : "[X] ") + q.Text)) : "") +
                          (effects.Count > 0 ? "\n\nEffects:\n" + string.Join("\n", effects) : "");
             if (Gui.Hover(box)) Gui.Tooltip(tip);
-            if (Gui.Button(new Rectangle(x + w - 98 * S, dy + rowH - 28 * S, 86 * S, 24 * S), "Take", can, tip, false, 14))
+            if (Gui.Button(new Rectangle(box.X + box.Width - pad - 86 * S, below + 3 * S, 86 * S, 24 * S), "Take", can, tip, false, 14))
                 Ui.SetStatus(G.Decisions.Take(d, player) ? $"Decision taken: {Localisation.Get(d.Name)}" : "Not possible");
-            dy += rowH + 6 * S;
+            dy += heights[i] + gap;
         }
         Gui.EndScroll();
     }

@@ -255,21 +255,21 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) { Ui.Left = LeftPanel.None; return; }
-        var r = LeftRect(2000);
-        Gui.Panel(r, "Recruit & Train");
+        var r = FitRect("recruit");
+        Gui.Panel(r, "");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
         var templates = G.Data.Templates.Values
             .Where(t => G.Rules.Economy.CannotRecruitReason(G, player, t, player.Capital ?? G.World.Locations[0]) != "This template belongs to another country").ToList();
         string hint = Ui.RecruitTemplate == null
-            ? "Pick a division template, then click your locations on the map to train it there."
-            : $"Click one of your locations to train a {Ui.RecruitTemplate.Name}. Right-click or Esc to stop.";
+            ? "Pick a template, then click a location to train it."
+            : $"Click a location to train a {Ui.RecruitTemplate.Name}. Right-click or Esc stops.";
         y += Gui.Wrapped(hint, x, y, w, 14, Ui.RecruitTemplate == null ? Gui.TextDim : Gui.Gold) + 8 * S;
 
         Gui.Section("Division templates", x, y, w);
         y += 26 * S;
         float rowH = 50 * S;
-        float listH = Math.Min(templates.Count * (rowH + 4 * S), r.Height * 0.45f);
+        float listH = Math.Min(templates.Count * (rowH + 4 * S), Raylib.GetScreenHeight() * 0.45f);
         float top = Gui.BeginScroll("templates", new Rectangle(x, y, w, listH), templates.Count * (rowH + 4 * S));
         float ty = top;
         foreach (var t in templates)
@@ -280,21 +280,30 @@ public sealed partial class Hud
             Card(box, sel ? new Color(78, 62, 34, 255) : hover ? new Color(50, 50, 56, 255) : new Color(36, 38, 44, 255), sel);
             Gui.Label(t.Name, box.X + 8 * S, box.Y + 5 * S, 16, sel ? Color.White : Gui.Gold, FontKind.Bold);
             string comp = string.Join(", ", t.Units.Select(u => $"{u.Count}x {u.Type.Name}"));
-            Gui.Label(Gui.Fit(comp, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 27 * S, 13, Gui.TextDim);
-            string cost = (G.Economy.GoldCosts ? $"{t.Cost:0}g  " : "") + $"{t.Manpower:0}mp  {t.BuildDays}d";
-            if (G.Production.Enabled && t.Equipment.Count > 0)
-            {
-                double share = G.Production.AvailableShare(player, t.Equipment);
-                cost += $"  eq {share:P0}";
-            }
+            Gui.Label(Gui.Fit(comp, box.Width - 150 * S, 13), box.X + 8 * S, box.Y + 27 * S, 13, Gui.TextDim);
+            string cost = (G.Economy.GoldCosts ? $"{t.Cost:0} gold  " : "") + $"{t.Manpower:0} manpower  {t.BuildDays} days";
             var cm = Gui.Measure(cost, 13, FontKind.Bold);
             Gui.Label(cost, box.X + box.Width - cm.X - 8 * S, box.Y + 6 * S, 13, Gui.Text, FontKind.Bold);
+            double share = 1;
+            bool hasEq = G.Production.Enabled && t.Equipment.Count > 0;
+            if (hasEq)
+            {
+                share = G.Production.AvailableShare(player, t.Equipment);
+                var bar = new Rectangle(box.X + box.Width - 78 * S, box.Y + 31 * S, 70 * S, 8 * S);
+                Gui.Bar(bar, (float)share, share >= 1 ? Gui.Good : share > 0 ? Gui.Gold : Gui.Bad);
+                string es = share >= 1 ? "equipped" : $"{share:P0}";
+                Gui.Label(es, bar.X - Gui.Measure(es, 12).X - 4 * S, box.Y + 27 * S, 12, share >= 1 ? Gui.Good : Gui.Bad);
+            }
             if (hover)
             {
-                string equip = G.Production.Enabled && t.Equipment.Count > 0
-                    ? "\nEquipment: " + string.Join(", ", t.Equipment.Select(kv => $"{kv.Value:0} {G.Data.Equipment.GetValueOrDefault(kv.Key)?.Name ?? kv.Key} ({G.Production.Stock(player, kv.Key):0} in stock)")) : "";
-                Gui.Tooltip($"{t.Name}\nCost: " + (G.Economy.GoldCosts ? $"{t.Cost:0} gold, " : "") + $"{t.Manpower:0} manpower{equip}\nTraining time: {t.BuildDays} days\n{comp}\n\n" +
-                            string.Join("\n", t.Stats.Select(kv => $"{Localisation.GetOrPretty(kv.Key)}: {kv.Value:0.##}")) + "\n\nClick to pick it, then click your locations on the map.");
+                var tip = new List<string> { t.Name, comp, $"Training time: {t.BuildDays} days" };
+                if (hasEq)
+                    tip.Add("Equipment: " + string.Join(", ", t.Equipment.Select(kv => $"{kv.Value:0} {G.Data.Equipment.GetValueOrDefault(kv.Key)?.Name ?? kv.Key} ({G.Production.Stock(player, kv.Key):0} in stock)")));
+                foreach (var k in new[] { "max_strength", "max_organisation", "soft_attack", "hard_attack", "defense", "breakthrough" })
+                    if (t.Stats.TryGetValue(k, out double v)) tip.Add($"{Localisation.GetOrPretty(k)}: {v:0.##}");
+                tip.Add("");
+                tip.Add("Click to pick it, then click your locations on the map. Open the Designer for all stats.");
+                Gui.Tooltip(string.Join("\n", tip));
                 if (Gui.Clicked(box)) Ui.RecruitTemplate = sel ? null : t;
             }
             Gui.Block(box);
@@ -311,14 +320,11 @@ public sealed partial class Hud
             y += 36 * S;
         }
 
+        if (player.Recruitment.Count == 0) { FitEnd("recruit", r, y); return; } // nothing in training: nothing to show
         Gui.Section($"In training ({player.Recruitment.Count})", x, y, w);
         y += 26 * S;
-        if (player.Recruitment.Count == 0)
-        {
-            Gui.Label("Nothing in training.", x, y, 14, Gui.TextDim);
-            return;
-        }
-        float qTop = Gui.BeginScroll("training", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), player.Recruitment.Count * 28 * S);
+        float qTop = Gui.BeginScroll("training", new Rectangle(x, y, w, Math.Min(player.Recruitment.Count * 28 * S, 220 * S)), player.Recruitment.Count * 28 * S);
+        FitEnd("recruit", r, y + Math.Min(player.Recruitment.Count * 28 * S, 220 * S));
         float qy = qTop;
         foreach (var o in player.Recruitment.ToList())
         {

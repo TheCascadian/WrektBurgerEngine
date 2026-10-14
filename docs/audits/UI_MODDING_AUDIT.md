@@ -13,7 +13,7 @@ It does **not** migrate the engine's built-in HUD screens into per-component dat
 - Interface loader: `src/Burger.Core/Mechanics/Interface.cs`, loaded from `DataLoader.LoadDefinitions`.
 - Mod hooks: `game/scripts/*.cs` compile at runtime through `ModManager`; project `backend/*.cs` holds game rules. There is no separate package/manifest-based runtime UI mod loader or global mod-priority system.
 - UI assets: paths such as `gfx/fonts/...`, `gfx/interface/...`, and icons are resolved relative to the game root. Theme fonts try configured paths, then `gfx/fonts`, engine fonts, and system fonts. Missing panel icons fall back to initials; missing panel/button textures fall back to drawn panels/buttons. A missing configured body font logs a warning.
-- Definitions are hot-reloadable via the game reload path documented in `docs/MODDING.md` (or restart); runtime reload behavior for active partial-panel references was not independently exercised here.
+- Definitions are hot-reloadable via the game reload path documented in `docs/game/MODDING.md` (or restart); runtime reload behavior for active partial-panel references was not independently exercised here.
 
 ## UI surface map
 
@@ -86,7 +86,7 @@ panel = {
 panel = { id = court disable = yes }
 ```
 
-A complete copyable example is in [`examples/ui-partial-override/game/interface/10_court_patch.txt`](../examples/ui-partial-override/game/interface/10_court_patch.txt). It targets the `court` panel already present in SampleGame.
+A complete copyable example is in [`examples/ui-partial-override/game/interface/10_court_patch.txt`](../../examples/ui-partial-override/game/interface/10_court_patch.txt). It targets the `court` panel already present in SampleGame.
 
 To tune one shared HUD region while leaving every other default intact:
 

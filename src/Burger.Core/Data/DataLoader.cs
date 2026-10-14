@@ -88,6 +88,7 @@ public static class DataLoader
         game.Population.Load(data);
         game.Decisions.Load(data);
         game.Interface.Load(data);
+        game.Particles.Load(data);
     }
 
     // -----------------------------------------------------------------------------------------------
@@ -450,10 +451,12 @@ public static class DataLoader
                     Key = n.Key,
                     Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key),
                     IncomeShare = n.GetDouble("income_share", 0.1),
+                    ManpowerShare = n.GetDouble("manpower_share", 0),
                     JoinsOverlordWars = n.GetBool("joins_overlord_wars", true),
                     CountsAsRelation = n.GetBool("counts_as_relation", true),
                     CanDeclareWar = n.GetBool("can_declare_war", false),
                     LibertyDesire = n.GetDouble("liberty_desire", 0),
+                    Government = n.GetString("government") ?? "imposed",
                     Definition = n,
                 };
             }
@@ -526,6 +529,19 @@ public static class DataLoader
             data.DefaultNames.Male.AddRange(d.GetList("male"));
             data.DefaultNames.Female.AddRange(d.GetList("female"));
             data.DefaultNames.Family.AddRange(d.GetList("family"));
+            foreach (var block in root.All)
+            {
+                if (block.Children == null || block.Key.Equals("default", StringComparison.OrdinalIgnoreCase)) continue;
+                var list = new NameList();
+                list.Male.AddRange(block.GetList("male"));
+                list.Female.AddRange(block.GetList("female"));
+                list.Family.AddRange(block.GetList("family"));
+                if (list.Male.Count + list.Female.Count + list.Family.Count == 0) continue;
+                var target = block.GetString("religion") is { } rel && block.GetString("culture") == null ? data.ReligionNames : data.CultureNames;
+                string key = block.GetString("culture") ?? block.GetString("religion") ?? block.Key;
+                if (!target.TryGetValue(key, out var existing)) target[key] = list;
+                else { existing.Male.AddRange(list.Male); existing.Female.AddRange(list.Female); existing.Family.AddRange(list.Family); }
+            }
         }
         if (data.DefaultNames.Male.Count == 0) data.DefaultNames.Male.AddRange(new[] { "Marcus", "Lucius", "Gaius", "Titus", "Johann", "Friedrich", "Henri", "Louis", "William", "Karl" });
         if (data.DefaultNames.Female.Count == 0) data.DefaultNames.Female.AddRange(new[] { "Julia", "Claudia", "Anna", "Maria", "Sophie", "Elisabeth", "Marie", "Charlotte" });

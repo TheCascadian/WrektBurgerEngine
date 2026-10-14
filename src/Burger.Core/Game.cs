@@ -131,6 +131,12 @@ public sealed class Game
     public DecisionSystem Decisions { get; }
     /// <summary>Monthly statistics per country for the Ledger charts.</summary>
     public StatisticsSystem Statistics { get; }
+    /// <summary>The Memory: what countries, characters, parties, states and pop groups are remembered for (see <see cref="Burger.Core.Memories.MemorySystem"/>).</summary>
+    public Burger.Core.Memories.MemorySystem Memory { get; }
+    /// <summary>The Figures: the animated bodies (the human rig and its idle/walk/run clips) everything that shows a person draws (see <see cref="Burger.Core.Figures.FigureSystem"/>).</summary>
+    public Burger.Core.Figures.FigureSystem Figures { get; }
+    /// <summary>The Particles: effects from common/particles.txt and the requests to show them (see <see cref="Burger.Core.Particles.ParticleSystem"/>).</summary>
+    public Burger.Core.Particles.ParticleSystem Particles { get; } = new();
     /// <summary>Custom panels and map modes from interface/ (or added from C#).</summary>
     public InterfaceRegistry Interface { get; } = new();
     public ModManager Mods { get; }
@@ -158,6 +164,8 @@ public sealed class Game
 
     /// <summary>Raised whenever ownership/control changes so the renderer can refresh map colors.</summary>
     public event Action? MapChanged;
+    /// <summary>The events systems raise about their own changes for the others to react to (see <see cref="GameEvents"/>).</summary>
+    public GameEvents Hub { get; } = new();
     public event Action<Notification>? NotificationAdded;
 
     public Game()
@@ -186,8 +194,18 @@ public sealed class Game
         Resources = new ResourceSystem(this);
         Decisions = new DecisionSystem(this);
         Statistics = new StatisticsSystem(this);
+        Memory = new Burger.Core.Memories.MemorySystem(this);
+        Figures = new Burger.Core.Figures.FigureSystem(this);
         Mods = new ModManager(this);
         Ai = new AiSystem(this);
+        // cross-system reactions: each system owns what it does when another one changes
+        Memory.Subscribe(Hub);
+        Hub.SubjectMade += Politics.FollowOverlord;
+        Hub.SubjectMonthly += (s, o) => Politics.FollowOverlord(s, o, 0.05);
+        Hub.SubjectMade += (s, _, _) => RefreshName(s);
+        Hub.SubjectReleased += (s, _) => RefreshName(s);
+        Hub.GovernmentChanged += (c, _) => RefreshName(c);
+        Hub.StateTransferred += (_, _, _) => Population.InvalidateMajorities();
         Clock = new GameClock(this);
         Commands = new ConsoleCommands(this);
         Builtins.RegisterAll(this);
@@ -197,6 +215,7 @@ public sealed class Game
         Modifiers.Providers.Add((scope, key) => Diplomacy.ExhaustionModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Tech.ModifierValue(scope, key));
         Diplomacy.RegisterScript();
+        Memory.RegisterScript();
         Politics.RegisterCommands(Commands);
     }
 
@@ -221,6 +240,7 @@ public sealed class Game
         game.Focus.Load(game.Data);
         game.Commodities.LoadDefinitions(game.Data);
         game.AiProfiles.LoadDefinitions(game.Data);
+        game.Figures.Load(game.Data.Root);
         if (compileScripts) game.Mods.CompileAndLoad();
         game.Ai.ResetRng(game.Seed); // mods may have replaced Game.Ai (OnLoad): reseed the active AI's streams
         WorldLoader.LoadWorld(game);
@@ -260,13 +280,26 @@ public sealed class Game
         RaiseMapChanged();
     }
 
+    /// <summary>The ideology ruling a country (null without the politics feature).</summary>
+    public string? RulingOf(Country c) => Politics.Enabled ? Politics.Of(c).Ruling : null;
+
+    /// <summary>A country's primary culture (null without the population feature or when it has none).</summary>
+    public string? CultureOf(Country c) => Population.Enabled ? Population.Of(c).Culture : null;
+
+    /// <summary>True if both countries have the same ruling ideology, or there is no politics feature to tell them apart.</summary>
+    /// <summary>Do two countries have the same primary culture? (the single definition of "the same people"; false without the population feature)</summary>
+    public bool SamePeople(Country a, Country b)
+        => CultureOf(a) is { Length: > 0 } x && string.Equals(x, CultureOf(b), StringComparison.OrdinalIgnoreCase);
+
+    public bool SameRuling(Country a, Country b) => !Politics.Enabled || Politics.Of(a).Ruling == Politics.Of(b).Ruling;
+
     /// <summary>
     /// A country's name follows its government and its dependence (country_names in its definition): ideology_subject, then
     /// subject, then the ruling ideology, else the name it started with. A name a script set (set_country_name) is left alone.
     /// </summary>
     public void RefreshName(Country c)
     {
-        string? ide = Politics.Enabled ? Politics.Of(c).Ruling : null;
+        string? ide = RulingOf(c);
         bool subject = World.Relations.OverlordOf(c) != null;
         if (c.NameVariants.Count > 0 && !c.Vars.HasFlag("name_scripted"))
         {
@@ -275,7 +308,7 @@ public sealed class Game
             if (name == null && subject) c.NameVariants.TryGetValue("subject", out name);
             if (name == null && ide != null) c.NameVariants.TryGetValue(ide, out name);
             string want = name ?? c.DefaultName;
-            if (c.RawName != want) c.Name = want;
+            if (c.RawName != want) { c.Name = want; RaiseMapChanged(); }
         }
         // the same for the map color: an own color for the government, else the ideology's tint of the original color
         // (a country that is red as a communist state is not red when it is not one)
@@ -287,7 +320,21 @@ public sealed class Game
             if (col == null && ide != null && c.ColorVariants.TryGetValue(ide, out var d)) col = d;
             if (col == null && ide != null && Politics.Ideology(ide) is { ColorBlend: { } blend } i) col = c.DefaultColor.Lerp(blend, i.ColorBlendAmount);
             var wantColor = col ?? c.DefaultColor;
-            if (!c.Color.Equals(wantColor)) { c.Color = wantColor; RaiseMapChanged(); }
+            if (!c.Color.Equals(wantColor)) { c.Color = wantColor; c.FlagVersion++; RaiseMapChanged(); }
+        }
+        // the flag follows the government too: an explicit country_flags entry, else gfx/flags/TAG_ideology.png when it exists
+        if (!c.Vars.HasFlag("flag_scripted"))
+        {
+            string? path = null;
+            if (subject && ide != null) c.FlagVariants.TryGetValue(ide + "_subject", out path);
+            if (path == null && subject) c.FlagVariants.TryGetValue("subject", out path);
+            if (path == null && ide != null) c.FlagVariants.TryGetValue(ide, out path);
+            if (path == null && ide != null)
+            {
+                string conv = $"gfx/flags/{c.Tag}_{ide}.png";
+                if (File.Exists(Data.PathOf(conv))) path = conv;
+            }
+            c.FlagPath = path ?? c.DefaultFlagPath;
         }
     }
 
@@ -441,6 +488,7 @@ public sealed class Game
         }
         if (Features.Has(F.Economy) || Features.Has(F.Military)) P("Economy.MonthlyTick", () => Economy.MonthlyTick()); // gold (economy) and manpower (military)
         if (Features.Has(F.LendLease)) P("Support.MonthlyTick", () => Support.MonthlyTick());
+        P("Memory.MonthlyTick", () => Memory.MonthlyTick());
         P("Resources.MonthlyTick", () => Resources.MonthlyTick());
         P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick());
         if (Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());

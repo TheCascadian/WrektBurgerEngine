@@ -31,6 +31,98 @@ public sealed partial class PoliticsSystem
         return (MovementDemand.Power, null);
     }
 
+    private void SpawnGroups(Movement m, IdeologyDef ideology)
+    {
+        m.Groups.Clear();
+        foreach (var (key, strength) in Rules.MovementInterestGroups(_game, m.Country, ideology))
+        {
+            if (m.Groups.Any(g => g.Key == key)) continue;
+            m.Groups.Add(new InterestGroup { Key = key, Strength = Math.Clamp(strength, 5, 100), Satisfaction = Rules.GroupSatisfaction(_game, m.Country, m, key) });
+        }
+    }
+
+    public static string GroupName(string key) => key switch { "freedom" => "Freedom", "security" => "Security", "army" => "A larger army", "independence" => "Independence", _ => key };
+
+    public static string GroupWants(string key) => key switch
+    {
+        "freedom" => "open politics, no repression, a say in government",
+        "security" => "order on the streets: a stable state that keeps the peace",
+        "army" => "a bigger standing army (about 0.6 divisions per state)",
+        "independence" => "an end to foreign rule: lower liberty desire",
+        _ => key,
+    };
+
+    /// <summary>Groups drift toward what the state really gives them, grow while denied and shrink when satisfied; the movement turns violent in proportion.</summary>
+    private void UpdateGroups(Country c, Movement m, IdeologyDef ideology)
+    {
+        var d = _game.Data.Defines;
+        m.Heat *= 1 - d.Get("movement_heat_decay", 0.25);
+        foreach (var g in m.Groups)
+        {
+            g.Satisfaction += (Rules.GroupSatisfaction(_game, c, m, g.Key) - g.Satisfaction) * d.Get("interest_satisfaction_rate", 0.2);
+            g.Strength = Math.Clamp(g.Strength + (0.5 - g.Satisfaction) * d.Get("interest_strength_rate", 4), 5, 100);
+        }
+        double chance = Rules.MovementIncidentChance(_game, c, m);
+        if (chance > 0 && _game.Rng.NextDouble() < chance) Incident(c, m, ideology);
+    }
+
+    /// <summary>A violent act from the group that is denied most: protests for freedom, riots and bombings for security, a mutiny for the army.</summary>
+    private void Incident(Country c, Movement m, IdeologyDef ideology)
+    {
+        var weights = m.Groups.Select(g => g.Strength * (1 - g.Satisfaction) + 1).ToList();
+        double roll = _game.Rng.NextDouble() * weights.Sum();
+        int pick = 0;
+        for (; pick < weights.Count - 1 && roll >= weights[pick]; pick++) roll -= weights[pick];
+        var group = m.Groups[pick];
+        string adj = ideology.Adjective.ToLowerInvariant();
+        string what;
+        switch (group.Key)
+        {
+            case "freedom": m.Heat = Math.Min(100, m.Heat + 15); m.Progress = Math.Min(100, m.Progress + 5); m.Organization = Math.Min(100, m.Organization + 1); what = $"Mass {adj} protests for freedom"; break;
+            case "independence": m.Heat = Math.Min(100, m.Heat + 15); m.Progress = Math.Min(100, m.Progress + 6); what = $"Nationalist {adj} demonstrations against foreign rule"; break;
+            case "security": m.Heat = Math.Min(100, m.Heat + 30); m.Progress = Math.Min(100, m.Progress + 3); what = $"{ideology.Adjective} riots and bombings"; break;
+            default: m.Heat = Math.Min(100, m.Heat + 20); m.Organization = Math.Min(100, m.Organization + 4); what = $"Officers sympathetic to the {adj} cause mutiny"; break;
+        }
+        _modsDirty.Add(c);
+        if (c.IsPlayer) _game.Notify($"{what}: they want {GroupName(group.Key).ToLowerInvariant()}.", NotificationKind.Bad);
+    }
+
+    /// <summary>Why nothing more can be done for one group now, or null.</summary>
+    public string? CannotMeet(Movement m, string key)
+        => m.Groups.All(g => g.Key != key) ? "No such group" : CanAfford(m.Country, MeetCost) ? null : $"Needs {MeetCost:0} {PowerName}";
+
+    public double MeetCost => ConcedeCost * _game.Data.Defines.Get("meet_group_cost_share", 0.5);
+
+    public List<string> ExplainGroup(Movement m, InterestGroup g)
+    {
+        var lines = new List<string>
+        {
+            $"{GroupName(g.Key)}: wants {GroupWants(g.Key)}",
+            $"Strength {g.Strength:0} of 100; the state gives it {g.Satisfaction:P0} of what it wants",
+            g.Satisfaction < 0.5 ? "Denied, it grows and pushes the movement to violence" : "Satisfied, it fades and the movement calms",
+        };
+        lines.Add($"Click to meet its demands: {MeetCost:0} {PowerName}, it loses strength");
+        return lines;
+    }
+
+    /// <summary>Gives one interest group something now: it loses strength and is better satisfied, and the movement is a little calmer. Cheaper than a full concession.</summary>
+    public string? MeetGroup(Movement m, string key)
+    {
+        var reason = CannotMeet(m, key);
+        if (reason != null) return reason;
+        var g = m.Groups.First(x => x.Key == key);
+        var d = _game.Data.Defines;
+        Pay(m.Country, MeetCost);
+        g.Strength = Math.Max(5, g.Strength - d.Get("meet_group_strength", 30));
+        g.Satisfaction = Math.Min(1, g.Satisfaction + 0.25);
+        m.Grievance = Math.Max(0, m.Grievance - d.Get("meet_group_grievance", 8));
+        m.Concessions += 0.5;
+        ApplyMovementReaction(m.Country, false, 0.5);
+        _modsDirty.Add(m.Country);
+        if (m.Country.IsPlayer) _game.Notify($"We met part of the {GroupName(key).ToLowerInvariant()} demand of the {Ideology(m.Ideology)?.Adjective.ToLowerInvariant()} movement.", NotificationKind.Info);
+        return null;
+    }
+
     public string DemandText(Movement m)
     {
         var i = Ideology(m.Ideology);
@@ -39,9 +131,47 @@ public sealed partial class PoliticsSystem
             : $"Put the {PartyName(m.Country, m.Ideology)} ({i?.Name}) in power";
     }
 
+    public Movement? MovementOf(Country c, string ideology) => Movements.FirstOrDefault(x => x.Country == c && x.Ideology == ideology);
+
+    /// <summary>Why a movement's grievance is where it is: causes with their weight (for tooltips).</summary>
+    public List<(string Cause, double Value)> MovementCauses(Movement m) => Rules.MovementGrievanceSources(_game, m.Country, m);
+
+    /// <summary>The stage a movement has reached, from what it can actually do (not from support).</summary>
+    public string MovementStage(Movement m)
+    {
+        if (m.Progress < 15 && m.Organization < 25) return "Sympathisers";
+        if (m.Progress < 30) return m.Organization >= 40 ? "Organising" : "Agitating";
+        if (m.Progress < 70) return "Strikes and marches";
+        return Rules.CanRevolt(_game, m.Country, m) ? "Ready to rise" : "Mobilised but blocked";
+    }
+
+    /// <summary>What is likely to happen next, in plain words, and what is holding it back.</summary>
+    public List<string> MovementForecast(Movement m)
+    {
+        var c = m.Country;
+        var d = _game.Data.Defines;
+        var lines = new List<string>();
+        double orgNeed = d.Get("movement_revolt_organization", 55), grNeed = d.Get("movement_revolt_grievance", 40), opening = Rules.MovementOpening(_game, c);
+        if (m.Organization < orgNeed) lines.Add($"Too loosely organised to rise ({m.Organization:0} of {orgNeed:0})");
+        if (m.Grievance < grNeed) lines.Add($"Its supporters are not angry enough yet ({m.Grievance:0} of {grNeed:0})");
+        if (opening < d.Get("movement_revolt_opening", 0.2)) lines.Add("The regime is too strong for it: no opening");
+        if (lines.Count == 0) lines.Add(m.Progress >= 100 ? "It has everything it needs: a revolt can come any month" : "It is organised, angry and the regime is weak: it will rise once mobilised");
+        foreach (var g in m.Groups.Where(g => g.Satisfaction < 0.4 && g.Strength >= 25).OrderByDescending(g => g.Strength * (1 - g.Satisfaction)))
+            lines.Add($"{GroupName(g.Key)} is denied ({g.Satisfaction:P0} met): it presses the movement toward violence");
+        if (m.Heat > 5) lines.Add($"Recent riots and mutinies cost {m.Heat / 100 * _game.Data.Defines.Get("movement_heat_stability", 3):0.0} stability a month");
+        double strikes = Rules.MovementDisruption(_game, c, m);
+        if (strikes < -0.05) lines.Add($"Strikes cost {-strikes:0.0} stability a month");
+        var summary = _game.Population.Enabled ? PopSummaryOf(c) : null;
+        if (summary != null && summary.Stronghold.TryGetValue(m.Ideology, out var sh) && sh.Share > 0)
+            lines.Add(sh.Share >= 0.45 ? $"Concentrated in {StateName(sh.State)} ({sh.Share:P0} of its backers): a civil war has a base" : $"Scattered across the country (largest share {sh.Share:P0}): a civil war has no base");
+        return lines;
+    }
+
+    private string StateName(string key) => _game.World.GetState(key)?.DisplayName ?? key;
+
     private void MonthlyUnrest()
     {
-        double threshold = _game.Data.Defines.Get("movement_threshold", 0.25);
+        var d = _game.Data.Defines;
         foreach (var c in _game.World.Countries.ToList()) // civil wars add countries
         {
             if (!c.Exists || CivilWars.Any(cw => cw.Origin == c || cw.Rebel == c)) continue;
@@ -50,19 +180,35 @@ public sealed partial class PoliticsSystem
             foreach (var i in Ideologies)
             {
                 double pop = Rules.MovementSupport(_game, c, i);
-                var m = Movements.FirstOrDefault(x => x.Country == c && x.Ideology == i.Key);
+                var m = MovementOf(c, i.Key);
                 var demand = DemandOf(c, p, i.Key);
                 if (m == null)
                 {
-                    if (demand == null || pop < threshold) continue;
-                    m = new Movement { Country = c, Ideology = i.Key, Demand = demand.Value.Demand, TargetLaw = demand.Value.Law, Started = _game.World.Date };
+                    if (demand == null) continue;
+                    // a new movement starts from the grievance its backers already have
+                    double start = _game.Population.Enabled && PopSummaryOf(c).BackerGrievance.TryGetValue(i.Key, out var bg) ? bg : 0;
+                    if (!Rules.MovementForms(_game, c, i, pop, start)) continue;
+                    m = new Movement { Country = c, Ideology = i.Key, Demand = demand.Value.Demand, TargetLaw = demand.Value.Law, Started = _game.World.Date, Grievance = start };
+                    m.Organization = Math.Min(20, pop * 40);
+                    SpawnGroups(m, i);
                     Movements.Add(m);
                     if (c.IsPlayer) _game.Notify($"A {i.Adjective.ToLowerInvariant()} movement has formed: {DemandText(m)}.", NotificationKind.Bad);
                     _game.Events.FireOnAction("on_movement_formed", c);
                 }
                 else if (demand == null) { Movements.Remove(m); continue; } // its demand was met
                 else { m.Demand = demand.Value.Demand; m.TargetLaw = demand.Value.Law; }
+
+                // grievance and organisation move slowly (they persist), memories of crackdowns and concessions fade
+                double gTarget = Math.Clamp(Rules.MovementGrievanceSources(_game, c, m).Sum(x => x.Value), 0, 100);
+                m.Grievance = Math.Clamp(m.Grievance + (gTarget - m.Grievance) * d.Get("movement_grievance_rate", 0.1), 0, 100);
+                double oTarget = Rules.MovementOrganizationTarget(_game, c, m, pop);
+                m.Organization = Math.Clamp(m.Organization + (oTarget - m.Organization) * d.Get("movement_organization_rate", 0.08), 0, 100);
+                if (m.Groups.Count == 0) SpawnGroups(m, i); // (a movement from an older save gets its groups now)
+                UpdateGroups(c, m, i);
+                m.Crackdowns *= 1 - d.Get("movement_memory_decay", 0.03);
+                m.Concessions *= 1 - d.Get("movement_memory_decay", 0.03);
                 m.Progress = Math.Clamp(m.Progress + Rules.MovementProgress(_game, c, m, pop), 0, 100);
+                _modsDirty.Add(c);
                 if (m.Progress >= 70 && !m.Warned && c.IsPlayer && m.Demand == MovementDemand.Power)
                 {
                     m.Warned = true;
@@ -70,13 +216,19 @@ public sealed partial class PoliticsSystem
                     _game.Events.FireOnAction("on_movement_ultimatum", c);
                     c.Vars.ClearFlag("ultimatum:" + m.Ideology);
                 }
-                if (m.Progress <= 0 && pop < threshold) { Movements.Remove(m); continue; }
+                // a movement that has lost its support, its organisation and its anger fades away
+                if (m.Progress <= 0.5 && m.Organization < 8 && pop < d.Get("movement_threshold", 0.25) * 0.6) { Movements.Remove(m); continue; }
                 if (m.Progress >= 100 && !calm)
                 {
-                    Movements.Remove(m);
-                    Revolt(c, i.Key, pop, "revolution");
-                    break; // one revolt per country per month
+                    if (Rules.CanRevolt(_game, c, m))
+                    {
+                        Movements.Remove(m);
+                        Revolt(c, i.Key, pop, "revolution");
+                        break; // one revolt per country per month
+                    }
+                    if (m.Stalled++ == 0 && c.IsPlayer) _game.Notify($"The {i.Adjective.ToLowerInvariant()} movement has mobilised but cannot yet rise: {MovementForecast(m)[0].ToLowerInvariant()}.", NotificationKind.Info);
                 }
+                else m.Stalled = 0;
             }
             if (!c.Exists || CivilWars.Any(cw => cw.Origin == c) || calm || _game.World.Date.TotalDays < p.CalmUntilDay) continue;
             // a popular shut-out ideology may seize power in a coup, or (HOI4 style) start a civil war
@@ -107,19 +259,111 @@ public sealed partial class PoliticsSystem
     }
 
     public double SuppressCost => _game.Data.Defines.Get("suppress_movement_cost", 50);
+    public double ConcedeCost => _game.Data.Defines.Get("concede_movement_cost", 35);
 
     public string? CannotSuppress(Movement m) => CanAfford(m.Country, SuppressCost) ? null : $"Needs {SuppressCost:0} {PowerName}";
 
-    /// <summary>Sets the movement back (costs political power and stability; martyrs make the ideology a little more popular).</summary>
+    public string? CannotConcede(Movement m)
+    {
+        if (m.Demand == MovementDemand.Power && m.TargetLaw == null && m.Concessions >= 3) return "It has been conceded to enough: it wants power, not more favours";
+        return CanAfford(m.Country, ConcedeCost) ? null : $"Needs {ConcedeCost:0} {PowerName}";
+    }
+
+    /// <summary>What a crackdown would cost and how likely it is to work, for the button tooltip.</summary>
+    public List<string> ExplainSuppress(Movement m)
+    {
+        var (success, cost) = Rules.CrackdownOdds(_game, m.Country, m);
+        var lines = new List<string> { $"Costs {SuppressCost:0} {PowerName} and about {cost:0.0} stability", $"Chance it breaks their organisation: {success:P0}" };
+        lines.Add("Success: mobilisation and organisation fall; a failure emboldens them");
+        lines.Add("Either way grievance is remembered and martyrs gain it support");
+        lines.AddRange(FactionReaction(m.Country, true).Take(3));
+        return lines;
+    }
+
+    public List<string> ExplainConcede(Movement m)
+    {
+        var lines = new List<string> { $"Costs {ConcedeCost:0} {PowerName}", "Eases grievance and mobilisation now", "It grows stronger on the back of a win, and the ruling parties' hardliners resent it" };
+        lines.AddRange(FactionReaction(m.Country, false).Take(3));
+        return lines;
+    }
+
+    /// <summary>Governing factions that would applaud or resent a crackdown (hardline stance > 0.5) or a concession.</summary>
+    private List<string> FactionReaction(Country c, bool crackdown)
+    {
+        var list = new List<string>();
+        foreach (var f in GoverningFactions(c).OrderByDescending(FactionInfluence))
+        {
+            double stance = (FactionHardline(f) - 0.5) * 2 * (crackdown ? 1 : -1);
+            if (Math.Abs(stance) < 0.25) continue;
+            list.Add($"{f.DisplayName} {(stance > 0 ? "approves" : "objects")}");
+        }
+        return list;
+    }
+
+    private void ApplyMovementReaction(Country c, bool crackdown, double scale)
+    {
+        double shock = Def("faction_movement_grievance", 12) * scale;
+        foreach (var f in GoverningFactions(c))
+        {
+            double stance = (FactionHardline(f) - 0.5) * 2 * (crackdown ? 1 : -1);
+            if (Math.Abs(stance) > 0.05) AddGrievance(f, -stance * shock);
+        }
+        _modsDirty.Add(c);
+    }
+
+    private void AddStability(Country c, double delta)
+    {
+        var stab = _game.Resources.Defs.FirstOrDefault(r => string.Equals(r.Key, "stability", StringComparison.OrdinalIgnoreCase));
+        if (stab != null) _game.Resources.Set(c, stab, _game.Resources.Get(c, stab) + delta);
+    }
+
+    /// <summary>
+    /// A crackdown. It can fail: the odds come from the regime's strength against the movement's organisation. Success breaks cells and demobilises
+    /// it; failure emboldens it. Either way grievance and the memory of repression build, martyrs add support, hardline factions in the
+    /// government approve and moderate ones resent it, and a state that holds free elections pays more stability.
+    /// </summary>
     public string? Suppress(Movement m)
     {
         var reason = CannotSuppress(m);
         if (reason != null) return reason;
-        Pay(m.Country, SuppressCost);
-        m.Progress = Math.Max(0, m.Progress - _game.Data.Defines.Get("suppress_movement_progress", 25));
-        var stab = _game.Resources.Defs.FirstOrDefault(r => string.Equals(r.Key, "stability", StringComparison.OrdinalIgnoreCase));
-        if (stab != null) _game.Resources.Set(m.Country, stab, _game.Resources.Get(m.Country, stab) - _game.Data.Defines.Get("suppress_movement_stability", 5));
-        AddPopularity(m.Country, m.Ideology, 0.01);
+        var c = m.Country;
+        var d = _game.Data.Defines;
+        var (success, cost) = Rules.CrackdownOdds(_game, c, m);
+        Pay(c, SuppressCost);
+        AddStability(c, -cost);
+        bool worked = _game.Rng.NextDouble() < success;
+        if (worked)
+        {
+            m.Progress = Math.Max(0, m.Progress - d.Get("suppress_movement_progress", 25));
+            m.Organization = Math.Max(0, m.Organization - d.Get("suppress_movement_organization", 15));
+        }
+        else m.Progress = Math.Min(100, m.Progress + d.Get("suppress_failure_progress", 6));
+        m.Crackdowns += worked ? 1 : 1.5;
+        m.Grievance = Math.Min(100, m.Grievance + d.Get("suppress_movement_grievance", 8));
+        AddPopularity(c, m.Ideology, 0.005 + m.Grievance / 100 * 0.01);
+        ApplyMovementReaction(c, true, 1);
+        if (c.IsPlayer) _game.Notify(worked ? $"The crackdown on the {Ideology(m.Ideology)?.Adjective.ToLowerInvariant()} movement broke up its cells, but it will be remembered." : $"The crackdown on the {Ideology(m.Ideology)?.Adjective.ToLowerInvariant()} movement failed and made martyrs.", worked ? NotificationKind.Info : NotificationKind.Bad);
+        return null;
+    }
+
+    /// <summary>
+    /// A partial concession (a reform, talks, an amnesty) that does not hand over power: it eases grievance and mobilisation now, but the
+    /// movement is emboldened (organisation and a little support), the memory of the concession is kept and hardliners resent it.
+    /// </summary>
+    public string? Concede(Movement m)
+    {
+        var reason = CannotConcede(m);
+        if (reason != null) return reason;
+        var c = m.Country;
+        var d = _game.Data.Defines;
+        Pay(c, ConcedeCost);
+        m.Grievance = Math.Max(0, m.Grievance - d.Get("concede_movement_grievance", 20));
+        m.Progress = Math.Max(0, m.Progress - d.Get("concede_movement_progress", 20));
+        m.Organization = Math.Min(100, m.Organization + d.Get("concede_movement_organization", 5));
+        m.Concessions += 1;
+        AddPopularity(c, m.Ideology, 0.005);
+        ApplyMovementReaction(c, false, 1);
+        if (c.IsPlayer) _game.Notify($"Concessions eased the {Ideology(m.Ideology)?.Adjective.ToLowerInvariant()} movement for now.", NotificationKind.Info);
         return null;
     }
 
@@ -127,10 +371,11 @@ public sealed partial class PoliticsSystem
     {
         foreach (var m in MovementsOf(c).ToList())
         {
-            if (m.Progress < 40) continue;
+            if (m.Progress < 40 && m.Grievance < 60) continue;
             // give in to legalisation; a government that could work with the movement may hand it power, the rest fight it
             if (m.Demand == MovementDemand.Legalize && _game.Rng.NextDouble() < 0.5) GiveIn(m);
             else if (_game.Rng.NextDouble() < Rules.AiGivesIn(_game, c, m, PopularityOf(c, m.Ideology))) GiveIn(m);
+            else if (m.Progress >= 40 && m.Grievance >= 40 && m.Crackdowns < 3 && CannotConcede(m) == null && _game.Rng.NextDouble() < 0.25) Concede(m);
             else if (m.Progress >= 60 && CannotSuppress(m) == null) Suppress(m);
         }
     }
@@ -209,7 +454,7 @@ public sealed partial class PoliticsSystem
         // the new country
         string tag = FreeTag();
         var col = Mix(c.Color, ide.Color, 0.45);
-        var rebel = w.CreateCountry(tag, $"{ide.Adjective} {c.Name}", col, c.FlagPath, ide.Government ?? c.Government);
+        var rebel = w.CreateCountry(tag, $"{ide.Adjective} {c.Name}", col, $"gfx/flags/{tag}.png", ide.Government ?? c.Government);
         rebel.Origin = c.Tag;
         rebel.Names.Male.AddRange(c.Names.Male);
         rebel.Names.Female.AddRange(c.Names.Female);

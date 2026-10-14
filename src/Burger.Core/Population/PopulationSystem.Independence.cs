@@ -263,7 +263,7 @@ public sealed partial class PopulationSystem
             string name = Rules.IndependentCountryName(_game, origin, culture, states);
             // a second country of the same people is named after its land
             if (w.Countries.Any(x => x.Exists && x.Name == name)) name = $"{name} of {states.MaxBy(TotalOf)!.DisplayName}";
-            country = w.CreateCountry(tag, name, def?.Color ?? Rgb.Gray, origin.FlagPath, origin.Government);
+            country = w.CreateCountry(tag, name, def?.Color ?? Rgb.Gray, $"gfx/flags/{tag}.png", origin.Government);
             country.Playable = false;
             var cp = new CountryPopulation { Culture = culture, Religion = MajorityReligionOf(states) ?? def?.Religion };
             _countries[country] = cp;

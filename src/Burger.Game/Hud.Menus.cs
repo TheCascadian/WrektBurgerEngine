@@ -32,7 +32,7 @@ public sealed partial class Hud
     /// <summary>Settings: the most days per second speed 5 may run (0 = as fast as the computer allows).</summary>
     private void DrawSettingsPanel()
     {
-        float w = 420 * S, h = 230 * S;
+        float w = 420 * S, h = 390 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
         Gui.Panel(r, "Settings");
         if (Gui.CloseButton(r)) { Ui.SettingsOpen = false; UserSettings.Save(); return; }
@@ -49,9 +49,34 @@ public sealed partial class Hud
         }
         y += 44 * S;
         Gui.Label($"Currently {G.Clock.ActualDaysPerSecond:0.0} days per second.", x, y, 14, Gui.TextDim);
+        y += 34 * S;
+        Gui.Label("AI behaviour", x, y, 16);
+        y += 26 * S;
+        if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.Ahistorical ? "Ahistorical AI: on" : "Historical AI (default)", true,
+                "Historical: nations follow their history and ambitions (realistic, plausible).\nAhistorical: nations follow only their own interests, so the player can take any role. Less accurate.",
+                UserSettings.Ahistorical, 15))
+        {
+            UserSettings.Ahistorical = !UserSettings.Ahistorical;
+            G.HistoricalBias = UserSettings.EffectiveBias;
+            UserSettings.Save();
+        }
+        y += 38 * S;
+        Gui.Label(UserSettings.Ahistorical ? "Less realistic, but freer for role-play." : "Realistic and plausible; history shapes the AI.", x, y, 14, Gui.TextDim);
         y += 30 * S;
+        if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.AiDisabled ? "Other countries' AI: DISABLED" : "Other countries' AI: enabled", true,
+                "Disabled: every country except yours does nothing (no moves, diplomacy, recruitment or production). Useful for testing and sandbox play.",
+                UserSettings.AiDisabled, 15))
+        {
+            UserSettings.AiDisabled = !UserSettings.AiDisabled;
+            G.Ai.Enabled = !UserSettings.AiDisabled;
+            UserSettings.Save();
+        }
+        y += 44 * S;
         if (Gui.Button(new Rectangle(x, y, bw, 34 * S), "Done")) { Ui.SettingsOpen = false; UserSettings.Save(); }
     }
+
+    private bool _saveCacheValid;
+    private List<(string Path, (string, string, string) Info)> _saveCache = new();
 
     private void DrawSaveMenu()
     {
@@ -61,18 +86,23 @@ public sealed partial class Hud
         if (Gui.CloseButton(r)) { Ui.SaveMenuOpen = false; return; }
         float x = r.X + 14 * S, y = r.Y + 40 * S, bw = w - 28 * S;
         if (Gui.Button(new Rectangle(x, y, bw, 34 * S), "Save new game", true, "Saves to the saves folder next to the game folder (F5 = quick save)"))
+        {
             Ui.SetStatus(_app.SaveAs(null));
+            _saveCacheValid = false;
+        }
         y += 44 * S;
         Gui.Label("Load a saved game:", x, y, 16, Gui.TextDim);
         y += 24 * S;
-        var saves = _app.ListSaves();
+        // reading every save header each frame made this menu crawl: cache until it is reopened or a save is made
+        if (!_saveCacheValid) { _saveCache = _app.ListSaves().Select(pa => (pa, SaveGame.Peek(pa))).ToList(); _saveCacheValid = true; }
+        var saves = _saveCache;
         float top = Gui.BeginScroll("saves", new Rectangle(x, y, bw, r.Y + h - y - 10 * S), saves.Count * 40 * S);
         float sy = top;
-        foreach (var path in saves)
+        foreach (var (path, info) in saves)
         {
-            var (_, date, player) = SaveGame.Peek(path);
-            string label = $"{Path.GetFileNameWithoutExtension(path)}   ({player}, {date})";
-            if (Gui.Button(new Rectangle(x, sy, bw - 12 * S, 34 * S), label, true, path, false, 15))
+            var (_, date, player) = info;
+            string label = Gui.Fit($"{Path.GetFileNameWithoutExtension(path)}   ({player}, {date})", bw - 36 * S, 15);
+            if (Gui.Button(new Rectangle(x, sy, bw - 12 * S, 34 * S), label, true, "…/" + Path.GetFileName(Path.GetDirectoryName(path)) + "/" + Path.GetFileName(path), false, 15))
             {
                 Ui.SaveMenuOpen = false;
                 _app.LoadSave(path);

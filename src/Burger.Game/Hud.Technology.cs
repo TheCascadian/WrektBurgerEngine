@@ -13,7 +13,7 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) { Ui.Left = LeftPanel.None; return; }
-        var r = LeftRect(2000);
+        var r = FitRect("tech");
         Gui.Panel(r, "Technology");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
@@ -21,7 +21,7 @@ public sealed partial class Hud
         var rules = G.Rules.Tech;
         double points = rules.MonthlyPoints(G, player);
         int slots = rules.Slots(G, player);
-        Gui.Label($"Research: {points:0.0} points a month, {slots} slot(s). Known: {T.Count(player)} of {T.Defs.Count}", x, y, 15, Gui.TextDim);
+        Gui.Label($"{points:0.0} points/month · {slots} slot(s) · {T.Count(player)}/{T.Defs.Count} known", x, y, 14, Gui.TextDim);
         y += 26 * S;
 
         // the research slots
@@ -34,12 +34,18 @@ public sealed partial class Hud
             {
                 var slot = current[i];
                 double cost = rules.Cost(G, player, slot.Tech);
-                Gui.Label(slot.Tech.Name, x + 8 * S, y + 4 * S, 15, Gui.Gold, FontKind.Bold);
-                Gui.Bar(new Rectangle(x + 8 * S, y + 26 * S, w - 80 * S, 10 * S), (float)Math.Clamp(slot.Progress / Math.Max(1, cost), 0, 1), new Color(110, 170, 230, 255));
+                Stripe(box, new Color(110, 170, 230, 255));
+                double frac = Math.Clamp(slot.Progress / Math.Max(1, cost), 0, 1);
+                Gui.Label(slot.Tech.Name, x + 10 * S, y + 4 * S, 15, Gui.Gold, FontKind.Bold);
+                var pb = new Rectangle(x + 10 * S, y + 26 * S, w - 90 * S, 10 * S);
+                Gui.Bar(pb, (float)frac, new Color(110, 170, 230, 255));
+                string pct = $"{frac:P0}";
+                Gui.Label(pct, x + w - 72 * S - Gui.Measure(pct, 12).X, y + 23 * S, 12, Gui.TextDim);
+                if (Gui.Hover(pb)) Gui.Tooltip($"{slot.Progress:0} of {cost:0} points");
                 if (Gui.Button(new Rectangle(x + w - 62 * S, y + 8 * S, 50 * S, 26 * S), "Drop", true, "Stop researching (the progress is lost)", false, 13)) T.Cancel(player, slot);
                 if (Gui.Hover(box)) Gui.Tooltip(TechTip(slot.Tech, player));
             }
-            else Gui.Label("Free slot - pick a technology below", x + 8 * S, y + 13 * S, 14, Gui.TextDim);
+            else Gui.Label("Free slot - pick a technology below", x + 10 * S, y + 13 * S, 14, Gui.TextDim);
             y += 50 * S;
         }
 
@@ -58,7 +64,9 @@ public sealed partial class Hud
 
         var list = T.Defs.Values.Where(t => t.Category == _techCategory).OrderBy(t => t.Year).ThenBy(t => t.Order).ToList();
         float rowH = 40 * S;
-        float top = Gui.BeginScroll("techs", new Rectangle(x, y, w, r.Bottom() - y - 10 * S), list.Count * (rowH + 4 * S));
+        float need = list.Count * (rowH + 4 * S);
+        FitEnd("tech", r, y + need);
+        float top = Gui.BeginScroll("techs", new Rectangle(x, y, w, Math.Min(need, r.Bottom() - y - 10 * S)), need);
         float dy = top;
         foreach (var t in list)
         {
@@ -67,9 +75,9 @@ public sealed partial class Hud
             string? why = known ? "Known" : T.CannotResearch(player, t);
             bool busy = current.Any(s => s.Tech == t);
             Card(box, known ? new Color(40, 58, 44, 255) : busy ? new Color(40, 50, 70, 255) : new Color(36, 38, 44, 255), busy);
-            Gui.Label(Gui.Fit(t.Name, w - 150 * S, 15, FontKind.Bold), x + 8 * S, dy + 4 * S, 15, known ? Gui.Good : Gui.Text, FontKind.Bold);
-            string sub = known ? "known" : $"{t.Year:0}, {rules.Cost(G, player, t):0} points";
-            Gui.Label(sub, x + 8 * S, dy + 22 * S, 12, Gui.TextDim);
+            Stripe(box, known ? Gui.Good : busy ? new Color(110, 170, 230, 255) : why == null ? Gui.Gold : new Color(90, 96, 108, 255));
+            Gui.Label(Gui.Fit(t.Name, w - 150 * S, 15, FontKind.Bold), x + 10 * S, dy + 4 * S, 15, known ? Gui.Good : Gui.Text, FontKind.Bold);
+            Gui.Label(known ? $"{t.Year:0} · known" : $"{t.Year:0} · {rules.Cost(G, player, t):0} points", x + 10 * S, dy + 22 * S, 12, Gui.TextDim);
             if (Gui.Hover(box)) Gui.Tooltip(TechTip(t, player));
             if (!known && !busy && Gui.Button(new Rectangle(x + w - 90 * S, dy + 6 * S, 76 * S, 26 * S), "Research", why == null, why ?? TechTip(t, player), false, 13))
                 Ui.SetStatus(T.Start(player, t) ?? $"Researching {t.Name}");

@@ -189,7 +189,7 @@ public sealed partial class PoliticsSystem
         double noise = _game.Data.Defines.Get("election_noise", 0.03);
         var votes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var key in PartyKeysOf(country))
-            votes[key] = Math.Max(0, state.PartyPopularity.GetValueOrDefault(key) + (_game.Rng.NextDouble() * 2 - 1) * noise);
+            votes[key] = Math.Max(0, state.PartyPopularity.GetValueOrDefault(key) * CohesionVoteFactor(key) + (_game.Rng.NextDouble() * 2 - 1) * noise);
         double sum = votes.Values.Sum();
         if (sum > 0) foreach (var key in votes.Keys.ToList()) votes[key] /= sum;
         return votes;
@@ -352,6 +352,10 @@ public sealed partial class PoliticsSystem
         => _game.World.GetGenericScope(key) is { } scope && IsParty(scope)
             && scope.Attributes.TryGetValue(FlagAttribute, out var path) && !string.IsNullOrWhiteSpace(path) ? path : null;
 
+    /// <summary>True when the character leads a party of their country (political leaders do not command armies).</summary>
+    public bool IsPartyLeader(Character ch)
+        => Enabled && ch.Country != null && PartiesOf(ch.Country).Any(party => LeaderOf(party) == ch);
+
     /// <summary>The character named as leader by a party, faction or branch, or null when absent/unknown.</summary>
     public Character? LeaderOf(IScope? scope)
         => scope is GenericScope structure && IsPartyStructure(structure)
@@ -440,6 +444,7 @@ public sealed partial class PoliticsSystem
                 problems.Add(($"Scope '{scope.Key}' of kind '{scope.Kind}' must have a party as its parent", where));
             }
 
+            ValidateFactions(scope, where, problems);
             if (IsPartyStructure(scope) && scope.Attributes.TryGetValue(LeaderAttribute, out var leaderKey)
                 && !string.IsNullOrWhiteSpace(leaderKey) && _game.World.GetCharacter(leaderKey) == null)
                 problems.Add(($"Political structure '{scope.Key}' references unknown character '{leaderKey}' in data = {{ leader = ... }}", where));
@@ -466,6 +471,7 @@ public sealed partial class PoliticsSystem
         var s = _game.Script;
         string IdeologyName(string? key) => Ideology(key)?.Name ?? key ?? "?";
 
+        RegisterFactionScript();
         s.RegisterValue("party_popularity", (ctx, x) => PartyPopularity(x));
         s.RegisterValue("party_seats", (ctx, x) => PartySeats(x));
         s.RegisterEffect("add_party_support", (ctx, n) =>

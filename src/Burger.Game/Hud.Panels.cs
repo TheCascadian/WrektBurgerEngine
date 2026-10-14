@@ -1,3 +1,4 @@
+using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
@@ -23,61 +24,159 @@ public sealed partial class Hud
         return p.Length <= 3 ? p : p[..3];
     }
 
+    private readonly HashSet<string> _locOpen = new();
+
+    /// <summary>Good is green, bad is red, nothing is dim (the colours of the tooltips).</summary>
+    private static Color DeltaColor(double delta, double eps = 0.005) => delta > eps ? Gui.Good : delta < -eps ? Gui.Bad : Gui.TextDim;
+
+    /// <summary>A collapsible section row: chevron, title and a one-line summary when closed. Returns whether it is open.</summary>
+    /// <summary>Draws the building's own glyph (bld_ prefix keeps shared tooltip icons untouched); locked uses the greyed variant.</summary>
+    private static bool BuildingIcon(string key, Rectangle dst, bool locked)
+        => (locked && Gui.Icon($"bld_{key}_locked", dst)) || Gui.Icon($"bld_{key}", dst, locked ? new Color(150, 150, 150, 255) : null);
+
+    private bool Collapse(string key, string title, string summary, Color summaryCol, float x, float y, float w)
+    {
+        bool open = _locOpen.Contains(key);
+        var row = new Rectangle(x, y, w, 24 * S);
+        bool hover = Gui.Hover(row);
+        if (hover) Raylib.DrawRectangleRec(row, new Color(255, 255, 255, 14));
+        float cx = x + 8 * S, cy = y + 12 * S, cs = 4 * S;
+        if (open) Raylib.DrawTriangle(new Vector2(cx - cs, cy - cs / 2), new Vector2(cx, cy + cs / 2 + 1), new Vector2(cx + cs, cy - cs / 2), Gui.Gold);
+        else Raylib.DrawTriangle(new Vector2(cx - cs / 2, cy - cs), new Vector2(cx - cs / 2, cy + cs), new Vector2(cx + cs / 2 + 1, cy), Gui.Gold);
+        Gui.Label(title, x + 20 * S, y + 2 * S, 15, Gui.Gold, FontKind.Header);
+        if (!open && summary.Length > 0)
+        {
+            float tw = Gui.Measure(title, 15, FontKind.Header).X;
+            string sm = Gui.Fit(summary, w - tw - 36 * S, 13);
+            Gui.Label(sm, x + w - Gui.Measure(sm, 13).X - 6 * S, y + 4 * S, 13, summaryCol);
+        }
+        if (Gui.Clicked(row)) { if (open) _locOpen.Remove(key); else _locOpen.Add(key); }
+        return open;
+    }
+
     private void DrawLocationPanel()
     {
         var l = Ui.SelectedLocation;
         if (l == null) { Ui.Left = LeftPanel.None; return; }
-        var r = LeftRect(G.Population.Enabled ? 2000 : 800 * S);
+        var r = FitRect("loc");
         Gui.Panel(r, l.DisplayName);
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
-        float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 22 * S;
-        void Row(string k, string v, Color? col = null)
+        float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 22 * S, w = r.Width - 24 * S;
+        void Row(string k, string v, Color? col = null, string? tip = null)
         {
-            Gui.Label(k, x, y, 16, Gui.TextDim);
-            Gui.Label(v, x + 120 * S, y, 16, col ?? Gui.Text);
+            Gui.Label(k, x, y, 15, Gui.TextDim);
+            Gui.Label(Gui.Fit(v, w - 110 * S, 15), x + 100 * S, y, 15, col ?? Gui.Text);
+            if (tip != null && Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip(tip);
+            y += lh;
+        }
+        void CountryRow(string k, Country? c, Color? col = null)
+        {
+            Gui.Label(k, x, y, 15, Gui.TextDim);
+            if (c == null) Gui.Label("-", x + 100 * S, y, 15);
+            else
+            {
+                float fx = FlagChip(c, x + 100 * S, y + 1 * S, 16 * S, col);
+                Gui.Label(Gui.Fit(c.Name, w - 100 * S - fx, 15), x + 100 * S + fx + 2 * S, y, 15, col ?? Gui.Text);
+            }
             y += lh;
         }
         Row("Terrain", l.Terrain.Name + (l.IsCoastal ? " (coastal)" : ""));
-        if (l.IsWater) { Row("Type", l.IsLake ? "Lake" : "Sea"); return; }
+        if (l.IsWater) { Row("Type", l.IsLake ? "Lake" : "Sea"); FitEnd("loc", r, y); return; }
         var st = l.State;
-        Row("State", st?.DisplayName ?? "(none)");
-        Row("Owner", CountryLink(l.Owner));
-        Row("Controller", CountryLink(l.Controller), l.IsOccupied ? Gui.Bad : null);
+        if (st != null) Row("State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
+        CountryRow("Owner", l.Owner);
+        if (l.Controller != l.Owner) CountryRow("Controller", l.Controller, Gui.Bad);
         if (st != null)
         {
-            Row("Cores", st.Cores.Count == 0 ? "-" : string.Join(", ", st.Cores.Select(c => c.Tag)));
-            Row("Claims", st.Claims.Count == 0 ? "-" : string.Join(", ", st.Claims.Select(c => c.Tag)));
-            Row("Tax / month", $"{st.Tax:0.##}");
-            Row("Manpower / month", $"{st.Manpower:0}");
-            Row("Locations", st.Locations.Count.ToString());
-            if (G.Population.Enabled) y = DrawStatePopulation(st, x, y + 4 * S, r.Width - 24 * S);
+            // tax and manpower against the average state of the owner: above is green, below is red
+            var peers = (l.Owner?.OwnedStates ?? new List<State>()).Where(s => s != st).ToList();
+            double avgTax = peers.Count > 0 ? peers.Average(s => s.Tax) : st.Tax, avgMan = peers.Count > 0 ? peers.Average(s => s.Manpower) : st.Manpower;
+            void Stat2(string k, double v, double avg, string text)
+            {
+                double rel = avg > 0 ? v / avg - 1 : 0;
+                Gui.Label(k, x, y, 15, Gui.TextDim);
+                Gui.Label(text, x + 100 * S, y, 15, Gui.Text, FontKind.Bold);
+                if (peers.Count > 0 && Math.Abs(rel) >= 0.005)
+                    Gui.Label($"{(rel >= 0 ? "+" : "")}{rel:P0}", x + 100 * S + Gui.Measure(text, 15, FontKind.Bold).X + 8 * S, y + 1 * S, 13, DeltaColor(rel));
+                if (Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip($"{k}\n{text} a month\nOwner's average state: {avg:0.##}" + (peers.Count > 0 ? $"\n{(rel >= 0 ? "+" : "")}{rel:P0} against the average" : ""));
+                y += lh;
+            }
+            Stat2("Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
+            Stat2("Manpower", st.Manpower, avgMan, Num(st.Manpower));
+            y += 4 * S;
+            if (G.Population.Enabled)
+            {
+                var P = G.Population;
+                var sp = P.Of(st);
+                string sum = $"{People(sp.Total)}  {(sp.LastGrowth >= 0 ? "+" : "-")}{People(Math.Abs(sp.LastGrowth))}/mo";
+                bool open = Collapse("people", "People", sum, DeltaColor(sp.LastGrowth, 0.5), x, y, w);
+                y += 26 * S;
+                if (open) y = DrawStatePopulation(st, x, y, w, false) + 4 * S;
+            }
+            if (st.Owner != null && G.Politics.PopsEnabled && G.Population.HasPops(st))
+            {
+                var stMoods = G.Politics.PopGroupRows(st.Owner, new[] { st });
+                double stAvg = stMoods.Count > 0 ? stMoods.Sum(g => g.Opinion * g.Size) / stMoods.Sum(g => g.Size) : 0;
+                bool open = Collapse("politics_here", "Politics", stMoods.Count > 0 ? $"opinion {stAvg:+0;-0;0}" : "", stAvg >= 10 ? Gui.Good : stAvg > -10 ? Gui.TextDim : Gui.Bad, x, y, w);
+                y += 26 * S;
+                if (open) y = DrawStatePolitics(l, st, x, y, w) + 4 * S;
+            }
             if (st.Buildings.Count > 0)
             {
-                // buildings in two columns so long lists stay inside the panel
-                y += 4 * S;
-                Gui.Section($"Buildings in {st.DisplayName}", x, y, r.Width - 24 * S);
+                int levels = st.Buildings.Values.Sum();
+                bool open = Collapse("buildings", "Buildings", $"{levels} levels", Gui.TextDim, x, y, w);
                 y += 26 * S;
-                float colW = (r.Width - 24 * S) / 2;
-                int i = 0;
-                foreach (var b in st.Buildings.OrderBy(b => b.Key))
+                if (open)
                 {
-                    string name = G.Data.BuildingTypes.TryGetValue(b.Key, out var bt) ? bt.Name : Localisation.GetOrPretty(b.Key);
-                    double dmg = st.Damaged.GetValueOrDefault(b.Key);
-                    string text = Gui.Fit($"{name}: {b.Value}" + (dmg >= 0.05 ? $" ({dmg:0.#} bombed)" : ""), colW - 8 * S, 15);
-                    Gui.Label(text, x + (i % 2) * colW, y + (i / 2) * 20 * S, 15, dmg >= 0.05 ? Gui.Bad : Gui.Text);
-                    i++;
+                    float tile = 46 * S, ih = 26 * S, cx = x + 4 * S, rowY = y;
+                    foreach (var b in st.Buildings.OrderBy(b => b.Key))
+                    {
+                        if (cx + tile > x + w && cx > x + 4 * S) { cx = x + 4 * S; rowY += 36 * S; }
+                        string name = G.Data.BuildingTypes.TryGetValue(b.Key, out var bt) ? bt.Name : Localisation.GetOrPretty(b.Key);
+                        double dmg = st.Damaged.GetValueOrDefault(b.Key);
+                        var cell = new Rectangle(cx, rowY, tile - 4 * S, 32 * S);
+                        var ir = new Rectangle(cx, rowY + 3 * S, ih, ih);
+                        if (!BuildingIcon(b.Key, ir, false))
+                        {
+                            Raylib.DrawRectangleRounded(ir, 0.25f, 4, new Color(70, 78, 92, 255));
+                            string ini = name.Length > 0 ? name[..1].ToUpperInvariant() : "?";
+                            var m = Gui.Measure(ini, 15);
+                            Gui.Label(ini, ir.X + (ir.Width - m.X) / 2, ir.Y + (ir.Height - m.Y) / 2, 15, Gui.TextDim);
+                        }
+                        Gui.Label(b.Value.ToString(), cx + ih + 3 * S, rowY + 7 * S, 15, dmg >= 0.05 ? Gui.Bad : Gui.Text);
+                        if (dmg >= 0.05) Raylib.DrawRectangleLinesEx(ir, 1, Gui.Bad);
+                        if (Gui.Hover(cell))
+                            Gui.Tooltip($"{name}\nLevel {b.Value}" + (dmg >= 0.05 ? $"\n{dmg:0.#} levels bombed" : ""));
+                        cx += tile + 8 * S;
+                    }
+                    y = rowY + 36 * S + 4 * S;
                 }
-                y += (i + 1) / 2 * 20 * S + 6 * S;
+            }
+            // everything else behind one fold
+            var rivers = l.Neighbors.Count(a => a.River);
+            var mods = G.Modifiers.Of(l).Concat(G.Modifiers.Of(st)).Count(m => !m.Def.Hidden);
+            bool details = Collapse("details", "Details", mods > 0 ? $"{mods} modifier(s)" : "", Gui.TextDim, x, y, w);
+            y += 26 * S;
+            if (details)
+            {
+                void Flags(string k, IEnumerable<Country> list, string tip)
+                {
+                    var arr = list.ToList();
+                    Gui.Label(k, x, y, 15, Gui.TextDim);
+                    if (arr.Count == 0) { Gui.Label("-", x + 100 * S, y, 15); y += lh; return; }
+                    y += FlagRow(arr, x + 100 * S, y, w - 100 * S, new Color(0, 0, 0, 200), _ => tip) + 4 * S;
+                }
+                Flags("Cores", st.Cores, "Core: people here count as part of this nation");
+                Flags("Claims", st.Claims, "Claim: may be taken by a peace deal");
+                if (rivers > 0) Row("Rivers", $"{rivers} border(s) with a river");
+                if (l.Fort > 0) Row("Fort", l.Fort.ToString());
+                y += DrawModifierList(l, x, y, w);
+                y += DrawModifierList(st, x, y, w);
+                y += 4 * S;
             }
         }
-        if (l.Fort > 0) Row("Fort", l.Fort.ToString());
-        if (l.SiegeProgress > 0) Row("Siege", $"{l.SiegeProgress:0} h by {l.Sieger?.Tag}");
-        var rivers = l.Neighbors.Count(a => a.River);
-        if (rivers > 0) Row("Rivers", $"{rivers} border(s) with a river");
-        y += DrawModifierList(l, x, y, r.Width - 24 * S);
-        if (st != null) y += DrawModifierList(st, x, y, r.Width - 24 * S);
-        y += 4 * S;
-        if (l.Owner != null && Gui.Button(new Rectangle(x, y, 170 * S, 28 * S), "View " + (l.Owner.Tag), true, "Open the owner's country panel"))
+        if (l.SiegeProgress > 0) Row("Siege", $"{l.SiegeProgress:0} h by {l.Sieger?.Tag}", Gui.Bad);
+        if (l.Owner != null && Gui.Button(new Rectangle(x, y, 170 * S, 28 * S), "Open " + l.Owner.Name, true, "Open the owner's country panel"))
         {
             Ui.SelectedCountry = l.Owner;
             Ui.Left = LeftPanel.Country;
@@ -88,18 +187,20 @@ public sealed partial class Hud
         var divs = G.Warfare.DivisionsAt(l);
         if (divs.Count > 0)
         {
-            Gui.Section("Units here", x, y, r.Width - 24 * S);
-            y += 6 * S;
-            y += lh;
+            Gui.Section("Units here", x, y, w);
+            y += 30 * S;
             foreach (var g in divs.GroupBy(d => d.Owner))
             {
-                Gui.Label($"{g.Key.Name}: {g.Count()} division(s)", x, y, 15);
+                float fx = FlagChip(g.Key, x, y + 1 * S, 16 * S);
+                Gui.Label($"{g.Count()} division(s)", x + fx, y, 15);
                 y += lh;
             }
         }
 
         var player = G.World.Player;
-        if (player != null && Has(FeatureSet.Military) && l.Owner == player && l.Controller == player && Gui.Button(new Rectangle(x, y + 6 * S, r.Width - 24 * S, 28 * S), "Recruit divisions...", true, "Open the recruit menu (R) - pick a template, then click your locations", false, 15))
+        bool recruit = player != null && Has(FeatureSet.Military) && l.Owner == player && l.Controller == player;
+        FitEnd("loc", r, y + (recruit ? 40 * S : 0));
+        if (recruit && Gui.Button(new Rectangle(x, y + 6 * S, w, 28 * S), "Recruit divisions...", true, "Open the recruit menu (R) - pick a template, then click your locations", false, 15))
             Ui.Left = LeftPanel.Recruit;
     }
 
@@ -116,10 +217,16 @@ public sealed partial class Hud
         float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 21 * S;
         Gui.Flag(c, new Rectangle(x, y, 84 * S, 56 * S));
         float tx = x + 94 * S;
-        Gui.Label($"Tag: {c.Tag}", tx, y, 15, Gui.TextDim);
+        Gui.Label(c.Tag, tx, y, 15, Gui.TextDim, FontKind.Bold);
         if (c.Government.Length > 0) Gui.Label(Localisation.GetOrPretty(c.Government), tx, y + 18 * S, 15);
-        Gui.Label($"{c.OwnedStates.Count} states, {G.World.Divisions.Count(d => d.Owner == c)} divisions", tx, y + 36 * S, 15, Gui.TextDim);
+        float hx = tx;
+        hx += IconStat("province", c.OwnedStates.Count.ToString(), $"{c.OwnedStates.Count} states", hx, y + 36 * S);
+        hx += IconStat("army", G.World.Divisions.Count(d => d.Owner == c).ToString(), "Divisions", hx, y + 36 * S);
+        if (Gui.Hover(new Rectangle(x, y, 84 * S, 56 * S))) Gui.Tooltip($"{c.Name} ({c.Tag})");
         y += 64 * S;
+        y = DrawCountryTabs(c, x, y, r.Width - 24 * S);
+        if (_countryTab == 1) { DrawCountryPeople(c, r, x, y, r.Width - 24 * S); return; }
+        if (_countryTab == 2) { DrawCountryFactions(c, r, x, y, r.Width - 24 * S); return; }
 
         if (c.Ruler != null)
         {
@@ -195,7 +302,7 @@ public sealed partial class Hud
             Gui.Label($"Diplomatic relations: {G.Diplomacy.RelationsUsed(c)}/{G.Diplomacy.MaxRelations(c)}", x, y, 15, Gui.TextDim);
             y += lh;
             var allies = R.AlliesOf(c).ToList();
-            if (allies.Count > 0) { Gui.Label("Allies: " + string.Join(", ", allies.Select(a => a.Tag)), x, y, 15); y += lh; }
+            if (allies.Count > 0) { Gui.Label("Allies", x, y + 1 * S, 14, AllyBlue); y += FlagRow(allies, x + 104 * S, y, r.Width - 24 * S - 104 * S, AllyBlue); }
             var subjects = R.SubjectsOf(c).ToList();
             if (subjects.Count > 0) { Gui.Label(Gui.Fit("Subjects: " + string.Join(", ", subjects.Select(a => $"{a.Tag} ({G.Diplomacy.LibertyDesire(a):0}% liberty)")), r.Width - 24 * S, 15), x, y, 15); y += lh; }
             if (G.Diplomacy.WarExhaustion(c) > 0.05) { Gui.Label($"War exhaustion: {G.Diplomacy.WarExhaustion(c):0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, G.Diplomacy.WarExhaustion(c) >= 10 ? Gui.Bad : Gui.TextDim); y += lh; }
@@ -272,9 +379,8 @@ public sealed partial class Hud
         foreach (var (label, list, col) in lines)
         {
             if (list.Count == 0) continue;
-            Gui.Label(label + ":", x, y, 14, Gui.TextDim);
-            string names = string.Join(", ", list.Select(o => o.Name));
-            y += Gui.Wrapped(names, x + 110 * S, y, w - 110 * S, 14, col) + 3 * S;
+            Gui.Label(label, x, y + 1 * S, 13, col);
+            y += FlagRow(list, x + 104 * S, y, w - 104 * S, col, o => label == "Subjects" ? $"{G.Diplomacy.LibertyDesire(o):0}% liberty desire" : null) + 2 * S;
         }
         if (Map.Mode == MapMode.Diplomacy && Map.DiplomacyFocus == c)
         {

@@ -1,3 +1,5 @@
+using Burger.Core.Memories;
+using Burger.Core.Politics;
 using Burger.Core.Modding;
 using System.Diagnostics;
 using System.Text;
@@ -21,7 +23,7 @@ namespace Burger.Tools;
 ///   burger generate-locations &lt;project&gt;    add every province color missing from locations.txt
 ///   burger docs [project]                  write the scripting reference (all triggers/effects)
 /// </summary>
-public static class Program
+public static partial class Program
 {
     private static string EngineRoot = "";
 
@@ -47,6 +49,7 @@ public static class Program
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
                 "docs" => Docs(rest),
+                "figure" or "figures" => Figure(rest),
                 "list" => ListProjects(),
                 "features" => Features(rest),
                 "presets" => ListPresets(),
@@ -79,7 +82,10 @@ public static class Program
   burger export <project> [--name Game] [--out folder] [--rid win-x64]
                                             build <Name>.exe + game/ folder that players can mod
   burger generate-locations <project>       name every provinces.png color missing from locations.txt
-  burger docs [project]                     write docs/SCRIPT_REFERENCE.md (all triggers, effects, scopes)
+  burger docs [project]                     write docs/game/SCRIPT_REFERENCE.md (all triggers, effects, scopes)
+  burger figure list [--project <project>]  the animated bodies of Game.Figures: triangles, joints, clips
+  burger figure export [key] [--out f.glb]  write a body with its rig and animations as .glb (for Blender)
+  burger figure test                        check the built-in human body and its idle / walk / run
 
 <project> is a name in the projects folder (e.g. SampleGame) or a path.
 ");
@@ -526,6 +532,7 @@ public static class Program
                           $"{wars} wars declared, {battles} battles, {game.World.Wars.Count} active wars, {game.World.Divisions.Count} divisions, " +
                           $"{game.World.Characters.Count(c => c.Alive)} living characters, {game.World.Countries.Count(c => c.Exists)} countries");
         foreach (var w in game.World.Wars) Console.WriteLine($"    {w.Name}: war score {w.WarScore:0}");
+        Console.WriteLine("  memory: " + string.Join(", ", game.Memory.All.GroupBy(e => $"{e.Actor.Type}/{e.Kind}").OrderByDescending(g => g.Count()).Take(14).Select(g => $"{g.Key} {g.Count()}")));
         if (args.Contains("--diag-wars"))
         {
             var live = game.World.Countries.Where(c => c.Exists).ToList();
@@ -553,13 +560,67 @@ public static class Program
         if (selftest)
         {
             PatchSelfTest(game);
+            FlagSelfTest();
+            FigureSelfTest(game);
             ScopeHierarchySelfTest(game);
             PartyScopeSelfTest(game);
+            FactionSelfTest(game);
             expectedSelfTestErrors = InterfaceSelfTest();
             string tmp = Path.Combine(Path.GetTempPath(), "burger_selftest.sav");
+            var memPair = game.World.Countries.Where(c => c.Exists).Take(2).ToList();
+            if (memPair.Count == 2)
+            {
+                var (la, lb) = (memPair[0], memPair[1]);
+                game.Memory.Record(la, "broke_treaty", lb);
+                game.Memory.Record(la, "selftest_scar", lb, 2, 0, "never fades");
+                Check(game.Memory.Has(la, "broke_treaty", lb) && game.Memory.Weight(la, "selftest_scar") == 2 && game.Memory.Record(la, "no_such_kind") == null,
+                    "memory records known kinds, custom kinds with a weight, and ignores unknown kinds without one");
+                var memPop = Subject.Pop("selftest_state", "selftest_culture", null, "peasants");
+                game.Memory.Record(memPop, "selftest_scar", la, 1, 0, "pop remembers");
+                if (game.World.Characters.FirstOrDefault(c => c.Alive) is { } memChar) game.Memory.Record(memChar, "selftest_scar", memPop, 3, 0);
+                Check(game.Memory.Has(memPop, "selftest_scar", la) && !game.Memory.Has(la, "selftest_scar", memPop) && game.Memory.NameOf(memPop).Contains("selftest_state"),
+                    "memory remembers pop groups, with no mix-up of who remembers whom");
+                if (game.World.Characters.FirstOrDefault(c => c.Alive) is { } hookChar)
+                {
+                    game.Hub.RaiseMinisterChanged(la, hookChar, false);
+                    game.Hub.RaiseRulerChanged(la, hookChar, game.World.Characters.Last());
+                    Check(game.Memory.Has(hookChar, "dismissed", la) && (!hookChar.Alive || hookChar == game.World.Characters.Last() || game.Memory.Has(hookChar, "deposed", la)),
+                        "events write memories for the characters they happen to");
+                }
+                var once = Subject.Pop("selftest_state", "selftest_culture", null, "peasants");
+                game.Memory.RecordOnce(once, "occupied", la, 90);
+                game.Memory.RecordOnce(once, "occupied", la, 90);
+                Check(game.Memory.Of(once, "occupied").Count() == 1, "the same act is not recorded twice within its window");
+                Check(game.Memory.Against(lb).Count(e => e.Actor == la && e.Kind is "broke_treaty" or "selftest_scar") == 2 && !game.Memory.Has(lb, "broke_treaty"), "memory tells who did what to whom");
+            }
             SaveGame.Save(game, tmp);
             var game2 = Game.Load(GameDir(project), compileScripts: true, seed: 1234);
             SaveGame.Load(game2, tmp);
+            if (memPair.Count == 2)
+            {
+                var (la2, lb2) = (game2.World.GetCountry(memPair[0].Tag)!, game2.World.GetCountry(memPair[1].Tag));
+                Check(game2.Memory.Has(la2, "broke_treaty", lb2) && game2.Memory.Weight(la2, "selftest_scar") == 2, "save/load keeps the memory");
+                Check(game2.Memory.Has(Subject.Pop("selftest_state", "selftest_culture", null, "peasants"), "selftest_scar", la2)
+                      && (!game.World.Characters.Any(c => c.Alive) || game2.Memory.Weight(game2.World.Characters.First(c => c.Alive), "selftest_scar") == 3),
+                    "save/load keeps what pops and characters remember");
+                string memLegacy = Path.Combine(Path.GetTempPath(), "burger_legacy_memory_selftest.sav");
+                var lr = ScriptParser.ParseFile(tmp, Path.GetFileName(tmp));
+                lr.Children!.RemoveAll(n => n.Key.Equals("x_memory", StringComparison.OrdinalIgnoreCase));
+                ScriptWriter.WriteFile(memLegacy, lr, "Legacy-format memory self-test");
+                var lg = Game.Load(GameDir(project), compileScripts: true, seed: 1234);
+                SaveGame.Load(lg, memLegacy);
+                Check(!lg.Memory.Has(lg.World.GetCountry(memPair[0].Tag)!, "broke_treaty"), "a save without a memory section loads with an empty memory");
+            }
+            if (_factionFixture is { } ff)
+            {
+                var loadedFaction = game2.World.GetGenericScope(ff.Faction);
+                var loadedMember = game2.World.GetCharacter(ff.Member);
+                Check(loadedFaction != null && Math.Abs(game2.Politics.FactionLoyalty(loadedFaction) - game.Politics.FactionLoyalty(game.World.GetGenericScope(ff.Faction)!)) < 1e-3 && Math.Abs(game2.Politics.FactionGrievance(loadedFaction) - game.Politics.FactionGrievance(game.World.GetGenericScope(ff.Faction)!)) < 1e-3
+                    && Math.Abs(game2.Politics.PartyCohesion(game2.World.GetGenericScope(ff.Party)!) - game.Politics.PartyCohesion(game.World.GetGenericScope(ff.Party)!)) < 1e-3,
+                    "save/load keeps faction loyalty, grievance and party cohesion");
+                Check(loadedMember != null && game2.Politics.OrganizationOf(loadedMember) == ff.Party && game2.Politics.FactionOfCharacter(loadedMember)?.Key == ff.Faction,
+                    "save/load keeps a character's party and faction membership");
+            }
             Check(game2.World.Date == game.World.Date, "save/load keeps the date");
             Check(game2.World.Divisions.Count == game.World.Divisions.Count, $"save/load keeps divisions ({game2.World.Divisions.Count}/{game.World.Divisions.Count})");
             Check(game2.World.Wars.Count == game.World.Wars.Count, "save/load keeps wars");
@@ -646,6 +707,7 @@ public static class Program
             if (game.Features.Has(FeatureSet.Military) && game.Features.Has(FeatureSet.Diplomacy)) WarGoalTests(project);
             if (game.Features.Has(FeatureSet.Diplomacy) && game.Features.Has(FeatureSet.Population)) ReleaseTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticsFeatureTests(project);
+            if (game.Features.Has(FeatureSet.Politics)) PoliticalDepthTests(project);
             if (game.Features.Has(FeatureSet.Population)) PopulationFeatureTests(project);
             HistoricalFeatureTests(project);
         }
@@ -770,6 +832,230 @@ public static class Program
     /// queries, validation, leader references and branch-state links. Runs against the active scenario and skips when
     /// politics is off or no country has two ideologies without an organization to use for an isolated test party.
     /// </summary>
+    /// <summary>Same-ideology party competition, factions, law reform, cabinet, government transitions, and two contrasting configurations.</summary>
+    private static void FactionSelfTest(Game game)
+    {
+        var P = game.Politics;
+        var world = game.World;
+        if (!P.Enabled || !P.LawsEnabled) return;
+        var power = P.PowerResource;
+        void Fund(Country c) { if (power != null) game.Resources.Set(c, power, 1_000_000); }
+
+        // a country and an ideology with no named party, so the fixture parties are the only ones of that ideology
+        var taken = world.GetGenericScope("selftest_party_a") is { } other ? world.ScopeHierarchy.ParentOf(other) : null;
+        var pick = world.Countries.Where(c => c.Exists && !c.IsPlayer && !ReferenceEquals(c, taken)).Reverse()
+            .Select(c => (Country: c, Free: P.Ideologies.FirstOrDefault(i => P.PartyOf(c, i.Key) == null && !P.IsPartyBanned(c, i.Key))))
+            .FirstOrDefault(x => x.Free != null);
+        if (pick.Country == null) return;
+        var country = pick.Country;
+        var ideology = pick.Free!.Key;
+        var state = P.Of(country);
+
+        // laws: pick three groups with an enactable alternative to what is in force, so one test can defy several factions
+        Fund(country);
+        var targets = new List<LawDef>();
+        foreach (var g in P.LawGroups.Where(g => P.IsGroupVisible(country, g)))
+        {
+            var law = g.Laws.FirstOrDefault(l => P.CannotEnact(country, l) == null && l.Bans.Count == 0 && !l.SingleParty && !l.SuspendsElections);
+            if (law != null) targets.Add(law);
+        }
+        Check(targets.Count >= 2, $"fixture needs two enactable laws ({targets.Count} found)");
+        if (targets.Count < 2) return;
+        var lawX = targets[0];
+        string Keys(IEnumerable<LawDef> laws) => string.Join(" ", laws.Select(l => l.Key));
+
+        GenericScope Make(string id, string kind, string? parent, Dictionary<string, string> data)
+        {
+            Check(world.TryCreateGenericScope(id, kind, id, true, out var scope, out _) && scope != null, $"{id} is created");
+            foreach (var kv in data) scope!.Attributes[kv.Key] = kv.Value;
+            Check(world.ScopeHierarchy.TrySetParent(scope!, parent == null ? country : world.GetGenericScope(parent)!, out _), $"{id} is parented");
+            return scope!;
+        }
+        var pa = Make("selftest_fp_a", "party", null, new() { ["ideology"] = ideology });
+        var pb = Make("selftest_fp_b", "party", null, new() { ["ideology"] = ideology });
+        var fa1 = Make("selftest_fp_a_hawks", "party_faction", pa.Key, new() { ["weight"] = "3", ["dislikes"] = lawX.Key });
+        var fa2 = Make("selftest_fp_a_doves", "party_faction", pa.Key, new() { ["weight"] = "1", ["likes"] = lawX.Key });
+        Check(P.FindPartyProblems().All(x => !x.Message.Contains("selftest_fp")), "faction fixture has no validation problems");
+        var bad = Make("selftest_fp_bad", "party_faction", pb.Key, new() { ["dislikes"] = "no_such_law", ["weight"] = "-1" });
+        Check(P.FindPartyProblems().Count(x => x.Message.Contains("selftest_fp_bad")) >= 2, "invalid faction data is reported");
+        bad.Attributes.Remove("dislikes"); bad.Attributes.Remove("weight");
+
+        // ---- same-ideology competition
+        P.InitializePartyPopularity(country, state);
+        state.PartyPopularity.Clear();
+        state.PartyPopularity[pa.Key] = 0.45; state.PartyPopularity[pb.Key] = 0.45;
+        P.SetRulingParty(country, ideology, "selftest");
+        state.RulingOrganization = pa.Key; state.GovernmentOrganizations = new() { pa.Key }; state.Government = new() { ideology };
+        P.HoldElection(country);
+        Check(state.PartySeats.GetValueOrDefault(pa.Key) > 0 && state.PartySeats.GetValueOrDefault(pb.Key) > 0
+              && state.Seats.GetValueOrDefault(ideology) == state.PartySeats[pa.Key] + state.PartySeats[pb.Key],
+            "two parties of one ideology both win seats and aggregate into the ideology total");
+        Check(!P.PartyInGovernment(pa) || !P.PartyInGovernment(pb) || state.GovernmentOrganizations.Count == 2,
+            "government participation is per party, not per ideology");
+        state.RulingOrganization = pa.Key; state.GovernmentOrganizations = new() { pa.Key }; state.Government = new() { ideology };
+        Check(P.PartyInGovernment(pa) && !P.PartyInGovernment(pb), "a same-ideology rival is not in government with its namesake");
+
+        // ---- faction influence
+        double i1 = P.FactionInfluence(fa1), i2 = P.FactionInfluence(fa2);
+        Check(Math.Abs(i1 - 0.75) < 1e-6 && Math.Abs(i1 + i2 - 1) < 1e-6, "influence follows faction weight (3:1 = 75%/25%)");
+        fa1.Vars.Set("loyalty", 20);
+        Check(P.FactionInfluence(fa1) < i1 && Math.Abs(P.FactionInfluence(fa1) + P.FactionInfluence(fa2) - 1) < 1e-6, "a disaffected faction loses influence and shares still sum to 1");
+        fa1.Vars.Set("loyalty", 60);
+
+        // ---- law reform: resistance, surcharge, grievance, trade-offs
+        var (opposition, support, _) = P.LawStance(country, lawX);
+        Check(Math.Abs(opposition - 0.75) < 1e-6 && Math.Abs(support - 0.25) < 1e-6, "the governing party's factions split on the law as configured");
+        double surcharge = P.FactionSurcharge(country, lawX);
+        Check(surcharge > 0 && Math.Abs(P.EnactCost(country, lawX) - (lawX.Cost + surcharge)) < 1e-9 && P.ExplainLaw(country, lawX).Any(l => l.Contains(fa1.DisplayName)),
+            "opposed law costs more and the tooltip names the faction responsible");
+        var quiet = targets.Skip(1).First();
+        Check(P.FactionSurcharge(country, quiet) == 0, "a law no faction cares about has no surcharge");
+        double before = power != null ? game.Resources.Get(country, power) : 0;
+        Check(P.Enact(country, lawX) == null && P.HasLaw(country, lawX.Key), "the player can defy internal opposition by paying more");
+        if (power != null) Check(Math.Abs(before - game.Resources.Get(country, power) - (lawX.Cost + surcharge)) < 1e-6, "defying paid the surcharge");
+        Check(P.FactionGrievance(fa1) >= 14 && P.FactionGrievance(fa2) == 0, "defied faction gains grievance; the backing faction does not");
+        Check(P.CannotPlacate(country, fa1) == null && P.Placate(country, fa1) == null && P.FactionGrievance(fa1) < 14 && P.CannotPlacate(country, fa1) != null,
+            "negotiating eases grievance once, then goes on cooldown");
+
+        // ---- monthly dynamics converge, bounded, and are explainable
+        for (int month = 0; month < 48; month++) { P.FactionMonthly(country); fa1.Vars.Set("restless_months", 0); fa2.Vars.Set("restless_months", 0); } // splintering is tested below
+        double standing = P.StandingGrievance(country, fa1);
+        Check(Math.Abs(P.FactionGrievance(fa1) - standing) < 1 && standing > 0 && P.FactionLoyalty(fa1) < 60 && P.FactionLoyalty(fa1) >= 0 && P.FactionGrievance(fa1) <= 100,
+            "grievance settles at the standing value for laws in force (no runaway)");
+        Check(P.FactionGrievance(fa2) == 0 && Math.Abs(P.FactionLoyalty(fa2) - 60) < 1, "a satisfied faction stays loyal");
+        Check(P.LoyaltyOutlook(country, fa1).Reasons.Any(r => r.StartsWith("Grievance")), "loyalty outlook explains its drivers");
+        Check(P.PartyCohesion(pa) < 60 && P.PartyCohesion(pa) > 30, "party cohesion reflects its factions' loyalty");
+
+        // ---- cabinet appointments
+        if (P.CabinetEnabled && P.Positions.Count > 0)
+        {
+            var pos = P.Positions[0];
+            var candidates = P.Candidates(country, pos);
+            Check(candidates.Count > 0 && candidates.All(ch => P.OrganizationOf(ch, country) == pa.Key), "cabinet candidates belong to the governing party, not its same-ideology rival");
+            var doveCandidate = candidates.FirstOrDefault(ch => ReferenceEquals(P.FactionOfCharacter(ch), fa2));
+            var hawkCandidate = candidates.FirstOrDefault(ch => ReferenceEquals(P.FactionOfCharacter(ch), fa1));
+            Check(doveCandidate != null && hawkCandidate != null, "generated candidates cover each faction");
+            fa1.Attributes["post"] = pos.Key;
+            double hawkGrievance = P.FactionGrievance(fa1);
+            if (hawkCandidate != null && doveCandidate != null)
+            {
+                Check(P.ExplainAppointment(country, pos, doveCandidate)!.Contains(fa1.DisplayName), "appointment tooltip says who else wanted the post");
+                Check(P.Appoint(country, pos, doveCandidate) == null && P.FactionGrievance(fa1) > hawkGrievance, "giving the post to a rival faction angers the faction that wanted it");
+                P.Appoint(country, pos, hawkCandidate);
+                Check(P.MinisterParty(hawkCandidate) == ideology && P.OrganizationOf(hawkCandidate, country) == pa.Key, "a minister keeps party identity and ideology consistent");
+                Check(P.StandingGrievance(country, fa1) < standing + 25, "a faction's own minister lowers its standing grievance");
+            }
+            var rival = _fixtureCharacter(game, country, pb.Key, P);
+            Check(P.CannotAppoint(country, pos, rival) != null, "a same-ideology rival party's member cannot be appointed");
+        }
+
+        // ---- government transition: the other party wins, its predecessors' ministers go
+        state.PartyPopularity.Clear();
+        state.PartyPopularity[pa.Key] = 0.05; state.PartyPopularity[pb.Key] = 0.9;
+        int heldBefore = P.ElectionsHeld;
+        P.HoldElection(country);
+        Check(P.ElectionsHeld == heldBefore + 1 && state.RulingOrganization == pb.Key, "the larger same-ideology party takes over government");
+        Check(state.Ministers.Values.All(m => P.OrganizationOf(m, country) is { } org && state.GovernmentOrganizations.Contains(org)), "ministers of parties that left government stood down");
+
+        // ---- contrasting configurations: united vs fragmented over the same laws
+        var defied = targets.ToList();
+        double Run(bool fragmented)
+        {
+            state.RulingOrganization = pa.Key; state.GovernmentOrganizations = new() { pa.Key }; state.Government = new() { ideology };
+            state.PartySeats[pa.Key] = 60;
+            foreach (var f in new[] { fa1, fa2 })
+            {
+                f.Vars.Set("loyalty", 60); f.Vars.Set("grievance", 0);
+                f.Attributes.Remove("post");
+                f.Attributes["likes"] = fragmented ? "" : Keys(defied);
+                f.Attributes["dislikes"] = fragmented ? Keys(defied) : "";
+            }
+            foreach (var l in defied) state.Laws[l.Group.Key] = P.LawGroups.First(g => g == l.Group).Default;
+            state.LawChangedDay.Clear();
+            Fund(country);
+            foreach (var l in defied) P.Enact(country, l);
+            for (int m = 0; m < 48; m++) { P.FactionMonthly(country); fa1.Vars.Set("restless_months", 0); fa2.Vars.Set("restless_months", 0); }
+            return P.GovernmentCohesion(country);
+        }
+        double united = Run(false);
+        double unitedStability = P.InfightingStability(country);
+        double fragmentedCohesion = Run(true);
+        double fragmentedStability = P.InfightingStability(country);
+        Check(united >= 55 && unitedStability == 0, $"united party keeps cohesion ({united:0}) and loses no stability");
+        Check(fragmentedCohesion < united && fragmentedStability < 0 && fragmentedStability >= -6, $"fragmented party loses cohesion ({fragmentedCohesion:0}) and bounded stability ({fragmentedStability:0.0})");
+        Check(fragmentedCohesion < P.CollapseCohesion, "a government that defied every faction is below the collapse threshold");
+        Check(P.ModifierSources(country).Any(x => x.Source == "Party infighting" && x.Value < 0), "infighting shows up as a named stability source");
+        state.LastElection = world.Date.AddMonths(-24);
+        int heldAfter = P.ElectionsHeld;
+        if (P.HoldsElections(country)) { P.MonthlyTick(); Check(P.ElectionsHeld > heldAfter, "a collapsed government is sent back to the voters"); }
+        // ---- reshaping the party: favour, sideline, coalition, splintering
+        state.RulingOrganization = pa.Key; state.GovernmentOrganizations = new() { pa.Key }; state.Government = new() { ideology };
+        foreach (var f in new[] { fa1, fa2 }) { f.Vars.Set("loyalty", 60); f.Vars.Set("grievance", 0); f.Vars.Set("favoured_day", -9999); f.Attributes["weight"] = f == fa1 ? "3" : "1"; }
+        Fund(country);
+        double doveShare = P.FactionInfluence(fa2);
+        var favourResult = P.Favour(country, fa2);
+        Check(favourResult == null && P.FactionInfluence(fa2) > doveShare && P.FactionGrievance(fa1) > 0, $"favouring a faction raises its influence and angers its rivals ({favourResult})");
+        Check(P.CannotFavour(country, fa2) != null, "reshaping a faction is on a cooldown");
+        fa1.Vars.Set("favoured_day", -9999);
+        double hawkShare = P.FactionInfluence(fa1);
+        Check(P.Sideline(country, fa1) == null && P.FactionInfluence(fa1) < hawkShare && P.FactionGrievance(fa1) >= 25, "sidelining a faction cuts its influence and leaves it aggrieved");
+        Check(P.CannotSideline(country, fa2) != null || P.FactionInfluence(fa2) > 0, "sidelined weight stays within bounds");
+        Check(P.CannotInvite(country, pb) != null || state.PartySeats.GetValueOrDefault(pb.Key) > 0, "a party needs seats to be invited");
+        state.PartySeats[pb.Key] = Math.Max(5, state.PartySeats.GetValueOrDefault(pb.Key));
+        Check(P.Invite(country, pb) == null && P.PartyInGovernment(pb) && P.Dismiss(country, pb) == null && !P.PartyInGovernment(pb), "a rival party can be invited into government and dismissed again");
+        Check(P.Dismiss(country, pa) != null, "the leading party cannot be dismissed");
+
+        var pc = Make("selftest_fp_c", "party", null, new() { ["ideology"] = ideology });
+        var fc1 = Make("selftest_fp_c_left", "party_faction", pc.Key, new() { ["weight"] = "1" });
+        var fc2 = Make("selftest_fp_c_right", "party_faction", pc.Key, new() { ["weight"] = "1" });
+        state.PartyPopularity[pc.Key] = 0.3; state.PartySeats[pc.Key] = 40;
+        state.RulingOrganization = pc.Key; state.GovernmentOrganizations = new() { pc.Key }; state.Government = new() { ideology };
+        double ideologySeats = state.PartySeats.Values.Sum(), popBefore = state.PartyPopularity.Values.Sum();
+        fc1.Vars.Set("loyalty", 5); fc1.Vars.Set("grievance", 90);
+        for (int m = 0; m < 36 && P.PartiesOf(country).All(x => !x.Key.StartsWith("selftest_fp_c_") || x.Key == pc.Key); m++) { fc1.Vars.Set("loyalty", 5); P.FactionMonthly(country); }
+        var breakaway = P.PartiesOf(country).FirstOrDefault(x => x.Key.StartsWith("selftest_fp_c_") && x.Key != pc.Key);
+        Check(breakaway != null && ReferenceEquals(world.ScopeHierarchy.ParentOf(fc1), breakaway) && ReferenceEquals(world.ScopeHierarchy.ParentOf(breakaway!), country),
+            "a faction that stays disaffected splinters into its own party of the same ideology");
+        if (breakaway != null)
+        {
+            Check(P.IdeologyKeyOfParty(breakaway.Key) == ideology && !P.PartyInGovernment(breakaway) && P.PartyInGovernment(pc), "the splinter party starts in opposition while the old party stays in government");
+            Check(Math.Abs(state.PartyPopularity.Values.Sum() - popBefore) < 1e-9 && state.PartySeats.Values.Sum() == ideologySeats && state.PartySeats[breakaway.Key] > 0,
+                "splintering moves support and seats without creating or destroying any");
+            P.HoldElection(country);
+            Check(state.PartySeats.GetValueOrDefault(breakaway.Key) >= 0 && state.Seats.GetValueOrDefault(ideology) == state.PartySeats.Where(kv => P.IdeologyKeyOfParty(kv.Key) == ideology).Sum(kv => kv.Value),
+                "the splinter party contests the next election alongside its former party");
+            Check(!P.PartyColor(breakaway.Key).Equals(P.PartyColor(pc.Key)) && P.PartyFlagPath(breakaway.Key) == null
+                  && FlagGenerator.Render(breakaway.Key, P.PartyColor(breakaway.Key), FlagKind.Party).AsSpan().SequenceEqual(FlagGenerator.Render(breakaway.Key, P.PartyColor(breakaway.Key), FlagKind.Party))
+                  && !FlagGenerator.Render(breakaway.Key, P.PartyColor(breakaway.Key), FlagKind.Party).AsSpan().SequenceEqual(FlagGenerator.Render(pc.Key, P.PartyColor(pc.Key), FlagKind.Party)),
+                "a splinter party has its own colour and no flag file, so it gets a deterministic generated flag unlike its parent's");
+            _factionFixture = null;
+        }
+        // the AI keeps its governing factions in check with the same actions, within a reserve
+        var ai = world.Countries.Where(x => x.Exists && !x.IsPlayer && !ReferenceEquals(x, country)).Reverse()
+            .FirstOrDefault(x => P.PartiesOf(x).Any(pp => P.FactionsOf(pp).Count() >= 2 && P.Of(x).GovernmentOrganizations.Contains(pp.Key)));
+        if (ai != null)
+        {
+            Fund(ai);
+            var angry = P.GoverningFactions(ai).First();
+            angry.Vars.Set("grievance", 70); angry.Vars.Set("placated_day", -9999);
+            P.FactionMonthly(ai);
+            Check(P.FactionGrievance(angry) < 70 + 1e-9 && (power == null || game.Resources.Get(ai, power) < 1_000_000), "the AI negotiates with its angriest governing faction");
+        }
+        // leave the divided state in place so the save/load checks below cover it
+        fc2.Vars.Set("loyalty", 41); fc2.Vars.Set("grievance", 33);
+        var savedMember = _fixtureCharacter(game, country, pc.Key, P, fc2.Key);
+        _factionFixture = (country.Tag, pc.Key, fc2.Key, savedMember.Key);
+    }
+
+    private static (string Country, string Party, string Faction, string Member)? _factionFixture;
+
+    private static Character _fixtureCharacter(Game game, Country country, string partyKey, PoliticsSystem politics, string? factionKey = null)
+    {
+        var ch = game.Characters.Generate(country, null, 40);
+        politics.SetAffiliation(ch, partyKey, factionKey);
+        return ch;
+    }
+
     private static void PartyScopeSelfTest(Game game)
     {
         var politics = game.Politics;
@@ -1039,6 +1325,16 @@ public static class Program
                 var g2 = Game.Load(GameDir(project), compileScripts: true, seed: 5);
                 SaveGame.Load(g2, tmp);
                 Check(g2.World.GetState(state.Key)?.Demilitarized == true, "demilitarization: the zone is saved and loaded");
+                var trapped = g.World.Divisions.FirstOrDefault(d => d.Owner == owner && d.Battle == null);
+                var zoneLoc = state.Locations.FirstOrDefault(l => l.IsLand);
+                if (trapped != null && zoneLoc != null)
+                {
+                    g.Warfare.Teleport(trapped, zoneLoc);
+                    g.Tick();
+                    Check(trapped.Path.Count > 0 && trapped.Path[^1].State?.Demilitarized != true, "demilitarization: a division inside a zone is routed to the nearest land outside it");
+                    for (int h = 0; h < 24 * 20 && trapped.Location.State?.Demilitarized == true; h++) g.Tick();
+                    Check(trapped.Location.State?.Demilitarized != true, "demilitarization: it walks out of the zone");
+                }
                 g.Diplomacy.DeclareWar(owner, enemy, null, null, force: true);
                 for (int h = 0; h < 24 * 3; h++) g.Tick();
                 Check(!state.Demilitarized, "demilitarization: the zone opens when its owner goes to war");
@@ -1521,8 +1817,15 @@ public static class Program
                 var rival = P.Ideologies.First(i => i.Key != dict.Key);
                 P.AddPopularity(coupLand, rival.Key, 0.85 - P.PopularityOf(coupLand, rival.Key));
                 P.Of(coupLand).CalmUntilDay = int.MinValue;
-                for (int m = 0; m < 36 && P.Of(coupLand).Ruling == dict.Key; m++) g.Politics.MonthlyTick();
-                Check(P.Of(coupLand).Ruling != dict.Key && !P.InCivilWar(coupLand), $"coups: {rival.Name} with 85% support took power in {coupLand.Name} without a civil war (now {P.Of(coupLand).Ruling})");
+                // (the regime must be weak for support to matter: the government has lost the country and stability is gone)
+                var stabDef = g.Resources.Defs.FirstOrDefault(r => string.Equals(r.Key, "stability", StringComparison.OrdinalIgnoreCase));
+                for (int m = 0; m < 72 && P.Of(coupLand).Ruling == dict.Key; m++)
+                {
+                    if (stabDef != null) g.Resources.Set(coupLand, stabDef, Math.Min(g.Resources.Get(coupLand, stabDef), 15));
+                    P.Of(coupLand).PartyPopularity.Clear(); // (so the government's own support is what the ideology numbers say)
+                    g.Politics.MonthlyTick();
+                }
+                Check(P.Of(coupLand).Ruling != dict.Key || P.Revolutions > 0, $"coups: {rival.Name} with 85% support brought down or fought the regime in {coupLand.Name} (coup or civil war) (now {P.Of(coupLand).Ruling}; {(P.MovementOf(coupLand, rival.Key) is { } dm ? $"movement progress {dm.Progress:0} org {dm.Organization:0} grievance {dm.Grievance:0} stalled {dm.Stalled}, opening {g.Rules.Politics.MovementOpening(g, coupLand):0.00}, stability {g.Rules.Politics.StabilityOf(g, coupLand):0}" : "no movement")})");
             }
             if (g.Features.Has(FeatureSet.Military) && g.Features.Has(FeatureSet.Diplomacy))
             {
@@ -1668,6 +1971,42 @@ public static class Program
         {
             try { Directory.Delete(root, recursive: true); } catch { }
         }
+    }
+
+    private static void FlagSelfTest()
+    {
+        const int W = FlagGenerator.Width, H = FlagGenerator.Height;
+        var rnd = new Random(11);
+        var seen = new HashSet<string>();
+        bool det = true, size = true, alpha = true, design = true; int n = 150, flat = 0;
+        var trads = new[] { null, "nordic", "slavic", "islamic", "east_asian", "no_such_tradition" };
+        for (int i = 0; i < n; i++)
+        {
+            var id = new FlagIdentity("selftest_" + i, new Rgb((byte)rnd.Next(256), (byte)rnd.Next(256), (byte)rnd.Next(256)), i % 2 == 0 ? FlagKind.Nation : FlagKind.Party)
+            { Tradition = trads[i % trads.Length], Year = 1900 + i % 90 };
+            var a = FlagGenerator.Render(id); var b = FlagGenerator.Render(id);
+            det &= a.AsSpan().SequenceEqual(b);
+            size &= a.Length == W * H * 4;
+            for (int p = 3; p < a.Length; p += 4) alpha &= a[p] == 255;
+            seen.Add(Convert.ToHexString(a));
+            var d = FlagGenerator.Design(id);
+            design &= !d.Rejected && d.Colors <= 6 && d.PrimaryShare > 0.03;
+            int first = BitConverter.ToInt32(a, 0), same = 0;
+            for (int p = 0; p < a.Length; p += 4) if (BitConverter.ToInt32(a, p) == first) same++;
+            if (same == W * H) flat++;
+        }
+        Check(det && size && alpha, "generated flags are deterministic, 96x64 RGBA and fully opaque");
+        Check(design && flat == 0, "the chosen flag design always passes the evaluator and is never a single flat colour");
+        Check(seen.Count >= n * 0.97, "generated flags are diverse across identities");
+        foreach (var c in new[] { new Rgb(0, 0, 0), new Rgb(255, 255, 255), new Rgb(128, 128, 128) })
+            foreach (var key in new[] { "", "x" })
+                Check(FlagGenerator.Render(key, c).Length == W * H * 4 && FlagGenerator.Render(key, c, FlagKind.Party).Length == W * H * 4, "black, white, grey and empty-key identities still render");
+        var parent = new FlagIdentity("selftest_parent", new Rgb(30, 90, 160), FlagKind.Nation) { Tradition = "nordic", Year = 1920 };
+        var child = new FlagIdentity("selftest_child", new Rgb(40, 100, 150), FlagKind.Nation) { Tradition = "nordic", Year = 1950, Predecessor = parent };
+        Check(FlagGenerator.Design(child).Family == FlagGenerator.Design(child).Family && !FlagGenerator.Render(child).AsSpan().SequenceEqual(FlagGenerator.Render(parent)),
+            "a successor flag is stable and not identical to its predecessor");
+        var sib = new FlagIdentity("selftest_sibling", new Rgb(30, 90, 160), FlagKind.Nation) { Distinct = new[] { parent } };
+        Check(FlagGenerator.Render(sib).AsSpan().SequenceEqual(FlagGenerator.Render(sib)), "selection with a duplication-avoidance list is stable");
     }
 
     private static void Check(bool ok, string what)
@@ -1837,7 +2176,7 @@ public static class Program
         Section("Iterators", game.Script.IteratorNames, "Prefix with `any_` / `all_` (triggers) or `every_` / `random_` (effects), e.g. `every_owned_state = { limit = { ... } add_tax = 1 }`. `any_` supports `count >= 2` and `percent >= 0.5`.");
         Section("Scope links", game.Script.LinkNames, "Switch scope: `ruler = { add_trait = brave }`, compare: `owner = ROOT`, chain: `ROOT.capital.state`. Also: `ROOT`, `THIS`, `PREV`, `TAG`, `c:TAG`, `state:key`, `location:key`, `character:id`, `scope:name`.");
         Section("Console commands", game.Commands.Names, "Open the console in game with the ` key.");
-        string path = Path.Combine(EngineRoot, "docs", "SCRIPT_REFERENCE.md");
+        string path = Path.Combine(EngineRoot, "docs", "game", "SCRIPT_REFERENCE.md");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, sb.ToString());
         Ok($"Wrote {path}");

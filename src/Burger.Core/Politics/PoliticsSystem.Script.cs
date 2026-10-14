@@ -68,6 +68,9 @@ public sealed partial class PoliticsSystem
             if (!Laws.TryGetValue(n.Value ?? "", out var law)) { Log.ErrorOnce("setlaw:" + n.Value, $"set_law: unknown law '{n.Value}'"); return; }
             Enact(c, law, free: true);
         }, (ctx, n) => $"Enact {(Laws.TryGetValue(n.Value ?? "", out var l) ? l.Name : n.Value)}");
+        s.RegisterValue("movement_organization", (ctx, x) => x is Country c ? MovementsOf(c).Select(m => m.Organization).DefaultIfEmpty(0).Max() : null);
+        s.RegisterValue("movement_grievance", (ctx, x) => x is Country c ? MovementsOf(c).Select(m => m.Grievance).DefaultIfEmpty(0).Max() : null);
+        s.RegisterEffect("concede_to_movement", (ctx, n) => { if (ctx.This is Country c && MovementsOf(c).FirstOrDefault(m => m.Ideology == n.Value) is { } m) Concede(m); }, (ctx, n) => $"Make concessions to the {Name(n.Value)} movement");
         // give_in_to_movement = fascist / suppress_movement = fascist: answer a movement that demands power
         s.RegisterEffect("give_in_to_movement", (ctx, n) => { if (ctx.This is Country c && MovementsOf(c).FirstOrDefault(m => m.Ideology == n.Value) is { } m) GiveIn(m); }, (ctx, n) => $"Give in: the {Name(n.Value)} party takes power");
         s.RegisterEffect("suppress_movement", (ctx, n) => { if (ctx.This is Country c && MovementsOf(c).FirstOrDefault(m => m.Ideology == n.Value) is { } m) Suppress(m); }, (ctx, n) => $"Suppress the {Name(n.Value)} movement");

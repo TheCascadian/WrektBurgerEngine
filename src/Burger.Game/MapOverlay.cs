@@ -14,6 +14,20 @@ public sealed class MapOverlay
 
     /// <summary>Unit counters, fleets, battles and order arrows on the map (the Units button, H). Kept for the whole session like the fog shading.</summary>
     public static bool ShowUnits = true;
+    /// <summary>How far above the ground division counters are drawn (raised over the heads of the map figures while those show).</summary>
+    public float UnitLift = 0.35f;
+    /// <summary>True while a figure stands on each land stack: the counter hangs below it in screen space instead of floating over its head.</summary>
+    public bool CounterBelowFigure;
+    // below a figure the counter hangs from the ground point itself: any height above it lands on the body at close zoom
+    // where a counter hangs: the ground the figure stands on, or a little above the ground without one
+    private Vector3 StandPos(Location l, Camera3D cam)
+    {
+        var p = _map.LocationPos(l, LiftFor(l));
+        if (CounterBelowFigure && !l.IsWater) p.Y = _map.StandHeight(p.X, p.Z, MapFigures.StandRadius(MapFigures.HeightFor(cam)));
+        return p;
+    }
+
+    private float LiftFor(Location l) => l.IsWater ? 0.35f : CounterBelowFigure ? 0f : UnitLift;
 
     public MapOverlay(Game game, MapRenderer map)
     {
@@ -33,17 +47,18 @@ public sealed class MapOverlay
         if (h > 18) _countryLabels.Draw(cam);
         if (h < 30)
         {
-            int drawn = 0;
-            foreach (var l in _game.World.Locations)
-            {
-                if (l.IsWater || l.PixelCount < 30) continue;
-                if (!Viewport.TryProjectSnapped(_map.LocationPos(l, 0.1f), cam, out var s)) continue;
-                if (!OnScreen(s, 0)) continue;
-                string name = l.DisplayName;
-                var m = Gui.Measure(name, 13);
-                Gui.LabelShadow(name, s.X - m.X / 2, s.Y + 14, 13, new Color(240, 236, 220, 210));
-                if (++drawn > 300) break;
-            }
+            // only the province under the cursor is named, and only when zoomed in: the rest of the map stays clear
+            float fade = Math.Clamp((30 - h) / 8f, 0f, 1f);                // eases in as the camera comes down
+            int size = h < 12 ? 16 : 15;
+            var l = _map.Hovered;
+            if (l == null || l.IsWater || Gui.MouseOverUi) return;
+            if (!Viewport.TryProjectSnapped(_map.LocationPos(l, 0.1f), cam, out var s) || !OnScreen(s, 0)) return;
+            string name = l.DisplayName;
+            var m = Gui.Measure(name, size);
+            var box = new Rectangle(s.X - m.X / 2 - 4, s.Y + 10, m.X + 8, m.Y + 2);
+            Raylib.DrawCircleV(s, 2f * Gui.Scale, new Color(250, 246, 230, (int)(200 * fade)));
+            Raylib.DrawRectangleRounded(box, 0.5f, 6, new Color(12, 14, 20, (int)(150 * fade)));
+            Gui.Label(name, s.X - m.X / 2, s.Y + 11, size, new Color(240, 236, 220, (int)(235 * fade)));
         }
     }
 
@@ -95,18 +110,37 @@ public sealed class MapOverlay
             if (owner != player && !_game.IsVisible(loc)) continue; // fog of war hides other armies
             int slot = perLocation.TryGetValue(loc, out var k) ? k : 0;
             perLocation[loc] = slot + 1;
-            var basePos = _map.LocationPos(loc, 0.35f);
+            var basePos = StandPos(loc, cam);
             var s = Viewport.SnapToScreen(basePos, cam);
             if (!OnScreen(s)) continue;
             // moving units are drawn part of the way to their next location
             var first = g.First();
             if (first.Path.Count > 0 && first.Battle == null && g.All(d => d.Path.Count > 0 && d.Path[0] == first.Path[0]))
             {
-                var next = Viewport.SnapToScreen(_map.LocationPos(first.Path[0], 0.35f), cam);
+                var next = Viewport.SnapToScreen(StandPos(first.Path[0], cam), cam);
                 s = Vector2.Lerp(s, next, (float)Math.Clamp(first.MoveProgress, 0, 1) * 0.8f);
             }
             float cw = 50 * scale, ch = 22 * scale;
             var rect = new Rectangle(s.X - cw / 2, s.Y - ch / 2 - slot * (ch + 9 * scale), cw, ch);
+            if (CounterBelowFigure && !loc.IsWater)
+            {
+                // under the feet, drawn over the figure; a tank is longer than a soldier is wide, so its hull reaches further down the screen
+                float clear = 0;
+                if (MapFigures.IsLightArmour(first))
+                {
+                    // the hull can face any way: clear the lowest point of a circle round its centre, on screen
+                    float reach = 2.4f * MapFigures.HeightFor(cam) * MapFigures.TankMapScale / 1.8f;
+                    float lowest = s.Y;
+                    for (int step = 0; step < 8; step++)
+                    {
+                        float a = step * MathF.Tau / 8;
+                        var edge = Viewport.SnapToScreen(basePos + new Vector3(MathF.Sin(a) * reach, 0, MathF.Cos(a) * reach), cam);
+                        lowest = MathF.Max(lowest, edge.Y);
+                    }
+                    clear = lowest - s.Y;
+                }
+                rect.Y = s.Y + 4 * scale + clear + slot * (ch + 9 * scale);
+            }
             bool selected = g.Any(d => ui.SelectedDivisions.Contains(d));
             bool mine = owner == player;
             Counters.Add((rect, owner, g.ToList()));

@@ -14,7 +14,7 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null || !Has(FeatureSet.Navy)) { CloseLeft(); return; }
-        var r = LeftRect(2000);
+        var r = FitRect("navy" + NavyTab);
         r.Width = 440 * S;
         Gui.Panel(r, "Navy");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
@@ -97,40 +97,48 @@ public sealed partial class Hud
         var N = G.Navy;
         var types = G.Data.ShipTypes.Values.ToList();
         var port = N.MainPort(c);
-        Gui.Label(port != null ? $"New ships appear in {port.DisplayName}" : "You have no port - you cannot build ships", x, y, 14, port != null ? Gui.TextDim : Gui.Bad);
+        Gui.Label(port != null ? $"Launched at {port.DisplayName}" : "No port - you cannot build ships", x, y, 14, port != null ? Gui.TextDim : Gui.Bad);
         y += 24 * S;
         if (types.Count == 0) { Gui.Label("No ship types (common/ships).", x, y, 14, Gui.TextDim); return; }
         bool production = Has(FeatureSet.Production);
         if (production)
         {
             int docks = G.Production.Dockyards(c);
-            y += Gui.Wrapped($"Ships are built by dockyards ({docks}). Each finished ship is launched at your main port. Start a production line here or in the Production menu.", x, y, w, 14) + 8 * S;
+            Gui.Label($"Dockyards: {docks}", x, y, 14, docks > 0 ? Gui.Text : Gui.Bad);
+            y += 22 * S;
         }
-        float rowH = 58 * S;
-        float listH = r.Y + r.Height - y - 10 * S;
+        var cats = types.GroupBy(t => Cap(t.Category)).Select(g => (g.Key, g.Count())).ToList();
+        y += FilterChips("ships", cats, x, y, w, out string scat);
+        types = types.Where(t => Cap(t.Category) == scat).OrderBy(t => t.Hp).ToList();
+        float rowH = 62 * S;
         var orders = production ? new List<ShipOrder>() : N.OrdersOf(c);
-        if (orders.Count > 0) listH -= Math.Min(4, orders.Count) * 34 * S + 34 * S;
-        float top = Gui.BeginScroll("shiptypes", new Rectangle(x, y, w, listH), types.Count * (rowH + 4 * S));
+        float ordersH = orders.Count > 0 ? Math.Min(4, orders.Count) * 34 * S + 34 * S : 0;
+        float need = types.Count * (rowH + 4 * S);
+        float listH = Math.Min(need, r.Y + r.Height - y - 10 * S - ordersH);
+        FitEnd("navy" + NavyTab, r, y + need + ordersH + 6 * S);
+        float top = Gui.BeginScroll("shiptypes", new Rectangle(x, y, w, listH), need);
         float sy = top;
         foreach (var t in types)
         {
             var box = new Rectangle(x, sy, w - 8 * S, rowH);
             Card(box, new Color(36, 38, 44, 255));
-            Gui.Label(t.Name, box.X + 8 * S, box.Y + 5 * S, 15, Gui.Gold, FontKind.Bold);
-            string stats = $"{t.Category}  hp {t.Hp:0}  speed {t.Speed:0}" +
-                           (t.Stat("light_attack") > 0 ? $"  light {t.Stat("light_attack"):0.#}" : "") +
-                           (t.Stat("heavy_attack") > 0 ? $"  heavy {t.Stat("heavy_attack"):0.#}" : "") +
-                           (t.Stat("armor") > 0 ? $"  armor {t.Stat("armor"):0.#}" : "") +
-                           (t.Stat("transport") > 0 ? $"  carries {t.Stat("transport"):0} div." : "");
-            Gui.Label(Gui.Fit(stats, box.Width - 120 * S, 13), box.X + 8 * S, box.Y + 28 * S, 13, Gui.TextDim);
-            var btn = new Rectangle(box.X + box.Width - 108 * S, box.Y + 15 * S, 100 * S, 28 * S);
+            Stripe(box, CategoryColor(t.Category));
+            Gui.Label(t.Name, box.X + 10 * S, box.Y + 5 * S, 15, Gui.Gold, FontKind.Bold);
+            float tx = box.X + 10 * S, ty = box.Y + 33 * S;
+            tx += StatTag($"HP {t.Hp:0}", tx, ty, new Color(120, 200, 120, 255));
+            tx += StatTag($"{t.Speed:0} km/h", tx, ty, new Color(130, 190, 235, 255));
+            if (t.Stat("light_attack") > 0 || t.Stat("heavy_attack") > 0) tx += StatTag($"ATK {t.Stat("light_attack"):0.#}/{t.Stat("heavy_attack"):0.#}", tx, ty, new Color(235, 140, 100, 255));
+            if (t.Stat("armor") > 0) tx += StatTag($"ARM {t.Stat("armor"):0.#}", tx, ty, new Color(190, 190, 200, 255));
+            if (t.Stat("transport") > 0) tx += StatTag($"Carries {t.Stat("transport"):0}", tx, ty, Gui.Gold);
+            if (Gui.Hover(new Rectangle(box.X, ty, box.Width - 110 * S, 17 * S))) Gui.Tooltip($"{t.Name}\nHP, speed, light and heavy attack, armor\nBuild time {t.BuildDays} days");
+            var btn = new Rectangle(box.X + box.Width - 100 * S, box.Y + 6 * S, 92 * S, 24 * S);
             if (production)
             {
                 G.Data.Equipment.TryGetValue(t.Key, out var e);
                 var line = e == null ? null : c.ProductionLines.FirstOrDefault(l => l.Equipment == e);
                 if (line != null)
-                    Gui.Label($"{line.Factories} dock. | {G.Production.Stock(c, t.Key):0.##}", btn.X, btn.Y + 5 * S, 13, Gui.Text);
-                else if (Gui.Button(btn, "Produce", e != null && port != null, $"Start a dockyard production line for {t.Name}\nProduction cost {t.ProductionCost:0}", false, 13))
+                    Gui.Label($"{line.Factories} dock. · {Num(G.Production.Stock(c, t.Key), 1)}", btn.X, btn.Y + 4 * S, 13, Gui.Good);
+                else if (Gui.Button(btn, "Produce", e != null && port != null, $"Start a dockyard production line for {t.Name}\nProduction cost {Num(t.ProductionCost)}", false, 13))
                     G.Production.AddLine(c, e!, Math.Min(1, G.Production.FreeFactories(c, true)));
             }
             else

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="910" height="1890" viewBox="0 0 910 1890" role="img" aria-label="Flowchart of pop moods, elections, seats, coalitions, factions and movements with loops">
+<style type="text/css">
+.bg{fill:#f6f7f9}.n{stroke-width:3}
+.blue{fill:#d6e6fb;stroke:#2b6cc4}.amber{fill:#fde9bd;stroke:#b87a00}.green{fill:#d3f0dc;stroke:#1f8a4c}.red{fill:#fbd9d6;stroke:#c0392b}
+.t{font:700 16px "Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;fill:#15181d;text-anchor:middle}.s{font:13px "Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;fill:#4d5663;text-anchor:middle}
+.l{stroke:#15181d;stroke-width:3}.l.loop{stroke:#2b6cc4;stroke-dasharray:9 6}
+#ah path{fill:#15181d}#ah2 path{fill:#2b6cc4}
+.pill.y{fill:#1f8a4c}.pill.n{fill:#c0392b}
+.pt{font:700 12px "Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;fill:#fff;text-anchor:middle;letter-spacing:.06em}
+.ll{font:italic 13px "Atkinson Hyperlegible","Segoe UI",Arial,sans-serif;fill:#2b6cc4}
+</style>
+<rect class="bg" width="910" height="1890"/>
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+<marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker>
+</defs>
+<path class="l" d="M300,86 L300,130" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,186 L300,230" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,286 L300,320" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,420 L300,470" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,526 L300,570" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,626 L300,660" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M170,710 L130,710 L130,800" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M430,710 L470,710 L470,800" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,883 L300,910" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,966 L300,1010" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,1066 L300,1100" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M170,1150 L130,1150 L130,1240" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M430,1150 L470,1150 L470,1240" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M470,1296 L470,1330" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M470,1430 L470,1470" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M580,1380 L630,1380" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,1556 L300,1580" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,1636 L300,1670" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M300,1770 L300,1810" fill="none" marker-end="url(#ah)"/>
+<path class="l" d="M130,856 L130,883 L300,883" fill="none"/>
+<path class="l" d="M470,856 L470,883 L300,883" fill="none"/>
+<path class="l" d="M130,1296 L130,1556 L300,1556" fill="none"/>
+<path class="l" d="M470,1526 L470,1556 L300,1556" fill="none"/>
+<path class="l loop" d="M430,370 L850,370 L850,58 L430,58" fill="none" marker-end="url(#ah2)"/>
+<path class="l loop" d="M170,1838 L14,1838 L14,58 L170,58" fill="none" marker-end="url(#ah2)"/>
+<path class="l loop" d="M730,1352 L730,1038 L430,1038" fill="none" marker-end="url(#ah2)"/>
+<path class="l loop" d="M430,1720 L880,1720 L880,58 L430,58" fill="none" marker-end="url(#ah2)"/>
+<path class="l loop" d="M430,612 L490,612 L490,584 L430,584" fill="none" marker-end="url(#ah2)"/>
+<rect class="n blue" x="170" y="30" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="54">1. People live in your states</text><text class="s" x="300" y="73">culture, religion, class, growth</text>
+<rect class="n blue" x="170" y="130" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="154">2. Each pop group forms a mood</text><text class="s" x="300" y="173">its goal and view of government</text>
+<rect class="n blue" x="170" y="230" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="254">3. Parties gain or lose support</text><text class="s" x="300" y="273">moods, stability, ruling-party pull</text>
+<polygon class="n amber" points="300,320 430,370 300,420 170,370"/><text class="t" x="300" y="375">Election due?</text>
+<rect class="n amber" x="170" y="470" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="494">Vote counted</text><text class="s" x="300" y="513">each state votes by its moods</text>
+<rect class="n amber" x="170" y="570" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="594">Seats filled</text><text class="s" x="300" y="613">a character sits per province</text>
+<polygon class="n amber" points="300,660 430,710 300,760 170,710"/><text class="t" x="300" y="715">Majority possible?</text>
+<rect class="n green" x="30" y="800" width="200" height="56" rx="8"/>
+<text class="t" x="130" y="824">Coalition</text><text class="s" x="130" y="843">partners share power</text>
+<rect class="n green" x="370" y="800" width="200" height="56" rx="8"/>
+<text class="t" x="470" y="824">Minority government</text><text class="s" x="470" y="843">biggest party alone</text>
+<rect class="n green" x="170" y="910" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="934">4. Government formed</text><text class="s" x="300" y="953">cabinet drawn from characters</text>
+<rect class="n green" x="170" y="1010" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="1034">5. Factions react</text><text class="s" x="300" y="1053">laws in force, cabinet posts</text>
+<polygon class="n amber" points="300,1100 430,1150 300,1200 170,1150"/><text class="t" x="300" y="1155">Factions happy?</text>
+<rect class="n green" x="30" y="1240" width="200" height="56" rx="8"/>
+<text class="t" x="130" y="1264">United party</text><text class="s" x="130" y="1283">full votes, stable</text>
+<rect class="n red" x="370" y="1240" width="200" height="56" rx="8"/>
+<text class="t" x="470" y="1264">Divided party</text><text class="s" x="470" y="1283">-stability, up to -25% votes</text>
+<polygon class="n amber" points="470,1330 580,1380 470,1430 360,1380"/><text class="t" x="470" y="1385">Unhappy for months?</text>
+<rect class="n red" x="370" y="1470" width="200" height="56" rx="8"/>
+<text class="t" x="470" y="1503">Faction splits off</text>
+<rect class="n blue" x="630" y="1352" width="200" height="56" rx="8"/>
+<text class="t" x="730" y="1376">You step in</text><text class="s" x="730" y="1395">Negotiate / Favour / Sideline</text>
+<rect class="n blue" x="170" y="1580" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="1604">6. Shut-out groups organise</text><text class="s" x="300" y="1623">a movement forms at 25% support</text>
+<polygon class="n amber" points="300,1670 430,1720 300,1770 170,1720"/><text class="t" x="300" y="1725">Movement at 100%?</text>
+<rect class="n red" x="170" y="1810" width="260" height="56" rx="8"/>
+<text class="t" x="300" y="1834">Coup or civil war</text><text class="s" x="300" y="1853">rebels may take the country</text>
+<rect class="pill y" x="281" y="434" width="38" height="22" rx="11"/><text class="pt" x="300" y="449.5">YES</text>
+<rect class="pill n" x="465" y="359" width="30" height="22" rx="11"/><text class="pt" x="480" y="374.5">NO</text>
+<rect class="pill y" x="111" y="739" width="38" height="22" rx="11"/><text class="pt" x="130" y="754.5">YES</text>
+<rect class="pill n" x="455" y="739" width="30" height="22" rx="11"/><text class="pt" x="470" y="754.5">NO</text>
+<rect class="pill y" x="111" y="1179" width="38" height="22" rx="11"/><text class="pt" x="130" y="1194.5">YES</text>
+<rect class="pill n" x="455" y="1179" width="30" height="22" rx="11"/><text class="pt" x="470" y="1194.5">NO</text>
+<rect class="pill n" x="590" y="1369" width="30" height="22" rx="11"/><text class="pt" x="605" y="1384.5">NO</text>
+<rect class="pill y" x="451" y="1444" width="38" height="22" rx="11"/><text class="pt" x="470" y="1459.5">YES</text>
+<rect class="pill n" x="440" y="1709" width="30" height="22" rx="11"/><text class="pt" x="455" y="1724.5">NO</text>
+<rect class="pill y" x="281" y="1784" width="38" height="22" rx="11"/><text class="pt" x="300" y="1799.5">YES</text>
+<text class="ll" x="640" y="358" text-anchor="middle">no vote: back to 1</text>
+<text class="ll" x="655" y="1708" text-anchor="middle">calm: back to 1</text>
+<text class="ll" x="24" y="1795" text-anchor="start">country changes hands: back to 1</text>
+<text class="ll" x="725" y="1000" text-anchor="end">eases grievance: back to 5</text>
+<text class="ll" x="498" y="602" text-anchor="start">term ends: seat refilled</text>
+</svg>

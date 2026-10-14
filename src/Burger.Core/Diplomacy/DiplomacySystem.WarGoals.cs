@@ -1,6 +1,7 @@
 using System.Globalization;
 using Burger.Core.Model;
 using Burger.Core.Modding;
+using Burger.Core.Politics;
 using Burger.Core.Script;
 using Burger.Core.Scripting;
 
@@ -120,11 +121,11 @@ public sealed partial class DiplomacySystem
     }
 
     /// <summary>The country at the top of the chain of overlords above <paramref name="c"/> (itself if it is nobody's subject).</summary>
-    public Country TopOverlord(Country c)
-    {
-        for (int i = 0; i < 8 && R.OverlordOf(c) is { } o && o != c; i++) c = o;
-        return c;
-    }
+    public Country TopOverlord(Country c) => R.TopOverlord(c);
+
+    /// <summary>Strength a country's subjects add to it in power comparisons (define subject_strength_share, 0.5).</summary>
+    public double SubjectStrength(Country c)
+        => R.SubjectsOf(c).Sum(Strength) * _game.Data.Defines.Get("subject_strength_share", 0.5);
 
     /// <summary>A subject of <paramref name="overlord"/> (or of its own overlord: subjects have no subjects) whose people are of this culture (null = none).</summary>
     public Country? SubjectOfCulture(Country overlord, string culture)
@@ -609,12 +610,7 @@ public sealed partial class DiplomacySystem
     public bool HoldsHomelandOf(Country overlord, Country other)
     {
         if (overlord == other) return true;
-        var pop = _game.Population;
-        if (pop.Enabled)
-        {
-            string a = pop.Of(overlord).Culture ?? "", b = pop.Of(other).Culture ?? "";
-            if (a.Length > 0 && string.Equals(a, b, StringComparison.OrdinalIgnoreCase)) return true;
-        }
+        if (_game.SamePeople(overlord, other)) return true;
         int cores = 0, held = 0;
         foreach (var s in _game.World.States)
         {
@@ -632,7 +628,7 @@ public sealed partial class DiplomacySystem
     /// </remarks>
     public void MakeSubject(Country subject, Country overlord, SubjectType type)
     {
-        if (TopOverlord(overlord) == subject) R.ReleaseSubject(overlord); // a subject that turned the tables on its overlord
+        if (TopOverlord(overlord) == subject) Release(overlord); // a subject that turned the tables on its overlord
         else overlord = TopOverlord(overlord);
         if (subject == overlord) return;
         foreach (var s in R.SubjectsOf(subject).ToList())
@@ -640,31 +636,28 @@ public sealed partial class DiplomacySystem
             if (s == overlord) continue;
             R.SetSubject(s, overlord, R.SubjectTypeOf(s) ?? type);
             _liberty.Remove(s);
-            FollowOverlord(s, overlord, popularity: 0.1);
+            _game.Hub.RaiseSubjectMade(s, overlord, 0.1);
             Record($"{s.Tag}, subject of {subject.Tag}, passed to {overlord.Tag}");
         }
         R.SetSubject(subject, overlord, type);
         _liberty.Remove(subject);
-        FollowOverlord(subject, overlord, popularity: 0.2);
-        _game.RefreshName(subject);
+        _game.Hub.RaiseSubjectMade(subject, overlord, 0.2);
         InvalidateCasusBelli();
         _game.RaiseMapChanged();
     }
 
-    /// <summary>Puts the overlord's ideology in power in a subject (with some extra support for it).</summary>
-    private void FollowOverlord(Country subject, Country overlord, double popularity)
+    /// <summary>Frees a subject: forgets its liberty desire and tells the other systems (<see cref="GameEvents.SubjectReleased"/>).</summary>
+    public void Release(Country subject)
     {
-        var pol = _game.Politics;
-        if (!pol.Enabled) return;
-        string want = pol.Of(overlord).Ruling;
-        if (string.IsNullOrEmpty(want) || string.Equals(pol.Of(subject).Ruling, want, StringComparison.OrdinalIgnoreCase)) return;
-        pol.SetRulingParty(subject, want, "overlord");
-        if (popularity > 0) pol.AddPopularity(subject, want, popularity);
+        var overlord = R.OverlordOf(subject);
+        R.ReleaseSubject(subject);
+        _liberty.Remove(subject);
+        _game.Hub.RaiseSubjectReleased(subject, overlord);
     }
 
     /// <summary>
-    /// Monthly: an overlord that holds a subject's homeland annexes it; subjects that changed government (elections,
-    /// revolts) are brought back in line with the overlord's ideology.
+    /// Monthly: an overlord that holds a subject's homeland annexes it; each remaining subject is announced to the other
+    /// systems (politics brings one that changed government back in line with its overlord, as its type allows).
     /// </summary>
     private void MonthlySubjects()
     {
@@ -682,8 +675,7 @@ public sealed partial class DiplomacySystem
             if (_game.World.AtWar(subject, overlord)) continue;
             if (HoldsHomelandOf(overlord, subject))
             {
-                R.ReleaseSubject(subject);
-                _liberty.Remove(subject);
+                Release(subject);
                 _game.Notify($"{overlord.Name} annexed {subject.Name}: it already rules their homeland.",
                     overlord.IsPlayer || subject.IsPlayer ? NotificationKind.Diplomacy : NotificationKind.Info);
                 Record($"{overlord.Tag} annexed its subject {subject.Tag} (holds their homeland)");
@@ -693,15 +685,13 @@ public sealed partial class DiplomacySystem
             // liberal overlords let restless subjects go
             if (Rules.WillGrantIndependence(_game, overlord, subject))
             {
-                R.ReleaseSubject(subject);
-                _liberty.Remove(subject);
-                _game.RefreshName(subject);
+                Release(subject);
                 AddOpinion(subject, overlord, "Granted independence", 50, 0.5);
                 _game.Notify($"{overlord.Name} granted independence to {subject.Name}.", overlord.IsPlayer || subject.IsPlayer ? NotificationKind.Diplomacy : NotificationKind.Info);
                 Record($"{overlord.Tag} granted independence to its subject {subject.Tag}");
                 continue;
             }
-            FollowOverlord(subject, overlord, popularity: 0.05);
+            _game.Hub.RaiseSubjectMonthly(subject, overlord);
         }
     }
 
@@ -747,9 +737,7 @@ public sealed partial class DiplomacySystem
             case PeaceTermType.Independence:
                 if (t.Beneficiary != null && R.OverlordOf(t.Beneficiary) != null)
                 {
-                    R.ReleaseSubject(t.Beneficiary);
-                    _liberty.Remove(t.Beneficiary);
-                    _game.RefreshName(t.Beneficiary);
+                    Release(t.Beneficiary);
                     AddOpinion(t.Beneficiary, winner, "Freed us", 50, 0.5);
                     _game.Notify($"{t.Beneficiary.Name} is free of its overlord.", NotificationKind.Diplomacy);
                 }
@@ -769,9 +757,7 @@ public sealed partial class DiplomacySystem
                                     var c = part.Receiver!;
                                     if (part.FreeReceiver && R.OverlordOf(c) != null)
                                     {
-                                        R.ReleaseSubject(c);
-                                        _liberty.Remove(c);
-                                        _game.RefreshName(c);
+                                        Release(c);
                                         _game.Notify($"{c.Name} is free of its overlord.", NotificationKind.Diplomacy);
                                     }
                                     foreach (var st in part.States) TransferState(st, c);
@@ -830,6 +816,7 @@ public sealed partial class DiplomacySystem
         if (!R.HasPact(breaker, other, _game.World.Date)) return;
         R.RemovePact(breaker, other);
         InvalidateCasusBelli();
+        _game.Hub.RaisePactBroken(breaker, other);
         AddOpinion(other, breaker, "Broke our non-aggression pact", -60, 1);
         foreach (var c in _game.World.Countries.Where(x => x.Exists && x != breaker && x != other))
             AddOpinion(c, breaker, "Broke a non-aggression pact", _game.Data.Defines.Get("break_pact_opinion", -10), 0.5);

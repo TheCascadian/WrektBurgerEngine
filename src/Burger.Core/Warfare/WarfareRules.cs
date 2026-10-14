@@ -18,7 +18,7 @@ public class WarfareRules
         var w = game.World;
         var r = w.Relations;
         if (r.AreAllied(country, ctrl)) return true;
-        if (r.OverlordOf(country) == ctrl || r.OverlordOf(ctrl) == country) return true;
+        if (r.AreOverlordAndSubject(country, ctrl)) return true;
         if (r.HasAccess(country, ctrl)) return true;
         foreach (var war in w.Wars)
         {

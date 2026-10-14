@@ -1,3 +1,4 @@
+using Burger.Core.Figures;
 using System.Text;
 
 namespace Burger.Runtime;
@@ -29,6 +30,14 @@ public sealed class AppOptions
     /// <summary>Historical bias 0-1 for this run (default: the player's setting).</summary>
     public double? Bias;
     public string? Open;
+    /// <summary>Render the contact sheet of a figure to this file and quit.</summary>
+    public string? FigureSheet;
+    /// <summary>Render every clip of a figure as numbered frames on a rotating platform into this folder and quit (tools/figure-gifs.sh turns them into .gif files).</summary>
+    public string? FigureFrames, FigureGifs, FigureGear, FigurePeople, FigureVariants;
+    public int FigureSize = 480;
+    public bool FigureForce;
+    public string[]? FigureClips;
+    public string FigureKey = Burger.Core.Figures.HumanMale.Key;
 }
 
 public static class Program
@@ -39,7 +48,14 @@ public static class Program
   --observe    skip the menu and watch the AI
   --load       load a save file
   --log-dir <folder>     write error.log and --perf output to this folder
-  --screenshot <file.png> [--frames N] [--days D]   render, save a screenshot and quit (testing)";
+  --screenshot <file.png> [--frames N] [--days D]   render, save a screenshot and quit (testing)
+  --figure-sheet <file.png> [--figure KEY]          render a figure and its animations to an image and quit
+  --figure-frames <folder> [--figure KEY] [--figure-clip a,b]  render each (or the named) animation as frames on a turntable (see tools/figure-gifs.sh)
+  --figure-gear <file.png>                          contact sheet of every piece of kit of every soldier variation
+  --figure-gear <file.png>                          contact sheet of every kit piece for every soldier variation
+  --figure-variants <dir>                           one contact sheet per country: its historical peoples, men and women, bare and in uniform
+  --figure-people <file.png>                        contact sheet of every people's look, bare and as a soldier
+  --figure-gif <folder> --figure KEY[,KEY...|all] [--figure-clip a,b] [--figure-size 480] [--figure-force]  .gif per animation, straight to ffmpeg; unchanged ones are skipped";
 
     public static int Main(string[] args)
     {
@@ -61,6 +77,16 @@ public static class Program
                     case "--frames": opt.ScreenshotFrame = int.Parse(Next()); break;
                     case "--days": opt.TicksBeforeScreenshot = int.Parse(Next()) * 24; break;
                     case "--hidden": opt.Hidden = true; break;
+                    case "--figure-sheet": opt.FigureSheet = Path.GetFullPath(Next()); break;
+                    case "--figure-frames": opt.FigureFrames = Path.GetFullPath(Next()); break;
+                    case "--figure-gif": opt.FigureGifs = Path.GetFullPath(Next()); break;
+                    case "--figure-variants": opt.FigureVariants = Path.GetFullPath(Next()); break;
+                    case "--figure-people": opt.FigurePeople = Path.GetFullPath(Next()); break;
+                    case "--figure-gear": opt.FigureGear = Path.GetFullPath(Next()); break;
+                    case "--figure-size": opt.FigureSize = int.Parse(Next()); break;
+                    case "--figure-force": opt.FigureForce = true; break;
+                    case "--figure-clip": opt.FigureClips = Next().Split(',', StringSplitOptions.RemoveEmptyEntries); break;
+                    case "--figure": opt.FigureKey = Next(); break;
                     case "--exec": opt.Exec.Add(Next()); break;
                     case "--mapmode": opt.MapMode = Next(); break;
                     case "--no-fog-shading": opt.NoFogShading = true; break;
@@ -86,6 +112,44 @@ public static class Program
                 }
             }
             opt.GameRoot = FindGameRoot(opt.GameRoot);
+            if (opt.FigureSheet != null || opt.FigureFrames != null || opt.FigureGifs != null || opt.FigureGear != null || opt.FigurePeople != null || opt.FigureVariants != null)
+            {
+                // the figures of the game folder (its gfx/models/ over the built-in body), without loading the game itself
+                var figures = new Burger.Core.Game().Figures;
+                figures.Load(opt.GameRoot);
+                if (opt.FigureVariants != null)
+                {
+                    Directory.CreateDirectory(opt.FigureVariants);
+                    foreach (string t in Burger.Core.Figures.Uniforms.Tags)
+                    {
+                        string tg = t.ToLowerInvariant();
+                        var peoples = Ancestries.Rosters.TryGetValue(t, out var roster) ? roster : new[] { "default" };
+                        string Spec(string p, bool f) => p + (f ? ".f." : ".") + Ancestries.StylesOf(Ancestries.Find(p) ?? Ancestry.Default, f)[0].ToString().ToLowerInvariant();
+                        // per sex (the country's first people), per people (men), per people and sex
+                        FigureRenderer.RenderSoldierSheet(figures, Path.Combine(opt.FigureVariants, $"sex_{tg}.png"), t, new[] { ("male", Spec(peoples[0], false)), ("female", Spec(peoples[0], true)) });
+                        FigureRenderer.RenderSoldierSheet(figures, Path.Combine(opt.FigureVariants, $"ancestry_{tg}.png"), t, peoples.Select(p => (p, Spec(p, false))).ToList(), 4);
+                        FigureRenderer.RenderSoldierSheet(figures, Path.Combine(opt.FigureVariants, $"ancestry_sex_{tg}.png"), t,
+                            peoples.SelectMany(p => new[] { (p + " male", Spec(p, false)), (p + " female", Spec(p, true)) }).ToList(), 4);
+                    }
+                    return 0;
+                }
+                if (opt.FigurePeople != null) { FigureRenderer.RenderPeopleSheet(figures, opt.FigurePeople); return 0; }
+                if (opt.FigureGear != null) { FigureRenderer.RenderGearSheet(figures, opt.FigureGear); return 0; }
+                if (opt.FigureGifs != null)
+                {
+                    // --figure takes several keys, or "all" for every model that has animations
+                    var keys = opt.FigureKey.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    var list = keys.Contains("all", StringComparer.OrdinalIgnoreCase)
+                        ? figures.All.Where(f => f.Clips.Count > 0).OrderBy(f => f.Key, StringComparer.OrdinalIgnoreCase).ToList()
+                        : keys.Select(k => figures.Find(k) ?? throw new ArgumentException($"No figure '{k}'")).ToList();
+                    FigureRenderer.RenderGifs(list, opt.FigureGifs, opt.FigureSize, opt.FigureClips, opt.FigureForce);
+                    return 0;
+                }
+                var model = figures.Find(opt.FigureKey) ?? throw new ArgumentException($"No figure '{opt.FigureKey}'");
+                if (opt.FigureFrames != null) FigureRenderer.RenderTurntable(model, opt.FigureFrames, clips: opt.FigureClips);
+                else FigureRenderer.RenderSheet(model, opt.FigureSheet!);
+                return 0;
+            }
             new App(opt).Run();
             return 0;
         }

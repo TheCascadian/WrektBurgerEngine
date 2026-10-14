@@ -22,6 +22,7 @@ democratic = {
 	coalition = { neutrality }
 	opinion = { democratic = 15 communist = -20 fascist = -20 }
 	modifier = { stability_target = 5 opinion = 5 }
+	government = republic
 }
 communist = {
 	name = "Communist"
@@ -45,6 +46,7 @@ fascist = {
 	coalition = { neutrality }
 	opinion = { fascist = 20 democratic = -20 communist = -40 neutrality = -5 }
 	modifier = { political_power_gain = 3 manpower = 0.15 stability_target = 9 }
+	government = dictatorship
 }
 neutrality = {
 	name = "Non-aligned"
@@ -54,4 +56,5 @@ neutrality = {
 	coalition = { democratic fascist }
 	opinion = { neutrality = 5 communist = -10 }
 	modifier = { stability_target = 5 }
+	government = authoritarian_state
 }

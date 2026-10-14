@@ -141,6 +141,9 @@ public static class WorldLoader
                 if (n.Get("country_names") is { Children: not null } variants)
                     foreach (var v in variants.All)
                         if (v.Value != null) c.NameVariants[v.Key] = v.Value;
+                if (n.Get("country_flags") is { Children: not null } flagVariants)
+                    foreach (var v in flagVariants.All)
+                        if (v.Value != null) c.FlagVariants[v.Key] = v.Value;
                 if (n.Get("country_colors") is { Children: not null } colors)
                     foreach (var v in colors.All)
                         if (Rgb.TryParse(v, out var vc)) c.ColorVariants[v.Key] = vc;

@@ -352,9 +352,11 @@ public static class Gui
     }
 
     /// <summary>A section title inside a panel: header font with a thin line under it.</summary>
-    public static void Section(string text, float x, float y, float width)
+    public static void Section(string text, float x, float y, float width, string? icon = null)
     {
-        Label(text, x, y, 17, Gold, FontKind.Header);
+        float tx = x;
+        if (icon != null && HasIcon(icon)) { float isz = FontSize(17) * 1.05f; Icon(icon, new Rectangle(x, y, isz, isz)); tx += isz + 5 * Scale; }
+        Label(text, tx, y, 17, Gold, FontKind.Header);
         float ly = y + FontSize(17) * 1.12f;
         if (Skin("section_line", new Rectangle(x, ly - 1.5f * Scale, width, 3 * Scale))) return;
         Raylib.DrawLineEx(new Vector2(x, ly), new Vector2(x + width, ly), 1, new Color(PanelInner.R, PanelInner.G, PanelInner.B, (byte)200));
@@ -499,6 +501,39 @@ public static class Gui
         return changed;
     }
 
+    /// <summary>One label/value row (optional icon and change against a baseline). Returns the row height.</summary>
+    public static float StatRow(float x, float y, float w, string label, double value, string? icon = null, double? baseline = null, bool lowerBetter = false, float size = 14)
+    {
+        float h = 20 * Scale;
+        if (icon != null) Icon(icon, new Rectangle(x, y + 1 * Scale, 14 * Scale, 14 * Scale));
+        Label(label, x + 18 * Scale, y, size, TextDim);
+        string vs = $"{value:0.##}";
+        float vx = x + w - 54 * Scale - Measure(vs, size, FontKind.Bold).X;
+        Label(vs, vx, y, size, Text, FontKind.Bold);
+        if (baseline is double was && Math.Abs(value - was) > 0.005)
+        {
+            double d = value - was;
+            Label($"{(d > 0 ? "+" : "")}{d:0.##}", x + w - 50 * Scale, y, size - 1, (d > 0) != lowerBetter ? Good : Bad);
+        }
+        return h;
+    }
+
+    private static string? _confirming;
+
+    /// <summary>A button that needs a second click ("Sure?") before it reports true. Any other click elsewhere cancels it.</summary>
+    public static bool ConfirmButton(string id, Rectangle r, string text, bool enabled = true, string? tooltip = null, float size = 14)
+    {
+        bool armed = _confirming == id;
+        var rr = armed ? new Rectangle(r.X + r.Width - Math.Max(r.Width, 40 * Scale), r.Y, Math.Max(r.Width, 40 * Scale), r.Height) : r;
+        if (Button(rr, armed ? "Sure?" : text, enabled, tooltip, armed, size))
+        {
+            if (armed) { _confirming = null; return true; }
+            _confirming = id;
+        }
+        else if (armed && _leftPressed && !Hover(rr)) _confirming = null;
+        return false;
+    }
+
     public static void Bar(Rectangle r, float fraction, Color fill, Color? back = null)
     {
         bool skinned = back == null && Skin("bar", r);
@@ -525,6 +560,8 @@ public static class Gui
         ["politics_overview"] = "politics", ["politics_organization"] = "organization", ["politics_law"] = "law",
         ["faction"] = "organization", ["branch"] = "province", ["cabinet"] = "characters",
         ["movement"] = "rebellion", ["effects"] = "information",
+        ["max_strength"] = "strength", ["max_organisation"] = "organization", ["soft_attack"] = "artillery", ["hard_attack"] = "battle",
+        ["defense"] = "fortification", ["breakthrough"] = "army", ["piercing"] = "ammunition", ["speed"] = "road", ["combat_width"] = "border", ["supply_use"] = "supply",
     };
     private static bool TryTooltipIcon(string subject, out Texture2D tex)
     {
@@ -854,28 +891,28 @@ public static class Gui
         var rows = lines.Skip(1).Select(line => ParseTooltipRow(line, titleRow.Text)).ToList();
         // Keep an actual safe margin around tooltips. Previously the last wrapped row could sit almost against
         // the right border (and appear clipped after colored runs were drawn separately).
-        float pad = 16 * Scale, iconColumn = 20 * Scale, bodySize = 14;
+        float pad = 9 * Scale, iconColumn = 16 * Scale, bodySize = 13, titleSize = 15;
         float screenW = Raylib.GetScreenWidth(), screenH = Raylib.GetScreenHeight();
         float screenMargin = 8 * Scale;
         float maxW = Math.Max(1, Math.Min(480 * Scale, screenW - 2 * screenMargin));
         float titleIconW = HasTooltipIcon(titleRow.Icon) ? iconColumn : 0;
-        float measured = Measure(titleRow.Text, 17, FontKind.Bold).X + titleIconW;
+        float measured = Measure(titleRow.Text, titleSize, FontKind.Bold).X + titleIconW;
         foreach (var row in rows)
         {
             float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
             measured = Math.Max(measured, Measure(row.Text, bodySize).X + rowIconW);
         }
-        float w = Math.Min(maxW, Math.Max(Math.Min(190 * Scale, maxW), measured + 2 * pad));
+        float w = Math.Min(maxW, Math.Max(Math.Min(60 * Scale, maxW), measured + 2 * pad + 2 * Scale));
         float titleW = Math.Max(1, w - 2 * pad - titleIconW);
-        float titleH = WrappedHeight(titleRow.Text, titleW, 17) + 2 * Scale;
+        float titleH = WrappedHeight(titleRow.Text, titleW, titleSize);
         float bodyH = 0;
         foreach (var row in rows)
         {
-            if (row.Spacer) { bodyH += 5 * Scale; continue; }
+            if (row.Spacer) { bodyH += 3 * Scale; continue; }
             float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
-            bodyH += WrappedHeight(row.Text, Math.Max(1, w - 2 * pad - rowIconW), bodySize) + 4 * Scale;
+            bodyH += WrappedHeight(row.Text, Math.Max(1, w - 2 * pad - rowIconW), bodySize) + 2 * Scale;
         }
-        float h = 10 * Scale + titleH + (rows.Count > 0 ? 7 * Scale + bodyH : 0) + 8 * Scale;
+        float h = 6 * Scale + titleH + (rows.Count > 0 ? 5 * Scale + bodyH : 0) + 4 * Scale;
         float x = Mouse.X + 18 * Scale, y = Mouse.Y + 18 * Scale;
         if (x + w > screenW - screenMargin) x = Mouse.X - w - 14 * Scale;
         // Clamp after choosing a side of the pointer. The old left-edge-only correction could still
@@ -891,25 +928,25 @@ public static class Gui
             Raylib.DrawRectangleLinesEx(r, 1.2f * Scale, PanelBorder);
             Raylib.DrawRectangleRec(new Rectangle(r.X, r.Y, 3 * Scale, r.Height), Gold);
         }
-        float cy = y + 8 * Scale;
+        float cy = y + 6 * Scale;
         Color titleColor = titleRow.Tone == TooltipTone.Neutral ? Gold : TooltipToneColor(titleRow.Tone);
-        if (titleIconW > 0) DrawTooltipIcon(titleRow.Icon, new Rectangle(x + pad, cy, iconColumn, FontSize(17)), titleColor);
+        if (titleIconW > 0) DrawTooltipIcon(titleRow.Icon, new Rectangle(x + pad, cy, iconColumn, FontSize(titleSize)), titleColor);
         float titleX = x + pad + titleIconW;
-        cy += Wrapped(titleRow.Text, titleX, cy, titleW, 17, titleColor) + 2 * Scale;
+        cy += Wrapped(titleRow.Text, titleX, cy, titleW, titleSize, titleColor);
         if (rows.Count > 0)
         {
-            Raylib.DrawLineEx(new Vector2(x + pad, cy + 2 * Scale), new Vector2(x + w - pad, cy + 2 * Scale), 1 * Scale, PanelInner);
-            cy += 7 * Scale;
+            Raylib.DrawLineEx(new Vector2(x + pad, cy + 1 * Scale), new Vector2(x + w - pad, cy + 1 * Scale), 1 * Scale, PanelInner);
+            cy += 5 * Scale;
         }
         foreach (var row in rows)
         {
-            if (row.Spacer) { cy += 5 * Scale; continue; }
+            if (row.Spacer) { cy += 3 * Scale; continue; }
             float rowIconW = HasTooltipIcon(row.Icon) ? iconColumn : 0;
             Color color = TooltipToneColor(row.Tone);
             if (rowIconW > 0) DrawTooltipIcon(row.Icon, new Rectangle(x + pad, cy, iconColumn, FontSize(bodySize)), color);
             float left = x + pad + rowIconW;
             float used = WrappedColored(row.Text, left, cy, Math.Max(1, w - (left - x) - pad), bodySize, color);
-            cy += used + 4 * Scale;
+            cy += used + 2 * Scale;
         }
     }
 

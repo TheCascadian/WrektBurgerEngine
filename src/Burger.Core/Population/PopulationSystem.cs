@@ -359,6 +359,18 @@ public sealed partial class PopulationSystem
     /// culture and religion figures, stability and what cultures can be accepted.</summary>
     public IEnumerable<State> HomeStates(Country c) => c.OwnedStates.Where(s => !IsColony(s));
 
+    /// <summary>Share of <paramref name="c"/>'s people (outside its colonies) whose culture <paramref name="judge"/> accepts.</summary>
+    public double AcceptedShareFor(Country c, Country judge)
+    {
+        double total = 0, acc = 0;
+        foreach (var s in HomeStates(c))
+        {
+            if (!_states.TryGetValue(s, out var sp)) continue;
+            foreach (var p in sp.Pops) { total += p.Size; if (IsAccepted(judge, p.Culture)) acc += p.Size; }
+        }
+        return total <= 0 ? 1 : acc / total;
+    }
+
     /// <summary>Share of a country's people (outside its colonies) of accepted cultures (and, with religion, of its state religion).</summary>
     public (double Accepted, double Faithful) Shares(Country c)
     {
@@ -441,7 +453,7 @@ public sealed partial class PopulationSystem
             if (cp.Culture != null && !IsAccepted(owner, p.Culture))
             {
                 double moved = p.Size * Rules.YearlyAssimilation(_game, s, p) / 12;
-                if (moved > 0) { p.Size -= moved; additions.Add(new Pop { Culture = cp.Culture, Religion = p.Religion, Type = p.Type, Size = moved }); }
+                if (moved > 0) { _game.Hub.RaisePopAssimilated(s, p, owner); p.Size -= moved; additions.Add(new Pop { Culture = cp.Culture, Religion = p.Religion, Type = p.Type, Size = moved }); }
             }
             // religion
             if (ReligionEnabled && cp.Religion != null && p.Religion != cp.Religion)

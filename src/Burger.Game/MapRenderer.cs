@@ -38,6 +38,9 @@ public sealed unsafe class MapRenderer : IDisposable
     // CPU copy of the mesh heights for picking and placing things on the ground
     private float[] _heights = Array.Empty<float>();
     private int _hw, _hh;
+    // the heights of the vertices of the terrain mesh as drawn: figures and counters must stand on this surface, not on the finer field
+    private float[] _meshHeights = Array.Empty<float>();
+    private int _mw, _mh;
 
     private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale,
         _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locTint, _locViewPos, _locFog;
@@ -146,6 +149,8 @@ public sealed unsafe class MapRenderer : IDisposable
         int meshMaxDim = Math.Max(_map.Width, _map.Height) > 4096 ? 1024 : Math.Max(1024, maxDim);
         float meshScale = Math.Min(1f, meshMaxDim / (float)Math.Max(_hw, _hh));
         int meshW = Math.Max(2, (int)(_hw * meshScale)), meshH = Math.Max(2, (int)(_hh * meshScale));
+        _mw = meshW; _mh = meshH;
+        _meshHeights = new float[meshW * meshH];
         Image meshImg = Raylib.GenImageColor(meshW, meshH, Color.Black);
         byte* meshPx = (byte*)meshImg.Data;
         for (int y = 0; y < meshH; y++)
@@ -155,6 +160,7 @@ public sealed unsafe class MapRenderer : IDisposable
                 int sy = meshH == 1 ? 0 : (int)(y * (_hh - 1f) / (meshH - 1));
                 byte h = smooth[sy * _hw + sx];
                 int o = (y * meshW + x) * 4;
+                _meshHeights[y * meshW + x] = h / 255f * s.HeightScale;
                 meshPx[o] = meshPx[o + 1] = meshPx[o + 2] = h;
                 meshPx[o + 3] = 255;
             }
@@ -374,23 +380,47 @@ public sealed unsafe class MapRenderer : IDisposable
     /// <summary>Ground height at a world position (bilinear on the mesh grid).</summary>
     public float HeightAt(float wx, float wz)
     {
-        float gx = wx / WorldWidth * (_hw - 1), gz = wz / WorldHeight * (_hh - 1);
-        int x0 = Math.Clamp((int)gx, 0, _hw - 1), z0 = Math.Clamp((int)gz, 0, _hh - 1);
-        int x1 = Math.Min(x0 + 1, _hw - 1), z1 = Math.Min(z0 + 1, _hh - 1);
+        if (_mw < 2 || _mh < 2) return 0;
+        float gx = wx / WorldWidth * (_mw - 1), gz = wz / WorldHeight * (_mh - 1);
+        int x0 = Math.Clamp((int)MathF.Floor(gx), 0, _mw - 2), z0 = Math.Clamp((int)MathF.Floor(gz), 0, _mh - 2);
+        int x1 = x0 + 1, z1 = z0 + 1;
         float fx = Math.Clamp(gx - x0, 0, 1), fz = Math.Clamp(gz - z0, 0, 1);
-        float a = _heights[z0 * _hw + x0], b = _heights[z0 * _hw + x1], c = _heights[z1 * _hw + x0], d = _heights[z1 * _hw + x1];
+        float a = _meshHeights[z0 * _mw + x0], b = _meshHeights[z0 * _mw + x1], c = _meshHeights[z1 * _mw + x0], d = _meshHeights[z1 * _mw + x1];
         // GenMeshHeightmap splits each cell along the top-right/bottom-left diagonal.
-        // Use the same two planar triangles here; bilinear interpolation made the CPU picker
-        // intersect a slightly different surface than the one the player sees.
+        // Use the same two planar triangles here: the picker, counters and figures then meet exactly the surface the player sees.
         return fx + fz <= 1
             ? a * (1 - fx - fz) + b * fx + c * fz
             : c * (1 - fx) + b * (1 - fz) + d * (fx + fz - 1);
+    }
+
+    /// <summary>
+    /// Where a body standing at a point rests: the highest ground within <paramref name="radius"/> of it. On a steep face the height
+    /// changes faster than a figure is wide, so the exact point alone would bury half of it in the slope.
+    /// </summary>
+    public float StandHeight(float wx, float wz, float radius)
+    {
+        float h = HeightAt(wx, wz);
+        h = Math.Max(h, HeightAt(wx - radius, wz));
+        h = Math.Max(h, HeightAt(wx + radius, wz));
+        h = Math.Max(h, HeightAt(wx, wz - radius));
+        h = Math.Max(h, HeightAt(wx, wz + radius));
+        float d = radius * 0.7f;
+        h = Math.Max(h, Math.Max(HeightAt(wx - d, wz - d), HeightAt(wx + d, wz + d)));
+        return Math.Max(h, Math.Max(HeightAt(wx - d, wz + d), HeightAt(wx + d, wz - d)));
     }
 
     public Vector3 WorldPos(float pixelX, float pixelY, float lift = 0)
     {
         float wx = pixelX / _map.Settings.PixelsPerUnit, wz = pixelY / _map.Settings.PixelsPerUnit;
         return new Vector3(wx, HeightAt(wx, wz) + lift, wz);
+    }
+
+    /// <summary>The unit normal of the terrain around a point, from heights <paramref name="reach"/> away on each side.</summary>
+    public Vector3 GroundNormal(float wx, float wz, float reach)
+    {
+        float dx = HeightAt(wx - reach, wz) - HeightAt(wx + reach, wz);
+        float dz = HeightAt(wx, wz - reach) - HeightAt(wx, wz + reach);
+        return Vector3.Normalize(new Vector3(dx, 2 * reach, dz));
     }
 
     public Vector3 LocationPos(Location l, float lift = 0) => WorldPos(l.CenterX, l.CenterY, lift);
@@ -414,13 +444,13 @@ public sealed unsafe class MapRenderer : IDisposable
             exit < enter)
             return null;
 
-        float cellX = WorldWidth / (_hw - 1f);
-        float cellZ = WorldHeight / (_hh - 1f);
+        float cellX = WorldWidth / (_mw - 1f);
+        float cellZ = WorldHeight / (_mh - 1f);
         // Probe a tiny distance inside the clipped area so a ray entering exactly on a grid
         // edge starts in the cell it is moving into, not the adjacent cell behind it.
         var probe = ray.Position + ray.Direction * (enter + 1e-4f);
-        int ix = Math.Clamp((int)MathF.Floor(probe.X / cellX), 0, _hw - 2);
-        int iz = Math.Clamp((int)MathF.Floor(probe.Z / cellZ), 0, _hh - 2);
+        int ix = Math.Clamp((int)MathF.Floor(probe.X / cellX), 0, _mw - 2);
+        int iz = Math.Clamp((int)MathF.Floor(probe.Z / cellZ), 0, _mh - 2);
         int stepX = ray.Direction.X > 1e-7f ? 1 : ray.Direction.X < -1e-7f ? -1 : 0;
         int stepZ = ray.Direction.Z > 1e-7f ? 1 : ray.Direction.Z < -1e-7f ? -1 : 0;
         float tDeltaX = stepX == 0 ? float.PositiveInfinity : cellX / MathF.Abs(ray.Direction.X);
@@ -439,12 +469,12 @@ public sealed unsafe class MapRenderer : IDisposable
             while (tMaxZ < enter) tMaxZ += tDeltaZ;
         }
 
-        Vector3 Vertex(int x, int z) => new(x * cellX, _heights[z * _hw + x], z * cellZ);
+        Vector3 Vertex(int x, int z) => new(x * cellX, _meshHeights[z * _mw + x], z * cellZ);
         const float hitEpsilon = 1e-4f;
-        // A ray crosses at most _hw + _hh cells in the map rectangle. The guard also
+        // A ray crosses at most _mw + _mh cells in the map rectangle. The guard also
         // protects against floating-point stalls at exact grid corners.
-        int maxCells = _hw + _hh + 8;
-        for (int visited = 0; visited < maxCells && (uint)ix < (uint)(_hw - 1) && (uint)iz < (uint)(_hh - 1); visited++)
+        int maxCells = _mw + _mh + 8;
+        for (int visited = 0; visited < maxCells && (uint)ix < (uint)(_mw - 1) && (uint)iz < (uint)(_mh - 1); visited++)
         {
             float nextT = Math.Min(exit, Math.Min(tMaxX, tMaxZ));
             var a = Vertex(ix, iz);
@@ -650,7 +680,7 @@ public sealed unsafe class MapRenderer : IDisposable
         if (other == me) return new Color(70, 200, 70, 225);
         if (w.AtWar(me, other)) return new Color(200, 40, 40, 210);
         if (R.AreAllied(me, other)) return new Color(50, 110, 220, 200);
-        if (R.OverlordOf(other) == me || R.OverlordOf(me) == other) return new Color(110, 190, 230, 200);
+        if (R.AreOverlordAndSubject(other, me)) return new Color(110, 190, 230, 200);
         if (R.HasTruce(me, other, w.Date)) return new Color(150, 150, 150, 200);
         double op = _game.Diplomacy.Opinion(other, me);
         // neutrals stay muted so the viewed country (green), allies (blue) and enemies (red) stand out;

@@ -58,7 +58,8 @@ public sealed partial class PoliticsSystem
         int cd = LawCooldownLeft(c, law.Group);
         if (cd > 0) return $"{law.Group.Name} changed recently ({cd} days left)";
         if (law.Allow != null && !_game.Script.EvalTrigger(law.Allow, _game.Context(c))) return "Requirements not met";
-        if (!CanAfford(c, law.Cost)) return $"Needs {law.Cost:0} {PowerName}";
+        double cost = EnactCost(c, law);
+        if (!CanAfford(c, cost)) return $"Needs {cost:0} {PowerName}" + (cost > law.Cost ? $" (+{cost - law.Cost:0} to defy factions)" : "");
         return null;
     }
 
@@ -69,13 +70,16 @@ public sealed partial class PoliticsSystem
         {
             var reason = CannotEnact(c, law);
             if (reason != null) return reason;
-            Pay(c, law.Cost);
+            Pay(c, EnactCost(c, law));
         }
         var p = Of(c);
+        var bannedBefore = p.PartySeats.Keys.Where(k => IsPartyBanned(c, p, k)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (!free) ApplyLawReaction(c, law, LawOf(c, law.Group));
         p.Laws[law.Group.Key] = law.Key;
         p.LawChangedDay[law.Group.Key] = _game.World.Date.TotalDays;
         _modsDirty.Add(c);
         LawsChanged++;
+        foreach (var k in p.PartySeats.Keys.ToList()) if (!bannedBefore.Contains(k) && IsPartyBanned(c, p, k)) _game.Hub.RaisePartyBanned(c, k);
         if (law.OnEnact != null) _game.Script.Execute(law.OnEnact, _game.Context(c));
         // Bans apply to every party of the affected ideology; single-party laws also exclude rival organizations
         // that share the ruling ideology. Keep zero-seat entries so inspecting the HUD cannot re-apportion the result.
@@ -142,6 +146,9 @@ public sealed partial class PoliticsSystem
 
     /// <summary>Ideology a character belongs to (flag party_IDEOLOGY), or null.</summary>
     public string? MinisterParty(Character ch)
+        => OrganizationOf(ch) is { } org && IdeologyKeyOfParty(org) is { } ideology ? ideology : MinisterIdeologyFlag(ch);
+
+    private string? MinisterIdeologyFlag(Character ch)
     {
         foreach (var f in ch.Vars.Flags)
             if (f.StartsWith("party_", StringComparison.OrdinalIgnoreCase) && IdeologyByKey.ContainsKey(f[6..])) return f[6..];
@@ -166,14 +173,18 @@ public sealed partial class PoliticsSystem
         var busy = p.Ministers.Values.ToHashSet();
         bool Usable(Character ch) => ch.Alive && ch.Country == c && !ch.IsRuler && ch.Age(now) >= _game.Data.Defines.AdultAge && !busy.Contains(ch)
                                      && _game.World.Armies.All(a => a.General != ch);
-        var list = _game.World.CharactersOf(c).Where(ch => Usable(ch) && MinisterParty(ch) is { } party && p.Government.Contains(party, StringComparer.OrdinalIgnoreCase)).ToList();
-        foreach (var party in p.Government)
+        var list = _game.World.CharactersOf(c).Where(ch => Usable(ch) && PartyInGovernmentOf(c, ch)).ToList();
+        // every governing organization offers a few candidates; generated ones are spread over its factions by influence
+        var organizations = p.GovernmentOrganizations.Count > 0 ? p.GovernmentOrganizations : p.Government;
+        foreach (var org in organizations)
         {
-            int have = list.Count(ch => MinisterParty(ch) == party);
-            for (int i = have; i < 3; i++)
+            var scope = _game.World.GetGenericScope(org);
+            var factions = scope != null && IsParty(scope) ? FactionsOf(scope).OrderByDescending(FactionInfluence).ToList() : new List<GenericScope>();
+            int have = list.Count(ch => (OrganizationOf(ch, c) ?? MinisterParty(ch)) == org);
+            for (int i = have; i < 3 + Math.Min(2, factions.Count); i++)
             {
                 var ch = _game.Characters.Generate(c, null, 35 + _game.Rng.Next(30));
-                SetParty(ch, party);
+                SetAffiliation(ch, org, factions.Count > 0 ? factions[i % factions.Count].Key : null);
                 list.Add(ch);
             }
         }
@@ -186,8 +197,7 @@ public sealed partial class PoliticsSystem
         if (!CabinetEnabled) return "No cabinet in this game";
         if (!ch.Alive || ch.Country != c) return "Not one of our characters";
         if (MinisterOf(c, pos) == ch) return "Already holds this post";
-        var party = MinisterParty(ch);
-        if (party == null || !InGovernment(c, party)) return "Their party is not in government";
+        if (!PartyInGovernmentOf(c, ch)) return "Their party is not in government";
         if (!CanAfford(c, pos.Cost)) return $"Needs {pos.Cost:0} {PowerName}";
         return null;
     }
@@ -203,13 +213,15 @@ public sealed partial class PoliticsSystem
         var p = Of(c);
         foreach (var kv in p.Ministers.Where(kv => kv.Value == ch).ToList()) p.Ministers.Remove(kv.Key); // one post each
         p.Ministers[pos.Key] = ch;
+        if (!free) ApplyAppointmentReaction(c, pos, ch);
         _modsDirty.Add(c);
+        _game.Hub.RaiseMinisterChanged(c, ch, true);
         return null;
     }
 
     public void Dismiss(Country c, CabinetPosition pos)
     {
-        if (Of(c).Ministers.Remove(pos.Key)) _modsDirty.Add(c);
+        if (Of(c).Ministers.Remove(pos.Key, out var gone)) { _modsDirty.Add(c); _game.Hub.RaiseMinisterChanged(c, gone, false); }
     }
 
     private void AiCabinet(Country c)
@@ -218,7 +230,10 @@ public sealed partial class PoliticsSystem
         foreach (var pos in Positions)
         {
             if (MinisterOf(c, pos) != null || !CanAfford(c, pos.Cost)) continue;
-            var best = Candidates(c, pos).FirstOrDefault();
+            // the AI weighs skill against keeping the discontented factions of its party in the cabinet
+            var best = Candidates(c, pos).Where(x => CannotAppoint(c, pos, x) == null)
+                .OrderByDescending(x => (pos.Stat.Length > 0 ? x.GetStat(pos.Stat) : 0)
+                    + (FactionOfCharacter(x) is { } f ? FactionGrievance(f) * 0.3 + (FactionPost(f) == pos.Key ? 4 : 0) : 0)).FirstOrDefault();
             if (best != null) Appoint(c, pos, best);
             break; // one appointment per month
         }

@@ -51,6 +51,10 @@ public sealed class SubjectType
     public bool CountsAsRelation = true;
     /// <summary>Base liberty desire of this kind of subject (EU style; added to the computed value).</summary>
     public double LibertyDesire;
+    /// <summary>Who decides the subject's government (government = imposed | preferred | free): the overlord's ideology is forced on it, only favoured, or left alone.</summary>
+    public string Government = "imposed";
+    /// <summary>Share (0-1) of the subject's monthly manpower gain that goes to the overlord (manpower_share, default 0).</summary>
+    public double ManpowerShare;
     public Node Definition = Node.Root("");
 }
 

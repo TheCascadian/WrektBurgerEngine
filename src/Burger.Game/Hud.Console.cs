@@ -46,7 +46,9 @@ public sealed partial class Hud
                 _history.Add(cmd);
                 _consoleLines.Add(("> " + cmd, Gui.TextDim));
                 int errs = Log.ErrorCount;
-                string result = cmd is "save" ? _app.QuickSave() : G.Commands.Execute(cmd);
+                string result = cmd is "save" ? _app.QuickSave()
+                    : cmd.Trim() is "observe_ui" ? ObserveUiCommand()
+                    : G.Commands.Execute(cmd);
                 foreach (var line in result.Split('\n')) _consoleLines.Add((line, Gui.Text));
                 if (Log.ErrorCount > errs)
                     foreach (var e in Log.Entries.Skip(Log.Entries.Count - (Log.ErrorCount - errs)))

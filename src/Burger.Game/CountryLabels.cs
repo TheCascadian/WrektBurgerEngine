@@ -32,12 +32,15 @@ public sealed class CountryLabels
     private sealed record BuildResult(int Version, Label[] Labels);
 
     private const double BuildDebounceSeconds = 0.4;
-    private const double MinBuildIntervalSeconds = 3.0;
+    private const double MinBuildIntervalSeconds = 1.0;
+    /// <summary>A rebuild starts at most this long after the first change, even if changes keep coming (a war raises them every tick).</summary>
+    private const double MaxDebounceSeconds = 1.5;
     private readonly Game _game;
     private readonly MapRenderer _map;
     private readonly List<Label> _labels = new();
     private bool _dirty = true;
     private int _version;
+    private long _firstDirtyTicks = Stopwatch.GetTimestamp();
     private long _lastInvalidationTicks = Stopwatch.GetTimestamp();
     private double _lastBuildStartedAt = double.NegativeInfinity;
     private Task<BuildResult>? _buildTask;
@@ -52,6 +55,7 @@ public sealed class CountryLabels
     public void MarkDirty()
     {
         _version++;
+        if (!_dirty) _firstDirtyTicks = Stopwatch.GetTimestamp();
         _dirty = true;
         _lastInvalidationTicks = Stopwatch.GetTimestamp();
     }
@@ -90,6 +94,7 @@ public sealed class CountryLabels
                 // Publish the most recent completed snapshot even if newer map changes arrived while
                 // it was being built; retain it until a coalesced follow-up is ready.
                 _dirty = result.Version != _version;
+                if (_dirty) _firstDirtyTicks = Stopwatch.GetTimestamp();
             }
             catch (Exception ex)
             {
@@ -102,7 +107,8 @@ public sealed class CountryLabels
         if (!_dirty || _buildTask != null) return;
         double now = Raylib.GetTime();
         if (now - _lastBuildStartedAt < MinBuildIntervalSeconds ||
-            Stopwatch.GetElapsedTime(_lastInvalidationTicks).TotalSeconds < BuildDebounceSeconds) return;
+            Stopwatch.GetElapsedTime(_lastInvalidationTicks).TotalSeconds < BuildDebounceSeconds &&
+            Stopwatch.GetElapsedTime(_firstDirtyTicks).TotalSeconds < MaxDebounceSeconds) return;
 
         BuildInput input;
         try { input = CaptureInput(_version); }
@@ -627,8 +633,30 @@ public sealed class CountryLabels
     // widest gap between letters, in letter heights: long names spread out over long countries
     const float MaxSpacing = 2.0f;
 
+    private int _pollFrame, _signature;
+
+    /// <summary>
+    /// Not every change to what a label shows (ruler, party, ideology, subject status, annexation, a name set directly) raises
+    /// MapChanged, so a few times a second the names are re-derived and a signature of what the labels are made from is compared.
+    /// </summary>
+    private void PollChanges()
+    {
+        if (++_pollFrame % 15 != 0) return;
+        _game.RefreshNames();
+        var h = new HashCode();
+        foreach (var c in _game.World.Countries)
+        {
+            if (!c.Exists) continue;
+            h.Add(c.Index); h.Add(c.Name); h.Add(c.Capital?.Index ?? -1);
+        }
+        foreach (var l in _game.World.Locations) h.Add(l.Owner?.Index ?? -1);
+        int sig = h.ToHashCode();
+        if (sig != _signature) { _signature = sig; MarkDirty(); }
+    }
+
     public void Draw(Camera3D cam, float minScreenFont = 3f)
     {
+        PollChanges();
         RefreshLabels();
         float ppu = _game.World.Map.Settings.PixelsPerUnit;
         var font = Assets.HeaderFont;

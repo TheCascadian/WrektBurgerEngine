@@ -148,7 +148,8 @@ public class PopulationRules
         // a national party in parliament gives the movement a voice
         double party = game.Politics.Enabled ? 1 + 2 * game.Politics.SeatShare(c, "culture:" + culture) : 1;
         return d.Get("independence_speed", 0.4) * (0.6 + Math.Min(1, share * 5)) * (colonial ? d.Get("colonial_independence_factor", 0.6) : 1)
-               * (1.6 - stability / 100.0) * atWar * party * game.Population.DecolonisationPressure * Math.Max(0, 1 + game.Modifiers.Sum(c, "independence_speed"));
+               * (1.6 - stability / 100.0) * atWar * party * game.Population.DecolonisationPressure * Math.Max(0, 1 + game.Modifiers.Sum(c, "independence_speed"))
+               * (game.World.Relations.IsSubject(c) ? d.Get("subject_independence_factor", 0.8) : 1); // a subject's own people ask its overlord, not it
     }
 
     /// <summary>Opinion between countries because of their state religions (religion feature).</summary>
