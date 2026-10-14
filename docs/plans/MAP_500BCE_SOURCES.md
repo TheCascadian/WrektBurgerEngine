@@ -182,3 +182,12 @@ Common rules for every prompt: never open or quote aourednik/historical-basemaps
 9. **Europe.** Find open-licensed data on Celtic, Etruscan, Greek, Iberian and Thracian sites and peoples around 500 BCE. Check Pleiades coverage and any national open data portals.
 10. **Names and languages.** Find open-licensed multilingual place and people names for ancient places (Wikidata, Pleiades, Getty TGN), including attested ancient-language names, and the license for each.
 11. **Synthesis.** Combine the findings of the above into one table: approved, pending owner, rejected, unverified, and what gaps remain per region.
+
+## 19. Tenth evidence pass (saved pages)
+Saved pages read; statuses are PENDING OWNER where the license is verified, because the owner has not yet approved these new rows.
+- **GRWL** (zenodo.org/records/1297434): Rights field reads "Creative Commons Attribution 4.0 International". Modern river lines only. Citation: Allen and Pavelsky (2018).
+- **Open-archeOcsean** (zenodo.org/records/17996201): Rights field reads CC BY 4.0; resource type is Software, version v1.1.0. The saved page does not show the separate data and code licenses the research report claimed (CC BY for data, GPL for code); that claim is unverified. It is an index, not geometry.
+- **Wikidata licensing page:** "All structured data ... is released into the public domain under Creative Commons Zero." Other namespaces are CC BY-SA 4.0 and must not be used.
+- **Natural Earth terms** (re-saved): public domain, same text as the approved ne_coast evidence. Rivers are a Natural Earth theme, so they are covered. The terms also list third-party grants (Washington Post, EC JRC IES, XNR) made "for the sole purpose of creating a world base map"; those layers (including roads) stay out unless the owner decides otherwise.
+- **NASA Historical Urban Population:** the saved page shows no license, only site navigation. UNVERIFIED. The CC BY 4.0 claim in the research report came from a Dataverse snippet that was not saved.
+- **WOCE SVP drifter (PANGAEA):** CC-BY-3.0, but a single 1998 buoy track. Irrelevant to 500 BCE; kept as evidence of PANGAEA's license format.
