@@ -133,3 +133,8 @@ The owner saved license pages and screenshots in docs/SOURCES/. Findings, read f
 - **Gazetteer of Ancient Arabia:** the owner reports the domain is for sale. Rejected as unavailable. DASI's terms say DASI supplies data to it, so those inscriptions remain reachable through DASI under DASI's terms.
 - **Art Institute of Chicago:** the owner confirms the link is only API documentation. UNVERIFIED; its data terms were not read.
 - **Rivers:** the owner requires rivers from another source. HydroRIVERS is rejected. No replacement is identified; options are a new source the owner approves, or rivers derived from GEBCO elevation (flow routing on our own grid, which needs no third-party river data).
+
+## 12. Fourth evidence pass (2026-10-14)
+- **Open Context (Chengdu survey):** the filter panel shows "License (Description): Creative Commons Licenses" on all 81,764 records, but not which Creative Commons license. Each record carries its own license. Stays UNVERIFIED until the specific license (BY, BY-SA, BY-NC and so on) is read per record; any share-alike or non-commercial record is excluded.
+- **MesoRAD:** the article page shows CC BY 3.0 (2021) for the article. That does not say what license the dataset in the repository carries, and an earlier listing said CC BY 4.0. Stays UNVERIFIED; the dataset record or repository license is still needed.
+- **Art Institute of Chicago:** the supplied link is the data-aggregator repository, licensed AGPL-3.0. That is the museum's software, not its data terms, and AGPL code must not be used. Its data terms still need to be read from the museum's own page. UNVERIFIED.
