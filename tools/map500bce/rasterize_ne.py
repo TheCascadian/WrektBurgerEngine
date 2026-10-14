@@ -1,8 +1,8 @@
-"""Rasterizes Natural Earth 10m land, lakes and river centerlines onto the 8192x4096 equirectangular world grid.
+"""Rasterizes Natural Earth 10m land, lakes and river centerlines onto the the world grid (grid.py) equirectangular world grid.
 
 Usage: python3 rasterize_ne.py <folder with ne_10m_*.zip> <output .npz>
 Natural Earth is public domain (see provenance/licenses/ne_terms.html). Output arrays (uint8): land, lake, river.
-Pixel (c, r) covers longitude -180 + c*360/8192 and latitude 90 - r*180/4096.
+Pixel (c, r) covers longitude -180 + c*360/W and latitude 90 - r*180/H.
 """
 import os
 import sys
@@ -12,7 +12,8 @@ import numpy as np
 import shapefile
 from PIL import Image, ImageDraw
 
-W, H = 8192, 4096
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from grid import H, W  # noqa: E402
 
 
 def log(*a):
@@ -39,7 +40,6 @@ def polygons(folder, name, fill_hole=False):
             ring = [px(*p) for p in shp.points[a:b]]
             if len(ring) < 3:
                 continue
-            img = Image.new("1", (W, H), 0)
             x0 = max(int(min(p[0] for p in ring)) - 1, 0); x1 = min(int(max(p[0] for p in ring)) + 2, W)
             y0 = max(int(min(p[1] for p in ring)) - 1, 0); y1 = min(int(max(p[1] for p in ring)) + 2, H)
             sub = Image.new("1", (x1 - x0, y1 - y0), 0)
@@ -73,7 +73,7 @@ def main():
     river = lines(folder, "rivers_lake_centerlines")
     np.savez_compressed(out, land=land, lake=lake, river=river)
     log("land share", float(land.mean()), "lake share", float(lake.mean()), "river pixels", int(river.sum()))
-    Image.fromarray((land * 120 + lake * 60 + river * 75).astype(np.uint8)).save(os.path.splitext(out)[0] + "_preview.png")
+    Image.fromarray((land * 120 + lake * 60 + river * 75).astype(np.uint8)).resize((4096, 2048), Image.BOX).save(os.path.splitext(out)[0] + "_preview.png")
 
 
 if __name__ == "__main__":

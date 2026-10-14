@@ -1,9 +1,8 @@
-"""Reduces the GEBCO 2026 sub-ice GeoTIFF tiles to the 8192x4096 world grid used by the 500 BCE map.
+"""Reduces the GEBCO 2026 sub-ice GeoTIFF tiles to the world grid used by the 500 BCE map (grid.py; default 16384x8192).
 
 Usage: python3 gebco_to_8k.py <gebco zip or folder of tiles> <output .npz>
 
-The grid is equirectangular (plate carree): 360 degrees across 8192 columns and 180 degrees down 4096 rows, so every
-pixel is 0.0439 degrees. Each 90x90 degree source tile (21600x21600 cells of 15 arc-seconds) maps onto exactly 2048x2048
+The grid is equirectangular (plate carree): 360 degrees across W columns and 180 degrees down H rows (H = W/2). Each 90x90 degree source tile (21600x21600 cells of 15 arc-seconds) maps onto exactly W/4 x W/4
 output pixels and is box-averaged, so the full-resolution grid is never held in memory. Output arrays (float32):
   mean      mean elevation in meters, negative below sea level
   landfrac  share of source cells at or above 0 m
@@ -20,7 +19,9 @@ import numpy as np
 import tifffile
 from PIL import Image
 
-W, H = 8192, 4096
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from grid import H, W  # noqa: E402
+
 TW, TH = W // 4, H // 2          # output pixels per 90x90 degree tile
 
 
