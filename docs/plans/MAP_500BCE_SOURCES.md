@@ -191,3 +191,6 @@ Saved pages read; statuses are PENDING OWNER where the license is verified, beca
 - **Natural Earth terms** (re-saved): public domain, same text as the approved ne_coast evidence. Rivers are a Natural Earth theme, so they are covered. The terms also list third-party grants (Washington Post, EC JRC IES, XNR) made "for the sole purpose of creating a world base map"; those layers (including roads) stay out unless the owner decides otherwise.
 - **NASA Historical Urban Population:** the saved page shows no license, only site navigation. UNVERIFIED. The CC BY 4.0 claim in the research report came from a Dataverse snippet that was not saved.
 - **WOCE SVP drifter (PANGAEA):** CC-BY-3.0, but a single 1998 buoy track. Irrelevant to 500 BCE; kept as evidence of PANGAEA's license format.
+
+## 20. NASA Historical Urban Population
+The data.nasa.gov record's License box reads "License not specified" (screenshot saved). Access reportedly requires an Earthdata account and acceptance of the NASA Earthdata End User License Agreement; the EULA text has not been read, and the claim of CC BY 4.0 is unsupported. A pasted chat answer describing these conditions is not a primary source and was not saved as evidence. The row stays UNVERIFIED and unusable until the EULA is saved and found to allow commercial redistribution inside a game.
