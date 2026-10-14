@@ -141,3 +141,7 @@ The owner saved license pages and screenshots in docs/SOURCES/. Findings, read f
 
 ## 13. Fifth evidence pass
 - **Open Context (Chengdu survey):** the license filter shows "Attribution 4.0 International (CC BY 4.0)" on all 81,764 records. Approved; credit each record creator and cite the record URI.
+
+## 14. Sixth evidence pass
+- **Art Institute of Chicago:** the Open Access Images page (saved) says images are CC0 and that the object caption data (artist, title, date) "is also made available under Creative Commons Zero (CC0)". Additional data is available through its public API, whose terms are not on that page. Approved for artist, title and date only; the museum requests the caption "Artist. Title, Date. The Art Institute of Chicago."
+- **Smithsonian:** the saved Terms of Use say CC0-icon content is free for commercial use, but the icon covers copyright only and third-party rights may remain. Users must cite and link to the Website, keep notices, and follow restrictions in the item metadata.
