@@ -138,3 +138,6 @@ The owner saved license pages and screenshots in docs/SOURCES/. Findings, read f
 - **Open Context (Chengdu survey):** the filter panel shows "License (Description): Creative Commons Licenses" on all 81,764 records, but not which Creative Commons license. Each record carries its own license. Stays UNVERIFIED until the specific license (BY, BY-SA, BY-NC and so on) is read per record; any share-alike or non-commercial record is excluded.
 - **MesoRAD:** the article page shows CC BY 3.0 (2021) for the article. That does not say what license the dataset in the repository carries, and an earlier listing said CC BY 4.0. Stays UNVERIFIED; the dataset record or repository license is still needed.
 - **Art Institute of Chicago:** the supplied link is the data-aggregator repository, licensed AGPL-3.0. That is the museum's software, not its data terms, and AGPL code must not be used. Its data terms still need to be read from the museum's own page. UNVERIFIED.
+
+## 13. Fifth evidence pass
+- **Open Context (Chengdu survey):** the license filter shows "Attribution 4.0 International (CC BY 4.0)" on all 81,764 records. Approved; credit each record creator and cite the record URI.
