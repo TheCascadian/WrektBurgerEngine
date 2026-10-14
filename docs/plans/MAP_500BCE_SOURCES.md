@@ -158,3 +158,8 @@ The owner saved license pages and screenshots in docs/SOURCES/. Findings, read f
 - **MesoRAD:** it is archived on tDAR (project 455305, DOI 10.6067/XCV8455305); mirror records say "License not specified". The tDAR record and its terms must be read.
 
 Pages for the owner to check: https://zenodo.org/records/11219313 (GRIT), the GRWL Zenodo record linked from https://gee-community-catalog.org/projects/grwl/, https://core.tdar.org/project/455305/mesoamerican-radiocarbon-database-mesorad (MesoRAD), and the Zenodo or figshare record for Beyer et al. 2020.
+
+## 17. Eighth evidence pass
+- **GRIT:** the Zenodo record shows "Creative Commons Attribution Non Commercial 4.0 International". Non-commercial, so rejected. Remaining river candidate: GRWL (CC BY 4.0 per the Earth Engine catalog; its Zenodo record is not yet read).
+- **MesoRAD:** the tDAR project page shows a summary, citation and one dataset (MesoRAD v1.2, 2020), but no license. Its only license statements remain the article's CC BY 3.0. Still unconfirmed; the dataset file's own page on tDAR, or the authors (contact: Julie Hoggarth), would have to state it.
+- **Beyer, Krapp and Manica 2020:** the article is CC BY 4.0 and its metadata files are CC0. The dataset is cited as hosted on the Open Science Framework (doi 10.17605/osf.io/p86rt), and its license is not shown. Unconfirmed until the OSF record is read.
