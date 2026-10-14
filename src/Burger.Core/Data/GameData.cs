@@ -13,6 +13,8 @@ public sealed class GameInfo
     /// <summary>Tag selected by default on the country selection screen.</summary>
     public string DefaultTag = "";
     public string Icon = "";
+    /// <summary>game.txt <c>globe_mode = no</c> turns the globe view off for this game: the toggle is hidden and the map stays flat.</summary>
+    public bool GlobeAllowed = true;
     public Node Raw = Node.Root("game.txt");
 }
 

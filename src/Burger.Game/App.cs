@@ -180,6 +180,7 @@ public sealed class App
             Assets.Init(game.Data.Root, game.Interface.Theme);
             Gui.ApplyTheme(game.Interface.Theme);
             DrawLoading("Building map...");
+            UserSettings.GlobeAllowed = game.Data.Info.GlobeAllowed && game.World.Map.Settings.WholeGlobe; // the globe needs the whole planet
             Renderer = new MapRenderer(game);
             Camera = new CameraController(Renderer);
             Overlay = new MapOverlay(game, Renderer);

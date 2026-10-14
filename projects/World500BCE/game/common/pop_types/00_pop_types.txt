@@ -1,0 +1,8 @@
+# Social classes of the 500 BCE world.
+farmers = { name = "Farmers" color = { 120 170 80 } share = 0.7 }
+herders = { name = "Herders" color = { 190 160 90 } share = 0.05 }
+foragers = { name = "Foragers" color = { 100 140 100 } share = 0.05 }
+artisans = { name = "Artisans" color = { 220 180 60 } share = 0.08 }
+nobles = { name = "Nobles" color = { 170 90 200 } share = 0.03 }
+clergy = { name = "Clergy" color = { 230 230 230 } share = 0.02 }
+slaves = { name = "Slaves" color = { 120 100 80 } share = 0.07 }

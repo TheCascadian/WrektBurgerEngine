@@ -56,6 +56,7 @@ public static class DataLoader
                 Description = g.GetString("description", "")!,
                 DefaultTag = g.GetString("default_country", "")!,
                 Icon = g.GetString("icon", "")!,
+                GlobeAllowed = g.GetBool("globe_mode", true),
             };
         }
         else Log.Warn("game.txt not found - using default game name");

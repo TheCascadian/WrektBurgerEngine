@@ -11,6 +11,7 @@ How to make, run and extend a game. Describes behaviour that exists today.
 - [Script reference](game/SCRIPT_REFERENCE.md): generated triggers, effects, values, scopes and iterators (`burger docs`).
 - [Scopes guide](game/SCOPES.md): generic scopes, hierarchy, data, variables and script usage.
 - [Command reference](game/COMMANDS.md): build, launch, validate, profile and repository workflows.
+- [Historical geography](game/GEOGRAPHY.md): dated provinces, splits, merges and lineage from 500 BCE.
 - [Tooltips](game/TOOLTIPS.md): tooltip system.
 - [Politics panel icons](game/POLITICS_PANEL_ICONS.md): icon set for the politics panels.
 

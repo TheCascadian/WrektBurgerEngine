@@ -32,3 +32,6 @@ notes_misc.txt
 # Runtime logs, generated test world, bytecode
 logs/
 projects/World500Test/
+
+# Local scenario project
+projects/WrektMap/

@@ -249,6 +249,8 @@ void main()
     // globe: the sun sits over the viewer's shoulder so the half you see is lit like the flat map
     vec3 sunDir = sunDirU; // fixed in the world and driven by the game clock only: the camera never moves the sun
     vec3 viewDir = normalize(viewPos - fragWorld);
+    // how far the sun is above this spot's horizon: the unlit half of the world stays dark whatever the camera does
+    float sunUp = smoothstep(-0.12, 0.3, globe > 0.5 ? dot(fragU, sunDir) : sunDir.y);
     vec4 data = texelFetch(texture0, clampPix(ivec2(floor(pix))), 0);
     float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat); // fades small details when zoomed out
 
@@ -367,15 +369,15 @@ void main()
 
         // hill shading
         vec3 n = normalize(fragE * fragNormal.x + fragU * fragNormal.y + fragS * fragNormal.z);
-        float ndl = max(dot(n, sunDir), 0.0);
-        col *= 0.38 + 0.72 * ndl;
+        float ndl = max(dot(n, sunDir), 0.0) * sunUp;
+        col *= (0.38 + 0.72 * ndl) * (0.22 + 0.78 * sunUp);
         col = mix(col, col * vec3(1.05, 1.0, 0.92), ndl * 0.3);          // warm light, cool shadows
 
         // map mode color: multiplied over the terrain so hills and forests still show (HOI4 style)
         vec4 mc = lut(loc, 0);
         if (mc.a > 0.0)
         {
-            vec3 tinted = mix(mc.rgb * (0.55 + 0.45 * ndl), col * mc.rgb * 2.1, 0.45);
+            vec3 tinted = mix(mc.rgb * (0.55 + 0.45 * ndl) * (0.22 + 0.78 * sunUp), col * mc.rgb * 2.1, 0.45);
             col = mix(col, tinted, clamp(mc.a * tintStrength, 0.0, 1.0));
             // a band of the country color just inside its border
             float band = 1.0 - smoothstep(0.0, 9.0 * borderScale, dCountry);

@@ -52,7 +52,7 @@ public sealed class CameraController
     {
         _map = map;
         Target = new Vector3(map.WorldWidth / 2, 0, map.WorldHeight / 2);
-        SetGlobe(UserSettings.GlobeMode, true);
+        SetGlobe(UserSettings.GlobeOn, true);
         Distance = MaxDistance * 0.6f;
         ApplyImmediate(); // snap so the first frame is already at the requested view
     }
@@ -130,7 +130,7 @@ public sealed class CameraController
     /// </summary>
     public void Update(float dt, bool mouseOverUi, bool wheelUsed, bool keyboardFree)
     {
-        if (Globe != UserSettings.GlobeMode) SetGlobe(UserSettings.GlobeMode);
+        if (Globe != UserSettings.GlobeOn) SetGlobe(UserSettings.GlobeOn);
         RecomputeFit();
 
         // ------------------------------------------------ input modifies only the logical target/distance

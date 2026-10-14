@@ -196,3 +196,7 @@ The script runs `./burger.sh validate SampleGame --days 60`, displays the pendin
 - UI preview: `assets/ui/bg/ui-bg-preview.html`
 
 Avoid committing temporary logs, saves, previews, or build output unless the generated file is an intentional repository asset.
+
+## Geography
+
+- `burger geo [project]` reports on historical provinces; `burger geo test` runs the self-test and scale test. Console: `geo <location>`. See [GEOGRAPHY.md](GEOGRAPHY.md).

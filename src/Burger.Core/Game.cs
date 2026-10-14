@@ -133,6 +133,8 @@ public sealed class Game
     public StatisticsSystem Statistics { get; }
     /// <summary>The Memory: what countries, characters, parties, states and pop groups are remembered for (see <see cref="Burger.Core.Memories.MemorySystem"/>).</summary>
     public Burger.Core.Memories.MemorySystem Memory { get; }
+    /// <summary>Historical provinces over time (<c>history/geography</c>). Empty and inert unless a project has that folder.</summary>
+    public Burger.Core.Geography.GeoRegistry Geo { get; } = new();
     /// <summary>The Figures: the animated bodies (the human rig and its idle/walk/run clips) everything that shows a person draws (see <see cref="Burger.Core.Figures.FigureSystem"/>).</summary>
     public Burger.Core.Figures.FigureSystem Figures { get; }
     /// <summary>The Particles: effects from common/particles.txt and the requests to show them (see <see cref="Burger.Core.Particles.ParticleSystem"/>).</summary>
@@ -565,6 +567,8 @@ public sealed class GameClock
     /// </summary>
     public double[] DaysPerSecond = { 0, 0.5, 1.5, 4, 10, 0 };
     public int Speed { get; set; } = 2;
+    /// <summary>How far the clock is through the current hour (0 to 1), for smooth visuals such as the sun at slow speeds. Held while paused.</summary>
+    public float HourFraction => (float)Math.Clamp(_accumulator, 0.0, 1.0);
     public bool Paused { get; set; } = true;
     /// <summary>Real milliseconds per frame the simulation may use (keeps the game responsive at high speed).</summary>
     public double FrameBudgetMs = 14;
@@ -580,7 +584,7 @@ public sealed class GameClock
     /// <summary>Call once per frame with the frame time; runs as many hourly ticks as needed.</summary>
     public int Update(double deltaSeconds)
     {
-        if (Paused || !_game.Started) { _accumulator = 0; LastUpdateMs = 0; return 0; }
+        if (Paused || !_game.Started) { if (!_game.Started) _accumulator = 0; LastUpdateMs = 0; return 0; }
         double daysPerSec = DaysPerSecond[Math.Clamp(Speed, 1, 5)];
         bool unlimited = daysPerSec <= 0;
         if (!unlimited) _accumulator += deltaSeconds * daysPerSec * 24;

@@ -1,0 +1,6 @@
+name = "World500BCE"
+version = "0.1"
+author = ""
+description = "500 BCE world scenario, no south pole, flat map only."
+default_country = ACH
+globe_mode = no

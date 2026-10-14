@@ -59,7 +59,8 @@ public readonly struct GameDate : IComparable<GameDate>, IEquatable<GameDate>
     public GameDate AddHours(int h)
     {
         long total = TotalHours + h;
-        return new GameDate((int)(total / 24), (int)(total % 24));
+        long days = (long)Math.Floor(total / 24.0), hour = total - days * 24; // floor, so BCE dates keep hour 0-23
+        return new GameDate((int)days, (int)hour);
     }
 
     public GameDate AddDays(int d) => new(TotalDays + d, Hour);

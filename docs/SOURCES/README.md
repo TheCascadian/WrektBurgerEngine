@@ -11,5 +11,6 @@ deleted: every page keeps its `_files` folder beside it. Files were only moved i
 | `archaeology-and-population/` | Historical urban population (NASA), MesoRad, open-archeOcsean |
 | `gazetteers-and-names/` | Syriaca.org, Getty vocabularies |
 | `reference-papers/` | Standalone PDFs (Scientific Data article 41597_2020_552) |
+| `maps-500bce/` | Reference maps for the 500 BCE scenario (peoples and polities), with sources and licenses |
 | `screenshots/` | Screenshots |
 | `doc.md` | Working source notes |

@@ -83,14 +83,17 @@ public sealed partial class Hud
             UserSettings.Save();
         }
         y += 44 * S;
-        if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.GlobeMode ? "Map view: globe" : "Map view: flat (wraps east-west)", true,
-                "Flat: the map repeats east-west, so you can pan around the world.\nGlobe: the same map on a sphere. Everything you see and select carries over.",
-                UserSettings.GlobeMode, 15))
+        if (UserSettings.GlobeAllowed)
         {
-            UserSettings.GlobeMode = !UserSettings.GlobeMode;
-            UserSettings.Save();
+            if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.GlobeMode ? "Map view: globe" : "Map view: flat (wraps east-west)", true,
+                    "Flat: the map repeats east-west, so you can pan around the world.\nGlobe: the same map on a sphere. Everything you see and select carries over.",
+                    UserSettings.GlobeMode, 15))
+            {
+                UserSettings.GlobeMode = !UserSettings.GlobeMode;
+                UserSettings.Save();
+            }
+            y += 44 * S;
         }
-        y += 44 * S;
         if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.SunCycle ? "Sun: circles the map with time" : "Sun: fixed", true,
                 "On: the sun travels around the map as the game clock runs, so day and night move across the world.\nOff: the sun stays where it is.",
                 UserSettings.SunCycle, 15))

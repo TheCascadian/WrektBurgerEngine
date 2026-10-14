@@ -21,6 +21,7 @@ namespace Burger.Tools;
 ///   burger run &lt;project&gt; [--tag TAG]        play the game
 ///   burger export &lt;project&gt; [--name N]      build a standalone EXE + editable game folder
 ///   burger generate-locations &lt;project&gt;    add every province color missing from locations.txt
+///   burger geo &lt;project&gt; [--date Y.M.D]   historical provinces: validate, snapshot, lineage
 ///   burger docs [project]                  write the scripting reference (all triggers/effects)
 /// </summary>
 public static partial class Program
@@ -49,6 +50,7 @@ public static partial class Program
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
                 "docs" => Docs(rest),
+                "geo" or "geography" => Geo(rest),
                 "figure" or "figures" => Figure(rest),
                 "list" => ListProjects(),
                 "features" => Features(rest),
@@ -82,6 +84,9 @@ public static partial class Program
   burger export <project> [--name Game] [--out folder] [--rid win-x64]
                                             build <Name>.exe + game/ folder that players can mod
   burger generate-locations <project>       name every provinces.png color missing from locations.txt
+  burger geo <project> [--date Y.M.D] [--density] [--province id]
+                                            historical provinces: validate, snapshot on a date, density, lineage (docs/game/GEOGRAPHY.md)
+  burger geo test                           self-test of the historical province layer
   burger docs [project]                     write docs/game/SCRIPT_REFERENCE.md (all triggers, effects, scopes)
   burger figure list [--project <project>]  the animated bodies of Game.Figures: triangles, joints, clips
   burger figure export [key] [--out f.glb]  write a body with its rig and animations as .glb (for Blender)
@@ -560,6 +565,7 @@ public static partial class Program
         if (selftest)
         {
             PatchSelfTest(game);
+            GeographySelfTest(game, GameDir(project));
             FlagSelfTest();
             FigureSelfTest(game);
             ScopeHierarchySelfTest(game);

@@ -19,6 +19,9 @@ public sealed class MapSettings
     public float HeightScale = 6f;
     /// <summary>Map pixels per world unit (bigger = smaller world).</summary>
     public float PixelsPerUnit = 10f;
+    /// <summary>Latitude of the top and bottom edge of the images in degrees (default: the whole globe, 90 to -90). A map cut off at a pole sets e.g. <c>lat_south = -60.47</c>.</summary>
+    public double NorthLat = 90, SouthLat = -90;
+    public bool WholeGlobe => NorthLat >= 89.999 && SouthLat <= -89.999;
     public float TreeDensity = 1f;
     public int TreeSpacing = 4;
     public Rgb RiverBackground = new(255, 255, 255);
@@ -40,6 +43,8 @@ public sealed class MapSettings
         s.SeaLevel = Math.Clamp(n.GetInt("sea_level", s.SeaLevel), 0, 254);
         s.HeightScale = (float)n.GetDouble("height_scale", s.HeightScale);
         s.PixelsPerUnit = Math.Max(0.1f, (float)n.GetDouble("pixels_per_unit", s.PixelsPerUnit));
+        s.NorthLat = Math.Clamp(n.GetDouble("lat_north", s.NorthLat), -89, 90);
+        s.SouthLat = Math.Clamp(n.GetDouble("lat_south", s.SouthLat), -90, s.NorthLat - 1);
         s.TreeDensity = (float)n.GetDouble("tree_density", s.TreeDensity);
         s.TreeSpacing = Math.Max(1, n.GetInt("tree_spacing", s.TreeSpacing));
         if (Rgb.TryParse(n.Get("river_background"), out var rb)) s.RiverBackground = rb;

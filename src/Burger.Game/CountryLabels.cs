@@ -673,10 +673,15 @@ public sealed class CountryLabels
             int n = lb.Points.Length;
             float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
             bool behindCamera = false;
+            float anchorX = 0;
             for (int i = 0; i < n; i++)
             {
                 var p = lb.Points[i];
-                var world = _map.PlaceAt(p.X / ppu, p.Y / ppu, lb.Heights[i]);
+                float wxp = p.X / ppu;
+                // flat map: keep the whole name in one copy of the wrapping world (a name near the seam must not split across both edges)
+                if (!_map.Globe && i > 0) wxp += _map.WorldWidth * MathF.Round((anchorX - wxp) / _map.WorldWidth);
+                var world = !_map.Globe && i > 0 ? new Vector3(wxp, lb.Heights[i], p.Y / ppu) : _map.PlaceAt(wxp, p.Y / ppu, lb.Heights[i]);
+                if (i == 0) anchorX = _map.Globe ? wxp : world.X;
                 // A point behind the eye projects mirrored and magnified (see Viewport.TryProjectSnapped), which made
                 // names flash across the screen while panning. A name that touches that region is not drawn at all.
                 if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth || Viewport.IsHidden(world, cam)) { behindCamera = true; break; }

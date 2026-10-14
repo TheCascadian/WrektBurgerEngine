@@ -24,6 +24,9 @@ public static class UserSettings
     public static bool PortraitSound = true;
     /// <summary>Draw the map as a globe instead of the flat, east-west wrapping map.</summary>
     public static bool GlobeMode;
+    /// <summary>Set from the game folder (game.txt <c>globe_mode</c>); false hides the toggle and keeps the map flat.</summary>
+    public static bool GlobeAllowed = true;
+    public static bool GlobeOn => GlobeMode && GlobeAllowed;
     /// <summary>The sun circles the map with the game's clock. Off: a fixed sun.</summary>
     public static bool SunCycle = true;
     /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>

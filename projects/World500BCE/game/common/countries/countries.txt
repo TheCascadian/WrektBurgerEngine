@@ -1,0 +1,71 @@
+# 500 BCE countries. Tags and names are placeholders; one country stands for each large power or people.
+ACH = {
+	name = "Achaemenid Empire"
+	color = { 120 60 150 }
+	capital = land_07110
+	culture = persian
+	religion = mazdayasna
+}
+GRK = {
+	name = "Greek Poleis"
+	color = { 70 120 200 }
+	capital = land_01113
+	culture = greek
+	religion = hellenic_religion
+}
+MAC = {
+	name = "Macedon"
+	color = { 200 80 60 }
+	capital = land_05247
+	culture = greek
+	religion = hellenic_religion
+}
+CAR = {
+	name = "Carthage"
+	color = { 150 40 90 }
+	capital = land_09105
+	culture = punic
+	religion = canaanite_religion
+}
+NUB = {
+	name = "Kush"
+	color = { 60 150 90 }
+	capital = land_08279
+	culture = kushite
+	religion = kushite_religion
+}
+SAB = {
+	name = "South Arabia"
+	color = { 210 170 70 }
+	capital = land_09216
+	culture = south_arabian
+	religion = south_arabian_polytheism
+}
+OLM = {
+	name = "Olmec"
+	color = { 80 170 160 }
+	capital = land_15261
+	culture = maya
+	religion = mesoamerican_religion
+}
+CHV = {
+	name = "Chavin"
+	color = { 190 120 70 }
+	capital = land_11805
+	culture = chavin
+	religion = andean_religion
+}
+IND = {
+	name = "Magadha and Ganges"
+	color = { 230 140 40 }
+	capital = land_03808
+	culture = indo_aryan
+	religion = vedic_brahmanism
+}
+ZHO = {
+	name = "Zhou"
+	color = { 200 50 50 }
+	capital = land_01707
+	culture = huaxia
+	religion = zhou_ancestor_cult
+}
