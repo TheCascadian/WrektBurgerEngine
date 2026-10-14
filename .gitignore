@@ -24,3 +24,6 @@ grandstrategy_ui_icon_collection/icons/_unused_icons
 projects/Earth1930/game/gfx/interface/tooltips/_unused_icons
 # Local notes (not for the repo)
 notes_misc.txt
+
+# Private archive of pre-pivot scenarios (local only)
+.ARCHIVE/
