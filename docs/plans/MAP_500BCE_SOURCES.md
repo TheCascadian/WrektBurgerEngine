@@ -66,3 +66,17 @@ Options for the owner (not decided):
 - Regional detail: 8,192 x 4,096 pixels for the province image.
 - Target: 26,000 total locations.
 - Still undecided: exact start date and calendar display, list of countries and peoples, handling of disputed or unknown areas, and approval of the source slate (Gate 1).
+
+## 7. Owner approval and attribution check (2026-10-14)
+The owner approved all rows marked PENDING OWNER in section 2, with the instruction to link sources and confirm attribution before integrating anything. Rows marked UNVERIFIED or REJECTED were not approved. Approval is recorded here; a row in `sources.csv` becomes APPROVED only after its license text is saved and hashed, so verify.py still blocks integration.
+
+Primary pages read so far (quotes are from the fetch results, not full license text):
+
+| Source | Page read | What it says | Attribution to use | Open |
+|---|---|---|---|---|
+| Natural Earth | naturalearthdata.com/about/terms-of-use/ | "All versions of Natural Earth raster + vector map data found on this website are in the public domain." "Crediting the authors is unnecessary." | Optional: "Made with Natural Earth." | None |
+| GEBCO | gebco.net/data_and_products/gridded_bathymetry_data/ | "The GEBCO Grid is placed in the public domain and may be used free of charge." The page asks for acknowledgement. | "GEBCO Bathymetric Compilation Group 2026 (2026). The GEBCO_2026 Grid - a continuous terrain model for oceans and land at 15 arc-second intervals. doi:10.5285/4f68d5c7-45eb-f999-e063-7086abc036fa" | The linked conditions-of-use and disclaimer page was not read. The correct year and DOI must match the grid version actually downloaded. |
+| Pleiades | pleiades.stoa.org/ | "All content is distributed under the terms of a Creative Commons Attribution license (cc-by)." Credit goes to the individual contributors listed at pleiades.stoa.org/credits/. | Cite Pleiades and the credits page per feature | The CC BY version (earlier found as 3.0 US) was not stated on the page. The terms page returned 404. |
+| Getty TGN | getty.edu data-services page | The fetch returned only the page title. No license text was seen. | Unknown | Terms (earlier reported as ODC-By 1.0) and the required notice remain UNVERIFIED. |
+
+Not yet checked at all: DASI, Gazetteer of Ancient Arabia, Met, Cleveland, Art Institute, Smithsonian, Syriaca, Nomisma, PeriodO, Chengdu survey, GeoNames. Each needs its license page read and its attribution text recorded before any data from it is integrated.
