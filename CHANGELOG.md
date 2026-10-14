@@ -18,3 +18,4 @@
 - A refit that keeps the old curve inside the land and the letters nearly as big is skipped (a province changing hands elsewhere no longer nudges the name).
 - A refit that does move a name glides to the new curve over 0.7 s instead of jumping.
 - Letters follow unsnapped, smoothly blended directions, so they no longer step or flip angle at every corner while the camera moves.
+- A name that is too big (letters over about 12% of the window height, gone at 24%) or mostly off screen (under 30% of its curve visible, full at 65%) fades out. It no longer stops growing at a fixed size.

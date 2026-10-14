@@ -725,6 +725,12 @@ public sealed class CountryLabels
     // widest gap between letters, in letter heights: long names spread out over long countries
     const float MaxSpacing = 2.0f;
     private const double MorphSeconds = 0.7;
+    // letters taller than this share of the window start to fade, and are gone at the larger one
+    private const float FadeBigStart = 0.12f, FadeBigEnd = 0.24f;
+    // share of the name's curve that is on screen: below the first it is gone, above the second fully visible
+    private const float FadeSeenStart = 0.3f, FadeSeenEnd = 0.65f;
+    private static float SmoothStep(float a, float b, float x) { float t = Math.Clamp((x - a) / (b - a), 0f, 1f); return t * t * (3 - 2 * t); }
+    private static bool OnScreen(Vector2 q) => q.X >= 0 && q.X <= Viewport.W && q.Y >= 0 && q.Y <= Viewport.H;
 
     private int _pollFrame, _signature;
 
@@ -809,7 +815,20 @@ public sealed class CountryLabels
             if (L < 2) continue;
             float fs = fontPx * (L / lengthPx);
             if (fs < minScreenFont) continue;
-            fs = Math.Min(fs, 140);
+            // Too big to read as a name, or too little of it on screen: it fades out. It never shrinks or stops growing
+            // with the land, and it is not pinned to the screen edge.
+            float fade = 1f - SmoothStep(Viewport.H * FadeBigStart, Viewport.H * FadeBigEnd, fs);
+            if (fade > 0f)
+            {
+                int inView = 0, samples = 0;
+                for (int i = 0; i < n; i++)
+                {
+                    samples++; if (OnScreen(scr[i])) inView++;
+                    if (i > 0) { samples++; if (OnScreen((scr[i] + scr[i - 1]) * 0.5f)) inView++; }
+                }
+                fade *= SmoothStep(FadeSeenStart, FadeSeenEnd, (float)inView / samples);
+            }
+            if (fade < 0.02f) continue;
             // glyph advances
             int keySize = (int)Math.Round(fs);
             float kscale = keySize / fs;
@@ -834,7 +853,7 @@ public sealed class CountryLabels
             float used = total + spacing * (lb.Text.Length - 1);
             float pos = (L - used) / 2;
             // solid letters with a dark outline, so names read on any map color (fading in only while tiny)
-            byte alpha = (byte)Math.Clamp(150 + (fs - minScreenFont) * 30, 150, 245);
+            byte alpha = (byte)(Math.Clamp(150 + (fs - minScreenFont) * 30, 150, 245) * fade);
             var col = new Color((byte)250, (byte)246, (byte)230, alpha);
             var shadow = new Color((byte)0, (byte)0, (byte)0, (byte)(alpha * 0.8f));
             float so = Math.Max(1f, fs / 22f);
