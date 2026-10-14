@@ -8,7 +8,8 @@ Status: draft. Fill one paragraph per item before any new mechanic is coded. Not
 - DECIDED: the player starts in 500 BCE (ancient era first).
 - DECIDED: one ruleset spans the whole timeline. Era Packs are overrides that enable specific mechanics at particular times; they are not separate games.
 - DECIDED: the 500 BCE to 2020 CE span is maintained regardless of how realistic it is. Scope pressure is handled by cutting mechanics, not by cutting the span.
-- DECIDED: Dino is not expected to be involved, so no revenue split with them is planned. burgerkinghotline self-publishes.
+- DECIDED: Dino is likely not involved.
+- DECIDED: revenue will be split between burgerkinghotline (BKH) and wrekt, and possibly one other developer. OPEN: the split terms (the notes say they should be agreed beforehand, based on effort and costs) and who the possible third developer is.
 - DECIDED: American English keys are used outright. British English ships as a localization language that overrides only the words that actually differ. No alias table.
 - DECIDED: SampleGame stays as the template and test fixture.
 - DECIDED: the tick structure is kept exactly (section 2).
@@ -62,7 +63,8 @@ Named RNG streams, event bus, registered definition types, save registry, test p
   - Non-disclosure risks removal, and Valve cannot verify use, so the accurate record is the developer's own.
 - Provenance log: keep a file listing each content category (code, art/textures, models, UI icons, text/localization, design docs) with how it was made (AI-generated, AI-assisted then hand-edited, hand-made). Update it as content is added, so the Steam answers come from the log and not from memory.
 - Content originality checklist: no Paradox names, no copied focus or tech trees, no content resembling Paradox files.
-- Revenue and publishing: self-published by burgerkinghotline; no third-party split currently planned.
+- Revenue: split between BKH and wrekt, and possibly one other developer. Terms are open and should be agreed before release.
+- Publishing: the notes record BKH wanting to self-publish (developer and publisher) and keep control of the money. Not confirmed as final.
 
 ## 8. Risks
 Scope (maintained span means mechanics get cut instead), collapse design, AI-content perception, performance on low-end hardware (hourly tick stays, so per-tick cost is the lever).
