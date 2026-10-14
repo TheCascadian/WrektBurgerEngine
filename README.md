@@ -1,6 +1,6 @@
 # BurgerEngine
 
-A grand strategy engine in the style of Paradox's Clausewitz engine, written in C# (.NET 8).
+A grand strategy engine in the style of Paradox's Clausewitz engine, written in C# (.NET 8 or .NET 9 on Arch Linux/CachyOS).
 You build a game out of **images and plain-text files**. Export turns it into a standalone **EXE**, and the
 `game/` folder next to it stays editable, so your players can mod everything.
 

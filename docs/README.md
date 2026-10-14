@@ -37,3 +37,8 @@ Findings about the current state, with evidence. Screenshots live beside the aud
 - Game docs describe what exists; plans describe what is intended; audits describe what was measured. Move a plan to `game/` once it ships.
 - Keep generated references in sync with `burger docs`.
 - When upstream changes, compare the canonical files against `upstream/main` before editing them locally.
+
+## Logs
+
+- [Dev log 2026-10-14](DEVLOG-2026-10-14.md): globe, wrap, clamp, clip-plane fix.
+- [Sources](SOURCES/README.md): saved data-source and license pages, grouped by subject.
