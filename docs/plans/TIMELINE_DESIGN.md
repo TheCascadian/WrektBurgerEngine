@@ -64,7 +64,7 @@ Named RNG streams, event bus, registered definition types, save registry, test p
 - Provenance log: keep a file listing each content category (code, art/textures, models, UI icons, text/localization, design docs) with how it was made (AI-generated, AI-assisted then hand-edited, hand-made). Update it as content is added, so the Steam answers come from the log and not from memory.
 - Content originality checklist: no Paradox names, no copied focus or tech trees, no content resembling Paradox files.
 - Revenue: split between BKH and wrekt, and possibly one other developer. Terms are open and should be agreed before release.
-- Publishing: the notes record BKH wanting to self-publish (developer and publisher) and keep control of the money. Not confirmed as final.
+- Publishing: DECIDED, BKH will self-publish.
 
 ## 8. Risks
 Scope (maintained span means mechanics get cut instead), collapse design, AI-content perception, performance on low-end hardware (hourly tick stays, so per-tick cost is the lever).
