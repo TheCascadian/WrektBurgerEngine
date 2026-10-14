@@ -30,6 +30,7 @@ to the size of the province map.
 | `heightmap.png` | greyscale elevation. Water is drawn flat at `sea_level`. |
 | `terrain.png` | painted with the `color` of terrain types from `common/terrain.txt`; textures blend at the edges |
 | `trees.png` | greyscale tree density (0 = none) |
+| `normal.png` | **optional**. Tangent-space normal map (RGB, x east, y north, z up, OpenGL style) over the same area as the other images, for fine hill shading. Without it the map is shaded from `heightmap.png` alone. Rename it with `normalmap = "file.png"` in `default.map`. Wider than 8192 pixels is scaled down on load. |
 | `rivers.png` | every pixel that is not the background color (white by default) is a river. Borders crossed by a river give attackers a penalty (`river_attack_penalty`). |
 
 Settings in `default.map`: `sea_level` (0-255), `height_scale`, `pixels_per_unit` (bigger = smaller map in 3D),

@@ -2,6 +2,10 @@
 
 ## 2026-10-14
 - Added opt-in historical geography: stable location atoms, dated provinces with split, merge and redraw, lineage, temporal properties, validation, runtime save section `x_geography`, `burger geo` tools and self-tests. See docs/game/GEOGRAPHY.md.
+- Optional normal map: `map/normal.png` (tangent space, x east, y north, z up; name set by `normalmap` in `default.map`) adds fine hill shading. A map without one renders exactly as before. The earth1930 and isle bases now include one, made by `tools/earth/make_normal.py`.
+- Map shader: bare rock on steep slopes, snow above a snow line that drops towards the poles, sky and sun light with a warm sun, and a soft distance haze on the flat map. Terrain mesh is now 3072 vertices wide by default (`mesh_width`), cut into chunks that are skipped when out of view.
+- World500BCE: exaggerated heightmap, `height_scale = 7`, normal map, new seamless 2048 terrain textures.
+- Terrain textures: the atlas cell follows the largest texture, capped at 1024 (never scaled lower), with a wrapped border so tile edges and mipmaps stay clean. Terrain types blend over a wider neighborhood with noise, so edges are no longer pixel stairs.
 
 ## World500BCE scenario
 - Added `projects/WrektMap`: 965 states, 10 countries, 113 cultures, 59 religions, 149.2M starting people (design estimates). `World500Test` unchanged. See `docs/game/WORLD500BCE.md`.

@@ -17,11 +17,14 @@ public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, 
 public sealed unsafe class MapRenderer : IDisposable
 {
     private const int LutWidth = 256;
-    private const int TileSize = 512;
+    private const int MaxTileSize = 1024;   // atlas cell cap: larger textures are scaled down to this, never lower
+    private const int DefaultTileSize = 512; // cell size when no terrain has a texture file
+    private const int AtlasPad = 32;         // wrapped border around each cell, so filtering and mipmaps never read a neighbor
 
     private readonly Game _game;
     private readonly MapData _map;
-    private Mesh _terrainMesh;
+    private Mesh[] _chunks = Array.Empty<Mesh>();
+    private BoundingBox[] _chunkBoxes = Array.Empty<BoundingBox>();
     private Mesh _seaMesh;
     private Mesh _treeMesh;
     private bool _hasTrees;
@@ -31,18 +34,20 @@ public sealed unsafe class MapRenderer : IDisposable
     private Texture2D _mapDataTex;
     private Texture2D _lutTex;
     private Texture2D _atlasTex;
+    private Texture2D _normalTex;
+    private bool _hasNormalMap;
     private Color[] _lut = Array.Empty<Color>();
     private int _blockRows;
     private int _atlasGrid;
+    private int _tilePx, _padPx;
 
     // CPU copy of the mesh heights for picking and placing things on the ground
-    private float[] _heights = Array.Empty<float>();
     private int _hw, _hh;
     // the heights of the vertices of the terrain mesh as drawn: figures and counters must stand on this surface, not on the finer field
     private float[] _meshHeights = Array.Empty<float>();
     private int _mw, _mh;
 
-    private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale,
+    private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
         _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun;
     private int _visibilityVersion = -1;
 
@@ -85,112 +90,147 @@ public sealed unsafe class MapRenderer : IDisposable
     // Construction
     // ===============================================================================================
 
+    /// <summary>Cells per side of one terrain chunk: 128 x 128 cells is 129 x 129 vertices, within the 16-bit indices raylib meshes use.</summary>
+    private const int ChunkCells = 128;
+
     private void BuildTerrainMesh()
     {
-        int maxDim = Math.Max(_map.Width, _map.Height) > 4096 ? 1024 : 512; // big maps (Earth) get a finer height/picking field
-        float aspect = _map.Width / (float)_map.Height;
-        _hw = aspect >= 1 ? Math.Min(maxDim, _map.Width) : Math.Max(2, (int)(Math.Min(maxDim, _map.Height) * aspect));
-        _hh = aspect >= 1 ? Math.Max(2, (int)(_hw / aspect)) : Math.Min(maxDim, _map.Height);
-        _hw = Math.Max(2, _hw);
-
         var s = _map.Settings;
+        int srcW = _map.Width, srcH = _map.Height;
+        int mw = Math.Clamp(Math.Min(srcW, s.MeshWidth), 2, 8192);
+        int mh = Math.Clamp((int)MathF.Round((mw - 1f) * srcH / srcW) + 1, 2, Math.Max(2, srcH));
+        _mw = _hw = mw; _mh = _hh = mh;
         int sea = s.SeaLevel;
-        Image img = Raylib.GenImageColor(_hw, _hh, Color.Black);
-        byte* px = (byte*)img.Data;
-        _heights = new float[_hw * _hh];
-        for (int y = 0; y < _hh; y++)
+        var locs = _game.World.Locations;
+        var water = new bool[locs.Count];
+        for (int i = 0; i < water.Length; i++) water[i] = locs[i].IsWater;
+        float stepX = (srcW - 1f) / (mw - 1), stepY = (srcH - 1f) / (mh - 1);
+        int kx = Math.Clamp((int)MathF.Ceiling(stepX), 1, 4), ky = Math.Clamp((int)MathF.Ceiling(stepY), 1, 4);
+
+        // Every vertex averages the map pixels under it (water counts as the sea surface), so a dense mesh follows the
+        // terrain smoothly instead of picking single noisy pixels.
+        var h = new float[mw * mh];
+        var land = new bool[mw * mh];
+        System.Threading.Tasks.Parallel.For(0, mh, y =>
         {
-            // Height samples become vertices spanning [0..WorldHeight]. Sample the source at
-            // those same endpoint-aligned coordinates; center resampling shifted the rendered
-            // heightfield away from the province pixels used by the fragment shader and picker.
-            int my = Math.Min(_map.Height - 1, (int)MathF.Round(y * (_map.Height - 1f) / (_hh - 1)));
-            for (int x = 0; x < _hw; x++)
+            for (int x = 0; x < mw; x++)
             {
-                int mx = Math.Min(_map.Width - 1, (int)MathF.Round(x * (_map.Width - 1f) / (_hw - 1)));
-                int i = my * _map.Width + mx;
-                int li = _map.PixelLocation[i];
-                bool water = li < 0 || _game.World.Locations[li].IsWater;
-                int h = _map.HeightMap[i];
-                h = water ? sea : Math.Max(h, Math.Min(255, sea + 2));
-                int o = (y * _hw + x) * 4;
-                px[o] = px[o + 1] = px[o + 2] = (byte)h;
-                px[o + 3] = 255;
-                _heights[y * _hw + x] = h / 255f * s.HeightScale;
+                float sum = 0;
+                for (int j = 0; j < ky; j++)
+                    for (int i = 0; i < kx; i++)
+                    {
+                        int px = Math.Clamp((int)MathF.Round(x * stepX + ((i + 0.5f) / kx - 0.5f) * stepX), 0, srcW - 1);
+                        int py = Math.Clamp((int)MathF.Round(y * stepY + ((j + 0.5f) / ky - 0.5f) * stepY), 0, srcH - 1);
+                        int idx = py * srcW + px;
+                        int li = _map.PixelLocation[idx];
+                        sum += li < 0 || water[li] ? sea : Math.Max((int)_map.HeightMap[idx], Math.Min(255, sea + 2));
+                    }
+                h[y * mw + x] = sum / (kx * ky);
+                int cx = Math.Min(srcW - 1, (int)MathF.Round(x * stepX)), cy = Math.Min(srcH - 1, (int)MathF.Round(y * stepY));
+                int cl = _map.PixelLocation[cy * srcW + cx];
+                land[y * mw + x] = cl >= 0 && !water[cl];
             }
-        }
-        // soften the steps between flattened water and land so coasts slope gently
-        var smooth = new byte[_hw * _hh];
-        for (int y = 0; y < _hh; y++)
-            for (int x = 0; x < _hw; x++)
+        });
+        // a light blur takes the 8-bit steps out of the slopes
+        var sm = new float[mw * mh];
+        System.Threading.Tasks.Parallel.For(0, mh, y =>
+        {
+            for (int x = 0; x < mw; x++)
             {
-                int sum = 0, n = 0;
+                float sum = 0;
                 for (int dy = -1; dy <= 1; dy++)
                     for (int dx = -1; dx <= 1; dx++)
-                    {
-                        int xx = Math.Clamp(x + dx, 0, _hw - 1), yy = Math.Clamp(y + dy, 0, _hh - 1);
-                        sum += px[(yy * _hw + xx) * 4];
-                        n++;
-                    }
-                smooth[y * _hw + x] = (byte)(sum / n);
+                        sum += h[Math.Clamp(y + dy, 0, mh - 1) * mw + Math.Clamp(x + dx, 0, mw - 1)];
+                float v = sum / 9f;
+                // smoothing across a coast must not drop land below the separate sea plane
+                if (land[y * mw + x]) v = Math.Max(v, Math.Min(255, sea + 2));
+                sm[y * mw + x] = v;
             }
-        for (int y = 0; y < _hh; y++)
+        });
+        _meshHeights = new float[mw * mh];
+        System.Threading.Tasks.Parallel.For(0, mh, y =>
         {
-            for (int x = 0; x < _hw; x++)
-            {
-                int i = y * _hw + x;
-                int mx = Math.Min(_map.Width - 1, (int)MathF.Round(x * (_map.Width - 1f) / (_hw - 1)));
-                int my = Math.Min(_map.Height - 1, (int)MathF.Round(y * (_map.Height - 1f) / (_hh - 1)));
-                int li = _map.PixelLocation[my * _map.Width + mx];
-                // Smoothing across a coast can lower the land mesh below the separate sea plane.
-                // Keep land vertices above that plane so ocean shading cannot cover coastal provinces.
-                if (li >= 0 && !_game.World.Locations[li].IsWater)
-                    smooth[i] = (byte)Math.Max(smooth[i], Math.Min(255, sea + 2));
-                px[i * 4] = px[i * 4 + 1] = px[i * 4 + 2] = smooth[i];
-                _heights[i] = smooth[i] / 255f * s.HeightScale;
-            }
-        }
-        // Keep the high-resolution height field for position queries and picking. Only the
-        // presentation mesh uses fewer vertices on very large maps; map-data texture stays full-res.
-        // Use a denser presentation mesh so relief is not visibly faceted. The
-        // height/picking field above remains independent of this render mesh.
-        int meshMaxDim = Math.Max(_map.Width, _map.Height) > 4096 ? 1024 : Math.Max(1024, maxDim);
-        float meshScale = Math.Min(1f, meshMaxDim / (float)Math.Max(_hw, _hh));
-        int meshW = Math.Max(2, (int)(_hw * meshScale)), meshH = Math.Max(2, (int)(_hh * meshScale));
-        _mw = meshW; _mh = meshH;
-        _meshHeights = new float[meshW * meshH];
-        Image meshImg = Raylib.GenImageColor(meshW, meshH, Color.Black);
-        byte* meshPx = (byte*)meshImg.Data;
-        for (int y = 0; y < meshH; y++)
-        {
-            int sy = meshH == 1 ? 0 : (int)(y * (_hh - 1f) / (meshH - 1));
             // the last rows before a pole squeeze every column into a few units: heights that differ from column to column there
             // become radial spikes on the globe. Pull those rows towards their own mean, fully flat at the pole itself.
-            float cosLat = MathF.Cos((0.5f - y / (meshH - 1f)) * MathF.PI);
+            double lat = s.SouthLat + (s.NorthLat - s.SouthLat) * (1.0 - y / (mh - 1.0));
+            float cosLat = (float)Math.Cos(lat * Math.PI / 180.0);
             float t = Math.Clamp((cosLat - 0.03f) / 0.12f, 0f, 1f);
             float keep = t * t * (3f - 2f * t);
             float mean = 0;
-            if (keep < 1f) { for (int x = 0; x < _hw; x++) mean += smooth[sy * _hw + x]; mean /= _hw; }
-            for (int x = 0; x < meshW; x++)
+            if (keep < 1f) { for (int x = 0; x < mw; x++) mean += sm[y * mw + x]; mean /= mw; }
+            for (int x = 0; x < mw; x++)
             {
-                int sx = meshW == 1 ? 0 : (int)(x * (_hw - 1f) / (meshW - 1));
-                byte h = smooth[sy * _hw + sx];
-                if (keep < 1f) h = (byte)MathF.Round(mean + (h - mean) * keep);
-                int o = (y * meshW + x) * 4;
-                _meshHeights[y * meshW + x] = h / 255f * s.HeightScale;
-                meshPx[o] = meshPx[o + 1] = meshPx[o + 2] = h;
-                meshPx[o + 3] = 255;
+                float v = sm[y * mw + x];
+                if (keep < 1f) v = mean + (v - mean) * keep;
+                _meshHeights[y * mw + x] = v / 255f * s.HeightScale;
             }
+        });
+
+        // cut into chunks (so the camera can skip the ones it cannot see); normals come from the whole field, so chunk edges meet seamlessly
+        float cellX = WorldWidth / (mw - 1f), cellZ = WorldHeight / (mh - 1f);
+        var chunks = new List<Mesh>();
+        var boxes = new List<BoundingBox>();
+        for (int z0 = 0; z0 < mh - 1; z0 += ChunkCells)
+            for (int x0 = 0; x0 < mw - 1; x0 += ChunkCells)
+            {
+                int nx = Math.Min(ChunkCells, mw - 1 - x0), nz = Math.Min(ChunkCells, mh - 1 - z0);
+                int vw = nx + 1, vh = nz + 1;
+                var mesh = new Mesh(vw * vh, nx * nz * 2);
+                mesh.AllocVertices(); mesh.AllocNormals(); mesh.AllocTexCoords(); mesh.AllocIndices();
+                var vs = mesh.VerticesAs<Vector3>();
+                var ns = mesh.NormalsAs<Vector3>();
+                var ts = mesh.TexCoordsAs<Vector2>();
+                var ix = mesh.IndicesAs<ushort>();
+                var lo = new Vector3(float.MaxValue); var hi = new Vector3(float.MinValue);
+                for (int z = 0; z < vh; z++)
+                    for (int x = 0; x < vw; x++)
+                    {
+                        int gx = x0 + x, gz = z0 + z, v = z * vw + x;
+                        float hh = _meshHeights[gz * mw + gx];
+                        int xa = Math.Max(gx - 1, 0), xb = Math.Min(gx + 1, mw - 1), za = Math.Max(gz - 1, 0), zb = Math.Min(gz + 1, mh - 1);
+                        float dhx = (_meshHeights[gz * mw + xb] - _meshHeights[gz * mw + xa]) / ((xb - xa) * cellX);
+                        float dhz = (_meshHeights[zb * mw + gx] - _meshHeights[za * mw + gx]) / ((zb - za) * cellZ);
+                        vs[v] = new Vector3(gx * cellX, hh, gz * cellZ);
+                        ns[v] = Vector3.Normalize(new Vector3(-dhx, 1f, -dhz));
+                        ts[v] = new Vector2(gx / (mw - 1f), gz / (mh - 1f));
+                        lo = Vector3.Min(lo, vs[v]); hi = Vector3.Max(hi, vs[v]);
+                    }
+                int k = 0;
+                for (int z = 0; z < nz; z++)
+                    for (int x = 0; x < nx; x++)
+                    {
+                        int a = z * vw + x, b = a + 1, c = a + vw, d = c + 1;
+                        // each cell is split along the top-right to bottom-left diagonal: HeightAt and Pick use the same two triangles
+                        ix[k++] = (ushort)a; ix[k++] = (ushort)c; ix[k++] = (ushort)b;
+                        ix[k++] = (ushort)b; ix[k++] = (ushort)c; ix[k++] = (ushort)d;
+                    }
+                Raylib.UploadMesh(ref mesh, new CBool(false));
+                chunks.Add(mesh);
+                boxes.Add(new BoundingBox(lo, hi));
+            }
+        _chunks = chunks.ToArray();
+        _chunkBoxes = boxes.ToArray();
+        Log.Info($"Terrain mesh: {mw} x {mh} vertices in {_chunks.Length} chunks ({(long)(mw - 1) * (mh - 1) * 2:N0} triangles)");
+    }
+
+    /// <summary>True when a chunk (shifted east by <paramref name="shiftX"/>) can be in view. Always true for the globe and for non-perspective cameras.</summary>
+    private bool ChunkVisible(in BoundingBox box, float shiftX, Camera3D cam, Vector3 fwd, Vector3 right, Vector3 up, float tanX, float tanY)
+    {
+        bool r = true, l = true, t = true, b = true, front = true;
+        for (int i = 0; i < 8; i++)
+        {
+            var p = new Vector3((i & 1) == 0 ? box.Min.X : box.Max.X, (i & 2) == 0 ? box.Min.Y : box.Max.Y, (i & 4) == 0 ? box.Min.Z : box.Max.Z);
+            p.X += shiftX;
+            var d = p - cam.Position;
+            float z = Vector3.Dot(d, fwd), x = Vector3.Dot(d, right), y = Vector3.Dot(d, up);
+            if (z > 0) front = false;
+            if (x - tanX * z <= 0) r = false;
+            if (-x - tanX * z <= 0) l = false;
+            if (y - tanY * z <= 0) t = false;
+            if (-y - tanY * z <= 0) b = false;
         }
-        // raylib spaces heightmap vertices by size/(vertexCount), not size/(vertexCount - 1).
-        // Expand the input size by one cell so the first and last vertices land exactly at
-        // [0..WorldWidth] and [0..WorldHeight], matching HeightAt(), WorldPos(), and map pixels.
-        var terrainSize = new Vector3(
-            WorldWidth * meshW / (meshW - 1f),
-            s.HeightScale,
-            WorldHeight * meshH / (meshH - 1f));
-        _terrainMesh = Raylib.GenMeshHeightmap(meshImg, terrainSize);
-        Raylib.UnloadImage(meshImg);
-        Raylib.UnloadImage(img);
+        // z is positive in front of the eye, so "all corners beyond a plane" means the box is out of view
+        return !(front || r || l || t || b);
     }
 
     private void BuildMapDataTexture()
@@ -250,29 +290,45 @@ public sealed unsafe class MapRenderer : IDisposable
     {
         var terrains = _game.Data.Terrains;
         _atlasGrid = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(terrains.Count)));
-        int size = _atlasGrid * TileSize;
+        // load every texture first: the cell is as large as the biggest one, capped at MaxTileSize
+        var tiles = new Image?[terrains.Count];
+        int tileSize = 0;
+        for (int t = 0; t < terrains.Count; t++)
+        {
+            var terr = terrains[t];
+            string? path = terr.Texture != null ? _game.Data.PathOf(terr.Texture) : null;
+            if (path != null && File.Exists(path))
+            {
+                var img = Raylib.LoadImage(path);
+                Raylib.ImageFormat(ref img, PixelFormat.UncompressedR8G8B8A8);
+                tiles[t] = img;
+                tileSize = Math.Max(tileSize, Math.Max(img.Width, img.Height));
+            }
+            else if (terr.Texture != null) Log.Warn($"Terrain texture not found: {terr.Texture}", "common/terrain.txt");
+        }
+        tileSize = tileSize == 0 ? DefaultTileSize : Math.Min(tileSize, MaxTileSize);
+        int pad = AtlasPad, cell = tileSize + 2 * pad;
+        _tilePx = tileSize; _padPx = pad;
+        int size = _atlasGrid * cell;
         Image atlas = Raylib.GenImageColor(size, size, Color.Gray);
         var rnd = new Random(1234);
         for (int t = 0; t < terrains.Count; t++)
         {
             var terr = terrains[t];
             int gx = t % _atlasGrid, gy = t / _atlasGrid;
-            var dst = new Rectangle(gx * TileSize, gy * TileSize, TileSize, TileSize);
-            Image tile;
-            string? path = terr.Texture != null ? _game.Data.PathOf(terr.Texture) : null;
-            if (path != null && File.Exists(path))
-            {
-                tile = Raylib.LoadImage(path);
-                Raylib.ImageFormat(ref tile, PixelFormat.UncompressedR8G8B8A8);
-            }
-            else
-            {
-                if (terr.Texture != null) Log.Warn($"Terrain texture not found: {terr.Texture}", "common/terrain.txt");
-                tile = Assets.NoiseTile(TileSize, terr.DisplayColor, rnd.Next());
-            }
-            Raylib.ImageDraw(ref atlas, tile, new Rectangle(0, 0, tile.Width, tile.Height), dst, Color.White);
+            Image tile = tiles[t] ?? Assets.NoiseTile(tileSize, terr.DisplayColor, rnd.Next());
+            if (tile.Width != tileSize || tile.Height != tileSize) Raylib.ImageResize(ref tile, tileSize, tileSize);
+            // the cell is the tile repeated 3x3, clipped: the border holds the texture's own wrapped edge
+            Image padded = Raylib.GenImageColor(cell, cell, Color.Gray);
+            var src = new Rectangle(0, 0, tileSize, tileSize);
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                    Raylib.ImageDraw(ref padded, tile, src, new Rectangle(pad + dx * tileSize, pad + dy * tileSize, tileSize, tileSize), Color.White);
+            Raylib.ImageDraw(ref atlas, padded, new Rectangle(0, 0, cell, cell), new Rectangle(gx * cell, gy * cell, cell, cell), Color.White);
+            Raylib.UnloadImage(padded);
             Raylib.UnloadImage(tile);
         }
+        Log.Info($"Terrain atlas: {size}x{size}, {tileSize}px per terrain (+{pad}px wrapped border)");
         _atlasTex = Raylib.LoadTextureFromImage(atlas);
         Raylib.UnloadImage(atlas);
         Raylib.GenTextureMipmaps(ref _atlasTex);
@@ -289,6 +345,7 @@ public sealed unsafe class MapRenderer : IDisposable
         Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Albedo, _mapDataTex);
         Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Metalness, _lutTex);
         Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Normal, _atlasTex);
+        LoadNormalMap();
 
         _locMapSize = Raylib.GetShaderLocation(_shader, "mapSize");
         _locWorldSize = Raylib.GetShaderLocation(_shader, "worldSize");
@@ -296,6 +353,7 @@ public sealed unsafe class MapRenderer : IDisposable
         _locBlockRows = Raylib.GetShaderLocation(_shader, "blockRows");
         _locAtlasGrid = Raylib.GetShaderLocation(_shader, "atlasGrid");
         _locTileScale = Raylib.GetShaderLocation(_shader, "tileScale");
+        _locAtlasTile = Raylib.GetShaderLocation(_shader, "atlasTile");
         _locWater = Raylib.GetShaderLocation(_shader, "waterColor");
         _locRiver = Raylib.GetShaderLocation(_shader, "riverColor");
         _locSun = Raylib.GetShaderLocation(_shader, "sunDirU");
@@ -311,16 +369,49 @@ public sealed unsafe class MapRenderer : IDisposable
         _locGlobeRadius = Raylib.GetShaderLocation(_shader, "globeRadius");
         _locMapData = _locLut = 0;
 
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "heightScale"), _map.Settings.HeightScale, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "latRange"), new Vector2((float)_map.Settings.NorthLat, (float)_map.Settings.SouthLat), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locMapSize, new Vector2(_map.Width, _map.Height), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locWorldSize, new Vector2(WorldWidth, WorldHeight), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locLutSize, new Vector2(LutWidth, _blockRows * 3), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locBlockRows, (float)_blockRows, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locAtlasGrid, (float)_atlasGrid, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locTileScale, 0.35f, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locAtlasTile, new Vector2(_tilePx, _padPx), ShaderUniformDataType.Vec2);
         var wc = _map.Settings.WaterColor;
         var rc = _map.Settings.RiverColor;
         Raylib.SetShaderValue(_shader, _locWater, new Vector3(wc.R / 255f, wc.G / 255f, wc.B / 255f), ShaderUniformDataType.Vec3);
         Raylib.SetShaderValue(_shader, _locRiver, new Vector3(rc.R / 255f, rc.G / 255f, rc.B / 255f), ShaderUniformDataType.Vec3);
+    }
+
+    /// <summary>The optional map/normal.png (name from <c>normalmap</c> in default.map). Without the file the map is shaded from the heightmap alone, as before.</summary>
+    private void LoadNormalMap()
+    {
+        string path = _game.Data.PathOf("map/" + _map.Settings.NormalMap);
+        if (File.Exists(path))
+        {
+            var img = Raylib.LoadImage(path);
+            if (img.Width > 0)
+            {
+                Raylib.ImageFormat(ref img, PixelFormat.UncompressedR8G8B8A8);
+                const int maxW = 8192; // keeps the texture within memory limits on a 16384 wide map
+                if (img.Width > maxW) Raylib.ImageResize(ref img, maxW, Math.Max(1, (int)((long)img.Height * maxW / img.Width)));
+                _normalTex = Raylib.LoadTextureFromImage(img);
+                Raylib.GenTextureMipmaps(ref _normalTex);
+                Raylib.SetTextureFilter(_normalTex, TextureFilter.Trilinear);
+                Raylib.SetTextureWrap(_normalTex, TextureWrap.Clamp);
+                _hasNormalMap = true;
+            }
+            else Log.Warn($"Normal map could not be read: map/{_map.Settings.NormalMap}", "map/default.map");
+            Raylib.UnloadImage(img);
+        }
+        if (_hasNormalMap)
+        {
+            // raylib binds material map N to texture unit N: the roughness slot is unit 3, which the shader reads as texture3
+            Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Roughness, _normalTex);
+            Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture3"), 3, ShaderUniformDataType.Int);
+        }
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "hasNormalMap"), _hasNormalMap ? 1f : 0f, ShaderUniformDataType.Float);
     }
 
     private void BuildTrees()
@@ -912,11 +1003,20 @@ public sealed unsafe class MapRenderer : IDisposable
         // The flat map repeats east-west: the map and one copy on each side cover any view (the view is never wider than the map).
         // Draw the middle one first: the depth test then rejects the fragments hidden under it instead of shading them twice.
         int copies = Globe ? 1 : 3;
+        // skip the terrain chunks outside the view (flat map only)
+        bool cull = !Globe && cam.Projection == CameraProjection.Perspective;
+        var fwd = Vector3.Normalize(cam.Target - cam.Position);
+        var right = Vector3.Normalize(Vector3.Cross(fwd, cam.Up));
+        var upV = Vector3.Cross(right, fwd);
+        float tanY = MathF.Tan(cam.FovY * MathF.PI / 360f) * 1.08f, tanX = tanY * Viewport.W / Math.Max(1f, Viewport.H);
         bool trees = !Globe && _hasTrees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
         for (int c = 0; c < copies; c++)
         {
-            var at = Raymath.MatrixTranslate((c == 0 ? 0 : c == 1 ? -1 : 1) * WorldWidth, 0, 0);
-            if (!Bench.Skip.Contains("terrain")) Raylib.DrawMesh(_terrainMesh, _material, at);
+            float shift = (c == 0 ? 0 : c == 1 ? -1 : 1) * WorldWidth;
+            var at = Raymath.MatrixTranslate(shift, 0, 0);
+            if (!Bench.Skip.Contains("terrain"))
+                for (int k = 0; k < _chunks.Length; k++)
+                    if (!cull || ChunkVisible(_chunkBoxes[k], shift, cam, fwd, right, upV, tanX, tanY)) Raylib.DrawMesh(_chunks[k], _material, at);
             if (trees) Raylib.DrawMesh(_treeMesh, _treeMaterial, at);
         }
         // endless sea beyond the map's north and south edges (the globe has none)
@@ -963,8 +1063,9 @@ public sealed unsafe class MapRenderer : IDisposable
         Raylib.UnloadTexture(_mapDataTex);
         Raylib.UnloadTexture(_lutTex);
         Raylib.UnloadTexture(_atlasTex);
+        if (_hasNormalMap) Raylib.UnloadTexture(_normalTex);
         Raylib.UnloadShader(_shader);
-        Raylib.UnloadMesh(_terrainMesh);
+        foreach (var c in _chunks) Raylib.UnloadMesh(c);
         Raylib.UnloadMesh(_seaMesh);
         if (_hasTrees) Raylib.UnloadMesh(_treeMesh);
     }

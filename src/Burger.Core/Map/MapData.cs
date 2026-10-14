@@ -10,6 +10,8 @@ public sealed class MapSettings
     public string Terrain = "terrain.png";
     public string Trees = "trees.png";
     public string Rivers = "rivers.png";
+    /// <summary>Optional tangent-space normal map (RGB, x east, y north, z up) over the same area as the other map images. Nothing changes when the file is missing.</summary>
+    public string NormalMap = "normal.png";
     public string Locations = "locations.txt";
     public string Adjacencies = "adjacencies.txt";
     public string StatesFolder = "states";
@@ -22,6 +24,8 @@ public sealed class MapSettings
     /// <summary>Latitude of the top and bottom edge of the images in degrees (default: the whole globe, 90 to -90). A map cut off at a pole sets e.g. <c>lat_south = -60.47</c>.</summary>
     public double NorthLat = 90, SouthLat = -90;
     public bool WholeGlobe => NorthLat >= 89.999 && SouthLat <= -89.999;
+    /// <summary>Vertices across the 3D terrain mesh (never more than the map is wide). More is smoother and heavier; the default is 3072.</summary>
+    public int MeshWidth = 3072;
     public float TreeDensity = 1f;
     public int TreeSpacing = 4;
     public Rgb RiverBackground = new(255, 255, 255);
@@ -37,6 +41,7 @@ public sealed class MapSettings
         s.Terrain = n.GetString("terrain", s.Terrain)!;
         s.Trees = n.GetString("trees", s.Trees)!;
         s.Rivers = n.GetString("rivers", s.Rivers)!;
+        s.NormalMap = n.GetString("normalmap", s.NormalMap)!;
         s.Locations = n.GetString("locations", s.Locations)!;
         s.Adjacencies = n.GetString("adjacencies", s.Adjacencies)!;
         s.StatesFolder = n.GetString("states", s.StatesFolder)!;
@@ -45,6 +50,7 @@ public sealed class MapSettings
         s.PixelsPerUnit = Math.Max(0.1f, (float)n.GetDouble("pixels_per_unit", s.PixelsPerUnit));
         s.NorthLat = Math.Clamp(n.GetDouble("lat_north", s.NorthLat), -89, 90);
         s.SouthLat = Math.Clamp(n.GetDouble("lat_south", s.SouthLat), -90, s.NorthLat - 1);
+        s.MeshWidth = Math.Clamp(n.GetInt("mesh_width", s.MeshWidth), 64, 8192);
         s.TreeDensity = (float)n.GetDouble("tree_density", s.TreeDensity);
         s.TreeSpacing = Math.Max(1, n.GetInt("tree_spacing", s.TreeSpacing));
         if (Rgb.TryParse(n.Get("river_background"), out var rb)) s.RiverBackground = rb;

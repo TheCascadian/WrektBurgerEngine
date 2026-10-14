@@ -64,6 +64,10 @@ uniform float globe;
 uniform sampler2D texture0; // map data: RG = location index + 1, B = terrain index, A = land: river (255) / water: closeness to the coast
 uniform sampler2D texture1; // per-location lookup: block0 color, block1 owner/state ids, block2 stripe color + flags
 uniform sampler2D texture2; // terrain texture atlas
+uniform sampler2D texture3; // optional normal map (only read when hasNormalMap is 1)
+uniform float hasNormalMap;
+uniform float heightScale;  // world height of the highest point (heightmap value 255)
+uniform vec2 latRange;      // latitude (degrees) of the top and bottom edge of the map
 uniform vec4 colDiffuse;
 uniform vec2 mapSize;
 uniform vec2 worldSize;
@@ -71,6 +75,7 @@ uniform vec2 lutSize;
 uniform float blockRows;
 uniform float atlasGrid;
 uniform float tileScale;
+uniform vec2 atlasTile;   // texture size in pixels, wrapped border in pixels
 uniform vec3 waterColor;
 uniform vec3 riverColor;
 uniform float time;
@@ -118,8 +123,9 @@ float terrainAt(ivec2 p) { return floor(texelFetch(texture0, clampPix(p), 0).b *
 vec3 atlas(float t, vec2 uv)
 {
     vec2 tile = vec2(mod(t, atlasGrid), floor(t / atlasGrid));
-    vec2 local = fract(uv) * 0.96 + 0.02;
-    vec2 g = uv * 0.96 / atlasGrid;
+    float cell = atlasTile.x + 2.0 * atlasTile.y;
+    vec2 local = (fract(uv) * atlasTile.x + atlasTile.y) / cell;
+    vec2 g = uv * (atlasTile.x / cell) / atlasGrid;
     return textureGrad(texture2, (tile + local) / atlasGrid, dFdx(g), dFdy(g)).rgb;
 }
 
@@ -307,15 +313,71 @@ void main()
             vec2 pl = (an.y >= an.x && an.y >= an.z) ? fragWorld.xz : (an.x >= an.z ? fragWorld.yz : fragWorld.xy);
             tuv = pl * tileScale;
         }
-        vec3 c00 = atlas(terrainAt(b), tuv);
-        vec3 c10 = atlas(terrainAt(b + ivec2(1, 0)), tuv);
-        vec3 c01 = atlas(terrainAt(b + ivec2(0, 1)), tuv);
-        vec3 c11 = atlas(terrainAt(b + ivec2(1, 1)), tuv);
-        col = mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
+        // gather the terrain of a wide neighborhood (6x6 map pixels) with a smooth kernel, around a position that noise has bent, so the
+        // edge is neither a map pixel staircase nor a straight fade; weights are summed per terrain, then each terrain is sampled once
+        vec2 wq = pp + (vec2(noise(pix * 0.8 + 3.1), noise(pix * 0.8 + 17.7)) - 0.5) * 2.6
+                     + (vec2(noise(pix * 2.1 + 5.0), noise(pix * 2.1 + 9.0)) - 0.5) * 1.1;
+        ivec2 qb = ivec2(floor(wq));
+        float tId[6]; float tW[6]; int tN = 0;
+        for (int j = -2; j <= 3; j++)
+            for (int i = -2; i <= 3; i++)
+            {
+                ivec2 c = qb + ivec2(i, j);
+                vec2 d = (vec2(c) - wq) / 2.7;
+                float kw = max(1.0 - dot(d, d), 0.0);
+                kw *= kw;
+                if (kw <= 0.0) continue;
+                float id = terrainAt(c);
+                int k = 0;
+                while (k < tN && tId[k] != id) k++;
+                if (k == tN) { if (tN >= 6) continue; tId[tN] = id; tW[tN] = 0.0; tN++; }
+                tW[k] += kw;
+            }
+        float tot = 0.0;
+        for (int k = 0; k < tN; k++) tot += tW[k];
+        vec3 tC[6]; float tH[6]; float tMax = 0.0;
+        for (int k = 0; k < tN; k++)
+        {
+            tW[k] /= max(tot, 1e-4);
+            if (tW[k] < 0.004) { tW[k] = 0.0; continue; }
+            tC[k] = atlas(tId[k], tuv);
+            // a texture's own brightness lets its bumps push through its neighbor (height blending)
+            tH[k] = tW[k] + dot(tC[k], vec3(0.3, 0.59, 0.11)) * 0.25;
+            tMax = max(tMax, tH[k]);
+        }
+        col = vec3(0.0); float cw = 0.0;
+        for (int k = 0; k < tN; k++)
+        {
+            if (tW[k] <= 0.0) continue;
+            float w = max(tH[k] - (tMax - 0.5), 0.0);
+            col += tC[k] * w; cw += w;
+        }
+        col /= max(cw, 1e-4);
         // large scale variation hides the texture repeating
         // (on the globe this noise is taken in 3D: in map coordinates it stretches into rays at the poles)
         if (globe > 0.5) col *= 0.90 + 0.20 * vnoise3(fragWorld * 0.11) * (0.5 + 0.5 * vnoise3(fragWorld * 0.37));
         else col *= 0.90 + 0.20 * noise(fragPos.xz * 0.11) * (0.5 + 0.5 * noise(fragPos.xz * 0.37));
+        vec3 ln = fragNormal;
+        if (hasNormalMap > 0.5 && !outside)
+        {
+            // tangent space (x east, y north, z up) to map space (x east, y up, z south), added onto the mesh slope
+            vec3 t = texture(texture3, pix / mapSize).xyz * 2.0 - 1.0;
+            ln = normalize(vec3(ln.x + t.x, ln.y, ln.z - t.y));
+        }
+        float slopeAmt = 1.0 - clamp(ln.y, 0.0, 1.0);
+        float rockN = noise(fragPos.xz * 1.9) * 0.6 + noise(fragPos.xz * 5.3) * 0.4;
+        float lumT = dot(col, vec3(0.3, 0.59, 0.11));
+        // steep ground shows bare rock, darker in the cracks
+        float rockAmt = smoothstep(0.22, 0.48, slopeAmt + (rockN - 0.5) * 0.12);
+        vec3 rockCol = mix(vec3(0.34, 0.30, 0.26), vec3(0.52, 0.48, 0.43), rockN) * (0.65 + 0.7 * lumT);
+        col = mix(col, rockCol, rockAmt * 0.7);
+        // snow above a snow line that drops towards the poles, thinner on steep faces
+        float lat = mix(latRange.x, latRange.y, fragPos.z / worldSize.y);
+        float cold = smoothstep(15.0, 65.0, abs(lat));
+        float snowLine = mix(0.64, 0.42, cold);
+        float hN = fragPos.y / max(heightScale, 0.001);
+        float snowAmt = smoothstep(snowLine, snowLine + 0.09, hN + (rockN - 0.5) * 0.07) * (1.0 - smoothstep(0.28, 0.62, slopeAmt) * 0.75);
+        col = mix(col, vec3(0.90, 0.93, 0.98) * (0.88 + 0.12 * rockN), snowAmt * 0.85);
         float rcov = 0.0, bank = 0.0;
         if (tpp < 1.0)
         {
@@ -368,10 +430,18 @@ void main()
         }
 
         // hill shading
-        vec3 n = normalize(fragE * fragNormal.x + fragU * fragNormal.y + fragS * fragNormal.z);
+        vec3 n = normalize(fragE * ln.x + fragU * ln.y + fragS * ln.z);
         float ndl = max(dot(n, sunDir), 0.0) * sunUp;
-        col *= (0.38 + 0.72 * ndl) * (0.22 + 0.78 * sunUp);
-        col = mix(col, col * vec3(1.05, 1.0, 0.92), ndl * 0.3);          // warm light, cool shadows
+        // sky light from above (cool, stronger on open ground) plus a warm sun; low sun rakes the relief
+        float skyAmt = 0.5 + 0.5 * dot(n, fragU);
+        vec3 amb = mix(vec3(0.31, 0.32, 0.34), vec3(0.43, 0.44, 0.45), skyAmt) * (0.22 + 0.78 * sunUp);
+        col *= amb + vec3(1.0, 0.95, 0.86) * (ndl * 0.80);
+        // distance haze on the flat map: far terrain fades towards the sky, which gives the tilted view its depth
+        if (globe < 0.5)
+        {
+            float hz = clamp(1.0 - exp(-length(viewPos - fragWorld) * 0.0005), 0.0, 0.2);
+            col = mix(col, vec3(0.62, 0.70, 0.78) * (0.30 + 0.70 * sunUp), hz);
+        }
 
         // map mode color: multiplied over the terrain so hills and forests still show (HOI4 style)
         vec4 mc = lut(loc, 0);
