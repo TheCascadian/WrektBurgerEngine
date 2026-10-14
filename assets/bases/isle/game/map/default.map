@@ -16,3 +16,4 @@ tree_spacing = 5
 river_background = { 255 255 255 }
 water_color = { 30 66 112 }
 river_color = { 46 96 158 }
+normalmap = "normal.png"
