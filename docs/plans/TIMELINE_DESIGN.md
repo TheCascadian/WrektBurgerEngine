@@ -16,6 +16,13 @@ Status: draft. Fill one paragraph per item before any new mechanic is coded. Not
 - DECIDED: the combat models are renamed to engine-exclusive ids: BH4, BE4, BI1. Each maps in the team's minds to its old counterpart but no Paradox game or product is named in code, data or docs.
 - DECIDED: git history is NOT rewritten. Earth1930 stays in the earlier commits.
 - DECIDED: all other business decisions are deferred (see section 7).
+- DECIDED: history-following is strict by default. Guided is an optional setting. History-following can be disabled only by an explicit, very clearly labeled setting chosen per playthrough, stored in that playthrough's save, so it never carries over to other playthroughs.
+- DECIDED: every country in every shipped scenario, and explicitly in the starting scenario, is modeled properly with as much content as is feasible within the project goal.
+- DECIDED: real names, real people, real locations.
+- DECIDED: the full timeline plus a sandbox extension beyond it.
+- DECIDED: all recommendations in section 9 are approved.
+- DECIDED: the GPL-3.0 historical basemap data is not used; its content is recreated safely (section 9.5).
+- DECIDED: tools, validation, self-tests and focus lint are scenario agnostic and take a single scenario per run.
 - DECIDED: the game is very unlikely ever to have live in-game generative AI content. Any generated content is created before release and shipped; nothing is generated mid-game or after release.
 
 ## 1. Pillars
@@ -109,7 +116,7 @@ Three kinds of bloc: Region, Elite, Army. Each has trust 0-100, reusing the exis
 | Industrial | 1650-1900 | industry, standing armies, parliaments, nationalism |
 | Modern | 1900-2020 | mechanized war, mass ideology, modern state |
 
-### 9.5 500 BCE map
+### 9.5 500 BCE map (approved; GPL-3.0 confirmed by the owner)
 - Coastlines, rivers and elevation are mostly reusable from the existing generator inputs (Natural Earth, public domain, plus AWS elevation tiles), with manual fixes where the coast has moved.
 - The political layer (who held what in 500 BCE) needs a source. aourednik/historical-basemaps has such maps but is reported to be GPL-3.0 (unverified); using it in a shipped game may impose GPL terms, so do not use it until licensing is confirmed. Alternative: draw the political layer ourselves from public-domain or citable references.
 - Tools should be rewritten from the 1930 generator to a timeline-neutral generator.
@@ -121,3 +128,28 @@ Three kinds of bloc: Region, Elite, Army. Each has trust 0-100, reusing the exis
 - When the Earth1930-specific self-tests and the focus-lint check in `Program.cs` get replaced.
 - The four decisions in HISTORICAL_AI_PLAN (railroad dial, scope of 1930, real names and people, time horizon): all four were written for the 1930 game.
 - Deferred business: split terms, third developer, Steam wording check, content provenance.
+
+## 11. Recommendations awaiting approval (second round)
+
+### 11.1 Safe recreation of the GPL-3.0 map data
+Not legal advice; a lawyer should review before release.
+- Do not copy, convert, trace, resample or "clean up" the GPL files, and do not keep them in the repo or on build machines used for the shipped data. A derived work could carry GPL terms into the game.
+- Facts (who held what, where a city stood) are not copyrightable. The risk is in the specific geometry and the selection and arrangement in that dataset.
+- Build from independently licensed sources, each logged with license and URL before use: Natural Earth (public domain) for coastlines and rivers, AWS elevation tiles for relief, and primary or scholarly sources for who held what. Check each license directly; do not assume.
+- Draw the political boundaries ourselves from those sources, as new polygons on our own grid (the game's province map), not by following another dataset's lines.
+- Keep a source ledger: for each country and region in the scenario, the references used and the date. This is the evidence that the data is independent.
+- Compare the finished map against the GPL data only as an audit, to catch accidental near-copies, never as an input.
+
+### 11.2 The 1930-era engine values
+Move each to a define or era-pack data, with the 1930 value removed from code:
+- Base year 1930: becomes the scenario start date.
+- Tech start-lag 60/25/10: becomes a per-scenario define, with a sensible default per era.
+- Flag era thresholds 1789, 1850, 1920: replace with era boundaries read from the Era Pack list. The seed rule stays unchanged so existing flag output does not change.
+- Flag families and emblems with year gates (for example hammer_sickle 1917) go to data, as the report already says.
+
+### 11.3 Planning week and kernel work
+Run them at the same time. The kernel steps in the rebuild report (script language, kernel, data loading) do not depend on the game design, so coding them in the planning week costs no design time. The first mechanic is not coded until the section 3 paragraphs are written.
+
+### 11.4 Strict-by-default history
+- A per-playthrough setting: strict (default), guided, or off. Off requires an explicit, clearly labeled choice at new-game time and is shown in the save and the UI.
+- The setting lives in the save's meta block, not in user settings, so it cannot leak across playthroughs.

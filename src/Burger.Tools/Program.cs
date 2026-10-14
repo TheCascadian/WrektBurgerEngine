@@ -289,7 +289,7 @@ public static partial class Program
                 var liveC = game.World.Countries.Where(c => c.Exists).ToList();
                 double world = liveC.Sum(c => game.Commodities.BalanceOf(c, k.Key).Output);
                 var short_ = liveC.Where(c => game.Commodities.BalanceOf(c, k.Key).Satisfied < 0.85).Select(c => $"{c.Tag} {game.Commodities.BalanceOf(c, k.Key).Satisfied:P0}").Take(8);
-                string main = string.Join(" ", new[] { "USA", "GER", "ENG", "FRA", "SOV", "JAP", "ITA" }.Select(t => game.World.GetCountry(t)).Where(c => c != null).Select(c => { var b = game.Commodities.BalanceOf(c!, k.Key); return $"{c!.Tag}:{b.Output:0}/{b.Demand:0}"; }));
+                string main = string.Join(" ", liveC.OrderByDescending(c => c.OwnedStates.Count).Take(7).Select(c => { var b = game.Commodities.BalanceOf(c, k.Key); return $"{c.Tag}:{b.Output:0}/{b.Demand:0}"; }));
                 Console.WriteLine($"  {k.Name}: world {world:0}/month, output/demand {main}; short: {string.Join(", ", short_)}");
             }
         }
@@ -1363,7 +1363,7 @@ public static partial class Program
         if (g.Focus.Enabled)
         {
             var lint = g.Focus.Lint();
-            if (project.Contains("Earth1930", StringComparison.OrdinalIgnoreCase)) Check(lint.Count == 0, "focus: the Earth1930 trees check no dates and make no war" + (lint.Count > 0 ? ": " + string.Join("; ", lint.Take(3)) : ""));
+            Check(lint.Count == 0, "focus: the trees check no dates and make no war" + (lint.Count > 0 ? ": " + string.Join("; ", lint.Take(3)) : ""));
             var c = live.FirstOrDefault(x => g.Focus.TreeOf(x) is { Default: false } && g.Focus.FocusesOf(x).Any(f => g.Focus.CannotStart(x, f) == null));
             if (c != null)
             {
@@ -1401,8 +1401,6 @@ public static partial class Program
         }
         var dependent = g.World.Countries.FirstOrDefault(c => c.Exists && c.NameVariants.ContainsKey("subject") && g.World.Relations.OverlordOf(c) != null);
         if (dependent != null) Check(dependent.RawName == dependent.NameVariants["subject"], $"names: the dependency {dependent.Tag} is '{dependent.Name}'");
-        if (g.World.GetCountry("RAJ") is { } raj && raj.Exists)
-            Check(P.IsAccepted(raj, "punjabi") && !P.IsAccepted(raj, "bengali") && !P.IsAccepted(raj, "tamil"), "culture: the Raj accepts its own north-west, not all of India");
         // a people of the winner's own: its land goes to the winner, there is no second country of it
         var a = g.World.Countries.Where(c => c.Exists && c.Capital != null && Builtins.NeighborCountries(g, c).Count >= 1 && c.OwnedStates.Count >= 3).OrderByDescending(c => c.OwnedStates.Count).First();
         var b = Builtins.NeighborCountries(g, a).Where(x => x.OwnedStates.Count >= 3 && g.World.Relations.OverlordOf(x) == null).OrderByDescending(x => x.OwnedStates.Count).FirstOrDefault();
