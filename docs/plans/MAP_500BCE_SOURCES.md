@@ -110,3 +110,17 @@ Remaining unread: Gazetteer of Ancient Arabia, Cleveland, Art Institute, Smithso
 | Culture, religion, population | Province data | None identified | n/a | Not covered by any source above |
 
 Also required, not yet decided: start date and calendar display, country and peoples list, handling of unknown areas, and a policy for 500 BCE coast corrections.
+
+## 10. Owner-supplied evidence (2026-10-14)
+The owner saved license pages and screenshots in docs/SOURCES/. Findings, read from those files:
+- **GEBCO:** public domain; free, commercial use allowed; must acknowledge the source and must not suggest GEBCO endorsement. Attribution text is in the grid documentation that ships with the download.
+- **Pleiades:** CC BY 3.0 US confirmed (deed saved). Credit with link to the license and note changes. The credits page does not load (owner confirmed); contributors are credited by citing Pleiades.
+- **Getty TGN:** ODC-By 1.0. Required credit line: "Contains information from the J. Paul Getty Trust, Getty Research Institute, [tool name], which is made available under the ODC Attribution License". Also cite the contributor and sources where appropriate.
+- **Syriaca:** CC BY 4.0, cite as "Syriaca.org: The Syriac Reference Portal. 2014-. http://syriaca.org" with the listed editors.
+- **PeriodO:** the contributors dedicated the dataset to the public domain; attribution is requested, not required.
+- **The Met:** CC0 for basic data on all accessioned works and images of public-domain works.
+- **Nomisma:** CC-BY for concepts on the nomisma.org domain; partner datasets carry their own licenses and must be checked individually.
+- **DASI:** CC BY 4.0 for record data, not images. Per-record attribution (scholars, publication date, last revision, DOI) must travel with each record; a general acknowledgement is not enough. DASI objects to bulk scraping and discourages reuse in AI-generated resources, so any use needs the API under an agreement with their contact person.
+- **MesoRAD:** the saved screenshot shows only the reuse text, no license. Stays UNVERIFIED and unapproved.
+- **HydroRIVERS (HydroSHEDS v1):** the license (technical document, Appendix A) is not a plain open license. It grants rights to integrate the data into a derivative work and distribute it to end users under an end-user agreement at least as protective as the license; it forbids distributing the data as a stand-alone product and forbids reverse engineering; required copyright statement is in Exhibit B; the scientific citation is Lehner, Verdin and Jarvis (2008). Using it means baking rivers into game data and shipping an end-user license and the Exhibit B statement. This conflicts with the owner's goal of open, moddable data unless the owner accepts it. Not approved.
+- **Not covered by the saved evidence:** GeoNames (page read earlier: cc-by, link to geonames.org), Gazetteer of Ancient Arabia, Cleveland, Art Institute, Smithsonian, Chengdu survey.
