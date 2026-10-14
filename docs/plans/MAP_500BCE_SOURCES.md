@@ -194,3 +194,14 @@ Saved pages read; statuses are PENDING OWNER where the license is verified, beca
 
 ## 20. NASA Historical Urban Population
 The data.nasa.gov record's License box reads "License not specified" (screenshot saved). Access reportedly requires an Earthdata account and acceptance of the NASA Earthdata End User License Agreement; the EULA text has not been read, and the claim of CC BY 4.0 is unsupported. A pasted chat answer describing these conditions is not a primary source and was not saved as evidence. The row stays UNVERIFIED and unusable until the EULA is saved and found to allow commercial redistribution inside a game.
+
+## 21. Current source list (owner decisions applied)
+The WOCE drifter row was removed at the owner's request. GRWL, Wikidata and open-archeOcsean were approved: evidence saved and hashed, commercial use allowed with attribution.
+
+| Status | Sources |
+|---|---|
+| APPROVED | ne_coast, gebco, pleiades, geonames, getty_tgn, syriaca, periodo, met_oa, nomisma, dasi, cleveland_oa, smithsonian_oa, chengdu_survey, artic, grwl, open_archeocsean, wikidata |
+| UNVERIFIED | mesorad, siddham, cliopatria, beyer_climate, nasa_urban_pop |
+| REJECTED | hydrorivers, pard, merit_hydro, ancient_arabia, grit, seshat, road |
+
+Attribution notes for the newly approved rows: GRWL: Allen and Pavelsky (2018), Science 361(6402):585-588, link CC BY 4.0, state changes. open-archeOcsean: Plutniak (2025), doi 10.5281/zenodo.17996201, link CC BY 4.0, state changes; index only, not geometry. Wikidata: CC0, no attribution required, structured data only (not other namespaces).
