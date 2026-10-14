@@ -1,1 +1,0 @@
-conquest = { name = "Conquest" allow = { always = yes } others_opinion = -20 }

@@ -1,2 +1,0 @@
-brave = { martial = 1 random_weight = 10 opposites = { craven } }
-craven = { martial = -1 random_weight = 5 opposites = { brave } }
