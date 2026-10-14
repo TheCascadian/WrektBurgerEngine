@@ -22,13 +22,26 @@ public sealed class CountryLabels
         public float LengthPx;
         public string Kind = "";                        // how the line was found (debugging)
         public float Coverage = 1;                        // share of the land's length the name runs along
+        // identity of what the label was fitted to: the same owner, name and land gives the same label (no refit, no movement)
+        public int Owner = -1;
+        public long Key;
+        public int[] Locs = Array.Empty<int>();
+        // a refit that really had to move the name glides from its old curve to the new one instead of jumping
+        public Vector2[]? FromPoints;
+        public float FromFontPx, FromLengthPx;
+        public double MorphAt = -1;
+        public Label Rekeyed(long key, int[] locs) => new Label
+        {
+            Text = Text, Points = Points, FontPx = FontPx, Heights = Heights, LengthPx = LengthPx, Kind = Kind, Coverage = Coverage,
+            Owner = Owner, Key = key, Locs = locs,
+        };
     }
 
     private sealed record LocationInput(int Index, int OwnerIndex, bool IsWater, int PixelCount,
         float CenterX, float CenterY, int MinX, int MinY, int MaxX, int MaxY, int[] LandNeighbors);
     private sealed record CountryInput(int Index, string Tag, string Name, int CapitalIndex);
     private sealed record BuildInput(int Version, int Width, int Height, int[] PixelLocation,
-        LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex);
+        LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex, Label[] Previous);
     private sealed record BuildResult(int Version, Label[] Labels);
 
     private const double BuildDebounceSeconds = 0.4;
@@ -77,7 +90,7 @@ public sealed class CountryLabels
         var countries = world.Countries.Where(c => c.Exists)
             .Select(c => new CountryInput(c.Index, c.Tag, c.Name, c.Capital?.Index ?? -1)).ToArray();
         return new BuildInput(version, map.Width, map.Height, map.PixelLocation, locations,
-            countries.ToDictionary(c => c.Index));
+            countries.ToDictionary(c => c.Index), _labels.ToArray());
     }
 
     private void RefreshLabels()
@@ -89,6 +102,8 @@ public sealed class CountryLabels
             {
                 var result = completed.GetAwaiter().GetResult();
                 ApplyHeights(result.Labels);
+                double now0 = Raylib.GetTime();
+                foreach (var l in result.Labels) if (l.FromPoints != null && l.MorphAt < 0) l.MorphAt = now0;
                 _labels.Clear();
                 _labels.AddRange(result.Labels);
                 // Publish the most recent completed snapshot even if newer map changes arrived while
@@ -225,11 +240,88 @@ public sealed class CountryLabels
                 long px = grp.Sum(i => blocks[i].Px);
                 bool wanted = grp.Key == home || (locs.Count >= 2 && px >= 400);
                 if (!wanted) continue;
+                int[] idx = locs.Select(l => l.Index).OrderBy(i => i).ToArray();
+                long key = LabelKey(country.Index, country.Name, idx);
+                var same = input.Previous.FirstOrDefault(pl => pl.Key == key);
+                if (same != null) { labels.Add(same); continue; }   // nothing this name depends on changed: it stays exactly where it is
                 var label = Fit(country, locs, grp.Key, block, blockGroup, input);
-                if (label != null) labels.Add(label);
+                if (label == null) continue;
+                label.Owner = country.Index; label.Key = key; label.Locs = idx;
+                var old = BestPrevious(input.Previous, country.Index, label.Text, idx);
+                if (old != null)
+                {
+                    // a small change in the land (a province gained or lost elsewhere) must not shuffle the name: keep the old
+                    // curve while it still lies inside the land and its letters are not much smaller than a fresh fit would give
+                    int gid = grp.Key, inside = 0, total = 0;
+                    bool In(Vector2 q)
+                    {
+                        int x = (int)q.X, y = (int)q.Y;
+                        if (x < 0 || y < 0 || x >= input.Width || y >= input.Height) return false;
+                        int li = input.PixelLocation[y * input.Width + x];
+                        return li >= 0 && block[li] >= 0 && blockGroup[block[li]] == gid;
+                    }
+                    for (int i = 0; i < old.Points.Length; i++)
+                    {
+                        total++; if (In(old.Points[i])) inside++;
+                        if (i > 0) { total++; if (In((old.Points[i] + old.Points[i - 1]) / 2)) inside++; }
+                    }
+                    if (inside >= total * 0.9f && old.FontPx >= label.FontPx * 0.75f) { labels.Add(old.Rekeyed(key, idx)); continue; }
+                    label.FromPoints = Resample(old.Points, label.Points.Length);
+                    label.FromFontPx = old.FontPx; label.FromLengthPx = old.LengthPx;
+                }
+                labels.Add(label);
             }
         }
         return labels.ToArray();
+    }
+
+    private static long LabelKey(int owner, string name, int[] sortedLocs)
+    {
+        var h = new HashCode();
+        h.Add(owner); h.Add(name);
+        foreach (int i in sortedLocs) h.Add(i);
+        return ((long)h.ToHashCode() << 32) ^ (uint)sortedLocs.Length * 2654435761u ^ sortedLocs.Sum(i => (long)i * 7919);
+    }
+
+    /// <summary>The earlier label of this country and name whose land overlaps the new land most (null if none).</summary>
+    private static Label? BestPrevious(Label[] previous, int owner, string text, int[] sortedLocs)
+    {
+        Label? best = null;
+        int bestShared = 0;
+        foreach (var pl in previous)
+        {
+            if (pl.Owner != owner || pl.Text != text) continue;
+            int a = 0, b = 0, shared = 0;
+            while (a < pl.Locs.Length && b < sortedLocs.Length)
+            {
+                if (pl.Locs[a] == sortedLocs[b]) { shared++; a++; b++; }
+                else if (pl.Locs[a] < sortedLocs[b]) a++; else b++;
+            }
+            if (shared > bestShared) { bestShared = shared; best = pl; }
+        }
+        // mostly the same land (a name must not hop to a different part of the country)
+        return best != null && bestShared * 2 >= Math.Min(best.Locs.Length, sortedLocs.Length) ? best : null;
+    }
+
+    /// <summary>The same curve with <paramref name="m"/> points, evenly spaced along its length.</summary>
+    private static Vector2[] Resample(Vector2[] pts, int m)
+    {
+        var res = new Vector2[m];
+        int n = pts.Length;
+        if (n == 0 || m == 0) return res;
+        if (n == 1 || m == 1) { Array.Fill(res, pts[0]); return res; }
+        var cum = new float[n];
+        for (int i = 1; i < n; i++) cum[i] = cum[i - 1] + Vector2.Distance(pts[i - 1], pts[i]);
+        float total = Math.Max(cum[n - 1], 1e-3f);
+        int k = 1;
+        for (int i = 0; i < m; i++)
+        {
+            float at = total * i / (m - 1);
+            while (k < n - 1 && cum[k] < at) k++;
+            float t = (at - cum[k - 1]) / Math.Max(1e-4f, cum[k] - cum[k - 1]);
+            res[i] = Vector2.Lerp(pts[k - 1], pts[k], Math.Clamp(t, 0, 1));
+        }
+        return res;
     }
 
     private static Label? Fit(CountryInput c, List<LocationInput> locs, int groupId, int[] block, int[] blockGroup, BuildInput md)
@@ -632,6 +724,7 @@ public sealed class CountryLabels
     // ------------------------------------------------------------------------------------- drawing
     // widest gap between letters, in letter heights: long names spread out over long countries
     const float MaxSpacing = 2.0f;
+    private const double MorphSeconds = 0.7;
 
     private int _pollFrame, _signature;
 
@@ -662,6 +755,8 @@ public sealed class CountryLabels
         var font = Assets.HeaderFont;
         var scr = new Vector2[24];
         var cum = new float[24];
+        var tan = new Vector2[24];
+        double clock = Raylib.GetTime();
         // Glyph advances only depend on (font, char, size); measuring every letter of every label
         // each frame (Raylib MeasureTextEx -> glyph-atlas lookup) dominated the frame time while
         // panning. Cache them; sizes are rounded to whole pixels so the cache stays small and bounded.
@@ -671,12 +766,28 @@ public sealed class CountryLabels
         foreach (var lb in _labels)
         {
             int n = lb.Points.Length;
+            // a name that was refitted glides from its old curve to the new one
+            var pts = lb.Points;
+            float fontPx = lb.FontPx, lengthPx = lb.LengthPx;
+            if (lb.FromPoints != null && lb.FromPoints.Length == n)
+            {
+                float mt = (float)((clock - lb.MorphAt) / MorphSeconds);
+                if (mt >= 1) lb.FromPoints = null;
+                else
+                {
+                    float e = mt <= 0 ? 0 : mt * mt * (3 - 2 * mt);
+                    pts = new Vector2[n];
+                    for (int i = 0; i < n; i++) pts[i] = Vector2.Lerp(lb.FromPoints[i], lb.Points[i], e);
+                    fontPx = float.Lerp(lb.FromFontPx, lb.FontPx, e);
+                    lengthPx = float.Lerp(lb.FromLengthPx, lb.LengthPx, e);
+                }
+            }
             float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
             bool behindCamera = false;
             float anchorX = 0;
             for (int i = 0; i < n; i++)
             {
-                var p = lb.Points[i];
+                var p = pts[i];
                 float wxp = p.X / ppu;
                 // flat map: keep the whole name in one copy of the wrapping world (a name near the seam must not split across both edges)
                 if (!_map.Globe && i > 0) wxp += _map.WorldWidth * MathF.Round((anchorX - wxp) / _map.WorldWidth);
@@ -685,7 +796,7 @@ public sealed class CountryLabels
                 // A point behind the eye projects mirrored and magnified (see Viewport.TryProjectSnapped), which made
                 // names flash across the screen while panning. A name that touches that region is not drawn at all.
                 if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth || Viewport.IsHidden(world, cam)) { behindCamera = true; break; }
-                scr[i] = Viewport.SnapToScreen(world, cam);
+                scr[i] = Viewport.ToScreen(world, cam); // not snapped: whole-pixel vertices made the letters step while the camera moved
                 minX = Math.Min(minX, scr[i].X); maxX = Math.Max(maxX, scr[i].X); minY = Math.Min(minY, scr[i].Y); maxY = Math.Max(maxY, scr[i].Y);
             }
             if (behindCamera) continue;
@@ -696,7 +807,7 @@ public sealed class CountryLabels
             for (int i = 1; i < n; i++) cum[i] = cum[i - 1] + Vector2.Distance(scr[i - 1], scr[i]);
             float L = cum[n - 1];
             if (L < 2) continue;
-            float fs = lb.FontPx * (L / lb.LengthPx);
+            float fs = fontPx * (L / lengthPx);
             if (fs < minScreenFont) continue;
             fs = Math.Min(fs, 140);
             // glyph advances
@@ -727,6 +838,12 @@ public sealed class CountryLabels
             var col = new Color((byte)250, (byte)246, (byte)230, alpha);
             var shadow = new Color((byte)0, (byte)0, (byte)0, (byte)(alpha * 0.8f));
             float so = Math.Max(1f, fs / 22f);
+            // direction of the curve at each point, blended along the segments: letters turn smoothly instead of snapping at every corner
+            for (int i = 0; i < n; i++)
+            {
+                var dv = scr[Math.Min(n - 1, i + 1)] - scr[Math.Max(0, i - 1)];
+                tan[i] = dv.LengthSquared() < 1e-6f ? Vector2.UnitX : Vector2.Normalize(dv);
+            }
             for (int i = 0; i < lb.Text.Length; i++)
             {
                 float center = pos + adv[i] / 2;
@@ -737,7 +854,7 @@ public sealed class CountryLabels
                 while (k < n - 1 && cum[k] < center) k++;
                 float t = (center - cum[k - 1]) / Math.Max(0.001f, cum[k] - cum[k - 1]);
                 var p = Vector2.Lerp(scr[k - 1], scr[k], Math.Clamp(t, 0, 1));
-                var d = scr[k] - scr[k - 1];
+                var d = Vector2.Lerp(tan[k - 1], tan[k], Math.Clamp(t, 0, 1));
                 float rot = MathF.Atan2(d.Y, d.X) * 180f / MathF.PI;
                 var origin = new Vector2(adv[i] / 2, fs / 2);
                 string s = ch.ToString();
