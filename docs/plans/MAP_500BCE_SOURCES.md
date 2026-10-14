@@ -124,3 +124,12 @@ The owner saved license pages and screenshots in docs/SOURCES/. Findings, read f
 - **MesoRAD:** the saved screenshot shows only the reuse text, no license. Stays UNVERIFIED and unapproved.
 - **HydroRIVERS (HydroSHEDS v1):** the license (technical document, Appendix A) is not a plain open license. It grants rights to integrate the data into a derivative work and distribute it to end users under an end-user agreement at least as protective as the license; it forbids distributing the data as a stand-alone product and forbids reverse engineering; required copyright statement is in Exhibit B; the scientific citation is Lehner, Verdin and Jarvis (2008). Using it means baking rivers into game data and shipping an end-user license and the Exhibit B statement. This conflicts with the owner's goal of open, moddable data unless the owner accepts it. Not approved.
 - **Not covered by the saved evidence:** GeoNames (page read earlier: cc-by, link to geonames.org), Gazetteer of Ancient Arabia, Cleveland, Art Institute, Smithsonian, Chengdu survey.
+
+## 11. Third evidence pass (2026-10-14)
+- **Cleveland Museum of Art:** its Open Access page says open access content (images, data, software, documentation) is published free of charge and without copyright and licensing restrictions, and that material offered with CC0 can be used in any application. Approved, CC0.
+- **Smithsonian:** the FAQ says Open Access items carry a CC0 designation, and "CC0 only applies to copyright so you may still need someone else's permission". Approved, but only per item designated Open Access.
+- **GeoNames:** terms page says "cc-by licence", "commercial usage is allowed", credit GeoNames with a link or other reference, data provided "as is". Approved for name disambiguation only.
+- **Open Context (Chengdu survey):** the screenshot shows a search map of 81,764 records and no license. UNVERIFIED; the project's own license page must be read.
+- **Gazetteer of Ancient Arabia:** the owner reports the domain is for sale. Rejected as unavailable. DASI's terms say DASI supplies data to it, so those inscriptions remain reachable through DASI under DASI's terms.
+- **Art Institute of Chicago:** the owner confirms the link is only API documentation. UNVERIFIED; its data terms were not read.
+- **Rivers:** the owner requires rivers from another source. HydroRIVERS is rejected. No replacement is identified; options are a new source the owner approves, or rivers derived from GEBCO elevation (flow routing on our own grid, which needs no third-party river data).
