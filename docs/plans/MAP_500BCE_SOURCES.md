@@ -61,3 +61,8 @@ Options for the owner (not decided):
 - No data downloaded, no license text copied, no hash recorded.
 - No record-level check of any source for 500 BCE coverage.
 - Rivers, modern-name and four regional searches were run as web searches only (summaries, not primary pages).
+
+## 6. Owner decisions (Gate 2, partial)
+- Regional detail: 8,192 x 4,096 pixels for the province image.
+- Target: 26,000 total locations.
+- Still undecided: exact start date and calendar display, list of countries and peoples, handling of disputed or unknown areas, and approval of the source slate (Gate 1).
