@@ -10,7 +10,8 @@ _helper.bat
 burger.sh
 !tools/git/burger.sh
 WBE.sh
-.pyc
+*.pyc
+__pycache__/
 .patch
 .claude
 .ZIPs
@@ -27,3 +28,7 @@ notes_misc.txt
 
 # Private archive of pre-pivot scenarios (local only)
 .ARCHIVE/
+
+# Runtime logs, generated test world, bytecode
+logs/
+projects/World500Test/
