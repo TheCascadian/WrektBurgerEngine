@@ -128,7 +128,7 @@ public sealed class CountryLabels
         {
             int n = label.Points.Length;
             var raw = new float[n];
-            for (int i = 0; i < n; i++) raw[i] = _map.WorldPos(label.Points[i].X, label.Points[i].Y).Y;
+            for (int i = 0; i < n; i++) raw[i] = _map.HeightAt(label.Points[i].X / _map.PixelsPerUnit, label.Points[i].Y / _map.PixelsPerUnit);
             var heights = new float[n];
             for (int i = 0; i < n; i++)
             {
@@ -676,10 +676,10 @@ public sealed class CountryLabels
             for (int i = 0; i < n; i++)
             {
                 var p = lb.Points[i];
-                var world = new Vector3(p.X / ppu, lb.Heights[i], p.Y / ppu);
+                var world = _map.PlaceAt(p.X / ppu, p.Y / ppu, lb.Heights[i]);
                 // A point behind the eye projects mirrored and magnified (see Viewport.TryProjectSnapped), which made
                 // names flash across the screen while panning. A name that touches that region is not drawn at all.
-                if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth) { behindCamera = true; break; }
+                if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth || Viewport.IsHidden(world, cam)) { behindCamera = true; break; }
                 scr[i] = Viewport.SnapToScreen(world, cam);
                 minX = Math.Min(minX, scr[i].X); maxX = Math.Max(maxX, scr[i].X); minY = Math.Min(minY, scr[i].Y); maxY = Math.Max(maxY, scr[i].Y);
             }

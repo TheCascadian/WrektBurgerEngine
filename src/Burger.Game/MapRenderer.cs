@@ -43,9 +43,16 @@ public sealed unsafe class MapRenderer : IDisposable
     private int _mw, _mh;
 
     private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale,
-        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locTint, _locViewPos, _locFog;
+        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun;
     private int _visibilityVersion = -1;
 
+    /// <summary>Draw the map on a globe instead of the flat, east-west wrapping map. Set through <see cref="CameraController.SetGlobe"/>.</summary>
+    public bool Globe { get; internal set; }
+    /// <summary>Radius of the globe: the map width is its circumference, so one map unit is the same length at the equator in both modes.</summary>
+    public float GlobeRadius => WorldWidth / MathF.Tau;
+    /// <summary>X of the point the camera looks at on the flat map. Things are drawn in the copy of the wrapping map nearest to it.</summary>
+    public float ViewCenterX { get; set; }
+    public float PixelsPerUnit => _map.Settings.PixelsPerUnit;
     public float WorldWidth { get; }
     public float WorldHeight { get; }
     public MapMode Mode { get; set; } = MapMode.Political;
@@ -154,16 +161,26 @@ public sealed unsafe class MapRenderer : IDisposable
         Image meshImg = Raylib.GenImageColor(meshW, meshH, Color.Black);
         byte* meshPx = (byte*)meshImg.Data;
         for (int y = 0; y < meshH; y++)
+        {
+            int sy = meshH == 1 ? 0 : (int)(y * (_hh - 1f) / (meshH - 1));
+            // the last rows before a pole squeeze every column into a few units: heights that differ from column to column there
+            // become radial spikes on the globe. Pull those rows towards their own mean, fully flat at the pole itself.
+            float cosLat = MathF.Cos((0.5f - y / (meshH - 1f)) * MathF.PI);
+            float t = Math.Clamp((cosLat - 0.03f) / 0.12f, 0f, 1f);
+            float keep = t * t * (3f - 2f * t);
+            float mean = 0;
+            if (keep < 1f) { for (int x = 0; x < _hw; x++) mean += smooth[sy * _hw + x]; mean /= _hw; }
             for (int x = 0; x < meshW; x++)
             {
                 int sx = meshW == 1 ? 0 : (int)(x * (_hw - 1f) / (meshW - 1));
-                int sy = meshH == 1 ? 0 : (int)(y * (_hh - 1f) / (meshH - 1));
                 byte h = smooth[sy * _hw + sx];
+                if (keep < 1f) h = (byte)MathF.Round(mean + (h - mean) * keep);
                 int o = (y * meshW + x) * 4;
                 _meshHeights[y * meshW + x] = h / 255f * s.HeightScale;
                 meshPx[o] = meshPx[o + 1] = meshPx[o + 2] = h;
                 meshPx[o + 3] = 255;
             }
+        }
         // raylib spaces heightmap vertices by size/(vertexCount), not size/(vertexCount - 1).
         // Expand the input size by one cell so the first and last vertices land exactly at
         // [0..WorldWidth] and [0..WorldHeight], matching HeightAt(), WorldPos(), and map pixels.
@@ -281,6 +298,7 @@ public sealed unsafe class MapRenderer : IDisposable
         _locTileScale = Raylib.GetShaderLocation(_shader, "tileScale");
         _locWater = Raylib.GetShaderLocation(_shader, "waterColor");
         _locRiver = Raylib.GetShaderLocation(_shader, "riverColor");
+        _locSun = Raylib.GetShaderLocation(_shader, "sunDirU");
         _locTime = Raylib.GetShaderLocation(_shader, "time");
         _locBorderScale = Raylib.GetShaderLocation(_shader, "borderScale");
         _locStripe = Raylib.GetShaderLocation(_shader, "stripePeriod");
@@ -289,6 +307,8 @@ public sealed unsafe class MapRenderer : IDisposable
         _locTint = Raylib.GetShaderLocation(_shader, "tintStrength");
         _locViewPos = Raylib.GetShaderLocation(_shader, "viewPos");
         _locFog = Raylib.GetShaderLocation(_shader, "fogStrength");
+        _locGlobe = Raylib.GetShaderLocation(_shader, "globe");
+        _locGlobeRadius = Raylib.GetShaderLocation(_shader, "globeRadius");
         _locMapData = _locLut = 0;
 
         Raylib.SetShaderValue(_shader, _locMapSize, new Vector2(_map.Width, _map.Height), ShaderUniformDataType.Vec2);
@@ -381,6 +401,7 @@ public sealed unsafe class MapRenderer : IDisposable
     public float HeightAt(float wx, float wz)
     {
         if (_mw < 2 || _mh < 2) return 0;
+        wx -= WorldWidth * MathF.Floor(wx / WorldWidth); // the map wraps east-west
         float gx = wx / WorldWidth * (_mw - 1), gz = wz / WorldHeight * (_mh - 1);
         int x0 = Math.Clamp((int)MathF.Floor(gx), 0, _mw - 2), z0 = Math.Clamp((int)MathF.Floor(gz), 0, _mh - 2);
         int x1 = x0 + 1, z1 = z0 + 1;
@@ -412,7 +433,68 @@ public sealed unsafe class MapRenderer : IDisposable
     public Vector3 WorldPos(float pixelX, float pixelY, float lift = 0)
     {
         float wx = pixelX / _map.Settings.PixelsPerUnit, wz = pixelY / _map.Settings.PixelsPerUnit;
-        return new Vector3(wx, HeightAt(wx, wz) + lift, wz);
+        return PlaceAt(wx, wz, HeightAt(wx, wz) + lift);
+    }
+
+    /// <summary>
+    /// Where a point of the flat map (in map units, at a height above sea level) is in the 3D scene: on the globe in globe mode,
+    /// otherwise in the copy of the east-west wrapping map nearest to the view. Everything drawn on the map goes through here.
+    /// </summary>
+    public Vector3 PlaceAt(float wx, float wz, float height)
+    {
+        if (Globe) return SpherePos(wx, wz, height);
+        wx += WorldWidth * MathF.Round((ViewCenterX - wx) / WorldWidth);
+        return new Vector3(wx, height, wz);
+    }
+
+    /// <summary>A map point on the globe: x runs around the equator (west to east), z from the north pole down to the south pole.</summary>
+    public Vector3 SpherePos(float wx, float wz, float height)
+    {
+        float lon = (wx / WorldWidth - 0.5f) * MathF.Tau, lat = (0.5f - wz / WorldHeight) * MathF.PI;
+        float cl = MathF.Cos(lat);
+        return new Vector3(cl * MathF.Sin(lon), MathF.Sin(lat), cl * MathF.Cos(lon)) * (GlobeRadius + height);
+    }
+
+    /// <summary>The unit vectors up (away from the globe's center) and south, along the surface, at a map point.</summary>
+    public (Vector3 Up, Vector3 South) GlobeFrame(float wx, float wz)
+    {
+        float lon = (wx / WorldWidth - 0.5f) * MathF.Tau, lat = (0.5f - wz / WorldHeight) * MathF.PI;
+        float cl = MathF.Cos(lat), sl = MathF.Sin(lat), co = MathF.Cos(lon), so = MathF.Sin(lon);
+        return (new Vector3(cl * so, sl, cl * co), new Vector3(sl * so, -cl, sl * co));
+    }
+
+    /// <summary>The map point (map units) below a point of the globe.</summary>
+    public (float X, float Z) FlatOf(Vector3 p)
+    {
+        var d = Vector3.Normalize(p);
+        float lat = MathF.Asin(Math.Clamp(d.Y, -1f, 1f)), lon = MathF.Atan2(d.X, d.Z);
+        return ((lon / MathF.Tau + 0.5f) * WorldWidth, (0.5f - lat / MathF.PI) * WorldHeight);
+    }
+
+    private static Vector3? RaySphere(Ray ray, float radius)
+    {
+        float b = Vector3.Dot(ray.Position, ray.Direction), c = ray.Position.LengthSquared() - radius * radius;
+        float disc = b * b - c;
+        if (disc < 0) return null;
+        float t = -b - MathF.Sqrt(disc);
+        return t < 0 ? null : ray.Position + ray.Direction * t;
+    }
+
+    /// <summary>The map point under a screen point on the globe, following the relief a little so a peak near the edge picks right.</summary>
+    private bool GlobeHit(Ray ray, out float wx, out float wz)
+    {
+        wx = wz = 0;
+        float seaH = _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale;
+        var hit = RaySphere(ray, GlobeRadius + seaH);
+        if (hit == null) return false;
+        (wx, wz) = FlatOf(hit.Value);
+        for (int i = 0; i < 2; i++)
+        {
+            var again = RaySphere(ray, GlobeRadius + HeightAt(wx, wz));
+            if (again == null) break;
+            (wx, wz) = FlatOf(again.Value);
+        }
+        return true;
     }
 
     /// <summary>The unit normal of the terrain around a point, from heights <paramref name="reach"/> away on each side.</summary>
@@ -432,10 +514,31 @@ public sealed unsafe class MapRenderer : IDisposable
     public Location? Pick(Vector2 screen, Camera3D cam, float stepScale = 1f)
     {
         _ = stepScale;
+        var ray0 = Viewport.Ray(screen, cam);
+        if (Globe)
+        {
+            if (!GlobeHit(ray0, out float gx, out float gz)) return null;
+            return _game.World.LocationAtPixel(Math.Clamp((int)(gx * _map.Settings.PixelsPerUnit), 0, _map.Width - 1), Math.Clamp((int)(gz * _map.Settings.PixelsPerUnit), 0, _map.Height - 1));
+        }
+        // the flat map repeats east-west: try the map and the copies on both sides, the nearest hit is what the cursor is on
+        Location? best = null;
+        float bestT = float.PositiveInfinity;
+        for (int k = 0; k < 3; k++)
+        {
+            var r = ray0;
+            r.Position.X -= (k == 0 ? 0 : k == 1 ? -1 : 1) * WorldWidth;
+            var l = PickFlat(r, out float t);
+            if (l != null && t < bestT) { best = l; bestT = t; }
+        }
+        return best;
+    }
+
+    private Location? PickFlat(Ray ray, out float hitT)
+    {
+        hitT = 0;
         // Traverse the heightfield cells in ray order and intersect the actual two triangles
         // rendered for each cell. Fixed-step ray marching can step over narrow high-relief peaks,
         // causing the cursor to select terrain far behind the visible surface.
-        var ray = Viewport.Ray(screen, cam);
         if (ray.Direction.Y >= 0 || _hw < 2 || _hh < 2) return null;
 
         float enter = 0f, exit = float.PositiveInfinity;
@@ -493,6 +596,7 @@ public sealed unsafe class MapRenderer : IDisposable
                 var point = ray.Position + ray.Direction * ta;
                 int px = Math.Clamp((int)(point.X * _map.Settings.PixelsPerUnit), 0, _map.Width - 1);
                 int py = Math.Clamp((int)(point.Z * _map.Settings.PixelsPerUnit), 0, _map.Height - 1);
+                hitT = ta;
                 return _game.World.LocationAtPixel(px, py);
             }
 
@@ -544,10 +648,24 @@ public sealed unsafe class MapRenderer : IDisposable
     /// </summary>
     public Location? PickFast(Vector2 screen, Camera3D cam) => Pick(screen, cam);
 
+    /// <summary>The direction from the globe's center to the sea-level surface under a screen point (unit vector), or null off the globe.</summary>
+    public Vector3? GlobeDir(Vector2 screen, Camera3D cam)
+    {
+        float seaH = _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale;
+        var hit = RaySphere(Viewport.Ray(screen, cam), GlobeRadius + seaH);
+        return hit == null ? null : Vector3.Normalize(hit.Value);
+    }
+
     /// <summary>World position under the mouse on the ground plane (for camera dragging).</summary>
     public Vector3? GroundPoint(Vector2 screen, Camera3D cam)
     {
         var ray = Viewport.Ray(screen, cam);
+        if (Globe)
+        {
+            if (!GlobeHit(ray, out float gx, out float gz)) return null;
+            gx += WorldWidth * MathF.Round((ViewCenterX - gx) / WorldWidth); // nearest copy to the view, so differences never jump across the seam
+            return new Vector3(gx, 0, gz);
+        }
         if (Math.Abs(ray.Direction.Y) < 1e-4) return null;
         float planeY = _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale;
         float t = (planeY - ray.Position.Y) / ray.Direction.Y;
@@ -699,12 +817,60 @@ public sealed unsafe class MapRenderer : IDisposable
     /// <summary>Camera height above which the map is a strategic overview: no fog of war, no unit counters.</summary>
     public float StrategicZoom => Math.Max(140f, Math.Max(WorldWidth, WorldHeight) * 0.33f);
 
+    /// <summary>
+    /// Direction to the sun. It depends only on the game's date and hour, never on the camera or the view mode: on the globe it is the
+    /// true sun (noon on the prime meridian at 12:00, tilted by the season); on the flat map it swings east to west across the day.
+    /// </summary>
+    private Vector3 SunDirection()
+    {
+        if (!UserSettings.SunCycle) return Globe ? Vector3.Normalize(new Vector3(0.45f, 0.35f, 0.82f)) : Vector3.Normalize(new Vector3(-0.35f, 1f, -0.45f));
+        var d = _game.World.Date;
+        float hour = d.Hour;
+        if (Globe)
+        {
+            float decl = 23.44f * MathF.PI / 180f * MathF.Sin(MathF.Tau * (d.DayOfYear - 80) / 365f);
+            float lon = (12f - hour) / 24f * MathF.Tau;
+            return new Vector3(MathF.Cos(decl) * MathF.Sin(lon), MathF.Sin(decl), MathF.Cos(decl) * MathF.Cos(lon));
+        }
+        // a full turn around the map each day: due south of the zenith at noon, climbing and sinking over a mid-latitude arc
+        float a = (hour - 12f) / 24f * MathF.Tau;
+        float elev = 0.55f + 0.40f * MathF.Cos(a);
+        return Vector3.Normalize(new Vector3(MathF.Sin(a) * MathF.Cos(0.4f), elev, MathF.Cos(a) * -0.6f));
+    }
+
+    private static Vector3[]? _stars;
+
+    /// <summary>The backdrop behind the globe: stars fixed in space, drawn first so the globe covers them. Flat map mode draws none.</summary>
+    private static void DrawSpace(Camera3D cam)
+    {
+        if (_stars == null)
+        {
+            var rng = new Random(500);
+            _stars = new Vector3[2200];
+            for (int i = 0; i < _stars.Length; i++)
+            {
+                float z = rng.NextSingle() * 2f - 1f, t = rng.NextSingle() * MathF.Tau, r = MathF.Sqrt(1f - z * z);
+                _stars[i] = new Vector3(r * MathF.Cos(t), z, r * MathF.Sin(t));
+            }
+        }
+        for (int i = 0; i < _stars.Length; i++)
+        {
+            int v = 90 + (i * 37 % 140);
+            var c = i % 9 == 0 ? new Color(v, v - 10, 255, 255) : i % 7 == 0 ? new Color(255, 245, v, 255) : new Color(v, v, v + 10, 255);
+            Raylib.DrawPoint3D(cam.Position + _stars[i] * 4500f, c);
+        }
+    }
+
     public void Draw(Camera3D cam, float time)
     {
         if (_game.VisibilityVersion != _visibilityVersion) Dirty = true;
         if (Dirty) UpdateLut();
         Raylib.SetShaderValue(_shader, _locTime, time, ShaderUniformDataType.Float);
-        float camH = cam.Position.Y;
+        if (Globe) DrawSpace(cam);
+        Raylib.SetShaderValue(_shader, _locSun, SunDirection(), ShaderUniformDataType.Vec3);
+        float camH = Viewport.HeightOf(cam);
+        Raylib.SetShaderValue(_shader, _locGlobe, Globe ? 1f : 0f, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locGlobeRadius, GlobeRadius, ShaderUniformDataType.Float);
         // terrain shows through the map colors up close; far out the map reads like a political map
         float tint = Math.Clamp(0.55f + (camH - 25f) / 160f, 0.55f, 0.95f);
         Raylib.SetShaderValue(_shader, _locTint, tint, ShaderUniformDataType.Float);
@@ -743,10 +909,18 @@ public sealed unsafe class MapRenderer : IDisposable
 
         // endless sea around the map, drawn with the map shader so it matches the water at the edges
         float seaY = _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale - 0.03f;
-        Raylib.DrawMesh(_seaMesh, _material, Raymath.MatrixTranslate(WorldWidth / 2, seaY, WorldHeight / 2));
-        Raylib.DrawMesh(_terrainMesh, _material, Matrix4x4.Identity);
-        if (_hasTrees && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain)))
-            Raylib.DrawMesh(_treeMesh, _treeMaterial, Matrix4x4.Identity);
+        // The flat map repeats east-west: the map and one copy on each side cover any view (the view is never wider than the map).
+        // Draw the middle one first: the depth test then rejects the fragments hidden under it instead of shading them twice.
+        int copies = Globe ? 1 : 3;
+        bool trees = !Globe && _hasTrees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
+        for (int c = 0; c < copies; c++)
+        {
+            var at = Raymath.MatrixTranslate((c == 0 ? 0 : c == 1 ? -1 : 1) * WorldWidth, 0, 0);
+            if (!Bench.Skip.Contains("terrain")) Raylib.DrawMesh(_terrainMesh, _material, at);
+            if (trees) Raylib.DrawMesh(_treeMesh, _treeMaterial, at);
+        }
+        // endless sea beyond the map's north and south edges (the globe has none)
+        if (!Globe && !Bench.Skip.Contains("sea")) Raylib.DrawMesh(_seaMesh, _material, Raymath.MatrixTranslate(WorldWidth / 2, seaY, WorldHeight / 2));
     }
 
     private int _lastHovered = -1, _lastSelected = -1;

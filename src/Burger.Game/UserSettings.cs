@@ -22,6 +22,12 @@ public static class UserSettings
     public static double EffectiveBias => Ahistorical ? 0 : HistoricalBias;
     /// <summary>Play the sound of animated portraits (the speaker button on a character portrait toggles it).</summary>
     public static bool PortraitSound = true;
+    /// <summary>Draw the map as a globe instead of the flat, east-west wrapping map.</summary>
+    public static bool GlobeMode;
+    /// <summary>The sun circles the map with the game's clock. Off: a fixed sun.</summary>
+    public static bool SunCycle = true;
+    /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>
+    public static double Speed1DaysPerSecond;
 
     private static string PathOf => System.IO.Path.Combine(AppContext.BaseDirectory, "settings.cfg");
 
@@ -39,6 +45,9 @@ public static class UserSettings
                 else if (parts[0] == "ahistorical") Ahistorical = v != 0;
                 else if (parts[0] == "ai_disabled") AiDisabled = v != 0;
                 else if (parts[0] == "portrait_sound") PortraitSound = v != 0;
+                else if (parts[0] == "globe_mode") GlobeMode = v != 0;
+                else if (parts[0] == "sun_cycle") SunCycle = v != 0;
+                else if (parts[0] == "speed1_days_per_second") Speed1DaysPerSecond = Math.Max(0, v);
             }
         }
         catch { /* settings are a convenience: the defaults will do */ }
@@ -55,6 +64,9 @@ public static class UserSettings
                 $"ahistorical = {(Ahistorical ? 1 : 0)}",
                 $"ai_disabled = {(AiDisabled ? 1 : 0)}",
                 $"portrait_sound = {(PortraitSound ? 1 : 0)}",
+                $"globe_mode = {(GlobeMode ? 1 : 0)}",
+                $"sun_cycle = {(SunCycle ? 1 : 0)}",
+                $"speed1_days_per_second = {Speed1DaysPerSecond.ToString("0.####", CultureInfo.InvariantCulture)}",
             });
         }
         catch { }
@@ -64,6 +76,7 @@ public static class UserSettings
     public static void Apply(Burger.Core.Game game)
     {
         game.Clock.DaysPerSecond[5] = Speed5DaysPerSecond;
+        if (Speed1DaysPerSecond > 0) game.Clock.DaysPerSecond[1] = Speed1DaysPerSecond;
         game.HistoricalBias = EffectiveBias;
         game.Ai.Enabled = !AiDisabled;
     }

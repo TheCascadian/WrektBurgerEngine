@@ -10,15 +10,43 @@ in vec3 vertexNormal;
 uniform mat4 mvp;
 uniform mat4 matModel;
 uniform mat4 matNormal;
+uniform float globe;        // 1: bend the flat map onto a sphere (the fragment shader still reads the flat map position)
+uniform float globeRadius;
+uniform vec2 worldSize;
 out vec2 fragTexCoord;
 out vec3 fragNormal;
-out vec3 fragPos;
+out vec3 fragPos;    // flat map position: every map lookup, border and highlight uses this, in both modes
+out vec3 fragWorld;  // where the fragment really is (the sphere in globe mode)
+out vec3 fragE;      // east, up and south of the map surface here, in world space (flat: the world axes)
+out vec3 fragU;
+out vec3 fragS;
 void main()
 {
     fragTexCoord = vertexTexCoord;
     fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 0.0)));
-    fragPos = vec3(matModel * vec4(vertexPosition, 1.0));
-    gl_Position = mvp * vec4(vertexPosition, 1.0);
+    vec3 fp = vec3(matModel * vec4(vertexPosition, 1.0));
+    fragPos = fp;
+    if (globe > 0.5)
+    {
+        float lon = (fp.x / worldSize.x - 0.5) * 6.28318530718;
+        float lat = (0.5 - fp.z / worldSize.y) * 3.14159265359;
+        float cl = cos(lat), sl = sin(lat), co = cos(lon), so = sin(lon);
+        fragU = vec3(cl * so, sl, cl * co);
+        fragE = vec3(co, 0.0, -so);
+        fragS = vec3(sl * so, -cl, sl * co);
+        fragWorld = fragU * (globeRadius + fp.y);
+        // the map's columns are oversampled towards the poles, so east-west height differences there are noise: fade that tilt out
+        fragNormal = normalize(vec3(fragNormal.x * clamp(cl * 2.0, 0.0, 1.0), fragNormal.y, fragNormal.z));
+        gl_Position = mvp * vec4(fragWorld, 1.0);
+    }
+    else
+    {
+        fragE = vec3(1.0, 0.0, 0.0);
+        fragU = vec3(0.0, 1.0, 0.0);
+        fragS = vec3(0.0, 0.0, 1.0);
+        fragWorld = fp;
+        gl_Position = mvp * vec4(vertexPosition, 1.0);
+    }
 }
 ";
 
@@ -26,6 +54,12 @@ void main()
 in vec2 fragTexCoord;
 in vec3 fragNormal;
 in vec3 fragPos;
+in vec3 fragWorld;
+in vec3 fragE;
+in vec3 fragU;
+in vec3 fragS;
+uniform vec3 sunDirU;     // direction to the sun, set from the game date and hour
+uniform float globe;
 
 uniform sampler2D texture0; // map data: RG = location index + 1, B = terrain index, A = land: river (255) / water: closeness to the coast
 uniform sampler2D texture1; // per-location lookup: block0 color, block1 owner/state ids, block2 stripe color + flags
@@ -52,7 +86,14 @@ out vec4 finalColor;
 
 // flags (lut block 2 alpha): 1 water, 2 occupied stripes, 4 selected, 8 hovered, 16 lake, 32 hidden by fog of war, 64 highlighted state, 128 demilitarized zone
 
-ivec2 clampPix(ivec2 p) { return clamp(p, ivec2(0), ivec2(mapSize) - ivec2(1)); }
+// the map wraps around east-west (the flat map repeats, the globe closes), north and south end at the poles
+ivec2 clampPix(ivec2 p)
+{
+    int w = int(mapSize.x);
+    int x = p.x - (p.x / w) * w;
+    if (x < 0) x += w;
+    return ivec2(x, clamp(p.y, 0, int(mapSize.y) - 1));
+}
 
 int locAt(ivec2 p)
 {
@@ -90,6 +131,31 @@ float noise(vec2 p)
     vec2 u = f * f * (3.0 - 2.0 * f);
     return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
 }
+float vhash3(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float vnoise3(vec3 p)
+{
+    vec3 i = floor(p), f = fract(p);
+    vec3 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(mix(vhash3(i), vhash3(i + vec3(1, 0, 0)), u.x), mix(vhash3(i + vec3(0, 1, 0)), vhash3(i + vec3(1, 1, 0)), u.x), u.y),
+               mix(mix(vhash3(i + vec3(0, 0, 1)), vhash3(i + vec3(1, 0, 1)), u.x), mix(vhash3(i + vec3(0, 1, 1)), vhash3(i + vec3(1, 1, 1)), u.x), u.y), u.z);
+}
+// river flag of a map pixel: land texels carry 255 in alpha (water texels carry the coast distance, at most 240)
+float riv(ivec2 p) { return texelFetch(texture0, clampPix(p), 0).a > 0.98 ? 1.0 : 0.0; }
+
+// ripples stretched along the flow: x runs downstream, y across the channel
+float streak(vec2 q, float t, float speed)
+{
+    return noise(vec2(q.x * 1.3 - t * speed, q.y * 4.5)) * 0.6 + noise(vec2(q.x * 3.2 - t * speed * 1.7, q.y * 10.0)) * 0.4;
+}
+
+float swell(vec2 p, float detail)
+{
+    float t = time;
+    return noise(p * 0.35 + vec2(t * 0.04, t * 0.02)) * 0.50
+         + noise(p * 0.90 + vec2(-t * 0.06, t * 0.05)) * 0.30
+         + noise(p * 2.10 + vec2(t * 0.10, -t * 0.07)) * 0.15 * detail
+         + noise(p * 4.70 + vec2(-t * 0.15, t * 0.12)) * 0.05 * detail;
+}
 float waves(vec2 p)
 {
     return noise(p * 0.9 + vec2(time * 0.05, time * 0.03)) * 0.6 + noise(p * 2.3 - vec2(time * 0.07, -time * 0.04)) * 0.4;
@@ -109,9 +175,11 @@ float line(float d, float halfWidth) { return 1.0 - smoothstep(halfWidth - 0.7, 
 
 void main()
 {
-    vec2 uv = fragPos.xz / worldSize;
-    vec2 pix = uv * mapSize;
-    float tpp = max(max(fwidth(pix.x), fwidth(pix.y)), 1e-4); // map pixels per screen pixel
+    vec2 pixU = fragPos.xz / worldSize * mapSize;
+    // on the globe a map column narrows with the cosine of the latitude, so east-west map pixels per screen pixel shrink by that much (this is what pinched the poles)
+    float cosLat = globe > 0.5 ? max(cos((0.5 - fragPos.z / worldSize.y) * 3.14159265), 0.02) : 1.0;
+    float tpp = max(max(fwidth(pixU.x) * cosLat, fwidth(pixU.y)), 1e-4); // map pixels per screen pixel (from the unwrapped position: no jump at the seam)
+    vec2 pix = vec2(pixU.x - mapSize.x * floor(pixU.x / mapSize.x), pixU.y);
 
     // the 4 map pixels around this fragment
     vec2 pp = pix - 0.5;
@@ -178,10 +246,11 @@ void main()
         }
     }
 
-    vec3 sunDir = normalize(vec3(-0.35, 1.0, -0.45));
-    vec3 viewDir = normalize(viewPos - fragPos);
+    // globe: the sun sits over the viewer's shoulder so the half you see is lit like the flat map
+    vec3 sunDir = sunDirU; // fixed in the world and driven by the game clock only: the camera never moves the sun
+    vec3 viewDir = normalize(viewPos - fragWorld);
     vec4 data = texelFetch(texture0, clampPix(ivec2(floor(pix))), 0);
-    float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x)); // fades small details when zoomed out
+    float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat); // fades small details when zoomed out
 
     vec3 col;
     if (water)
@@ -192,35 +261,112 @@ void main()
         vec3 deep = waterColor * 0.72;
         vec3 shore = mix(waterColor, vec3(0.30, 0.62, 0.66), 0.55) * 1.15;
         col = mix(deep, shore, shallow);
-        // gentle waves: normal from the slope of a smooth noise field
+        // layered, drifting swell: four noise octaves; the fine ones fade out with distance so far water stays calm and does not shimmer
         vec2 wp = fragPos.xz;
-        float e = 0.08;
-        float h0 = waves(wp), hx = waves(wp + vec2(e, 0.0)), hz = waves(wp + vec2(0.0, e));
-        vec3 wn = normalize(vec3((h0 - hx) / e * 0.22 * detail, 1.0, (h0 - hz) / e * 0.22 * detail));
-        col *= 0.95 + 0.07 * h0;
-        float fres = pow(1.0 - max(dot(wn, viewDir), 0.0), 3.0);
-        col = mix(col, vec3(0.55, 0.68, 0.80), fres * 0.35);
-        float spec = pow(max(dot(reflect(-sunDir, wn), viewDir), 0.0), 90.0);
-        col += vec3(1.0, 0.95, 0.85) * spec * 0.22 * detail;
+        if (globe > 0.5)
+        {
+            vec3 an = abs(normalize(fragWorld)); // surface coordinates instead of map coordinates (those stretch into rays at the poles)
+            wp = (an.y >= an.x && an.y >= an.z) ? fragWorld.xz : (an.x >= an.z ? fragWorld.yz : fragWorld.xy);
+        }
+        float e = 0.05;
+        float h0 = swell(wp, detail), hx = swell(wp + vec2(e, 0.0), detail), hz = swell(wp + vec2(0.0, e), detail);
+        float amp = 0.10 + 0.55 * detail;
+        vec3 wn = normalize(vec3((h0 - hx) / e * amp * 0.5, 1.0, (h0 - hz) / e * amp * 0.5));
+        wn = normalize(fragE * wn.x + fragU * wn.y + fragS * wn.z);
+        // water takes on the sky: Schlick fresnel, so it is dark and clear looking down and mirror-like at a grazing angle
+        // daylight on this water: the sky reflection, glitter and foam are lit by the sun, so they go dark with it at night
+        float day = smoothstep(-0.12, 0.3, globe > 0.5 ? dot(fragU, sunDir) : sunDir.y);
+        float ndv = max(dot(wn, viewDir), 0.0);
+        float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
+        vec3 rd = reflect(-viewDir, wn);
+        float skyUp = clamp(dot(rd, fragU), 0.0, 1.0);
+        vec3 sky = mix(vec3(0.66, 0.78, 0.90), vec3(0.22, 0.42, 0.76), sqrt(skyUp));
+        col *= 0.88 + 0.24 * h0;
+        // light scattering through thin crests
+        col += vec3(0.04, 0.13, 0.12) * smoothstep(0.55, 0.85, h0) * (0.4 + 0.6 * detail);
+        col = mix(col, sky * (0.06 + 0.94 * day), clamp(fres * 0.9, 0.0, 0.85));
+        // sun glitter: a tight highlight plus a soft sheen
+        vec3 hv = normalize(sunDir + viewDir);
+        float nh = max(dot(wn, hv), 0.0);
+        col += vec3(1.0, 0.94, 0.82) * (pow(nh, 260.0) * 1.6 * (0.3 + 0.7 * detail) + pow(nh, 28.0) * 0.10) * day;
+        // foam along the coast, broken up by noise so it laps in and out
+        float lap = noise(wp * 0.9 + vec2(time * 0.2, -time * 0.15));
+        col = mix(col, vec3(0.88, 0.93, 0.92) * (0.10 + 0.90 * day), line(dCoast + (lap - 0.5) * 3.0, 1.5) * 0.55);
         if ((flags & 16) != 0) col = mix(col, shore, 0.4);
-        // light foam line along the coast
-        col = mix(col, vec3(0.80, 0.86, 0.84), line(dCoast, 1.2) * 0.45);
     }
     else
     {
         // blend the four nearest terrain texels so terrain types fade into each other
         vec2 tuv = fragPos.xz * tileScale;
+        if (globe > 0.5)
+        {
+            // the map's columns collapse at the poles, so tile the texture on the true surface: project along the sphere's dominant axis
+            vec3 an = abs(normalize(fragWorld));
+            vec2 pl = (an.y >= an.x && an.y >= an.z) ? fragWorld.xz : (an.x >= an.z ? fragWorld.yz : fragWorld.xy);
+            tuv = pl * tileScale;
+        }
         vec3 c00 = atlas(terrainAt(b), tuv);
         vec3 c10 = atlas(terrainAt(b + ivec2(1, 0)), tuv);
         vec3 c01 = atlas(terrainAt(b + ivec2(0, 1)), tuv);
         vec3 c11 = atlas(terrainAt(b + ivec2(1, 1)), tuv);
         col = mix(mix(c00, c10, f.x), mix(c01, c11, f.x), f.y);
         // large scale variation hides the texture repeating
-        col *= 0.90 + 0.20 * noise(fragPos.xz * 0.11) * (0.5 + 0.5 * noise(fragPos.xz * 0.37));
-        if (data.a > 0.5) col = mix(col, riverColor, 0.85);
+        // (on the globe this noise is taken in 3D: in map coordinates it stretches into rays at the poles)
+        if (globe > 0.5) col *= 0.90 + 0.20 * vnoise3(fragWorld * 0.11) * (0.5 + 0.5 * vnoise3(fragWorld * 0.37));
+        else col *= 0.90 + 0.20 * noise(fragPos.xz * 0.11) * (0.5 + 0.5 * noise(fragPos.xz * 0.37));
+        float rcov = 0.0, bank = 0.0;
+        if (tpp < 1.0)
+        {
+            float r00 = riv(b), r10 = riv(b + ivec2(1, 0)), r01 = riv(b + ivec2(0, 1)), r11 = riv(b + ivec2(1, 1));
+            float rv = mix(mix(r00, r10, f.x), mix(r01, r11, f.x), f.y);
+            rcov = smoothstep(0.18, 0.55, rv);
+            float sb = 0.0;
+            for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) sb += riv(ivec2(floor(pix)) + ivec2(i, j));
+            bank = clamp(sb * 0.35, 0.0, 1.0);
+        }
+        else
+        {
+            // zoomed out: widen the line with the zoom so a river stays a thin, visible thread instead of vanishing
+            float sw = 0.0, spacing = tpp * 0.9;
+            for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) sw += riv(ivec2(floor(pix + vec2(i, j) * spacing)));
+            rcov = clamp(sw * 0.4, 0.0, 1.0) * (1.0 - smoothstep(6.0, 14.0, tpp));
+            bank = rcov * 0.5;
+        }
+        if (rcov > 0.01 || bank > 0.01)
+        {
+            // flow runs downhill: the terrain normal leans towards the lower side
+            vec2 sl = fragNormal.xz;
+            float slope = length(sl);
+            vec2 fd = slope > 0.01 ? sl / slope : vec2(0.0, 1.0);
+            vec2 pd = vec2(-fd.y, fd.x);
+            vec2 wpm = vec2(fragPos.x * cosLat, fragPos.z); // east/south distance in map units
+            vec2 q = vec2(dot(wpm, fd), dot(wpm, pd));
+            float speed = 0.5 + 3.5 * smoothstep(0.0, 0.4, slope);
+            float e = 0.03;
+            float k0 = streak(q, time, speed), ks = streak(q + vec2(e, 0.0), time, speed), ka = streak(q + vec2(0.0, e), time, speed);
+            float ra = (0.15 + 0.85 * detail) * 0.7;
+            vec2 sv = fd * ((k0 - ks) / e) + pd * ((k0 - ka) / e);
+            vec3 rn = normalize(vec3(sv.x * ra * 0.4, 1.0, sv.y * ra * 0.4));
+            rn = normalize(fragE * rn.x + fragU * rn.y + fragS * rn.z);
+            float rndv = max(dot(rn, viewDir), 0.0);
+            float rfres = 0.02 + 0.98 * pow(1.0 - rndv, 5.0);
+            vec3 rrd = reflect(-viewDir, rn);
+            vec3 rsky = mix(vec3(0.66, 0.78, 0.90), vec3(0.22, 0.42, 0.76), sqrt(clamp(dot(rrd, fragU), 0.0, 1.0)));
+            // darker and deeper in the middle of the channel, lighter and greener over the shallows at the edge
+            float mid = smoothstep(0.55, 1.0, rcov);
+            vec3 rcol = mix(riverColor * 1.25 + vec3(0.03, 0.09, 0.07), riverColor * 0.75, mid) * (0.85 + 0.3 * k0);
+            rcol = mix(rcol, rsky, clamp(rfres * 0.85, 0.0, 0.7));
+            vec3 rh = normalize(sunDir + viewDir);
+            rcol += vec3(1.0, 0.94, 0.82) * pow(max(dot(rn, rh), 0.0), 140.0) * 0.9 * (0.4 + 0.6 * detail);
+            // white water where the river drops fast
+            rcol = mix(rcol, vec3(0.92, 0.96, 0.97), smoothstep(0.22, 0.5, slope) * smoothstep(0.55, 0.8, k0) * 0.7);
+            // wet banks: the ground darkens and turns greener around the water
+            col = mix(col, col * vec3(0.78, 0.86, 0.72), bank * (1.0 - rcov) * 0.55);
+            col = mix(col, rcol, rcov * 0.94);
+        }
 
         // hill shading
-        vec3 n = normalize(fragNormal);
+        vec3 n = normalize(fragE * fragNormal.x + fragU * fragNormal.y + fragS * fragNormal.z);
         float ndl = max(dot(n, sunDir), 0.0);
         col *= 0.38 + 0.72 * ndl;
         col = mix(col, col * vec3(1.05, 1.0, 0.92), ndl * 0.3);          // warm light, cool shadows
@@ -270,7 +416,7 @@ void main()
         else
         {
             fogged = mix(col, vec3(lum) * vec3(0.78, 0.80, 0.86), 0.72) * 0.62;
-            float h = step(0.85, fract((fragPos.x - fragPos.z) / max(fwidth(fragPos.x) * 9.0, 0.05)));
+            float h = step(0.85, fract((fragPos.x - fragPos.z) / max(fwidth(fragPos.x) * cosLat * 9.0, 0.05)));
             fogged *= 1.0 - h * 0.10;
         }
         col = mix(col, fogged, fogStrength);

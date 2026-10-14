@@ -21,6 +21,8 @@ public sealed class AppOptions
     public int Speed;
     /// <summary>Write frame and simulation timings to the log every few seconds.</summary>
     public bool Perf;
+    /// <summary>Scripted render benchmark: vsync and frame cap off, camera flies fixed phases, results go to the log, then quits.</summary>
+    public bool Bench;
     /// <summary>Console commands to run after the game starts (testing / automation).</summary>
     public List<string> Exec = new();
     public string? MapMode;
@@ -96,6 +98,7 @@ public static class Program
                     case "--open": opt.Open = Next(); break;
                     case "--speed": opt.Speed = int.Parse(Next()); break;
                     case "--perf": opt.Perf = true; break;
+                    case "--bench": opt.Bench = true; break;
                     case "--size":
                         var parts = Next().ToLowerInvariant().Split('x');
                         opt.Width = int.Parse(parts[0]);

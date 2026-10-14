@@ -27,12 +27,12 @@ public sealed partial class Hud
         if (Gui.Button(new Rectangle(x, y, bw, bh), "Quit")) _app.RequestQuit();
     }
 
-    private string _speed5Text = "";
+    private string _speed5Text = "", _speed1Text = "";
 
     /// <summary>Settings: the most days per second speed 5 may run (0 = as fast as the computer allows).</summary>
     private void DrawSettingsPanel()
     {
-        float w = 420 * S, h = 390 * S;
+        float w = 420 * S, h = 560 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
         Gui.Panel(r, "Settings");
         if (Gui.CloseButton(r)) { Ui.SettingsOpen = false; UserSettings.Save(); return; }
@@ -45,6 +45,17 @@ public sealed partial class Hud
         if (double.TryParse(_speed5Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v >= 0 && Math.Abs(v - UserSettings.Speed5DaysPerSecond) > 1e-9)
         {
             UserSettings.Speed5DaysPerSecond = v;
+            UserSettings.Apply(G);
+        }
+        y += 44 * S;
+        if (_speed1Text.Length == 0) _speed1Text = UserSettings.Speed1DaysPerSecond.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+        Gui.Label("Speed 1: days per second", x, y, 16);
+        y += 26 * S;
+        Gui.TextField("speed1", new Rectangle(x, y, 120 * S, 30 * S), ref _speed1Text, 8, "0");
+        Gui.Label("0 = default (0.5); try 0.05 for slow", x + 134 * S, y + 6 * S, 14, Gui.TextDim);
+        if (double.TryParse(_speed1Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v1) && v1 >= 0 && Math.Abs(v1 - UserSettings.Speed1DaysPerSecond) > 1e-9)
+        {
+            UserSettings.Speed1DaysPerSecond = v1;
             UserSettings.Apply(G);
         }
         y += 44 * S;
@@ -69,6 +80,22 @@ public sealed partial class Hud
         {
             UserSettings.AiDisabled = !UserSettings.AiDisabled;
             G.Ai.Enabled = !UserSettings.AiDisabled;
+            UserSettings.Save();
+        }
+        y += 44 * S;
+        if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.GlobeMode ? "Map view: globe" : "Map view: flat (wraps east-west)", true,
+                "Flat: the map repeats east-west, so you can pan around the world.\nGlobe: the same map on a sphere. Everything you see and select carries over.",
+                UserSettings.GlobeMode, 15))
+        {
+            UserSettings.GlobeMode = !UserSettings.GlobeMode;
+            UserSettings.Save();
+        }
+        y += 44 * S;
+        if (Gui.Button(new Rectangle(x, y, bw, 32 * S), UserSettings.SunCycle ? "Sun: circles the map with time" : "Sun: fixed", true,
+                "On: the sun travels around the map as the game clock runs, so day and night move across the world.\nOff: the sun stays where it is.",
+                UserSettings.SunCycle, 15))
+        {
+            UserSettings.SunCycle = !UserSettings.SunCycle;
             UserSettings.Save();
         }
         y += 44 * S;

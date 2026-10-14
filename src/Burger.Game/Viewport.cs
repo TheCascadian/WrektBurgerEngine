@@ -20,6 +20,16 @@ public static class Viewport
     /// <summary>Mouse position relative to the map area.</summary>
     public static Vector2 Mouse => Raylib.GetMousePosition() - Origin;
 
+    /// <summary>Radius of the globe the map is wrapped on (0 = the flat map). Set by the map renderer.</summary>
+    public static float GlobeRadius;
+
+    /// <summary>How high the camera is above the map: its height over the flat map, its altitude over the globe.</summary>
+    public static float HeightOf(Camera3D cam) => GlobeRadius > 0 ? cam.Position.Length() - GlobeRadius : cam.Position.Y;
+
+    /// <summary>True for a point on the far side of the globe (the planet hides it). Always false on the flat map.</summary>
+    public static bool IsHidden(Vector3 world, Camera3D cam) =>
+        GlobeRadius > 0 && Vector3.Dot(world, cam.Position) < GlobeRadius * GlobeRadius * 0.995f;
+
     public static Vector2 ToScreen(Vector3 world, Camera3D cam) => Raylib.GetWorldToScreenEx(world, cam, W, H);
 
     /// <summary>
@@ -40,6 +50,7 @@ public static class Viewport
     /// </summary>
     public static Vector2 SnapToScreen(Vector3 world, Camera3D cam)
     {
+        if (IsHidden(world, cam)) return new Vector2(-100000, -100000); // far side of the globe: far off screen, never drawn
         var s = ToScreen(world, cam);
         return new Vector2(MathF.Round(s.X), MathF.Round(s.Y));
     }
@@ -62,7 +73,7 @@ public static class Viewport
     public static bool TryProjectSnapped(Vector3 world, Camera3D cam, out Vector2 screen)
     {
         var forward = Vector3.Normalize(cam.Target - cam.Position);
-        if (DepthAlong(world, cam.Position, forward) < MinProjectionDepth)
+        if (DepthAlong(world, cam.Position, forward) < MinProjectionDepth || IsHidden(world, cam))
         {
             screen = default;
             return false;

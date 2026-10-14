@@ -37,8 +37,9 @@ public readonly struct GameDate : IComparable<GameDate>, IEquatable<GameDate>
         Hour = Math.Clamp(hour, 0, 23);
     }
 
-    public int Year => TotalDays / 365 + 1;
-    public int DayOfYear => TotalDays % 365; // 0-based
+    // Floor division so dates before 1.1.1 work. Year 0 is 1 BCE, -499 is 500 BCE (astronomical numbering).
+    public int Year => (int)Math.Floor(TotalDays / 365.0) + 1;
+    public int DayOfYear => ((TotalDays % 365) + 365) % 365; // 0-based
 
     public int Month
     {
@@ -95,8 +96,11 @@ public readonly struct GameDate : IComparable<GameDate>, IEquatable<GameDate>
     /// <summary>Script format: <c>1936.1.1</c>.</summary>
     public string ToScript() => $"{Year}.{Month}.{Day}";
 
+    /// <summary>Year as shown to players: 500 BCE for year -499, plain number for CE.</summary>
+    public string YearDisplay => Year >= 1 ? Year.ToString(CultureInfo.InvariantCulture) : $"{1 - Year} BCE";
+
     public string ToDisplay(bool withHour = false)
-        => withHour ? $"{Hour:00}:00, {Day} {MonthNames[Month - 1]} {Year}" : $"{Day} {MonthNames[Month - 1]} {Year}";
+        => withHour ? $"{Hour:00}:00, {Day} {MonthNames[Month - 1]} {YearDisplay}" : $"{Day} {MonthNames[Month - 1]} {YearDisplay}";
 
     public override string ToString() => ToScript();
 

@@ -31,6 +31,7 @@ public sealed class App
     private int _frame;
     private Action? _pending;
     private RenderPerf? _renderPerf;
+    private Bench? _bench;
 
     public App(AppOptions options) { _opt = options; }
 
@@ -42,6 +43,8 @@ public sealed class App
     {
         _gameRoot = _opt.GameRoot;
         var flags = ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint | ConfigFlags.VSyncHint;
+        if (Environment.GetEnvironmentVariable("BURGER_NO_MSAA") == "1") flags &= ~ConfigFlags.Msaa4xHint; // fullscreen test: 4x MSAA framebuffer resize
+        if (_opt.Bench) flags &= ~ConfigFlags.VSyncHint;
         if (_opt.Hidden) flags |= ConfigFlags.HiddenWindow;
         Raylib.SetConfigFlags(flags);
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
@@ -50,9 +53,12 @@ public sealed class App
         Raylib.SetExitKey(KeyboardKey.Null);
         UserSettings.Load();
         Media.AudioEnabled = UserSettings.PortraitSound;
-        Raylib.SetTargetFPS(120);
+        Raylib.SetTargetFPS(_opt.Bench ? 0 : 120);
+        // raylib defaults to near 0.01 / far 1000, which clips the far rows of the 1638-unit map; widen the range (set before any BeginMode3D)
+        Rlgl.SetClipPlanes(0.5, 6000.0);
         Assets.Font = Raylib.GetFontDefault();
-        if (_opt.Perf) _renderPerf = new RenderPerf();
+        if (_opt.Perf || _opt.Bench) _renderPerf = new RenderPerf();
+        if (_opt.Bench) { _bench = new Bench(); _opt.Observe = true; }
 
         LoadGame();
         if (Game != null && _opt.LoadSave != null) DoLoadSave(_opt.LoadSave);
@@ -393,9 +399,9 @@ public sealed class App
     // ===============================================================================================
     private void DrawWorld(Camera3D cam)
     {
-        Raylib.ClearBackground(new Color(12, 22, 38, 255));
+        Raylib.ClearBackground(Renderer != null && Renderer.Globe ? new Color(2, 3, 9, 255) : new Color(12, 22, 38, 255)); // space behind the globe
         Raylib.BeginMode3D(cam);
-        Renderer!.Draw(cam, (float)Raylib.GetTime());
+        if (!Bench.Skip.Contains("map")) Renderer!.Draw(cam, (float)Raylib.GetTime());
         if (_screen == AppScreen.Playing && Figures != null)
         {
             Overlay!.CounterBelowFigure = Figures.Visible(cam);
@@ -412,6 +418,7 @@ public sealed class App
         var map = Renderer!;
         var cam = Camera!;
         _renderPerf?.Begin();
+        if (_bench != null && _bench.Step(cam, map, _renderPerf!)) { _quit = true; return; }
         _hud!.HandleKeys();
         // camera input + damped movement are resolved here, before BeginDrawing - never inside the draw loop
         cam.Update(dt, Gui.MouseOverUi, false, !_hud.KeyboardCaptured);
@@ -438,7 +445,7 @@ public sealed class App
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Right)) _hud.OnMapRightClick(hovered);
         if (hovered != null && !Gui.MouseOverUi) DrawHoverInfo(hovered);
         _renderPerf?.Mark(8);
-        _hud.Draw();
+        if (!Bench.Skip.Contains("ui")) _hud.Draw();
         Gui.EndFrame();
         _renderPerf?.Mark(9);
         Raylib.EndDrawing();

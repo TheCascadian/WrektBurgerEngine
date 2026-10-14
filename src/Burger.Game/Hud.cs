@@ -73,7 +73,8 @@ public sealed partial class Hud
         HandleMechanicKeys();
         if (Raylib.IsKeyPressed(KeyboardKey.Escape))
         {
-            if (Ui.SaveMenuOpen) Ui.SaveMenuOpen = false;
+            if (Ui.SettingsOpen) { Ui.SettingsOpen = false; Ui.PauseMenuOpen = false; UserSettings.Save(); } // ESC leaves the pause menu, settings included
+            else if (Ui.SaveMenuOpen) Ui.SaveMenuOpen = false;
             else if (Ui.ChoosingGeneralFor != null) Ui.ChoosingGeneralFor = null;
             else if (Ui.RecruitTemplate != null && Ui.Left == LeftPanel.Recruit) Ui.RecruitTemplate = null;
             else if (Ui.BuildType != null && Ui.Left == LeftPanel.Production) Ui.BuildType = null;

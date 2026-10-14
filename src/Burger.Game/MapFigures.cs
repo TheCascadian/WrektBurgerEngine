@@ -56,7 +56,7 @@ public sealed class MapFigures : IDisposable
     }
 
     /// <summary>How tall figures are drawn, in world units: they grow as the camera rises so they stay readable, up to a limit.</summary>
-    public static float HeightFor(Camera3D cam) => Math.Clamp(cam.Position.Y * 0.08f, 0.3f, 2f);
+    public static float HeightFor(Camera3D cam) => Math.Clamp(Viewport.HeightOf(cam) * 0.08f, 0.3f, 2f);
 
     /// <summary>Half the width of the patch of ground a figure of this height stands on.</summary>
     public static float StandRadius(float height) => height * 0.5f;
@@ -67,7 +67,7 @@ public sealed class MapFigures : IDisposable
     /// <summary>True while figures are on the map for this camera.</summary>
     public bool Visible(Camera3D cam)
     {
-        if (!Show || !MapOverlay.ShowUnits || cam.Position.Y > _map.StrategicZoom) return false;
+        if (!Show || !MapOverlay.ShowUnits || Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
         // height on screen of a figure at the point the camera looks at
         float distance = Vector3.Distance(cam.Position, cam.Target);
         float pixels = HeightFor(cam) / (2 * distance * MathF.Tan(cam.FovY * MathF.PI / 360f)) * Viewport.H;

@@ -43,7 +43,7 @@ public sealed class MapOverlay
 
     public void DrawLabels(Camera3D cam)
     {
-        float h = cam.Position.Y;
+        float h = Viewport.HeightOf(cam);
         if (h > 18) _countryLabels.Draw(cam);
         if (h < 30)
         {
@@ -70,12 +70,12 @@ public sealed class MapOverlay
     {
         Counters.Clear();
         if (!ShowUnits) return false;
-        if (cam.Position.Y > _map.StrategicZoom) return false; // strategic view: no counters
+        if (Viewport.HeightOf(cam) > _map.StrategicZoom) return false; // strategic view: no counters
         bool clicked = false;
         var w = _game.World;
         var player = w.Player;
         bool shift = Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift);
-        float scale = Gui.Scale * Math.Clamp(60f / cam.Position.Y, 0.65f, 1.15f);
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
 
         // battles first (under the counters)
         Counters.Clear();
@@ -192,10 +192,10 @@ public sealed class MapOverlay
     public bool DrawFleets(Camera3D cam, UiState ui, bool mouseOverUi)
     {
         if (!ShowUnits) return false;
-        if (cam.Position.Y > _map.StrategicZoom) return false;
+        if (Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
         if (!_game.Features.Has(Burger.Core.Modding.FeatureSet.Navy)) return false;
         var player = _game.World.Player;
-        float scale = Gui.Scale * Math.Clamp(60f / cam.Position.Y, 0.65f, 1.15f);
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
         bool clicked = false;
         if (ui.SelectedFleet != null && !_game.Navy.Fleets.Contains(ui.SelectedFleet)) ui.SelectedFleet = null;
         // route of the selected fleet
@@ -264,9 +264,9 @@ public sealed class MapOverlay
     /// <summary>Air bases of the player that hold wings (air feature): a plane badge with the number of planes. Returns true if one was clicked.</summary>
     public bool DrawAirBases(Camera3D cam, bool mouseOverUi)
     {
-        if (cam.Position.Y > _map.StrategicZoom) return false;
+        if (Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
         if (!_game.Features.Has(Burger.Core.Modding.FeatureSet.Air) || _game.World.Player is not { } player) return false;
-        float scale = Gui.Scale * Math.Clamp(60f / cam.Position.Y, 0.65f, 1.15f);
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
         bool clicked = false;
         foreach (var g in _game.Air.WingsOf(player).GroupBy(w => w.Base))
         {
