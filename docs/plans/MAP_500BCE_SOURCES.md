@@ -94,3 +94,19 @@ Not yet checked at all: DASI, Gazetteer of Ancient Arabia, Met, Cleveland, Art I
 | CC BY 3.0 US legal code (for Pleiades) | URL returned 404, not read | n/a | UNVERIFIED |
 
 Remaining unread: Gazetteer of Ancient Arabia, Cleveland, Art Institute, Smithsonian, Chengdu survey. Rule applied: a source stays out of the build until its terms are read from a primary page.
+
+## 9. Required sources by map layer (nothing downloaded)
+| Layer | Needed for | Source | Terms status | Gap |
+|---|---|---|---|---|
+| Coastline | Land and sea mask | Natural Earth 10m coastline | APPROVED, hashed | Modern coast; 500 BCE shoreline changes (deltas, lakes) need cited corrections |
+| Elevation and bathymetry | Terrain, mountains, sea depth | GEBCO grid (proposed sole source) | Public domain, conditions page unread | Not downloaded; owner permission pending |
+| Rivers | River and lake features | HydroRIVERS | Agreement text unread, not approved | Natural Earth rivers excluded; no approved river source |
+| Terrain types | Climate, vegetation, soil | None identified | n/a | Derive from elevation and latitude only, or approve a new source |
+| Ancient places and names | Locations, cities | Pleiades; Syriaca; Getty TGN; DASI; Gazetteer of Ancient Arabia | Pleiades and Syriaca read (CC BY); the rest unread | Coverage thin outside the Mediterranean, Near East and Arabia |
+| Modern names | Disambiguation only | GeoNames | CC BY read | None |
+| Periods and dating | Date labels | PeriodO | UNVERIFIED | License page unread |
+| Political ownership | Countries, rulers, peoples | None | n/a | Needs a scholarship-citation source set or an owner choice (section 4) |
+| Americas, Oceania, sub-Saharan Africa, Siberia | Peoples and settlements | MesoRAD (not approved) | UNVERIFIED | No approved source |
+| Culture, religion, population | Province data | None identified | n/a | Not covered by any source above |
+
+Also required, not yet decided: start date and calendar display, country and peoples list, handling of unknown areas, and a policy for 500 BCE coast corrections.
