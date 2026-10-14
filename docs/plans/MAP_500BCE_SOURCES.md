@@ -205,3 +205,10 @@ The WOCE drifter row was removed at the owner's request. GRWL, Wikidata and open
 | REJECTED | hydrorivers, pard, merit_hydro, ancient_arabia, grit, seshat, road |
 
 Attribution notes for the newly approved rows: GRWL: Allen and Pavelsky (2018), Science 361(6402):585-588, link CC BY 4.0, state changes. open-archeOcsean: Plutniak (2025), doi 10.5281/zenodo.17996201, link CC BY 4.0, state changes; index only, not geometry. Wikidata: CC0, no attribution required, structured data only (not other namespaces).
+
+## 22. Eleventh evidence pass
+- **Neotoma:** the saved policy page lists V.2025 as the current version (approved March 27, 2025) and V.2019 as deprecated. V.2025 reads "All data available through the Neotoma Paleoecology Database are free to use with attribution under a CC BY 4.0 license." The earlier CC BY-NC 3.0 quote came from the deprecated V.2019 policy. Attribution has three levels: Neotoma (doi 10.17616/R3PD38), the constituent database, and per-dataset DOIs and primary publications. Approved; every selected record needs its own citation row.
+- **Beyer et al. palaeoclimate (Figshare 24039540):** the Licence field reads CC BY 4.0. Approved as its own row (beyer_figshare). It has not been shown to be the same release as the OSF p86rt dataset (beyer_climate stays UNVERIFIED).
+- **PANGAEA records:** LegacyPollen 2.0 (965907), Siberia pollen (898616) and Lake Fazilman (987394) each show "Creative Commons Attribution 4.0 International (CC-BY-4.0)". Approved. They are site points and tables.
+- **Li et al. 2025 biome output:** the article assets page lists LegacyPollen 2.0 as the dataset and the GitHub repository (PolarTerrestrialEnvironmentalSystems/Biome) as model code. The repository contains R scripts and a Readme, and the GitHub API reports no license; input data and results are in release attachments with no license stated. So the biome time slices remain UNVERIFIED. LegacyPollen 2.0 is usable, but converting pollen into biome classes would be our own derivation.
+- **NASA urban population:** the saved NASA portal listing shows "License not specified" for all 85 datasets in the filter. Unchanged: UNVERIFIED.
