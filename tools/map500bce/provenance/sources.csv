@@ -1,0 +1,10 @@
+id,name,publisher,primary_url,retrieval_date,license,license_url,license_text_path,sha256,attribution,use,status,approved_by
+ne_coast,Natural Earth coastline,Natural Earth,https://www.naturalearthdata.com/about/terms-of-use/,,Public domain,https://www.naturalearthdata.com/about/terms-of-use/,,,none required,coastline only,PENDING OWNER,
+gebco,GEBCO gridded bathymetry,GEBCO,https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use,,Public domain with source acknowledgement,https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use,,,source acknowledgement required,bathymetry and relief,PENDING OWNER,
+pleiades,Pleiades,Pleiades,https://pleiades.stoa.org/,,CC BY 3.0 US or later,https://pleiades.stoa.org/,,,attribution required,ancient place and name references only,PENDING OWNER,
+hydrorivers,HydroRIVERS,HydroSHEDS,https://hydrosheds.org/page/hydrorivers,,HydroSHEDS license agreement (text not read),,,,to be read from the agreement,global river lines,UNVERIFIED,
+geonames,GeoNames,GeoNames,https://geonames.org/export/,,CC BY (full text not retrieved),,,,link to geonames.org,modern name disambiguation only,PENDING OWNER,
+mesorad,MesoRAD,Open Archaeology Data,https://openarchaeologydata.metajnl.com/articles/10.5334/joad.83,,CC BY 4.0 or 3.0 (conflict),,,,,Maya lowland radiocarbon dates,UNVERIFIED,
+siddham,SIDDHAM,SIDDHAM,https://siddham.network/,,unresolved,,,,,inscription references,UNVERIFIED,
+pard,Pacific Archaeology Radiocarbon Database,University of Waikato / authors,,,CC BY-NC 4.0,,,,,none,REJECTED,
+merit_hydro,MERIT Hydro,MERIT Hydro authors,,,CC BY-NC 4.0 or ODbL 1.0,,,,,none,REJECTED,
