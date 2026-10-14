@@ -1,5 +1,5 @@
 id,name,publisher,primary_url,retrieval_date,license,license_url,license_text_path,sha256,attribution,use,status,approved_by
-ne_coast,Natural Earth coastline,Natural Earth,https://www.naturalearthdata.com/about/terms-of-use/,,Public domain,https://www.naturalearthdata.com/about/terms-of-use/,,,none required,coastline only,PENDING OWNER,
+ne_coast,Natural Earth coastline,Natural Earth,https://naciscdn.org/naturalearth/10m/physical/ne_10m_coastline.zip,2026-10-14,Public domain,https://www.naturalearthdata.com/about/terms-of-use/,licenses/ne_terms.html,bfa04cdbcbef07ef90dfca1dabb48062eca29900a113df0f389303e255484017,optional: Made with Natural Earth,coastline only,APPROVED,owner 2026-10-14
 gebco,GEBCO gridded bathymetry,GEBCO,https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use,,Public domain with source acknowledgement,https://www.gebco.net/data-products/gridded-bathymetry/terms-of-use,,,source acknowledgement required,bathymetry and relief,PENDING OWNER,
 pleiades,Pleiades,Pleiades,https://pleiades.stoa.org/,,CC BY 3.0 US or later,https://pleiades.stoa.org/,,,attribution required,ancient place and name references only,PENDING OWNER,
 hydrorivers,HydroRIVERS,HydroSHEDS,https://hydrosheds.org/page/hydrorivers,,HydroSHEDS license agreement (text not read),,,,to be read from the agreement,global river lines,UNVERIFIED,
