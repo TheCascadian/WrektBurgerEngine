@@ -267,7 +267,7 @@ public static class SaveGame
         ScriptWriter.WriteFile(path, root, $"BurgerEngine save - {game.Data.Info.Name} - {w.Date.ToDisplay()}");
     }
 
-    private static string ScopeRef(IScope s) => s switch
+    internal static string ScopeRef(IScope s) => s switch
     {
         Country c => "c:" + c.Tag,
         Character ch => "character:" + ch.Key,

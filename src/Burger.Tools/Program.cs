@@ -46,6 +46,7 @@ public static partial class Program
                 "new" => New(rest),
                 "validate" => Validate(rest),
                 "validate-par" => ValidatePar(rest),
+                "mp-test" => MultiplayerTest(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
                 "run" => Run(rest),
                 "export" => Export(rest),

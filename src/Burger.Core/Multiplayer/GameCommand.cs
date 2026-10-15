@@ -1,0 +1,99 @@
+using System.Globalization;
+using Burger.Core.Diplomacy;
+using Burger.Core.Model;
+
+namespace Burger.Core.Multiplayer;
+
+/// <summary>
+/// One player action. Only commands travel between machines; every machine applies the same ones at the same tick.
+/// <see cref="Tick"/> is the number of ticks the simulation has executed when the command is applied (it runs just before tick number Tick).
+/// </summary>
+public sealed record GameCommand(long Tick, string Country, string Type, string[] Args)
+{
+    public const string Move = "move";
+    public const string DeclareWar = "declare_war";
+    public const string AcceptPeace = "accept_peace";
+    public const string RefusePeace = "refuse_peace";
+    public const string WhitePeace = "white_peace";
+    public const string QueueProduction = "queue_production";
+    /// <summary>Answers an event (args: event id, option index).</summary>
+    public const string EventOption = "event_option";
+    /// <summary>System command: a human takes this country (args: player id). The AI stops playing it.</summary>
+    public const string Claim = "claim";
+    /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
+    public const string Release = "release";
+
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption;
+
+    public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
+
+    public static GameCommand? Decode(string[] f, int at)
+    {
+        if (f.Length < at + 4 || !long.TryParse(f[at], NumberStyles.Integer, CultureInfo.InvariantCulture, out long tick)) return null;
+        var args = f[at + 3].Length == 0 ? Array.Empty<string>() : f[at + 3].Split(',').Select(Net.Unesc).ToArray();
+        return new GameCommand(tick, Net.Unesc(f[at + 1]), Net.Unesc(f[at + 2]), args);
+    }
+}
+
+/// <summary>Applies commands to a game. Every check is a function of sim state, so all machines reach the same verdict.</summary>
+public static class CommandExecutor
+{
+    /// <summary>Applies the command. Returns false (and changes nothing) when it is not valid right now.</summary>
+    public static bool Apply(Game g, GameCommand c)
+    {
+        var w = g.World;
+        var country = w.GetCountry(c.Country);
+        if (country == null || !country.Exists) return false;
+        string A(int i) => i < c.Args.Length ? c.Args[i] : "";
+        switch (c.Type)
+        {
+            case GameCommand.Claim: country.IsPlayer = true; return true;
+            case GameCommand.Release: country.IsPlayer = false; return true;
+            case GameCommand.Move:
+            {
+                if (!int.TryParse(A(0), NumberStyles.Integer, CultureInfo.InvariantCulture, out int id)) return false;
+                var div = w.Divisions.FirstOrDefault(d => d.Id == id);
+                var to = w.GetLocation(A(1));
+                if (div == null || to == null || div.Owner != country) return false;
+                return g.Warfare.OrderMove(div, to);
+            }
+            case GameCommand.DeclareWar:
+            {
+                var target = w.GetCountry(A(0));
+                if (target == null || target == country) return false;
+                return g.Diplomacy.DeclareWar(country, target) != null;
+            }
+            case GameCommand.AcceptPeace:
+            case GameCommand.RefusePeace:
+            {
+                var p = g.PendingProposals.FirstOrDefault(x => x.Kind == ProposalKind.Peace && x.To == country && x.From.Tag == A(0));
+                if (p == null) return false;
+                g.Diplomacy.Respond(p, c.Type == GameCommand.AcceptPeace);
+                return true;
+            }
+            case GameCommand.WhitePeace:
+            {
+                var enemy = w.GetCountry(A(0));
+                var war = enemy == null ? null : w.WarBetween(country, enemy);
+                if (war == null) return false;
+                var offer = new PeaceOffer { War = war, From = country, To = enemy!, FromIsWinner = false };
+                return g.Diplomacy.SendPeaceOffer(offer) != null;
+            }
+            case GameCommand.EventOption:
+            {
+                var pe = g.Events.PlayerQueue.FirstOrDefault(x => x.Def.Id == A(0) && Scripting.ScopeHelpers.CountryOf(x.Context.Root) == country);
+                if (pe == null || !int.TryParse(A(1), NumberStyles.Integer, CultureInfo.InvariantCulture, out int opt)) return false;
+                g.Events.ChooseOption(pe, Math.Clamp(opt, 0, Math.Max(0, pe.Def.Options.Count - 1)));
+                return true;
+            }
+            case GameCommand.QueueProduction:
+            {
+                if (!g.Data.Equipment.TryGetValue(A(0), out var eq)) return false;
+                int factories = int.TryParse(A(1), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? Math.Clamp(n, 1, 50) : 1;
+                g.Production.AddLine(country, eq, factories);
+                return true;
+            }
+        }
+        return false;
+    }
+}
