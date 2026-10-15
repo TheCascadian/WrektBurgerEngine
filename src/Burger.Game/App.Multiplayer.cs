@@ -52,7 +52,7 @@ public sealed partial class App
         var mp = LockstepSession.Host(Game, Project, seed, string.IsNullOrWhiteSpace(_joinName) ? "Host" : _joinName.Trim());
         WireSession(mp);
         try { _listener = new TcpHostListener(27960); } catch { _listener = new TcpHostListener(); }
-        string code = JoinCode.Make(JoinCode.LocalAddress(), _listener.Port);
+        string code = JoinCode.Make(JoinCode.LocalAddress(), _listener.Port, _listener.Secret);
         MpLog("* Join code: " + code);
         EnterPlaying();
         if (tag != null) mp.Pick(tag);
@@ -61,11 +61,11 @@ public sealed partial class App
 
     public void JoinMultiplayer(string code, string name)
     {
-        if (!JoinCode.TryParse(code, out var host, out int port)) { _mpMessage = "That join code is not valid"; return; }
+        if (!JoinCode.TryParse(code, out var host, out int port, out var secret)) { _mpMessage = "That join code is not valid"; return; }
         MpStop();
         try
         {
-            var link = TcpTransport.Connect(host, port);
+            var link = TcpTransport.Connect(host, port, secret);
             var mp = LockstepSession.Join(link, string.IsNullOrWhiteSpace(name) ? "Player" : name.Trim(), (project, seed) =>
             {
                 if (project != Project) throw new InvalidDataException($"this machine has '{Project}', the host plays '{project}'");

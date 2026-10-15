@@ -23,6 +23,18 @@ public sealed class PlayerInfo
     internal bool? VotePause;
     internal int? VoteSpeed;
     internal double PingSentAt;
+    internal int Strikes;
+    private double _tokens = 400, _tokenAt = -1;
+
+    /// <summary>Message budget: a burst of 400, refilled at 200 per second. A peer that floods runs dry and collects strikes.</summary>
+    internal bool Take(double now)
+    {
+        if (_tokenAt < 0) _tokenAt = now;
+        _tokens = Math.Min(400, _tokens + (now - _tokenAt) * 0.2);
+        _tokenAt = now;
+        if (_tokens < 1) return false;
+        _tokens -= 1; return true;
+    }
 
     /// <summary>A player who left: the country they held is now played by the AI.</summary>
     public bool IsAi => !Active && Tag.Length > 0;
@@ -40,7 +52,9 @@ public sealed class LockstepSession
     public const int InputDelay = 2;
     /// <summary>The host waits when the slowest client is this many ticks behind.</summary>
     public const int MaxLead = 48;
-    public const int Protocol = 1;
+    public const int Protocol = Wire.Version;
+    /// <summary>Protocol violations a peer may commit before it is dropped.</summary>
+    public const int MaxStrikes = 5;
 
     public bool IsHost { get; }
     public Game Game { get; private set; }
@@ -93,7 +107,7 @@ public sealed class LockstepSession
     public static LockstepSession Join(ITransport link, string playerName, Func<string, int, Game> loader)
     {
         var s = new LockstepSession(null!, false, loader) { _hostLink = link };
-        link.Send($"HELLO|{Protocol}|{Net.Esc(playerName)}");
+        link.Send($"HELLO|{Protocol}|{Net.Esc(Sanitize.PlayerName(playerName))}|-");
         return s;
     }
 
@@ -108,6 +122,7 @@ public sealed class LockstepSession
 
     private void Attach(Game g)
     {
+        g.ModNet.Outbound = (_, args) => { Submit(GameCommand.ModMessage, args); return true; };
         g.SaveSections.Add(new SaveSection
         {
             Name = "multiplayer",
@@ -147,12 +162,17 @@ public sealed class LockstepSession
     public void Submit(string type, params string[] args)
     {
         if (Me == null || Me.Tag.Length == 0) return;
-        if (IsHost) { if (GameCommand.IsPlayerCommand(type)) Stamp(Me.Tag, type, args); }
+        if (IsHost)
+        {
+            var refused = CommandValidator.Check(Game, Me.Tag, type, args);
+            if (refused == null) Stamp(Me.Tag, type, args); else Toast?.Invoke("Refused: " + refused);
+        }
         else _hostLink!.Send($"CMD|0||{Net.Esc(type)}|{string.Join(',', args.Select(Net.Esc))}");
     }
 
     public void SendChat(string text)
     {
+        text = Sanitize.Chat(text);
         if (Me == null || text.Length == 0) return;
         if (IsHost) { Broadcast($"CHAT|{Net.Esc(Me.Name)}|{Net.Esc(text)}"); Chat?.Invoke(Me.Name, text); }
         else _hostLink!.Send("CHAT|" + Net.Esc(text));
@@ -322,26 +342,47 @@ public sealed class LockstepSession
             if (link.TryReceive(out var line))
             {
                 _pending.RemoveAt(i);
-                Hello(link, line.Split('|'));
+                try { Hello(link, line); }
+                catch (Exception e) { Log.Warn($"Multiplayer: bad HELLO ({e.GetType().Name})", "multiplayer"); link.Close(); }
             }
             else if (!link.Connected || Now() - since > 10000) { _pending.RemoveAt(i); link.Close(); }
         }
         foreach (var p in Players.Where(p => p.Active && !p.IsHost).ToList())
         {
-            while (p.Link!.TryReceive(out var line)) OnHostMessage(p, line.Split('|'));
-            if (!p.Link.Connected && p.Active) Remove(p, "disconnected");
+            while (p.Active && p.Link!.TryReceive(out var line))
+            {
+                if (!p.Take(Now())) { Strike(p, "flooding"); continue; }
+                string? bad = Wire.Check(Wire.Dir.ToHost, line, out var f, p.Ready);
+                if (bad != null) { Strike(p, bad); continue; }
+                try { OnHostMessage(p, f); }
+                catch (Exception e) { Log.Warn($"Multiplayer: handler for {f[0]} threw {e.GetType().Name}", "multiplayer"); Strike(p, "invalid " + f[0]); }
+            }
+            if (p.Active && !p.Link!.Connected) Remove(p, "disconnected");
         }
     }
 
-    private void Hello(ITransport link, string[] f)
+    private void Strike(PlayerInfo p, string why)
+    {
+        if (!p.Active) return;
+        Log.Warn($"Multiplayer: {p.Name}: {why} (strike {p.Strikes + 1})", "multiplayer");
+        if (++p.Strikes >= MaxStrikes) Remove(p, "protocol violations");
+    }
+
+    /// <summary>Hash of the registered mod message keys: both sides must have the same mods with the same messages.</summary>
+    private static string ModSetHash(Game g) =>
+        Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(string.Join('\n', g.ModNet.Keys)))).ToLowerInvariant();
+
+    private void Hello(ITransport link, string line)
     {
         string? reject = null;
-        if (f[0] != "HELLO" || f.Length < 3 || f[1] != Protocol.ToString(CultureInfo.InvariantCulture)) reject = "Protocol mismatch";
+        string? bad = Wire.Check(Wire.Dir.ToHost, line, out var f, false);
+        if (bad != null || f[0] != "HELLO") { link.Close(); return; }
+        if (f[1] != Protocol.ToString(CultureInfo.InvariantCulture)) reject = "Protocol mismatch";
         else if (Players.Count(p => p.Active) >= MaxPlayers) reject = "Game is full";
         if (reject != null) { link.Send("REJECT|" + Net.Esc(reject)); link.Close(); return; }
-        var p = new PlayerInfo { Id = _nextId++, Name = UniqueName(Net.Unesc(f[2])), Link = link };
+        var p = new PlayerInfo { Id = _nextId++, Name = UniqueName(Sanitize.PlayerName(Net.Unesc(f[2]))), Link = link };
         Players.Add(p);
-        link.Send($"WELCOME|{p.Id}|{Net.Esc(Project)}|{Seed}|{_scriptsHash}");
+        link.Send($"WELCOME|{p.Id}|{Net.Esc(Project)}|{Seed}|{_scriptsHash}|{ModSetHash(Game)}|{Protocol}");
     }
 
     private string UniqueName(string name)
@@ -356,18 +397,42 @@ public sealed class LockstepSession
     {
         switch (f[0])
         {
-            case "READY": p.Ready = true; SendSync(p); ToastAll($"{p.Name} joined"); BroadcastPlayers(); break;
-            case "PICK": if (p.Ready && f.Length > 1) { var err = PickFor(p, Net.Unesc(f[1])); if (err != null) p.Link!.Send("TOAST|" + Net.Esc(err)); } break;
-            case "CMD":
-                if (p.Ready && p.Tag.Length > 0 && GameCommand.Decode(f, 1) is { } c && GameCommand.IsPlayerCommand(c.Type))
-                    Stamp(p.Tag, c.Type, c.Args);
+            case "READY":
+                if (p.Ready) { Strike(p, "READY twice"); break; }
+                p.Ready = true; SendSync(p); ToastAll($"{p.Name} joined"); BroadcastPlayers(); break;
+            case "PICK":
+            {
+                string tag = Net.Unesc(f[1]);
+                var err = Sanitize.Tag(tag).Length == 0 ? "Bad country" : PickFor(p, tag);
+                if (err != null) p.Link!.Send("TOAST|" + Net.Esc(err));
                 break;
-            case "VOTE": if (p.Ready && f.Length > 2 && int.TryParse(f[2], out int v)) Vote(p, f[1], v); break;
-            case "CHAT": if (p.Ready && f.Length > 1) { string t = Net.Unesc(f[1]); Broadcast($"CHAT|{Net.Esc(p.Name)}|{Net.Esc(t)}"); Chat?.Invoke(p.Name, t); } break;
-            case "ACK": if (f.Length > 1 && long.TryParse(f[1], out long a)) p.Ack = Math.Max(p.Ack, a); break;
-            case "PONG": p.PingMs = (int)(Now() - p.PingSentAt); break;
+            }
+            case "CMD":
+            {
+                if (p.Tag.Length == 0) break;
+                var c = GameCommand.Decode(f, 1);
+                if (c == null) { Strike(p, "bad CMD"); break; }
+                var refused = CommandValidator.Check(Game, p.Tag, c.Type, c.Args);
+                if (refused != null) { Strike(p, "refused command: " + refused); p.Link!.Send("TOAST|" + Net.Esc("Refused: " + refused)); break; }
+                Stamp(p.Tag, c.Type, c.Args);
+                break;
+            }
+            case "VOTE":
+                if (f[1] is not ("pause" or "speed") || !Wire.Int(f[2], 0, 5, out int v)) { Strike(p, "bad VOTE"); break; }
+                Vote(p, f[1], v); break;
+            case "CHAT":
+            {
+                string t = Sanitize.Chat(Net.Unesc(f[1]));
+                if (t.Length == 0) break;
+                Broadcast($"CHAT|{Net.Esc(p.Name)}|{Net.Esc(t)}"); Chat?.Invoke(p.Name, t); break;
+            }
+            case "ACK":
+                if (!Wire.Int(f[1], 0, Tick, out long a)) { Strike(p, "bad ACK"); break; } // a client cannot have run ticks the host has not
+                p.Ack = Math.Max(p.Ack, a); break;
+            case "PONG": p.PingMs = (int)Math.Clamp(Now() - p.PingSentAt, 0, 60000); break;
             case "SUM":
-                if (f.Length > 2 && long.TryParse(f[1], out long tick) && _sums.TryGetValue(tick, out var mine) && f[2] != mine.ToString("x16"))
+                if (!Wire.Int(f[1], 0, Tick, out long tick) || f[2].Length != 16) { Strike(p, "bad SUM"); break; }
+                if (_sums.TryGetValue(tick, out var mine) && f[2] != mine.ToString("x16"))
                 {
                     Resyncs++;
                     ToastAll($"Desync of {p.Name} at {Game.World.Date.ToDisplay()}: sending a full save");
@@ -418,9 +483,14 @@ public sealed class LockstepSession
         try { File.Delete(path); } catch { }
         using var ms = new MemoryStream();
         using (var gz = new GZipStream(ms, CompressionLevel.Fastest, true)) gz.Write(raw);
+        byte[] zip = ms.ToArray();
         string tags = string.Join(',', Game.World.Countries.Where(c => c.IsPlayer).Select(c => c.Tag).OrderBy(t => t, StringComparer.Ordinal));
         var link = p.Link!;
-        link.Send($"SYNC|{Tick}|{tags}|{Convert.ToBase64String(ms.ToArray())}");
+        link.Send($"SYNC|{Tick}|{tags}|{zip.Length}");
+        int seq = 0;
+        for (int at = 0; at < zip.Length; at += Wire.SyncChunk)
+            link.Send($"SYNCDATA|{seq++}|{Convert.ToBase64String(zip, at, Math.Min(Wire.SyncChunk, zip.Length - at))}");
+        link.Send($"SYNCEND|{seq}");
         link.Send(PlayersLine());
         foreach (var c in _queue.Values.SelectMany(l => l)) link.Send("CMD|" + c.Encode());
         link.Send($"PACE|{(Paused ? 1 : 0)}|{Speed}");
@@ -430,27 +500,52 @@ public sealed class LockstepSession
 
     // ---------------------------------------------------------------------------------------- client side
 
+    private int _hostStrikes;
+    private MemoryStream? _syncBuf;
+    private long _syncTick, _syncLen;
+    private int _syncSeq;
+    private string[] _syncTags = Array.Empty<string>();
+    private const int MaxQueued = 200_000;
+
     private void ClientPump()
     {
         var link = _hostLink!;
-        while (link.TryReceive(out var line)) OnClientMessage(line.Split('|'));
+        while (!Disconnected && link.TryReceive(out var line))
+        {
+            string? bad = Wire.Check(Wire.Dir.ToClient, line, out var f, Game != null);
+            if (bad == null && Game == null && f[0] is not ("WELCOME" or "REJECT")) bad = "message before WELCOME";
+            if (bad != null) { HostStrike(bad); continue; }
+            try { OnClientMessage(f); }
+            catch (Exception e) { HostStrike($"invalid {f[0]} ({e.GetType().Name})"); }
+        }
         if (!link.Connected && !Disconnected && !link.TryReceive(out _)) { Disconnected = true; Toast?.Invoke("Lost the connection to the host"); }
+    }
+
+    private void HostStrike(string why)
+    {
+        Log.Warn($"Multiplayer: host sent {why}", "multiplayer");
+        if (++_hostStrikes >= MaxStrikes && !Disconnected) { Disconnected = true; _hostLink!.Close(); Toast?.Invoke("Left: the host sent invalid data"); }
     }
 
     private void OnClientMessage(string[] f)
     {
         switch (f[0])
         {
-            case "REJECT": Disconnected = true; Toast?.Invoke("Join refused: " + Net.Unesc(f[1])); break;
+            case "REJECT": Disconnected = true; Toast?.Invoke("Join refused: " + Sanitize.Text(Net.Unesc(f[1]), Sanitize.MaxToast)); break;
             case "WELCOME":
             {
-                int id = int.Parse(f[1], CultureInfo.InvariantCulture);
-                Project = Net.Unesc(f[2]); Seed = int.Parse(f[3], CultureInfo.InvariantCulture);
+                if (Me != null) { HostStrike("second WELCOME"); break; }
+                if (!Wire.Int(f[1], 0, 1000, out int id) || !Wire.Int(f[3], int.MinValue, int.MaxValue, out int seed) || f[6] != Protocol.ToString(CultureInfo.InvariantCulture))
+                    throw new InvalidDataException("bad WELCOME");
+                Project = Sanitize.Name(Net.Unesc(f[2]));
+                if (Project.Length == 0) throw new InvalidDataException("bad project name");
+                Seed = seed;
                 Me = new PlayerInfo { Id = id, Ready = true };
                 try
                 {
                     var g = _loader!(Project, Seed);
-                    if (Net.ScriptsHash(g.Data.Root) != f[4]) throw new InvalidDataException("scripts differ from the host's");
+                    if (Net.ScriptsHash(g.Data.Root) != f[4]) throw new InvalidDataException("scripts or project code differ from the host's");
+                    if (ModSetHash(g) != f[5]) throw new InvalidDataException("mod messages differ from the host's");
                     Game = g; Attach(g); _loadedForJoin = true;
                 }
                 catch (Exception e)
@@ -462,25 +557,65 @@ public sealed class LockstepSession
                 _hostLink!.Send("READY");
                 break;
             }
-            case "SYNC": Sync(f); break;
+            case "SYNC":
+                if (!Wire.Int(f[1], 0, long.MaxValue, out _syncTick) || !Wire.Int(f[3], 1, Wire.MaxSyncBytes, out _syncLen)) throw new InvalidDataException("bad SYNC");
+                _syncTags = f[2].Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (_syncTags.Length > 256 || _syncTags.Any(t => Sanitize.Tag(t) != t)) throw new InvalidDataException("bad SYNC tags");
+                _syncBuf = new MemoryStream(); _syncSeq = 0;
+                break;
+            case "SYNCDATA":
+            {
+                if (_syncBuf == null || !Wire.Int(f[1], 0, int.MaxValue, out int seq) || seq != _syncSeq) throw new InvalidDataException("bad SYNCDATA");
+                var chunk = Convert.FromBase64String(f[2]);
+                if (chunk.Length > Wire.SyncChunk || _syncBuf.Length + chunk.Length > _syncLen) { _syncBuf = null; throw new InvalidDataException("SYNC too large"); }
+                _syncBuf.Write(chunk); _syncSeq++;
+                break;
+            }
+            case "SYNCEND":
+            {
+                var buf = _syncBuf; _syncBuf = null;
+                if (buf == null || !Wire.Int(f[1], 0, int.MaxValue, out int n) || n != _syncSeq || buf.Length != _syncLen) throw new InvalidDataException("bad SYNCEND");
+                Sync(_syncTick, _syncTags, buf.ToArray());
+                break;
+            }
             case "PLAYERS": ReadPlayers(f[1]); break;
-            case "CMD": if (GameCommand.Decode(f, 1) is { } c) Enqueue(c); break;
-            case "HORIZON": _horizon = Math.Max(_horizon, long.Parse(f[1], CultureInfo.InvariantCulture)); break;
-            case "PACE": Paused = f[1] == "1"; Speed = int.Parse(f[2], CultureInfo.InvariantCulture); break;
-            case "CHAT": Chat?.Invoke(Net.Unesc(f[1]), Net.Unesc(f[2])); break;
-            case "TOAST": Toast?.Invoke(Net.Unesc(f[1])); break;
-            case "PING": _hostLink!.Send("PONG|" + f[1]); break;
+            case "CMD":
+            {
+                var c = GameCommand.Decode(f, 1);
+                if (c == null || !Wire.KnownCommandType(c.Type) || Sanitize.Tag(c.Country) != c.Country || c.Country.Length == 0 || !Wire.ArgsOk(c.Args)
+                    || c.Tick < Tick || c.Tick > Math.Max(_horizon, Tick) + 100_000 || _queue.Values.Sum(l => l.Count) >= MaxQueued)
+                    throw new InvalidDataException("bad CMD");
+                Enqueue(c);
+                break;
+            }
+            case "HORIZON":
+                if (!Wire.Int(f[1], 0, long.MaxValue, out long h)) throw new InvalidDataException("bad HORIZON");
+                _horizon = Math.Max(_horizon, h); break;
+            case "PACE":
+                if (!Wire.Int(f[1], 0, 1, out int pz) || !Wire.Int(f[2], 1, 5, out int sp)) throw new InvalidDataException("bad PACE");
+                Paused = pz == 1; Speed = sp; break;
+            case "CHAT": Chat?.Invoke(Sanitize.PlayerName(Net.Unesc(f[1])), Sanitize.Chat(Net.Unesc(f[2]))); break;
+            case "TOAST": Toast?.Invoke(Sanitize.Text(Net.Unesc(f[1]), Sanitize.MaxToast)); break;
+            case "PING": _hostLink!.Send("PONG|" + (f[1].Length <= 40 ? f[1] : "0")); break;
+            default: HostStrike("unexpected " + f[0]); break;
         }
     }
 
-    private void Sync(string[] f)
+    private void Sync(long tick, string[] tags, byte[] gz)
     {
-        long tick = long.Parse(f[1], CultureInfo.InvariantCulture);
-        byte[] gz = Convert.FromBase64String(f[3]);
         string path = Path.Combine(Path.GetTempPath(), $"burger_mp_{Environment.ProcessId}_in.sav");
         using (var ms = new MemoryStream(gz))
         using (var z = new GZipStream(ms, CompressionMode.Decompress))
-        using (var fs = File.Create(path)) z.CopyTo(fs);
+        using (var fs = File.Create(path))
+        {
+            var chunk = new byte[81920]; long total = 0; int n;
+            while ((n = z.Read(chunk, 0, chunk.Length)) > 0)
+            {
+                total += n;
+                if (total > Wire.MaxSaveBytes) { fs.Close(); try { File.Delete(path); } catch { } throw new InvalidDataException("save too large"); }
+                fs.Write(chunk, 0, n);
+            }
+        }
         // the very first sync reuses the game loaded at WELCOME; later ones (desync) need a fresh game
         Game g = _loadedForJoin ? Game : _loader!(Project, Seed);
         _loadedForJoin = false;
@@ -489,7 +624,7 @@ public sealed class LockstepSession
         SaveGame.Load(g, path);
         try { File.Delete(path); } catch { }
         foreach (var c in g.World.Countries) c.IsPlayer = false;
-        foreach (var tag in f[2].Split(',', StringSplitOptions.RemoveEmptyEntries)) { var c = g.World.GetCountry(tag); if (c != null) c.IsPlayer = true; }
+        foreach (var tag in tags) { var c = g.World.GetCountry(tag); if (c != null) c.IsPlayer = true; }
         g.World.Player = null;
         Game = g;
         Tick = tick; _horizon = tick; _queue.Clear();
@@ -503,11 +638,11 @@ public sealed class LockstepSession
         foreach (var rec in s.Split(';', StringSplitOptions.RemoveEmptyEntries))
         {
             var a = rec.Split(',');
-            list.Add(new PlayerInfo
-            {
-                Id = int.Parse(a[0], CultureInfo.InvariantCulture), Name = Net.Unesc(a[1]), Tag = Net.Unesc(a[2]),
-                Active = a[3] == "1", IsHost = a[4] == "1", Ack = long.Parse(a[5], CultureInfo.InvariantCulture), PingMs = int.Parse(a[6], CultureInfo.InvariantCulture),
-            });
+            if (list.Count >= 64 || a.Length != 7 || !Wire.Int(a[0], 0, 1000, out int id) || !Wire.Int(a[5], 0, long.MaxValue, out long ack) || !Wire.Int(a[6], 0, 60000, out int ping))
+                throw new InvalidDataException("bad PLAYERS");
+            string tag = Net.Unesc(a[2]);
+            if (tag.Length > 0 && Sanitize.Tag(tag) != tag) throw new InvalidDataException("bad PLAYERS tag");
+            list.Add(new PlayerInfo { Id = id, Name = Sanitize.PlayerName(Net.Unesc(a[1])), Tag = tag, Active = a[3] == "1", IsHost = a[4] == "1", Ack = ack, PingMs = ping });
         }
         Players = list;
         if (Me != null)
@@ -520,6 +655,7 @@ public sealed class LockstepSession
 
     public void Leave()
     {
+        if (Game != null) Game.ModNet.Outbound = null;
         if (IsHost) { foreach (var p in Players.Where(p => p.Active && !p.IsHost)) p.Link?.Send("REJECT|" + Net.Esc("Host closed the game")); }
         else _hostLink?.Close();
         Disconnected = true;

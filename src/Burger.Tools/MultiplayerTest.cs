@@ -25,12 +25,12 @@ public static partial class Program
         host.Toast += t => toasts.Add(t);
 
         using var listener = new TcpHostListener();
-        var code = JoinCode.Make(IPAddress.Loopback, listener.Port);
+        var code = JoinCode.Make(IPAddress.Loopback, listener.Port, listener.Secret);
         Console.WriteLine($"Join code {code}");
-        Check(JoinCode.TryParse(code, out var h2, out int p2) && h2 == "127.0.0.1" && p2 == listener.Port, "join code round trip");
+        Check(JoinCode.TryParse(code, out var h2, out int p2, out var sec2) && sec2.SequenceEqual(listener.Secret) && h2 == "127.0.0.1" && p2 == listener.Port, "join code round trip");
 
         var clients = new List<LockstepSession>();
-        var tcp = TcpTransport.Connect("127.0.0.1", listener.Port);
+        var tcp = TcpTransport.Connect("127.0.0.1", listener.Port, listener.Secret);
         clients.Add(LockstepSession.Join(tcp, "Ann", LoadStarted));
         for (int i = 0; i < 2; i++)
         {
