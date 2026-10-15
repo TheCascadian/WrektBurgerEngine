@@ -361,7 +361,8 @@ public sealed class Game
     internal void MarkStartedFromSave()
     {
         Started = true;
-        foreach (var c in World.Countries.Where(c => c.Exists)) Economy.UpdateEstimates(c);
+        // (the estimates are saved: they are counted monthly, so recounting here would give a loaded game other numbers than the one it came from; an old save without them is counted)
+        foreach (var c in World.Countries.Where(c => c.Exists && c.LastIncome == 0 && c.LastExpenses == 0 && c.LastManpowerGain == 0)) Economy.UpdateEstimates(c);
         Diplomacy.UpdateWarScores();
     }
 

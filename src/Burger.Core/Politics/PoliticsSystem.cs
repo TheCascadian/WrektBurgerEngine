@@ -33,7 +33,7 @@ public sealed partial class PoliticsSystem
         _game = game;
         game.SaveSections.Add(new SaveSection { Name = "politics", Write = Save, Read = LoadSave, Reset = ResetRuntime });
         game.SaveSections.Add(new SaveSection { Name = "pop_politics", Write = SavePopMoods, Read = LoadPopMoods, Reset = () => { _moods.Clear(); _popSummary.Clear(); } });
-        game.SaveSections.Add(new SaveSection { Name = "parliament", Write = SaveParliaments, Read = LoadParliaments, Reset = () => _parliaments.Clear() });
+        game.SaveSections.Add(new SaveSection { Name = "parliament", Write = SaveParliaments, Read = LoadParliaments, Reset = () => { _parliaments.Clear(); _former.Clear(); _retired.Clear(); _pinned = null; } });
         RegisterScript();
     }
 
@@ -266,6 +266,7 @@ public sealed partial class PoliticsSystem
 
     private void ResetRuntime()
     {
+        lock (_wealth) { _wealth.Clear(); _wealthDay = int.MinValue; }
         _state.Clear();
         Movements.Clear();
         CivilWars.Clear();
@@ -716,6 +717,7 @@ public sealed partial class PoliticsSystem
             foreach (var kv in p.Ministers.ToList())
                 if (!kv.Value.Alive || kv.Value.Country != c) { p.Ministers.Remove(kv.Key); _modsDirty.Add(c); }
         }
+        FlushRetired();
         if (CivilWarsEnabled) MonthlyUnrest();
     }
 
@@ -727,6 +729,15 @@ public sealed partial class PoliticsSystem
 
     private void Save(Node root)
     {
+        // the daily wealth ranking is counted at the first request of a day, so a loaded game would count it at another hour: keep it
+        lock (_wealth)
+            if (_wealthDay != int.MinValue)
+            {
+                var wn = root.AddBlock("wealth");
+                wn.Add("day", _wealthDay.ToString(CultureInfo.InvariantCulture));
+                var items = wn.AddBlock("values");
+                foreach (var (wc, wv) in _wealth.OrderBy(k => k.Key.Tag, StringComparer.Ordinal)) { items.AddItem(wc.Tag); items.AddItem(F(wv)); }
+            }
         foreach (var (c, p) in _state)
         {
             if (!c.Exists && !c.Dynamic) continue;
@@ -795,6 +806,15 @@ public sealed partial class PoliticsSystem
     private void LoadSave(Node root)
     {
         var w = _game.World;
+        lock (_wealth)
+            if (root.Get("wealth") is { } wn)
+            {
+                _wealth.Clear();
+                _wealthDay = wn.GetInt("day", int.MinValue);
+                var vals = wn.GetList("values");
+                for (int i = 0; i + 1 < vals.Count; i += 2)
+                    if (w.GetCountry(vals[i]) is { } wc && double.TryParse(vals[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out var wv)) _wealth[wc] = wv;
+            }
         foreach (var n in root.GetAll("country"))
         {
             var c = w.GetCountry(n.GetString("tag"));

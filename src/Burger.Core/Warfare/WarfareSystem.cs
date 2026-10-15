@@ -113,7 +113,10 @@ public sealed class WarfareSystem
     private void AddToIndex(Division d)
     {
         if (!_byLocation.TryGetValue(d.Location, out var list)) _byLocation[d.Location] = list = new List<Division>();
-        list.Add(d);
+        // kept in id order: arrival order would differ between a continuous game and one rebuilt from a save, and battles pick divisions in list order
+        int at = list.Count;
+        while (at > 0 && list[at - 1].Id > d.Id) at--;
+        list.Insert(at, d);
     }
 
     private void RemoveFromIndex(Division d)

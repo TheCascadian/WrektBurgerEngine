@@ -886,6 +886,8 @@ public sealed partial class DiplomacySystem
         foreach (var kv in _exhaustion) if (kv.Key.Exists) ex.Add(kv.Key.Tag, F(kv.Value));
         var ml = root.AddBlock("men_lost");
         foreach (var kv in MenLost) ml.Add(kv.Key.Tag, F(kv.Value));
+        var mm = root.AddBlock("men_lost_month"); // (the month's losses feed the next monthly exhaustion)
+        foreach (var kv in _menLostMonth.OrderBy(k => k.Key.Tag, StringComparer.Ordinal)) mm.Add(kv.Key.Tag, F(kv.Value));
     }
 
     private void LoadWarGoals(Node root)
@@ -909,6 +911,8 @@ public sealed partial class DiplomacySystem
             if (w.GetCountry(c.Key) is { } country) _exhaustion[country] = c.AsDouble();
         foreach (var c in root.Get("men_lost")?.All ?? Enumerable.Empty<Node>())
             if (w.GetCountry(c.Key) is { } country) MenLost[country] = c.AsDouble();
+        foreach (var c in root.Get("men_lost_month")?.All ?? Enumerable.Empty<Node>())
+            if (w.GetCountry(c.Key) is { } country) _menLostMonth[country] = c.AsDouble();
     }
 
     private void ResetWarGoals()

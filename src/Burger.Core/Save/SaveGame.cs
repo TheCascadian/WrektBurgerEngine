@@ -58,6 +58,9 @@ public static class SaveGame
             if (c.Capital != null) n.Add("capital", c.Capital.Key);
             n.Add("gold", F(c.Gold));
             n.Add("manpower", F(c.Manpower));
+            if (c.LastIncome != 0) n.Add("last_income", F(c.LastIncome));
+            if (c.LastExpenses != 0) n.Add("last_expenses", F(c.LastExpenses));
+            if (c.LastManpowerGain != 0) n.Add("last_manpower_gain", F(c.LastManpowerGain));
             n.Add("government", c.Government, true);
             if (c.Ruler != null) n.Add("ruler", c.Ruler.Key);
             if (c.Heir != null) n.Add("heir", c.Heir.Key);
@@ -106,31 +109,32 @@ public static class SaveGame
         foreach (var ch in w.Characters)
         {
             var n = chars.AddBlock("character");
+            // fields at the loader's default are left out (a late game holds tens of thousands of characters)
             n.Add("num", I(ch.Id));
-            n.Add("id", ch.Key);
+            if (ch.Key != "char_" + I(ch.Id)) n.Add("id", ch.Key);
             n.Add("first_name", ch.FirstName, true);
             n.Add("family", ch.Family, true);
-            n.Add("female", ch.Female ? "yes" : "no");
+            if (ch.Female) n.Add("female", "yes");
             n.Add("birth", ch.BirthDate.ToScript());
             if (ch.DeathDate != null) { n.Add("death", ch.DeathDate.Value.ToScript()); n.Add("death_reason", ch.DeathReason, true); }
             if (ch.Country != null) n.Add("country", ch.Country.Tag);
-            var traits = n.AddBlock("traits");
-            foreach (var t in ch.Traits) traits.AddItem(t.Key);
+            if (ch.Traits.Count > 0) { var traits = n.AddBlock("traits"); foreach (var t in ch.Traits) traits.AddItem(t.Key); }
             var stats = n.AddBlock("stats");
             foreach (var kv in ch.Stats) stats.Add(kv.Key, F(kv.Value));
-            n.Add("loyalty", F(ch.Loyalty));
-            n.Add("health", F(ch.Health));
+            if (ch.Loyalty != 50) n.Add("loyalty", F(ch.Loyalty));
+            if (ch.Health != 100) n.Add("health", F(ch.Health));
             if (ch.Father != null) n.Add("father", ch.Father.Key);
             if (ch.Mother != null) n.Add("mother", ch.Mother.Key);
             if (ch.Spouse != null) n.Add("spouse", ch.Spouse.Key);
             if (ch.Portrait != null) n.Add("portrait", ch.Portrait, true);
             if (ch.PortraitRules != null) n.Add(ch.PortraitRules.Clone());
-            n.Add("general", ch.IsGeneral ? "yes" : "no");
+            if (ch.IsGeneral) n.Add("general", "yes");
             if (ch.Culture != null) n.Add("culture", ch.Culture);
             if (ch.Religion != null) n.Add("religion", ch.Religion);
             if (ch.PopType != null) n.Add("pop_type", ch.PopType);
+            if (ch.ParliamentTimes > 0) n.Add("parliament_times", I(ch.ParliamentTimes));
             if (ch.HomeState != null) n.Add("home_state", ch.HomeState);
-            WriteVars(n.AddBlock("vars"), ch.Vars);
+            if (ch.Vars.Flags.Count > 0 || ch.Vars.Vars.Count > 0) WriteVars(n.AddBlock("vars"), ch.Vars);
         }
 
         var armies = root.AddBlock("armies");
@@ -172,6 +176,32 @@ public static class SaveGame
             if (d.Retreating) n.Add("retreating", "yes");
             if (d.ManualOrder) n.Add("manual", "yes");
             if (d.FrontPost != null) n.Add("front_post", d.FrontPost.Key);
+            if (d.AttackTarget != null) n.Add("attack_target", d.AttackTarget.Key);
+            if (d.Supply != 1) n.Add("supply", F(d.Supply));
+            if (d.CombatFactor != 1) n.Add("combat_factor", F(d.CombatFactor));
+            if (d.PathRetryDay != 0) n.Add("path_retry", I(d.PathRetryDay));
+        }
+
+        // battles in progress: without them a reloaded game (or a client after a resync) starts a fresh battle and drifts from the host
+        var battles = root.AddBlock("battles");
+        foreach (var b in w.Battles)
+        {
+            var n = battles.AddBlock("battle");
+            n.Add("num", I(b.Id));
+            n.Add("location", b.Location.Key);
+            n.Add("attacker_country", b.AttackerCountry.Tag);
+            n.Add("defender_country", b.DefenderCountry.Tag);
+            n.Add("start", b.StartDate.ToScript());
+            n.Add("hours", I(b.Hours));
+            n.Add("attacker_losses", F(b.AttackerLosses));
+            n.Add("defender_losses", F(b.DefenderLosses));
+            n.Add("progress", F(b.AttackerProgress));
+            if (b.Finished) n.Add("finished", "yes");
+            if (b.AttackerWon) n.Add("attacker_won", "yes");
+            var at = n.AddBlock("attackers"); foreach (var d in b.Attackers) at.AddItem(I(d.Id));
+            var df = n.AddBlock("defenders"); foreach (var d in b.Defenders) df.AddItem(I(d.Id));
+            if (b.MenLost.Count > 0) { var m = n.AddBlock("men_lost"); foreach (var kv in b.MenLost) { m.AddItem(kv.Key.Tag); m.AddItem(F(kv.Value)); } }
+            if (b.Data.Count > 0) { var m = n.AddBlock("data"); foreach (var kv in b.Data) { m.AddItem(kv.Key); m.AddItem(F(kv.Value)); } }
         }
 
         var wars = root.AddBlock("wars");
@@ -471,6 +501,7 @@ public static class SaveGame
                 Culture = n.GetString("culture"),
                 Religion = n.GetString("religion"),
                 PopType = n.GetString("pop_type"),
+                ParliamentTimes = n.GetInt("parliament_times"),
                 HomeState = n.GetString("home_state"),
             };
             if (n.Has("death")) { ch.DeathDate = GameDate.Parse(n.GetString("death")!, w.Date); ch.DeathReason = n.GetString("death_reason", "")!; }
@@ -483,7 +514,7 @@ public static class SaveGame
         }
         foreach (var n in charNodes)
         {
-            var ch = w.GetCharacter(n.GetString("id"))!;
+            var ch = w.GetCharacter(n.GetString("id") ?? "char_" + n.GetInt("num"))!;
             ch.Father = w.GetCharacter(n.GetString("father"));
             ch.Mother = w.GetCharacter(n.GetString("mother"));
             ch.Spouse = w.GetCharacter(n.GetString("spouse"));
@@ -502,6 +533,7 @@ public static class SaveGame
             c.Capital = w.GetLocation(n.GetString("capital"));
             c.Gold = n.GetDouble("gold");
             c.Manpower = n.GetDouble("manpower");
+            c.LastIncome = n.GetDouble("last_income"); c.LastExpenses = n.GetDouble("last_expenses"); c.LastManpowerGain = n.GetDouble("last_manpower_gain");
             c.Government = n.GetString("government", "")!;
             c.Ruler = w.GetCharacter(n.GetString("ruler"));
             c.Heir = w.GetCharacter(n.GetString("heir"));
@@ -590,11 +622,43 @@ public static class SaveGame
                 Retreating = n.GetBool("retreating"),
                 ManualOrder = n.GetBool("manual"),
                 FrontPost = w.GetLocation(n.GetString("front_post")),
+                AttackTarget = w.GetLocation(n.GetString("attack_target")),
+                Supply = n.GetDouble("supply", 1),
+                CombatFactor = n.GetDouble("combat_factor", 1),
+                PathRetryDay = n.GetInt("path_retry"),
             };
             foreach (var lk in n.GetList("path")) if (w.GetLocation(lk) is { } pl) d.Path.Add(pl);
             if (n.Has("army") && armyById.TryGetValue(n.GetInt("army"), out var army)) { d.Army = army; army.Divisions.Add(d); }
             d.VolunteerFrom = w.GetCountry(n.GetString("volunteer_from"));
             game.Warfare.AddLoadedDivision(d);
+        }
+
+        // ---- battles
+        {
+            var divById = w.Divisions.ToDictionary(d => d.Id);
+            foreach (var n in root.Get("battles")?.GetAll("battle") ?? Enumerable.Empty<Node>())
+            {
+                var loc = w.GetLocation(n.GetString("location"));
+                var ac = w.GetCountry(n.GetString("attacker_country"));
+                var dc = w.GetCountry(n.GetString("defender_country"));
+                if (loc == null || ac == null || dc == null) continue;
+                var b = new Battle
+                {
+                    Id = n.GetInt("num"), Location = loc, AttackerCountry = ac, DefenderCountry = dc,
+                    StartDate = GameDate.Parse(n.GetString("start") ?? "", w.Date),
+                    Hours = n.GetInt("hours"),
+                    AttackerLosses = n.GetDouble("attacker_losses"), DefenderLosses = n.GetDouble("defender_losses"),
+                    AttackerProgress = n.GetDouble("progress", 0.5),
+                    Finished = n.GetBool("finished"), AttackerWon = n.GetBool("attacker_won"),
+                };
+                foreach (var id in n.GetList("attackers")) if (int.TryParse(id, out var i) && divById.TryGetValue(i, out var d)) { b.Attackers.Add(d); d.Battle = b; }
+                foreach (var id in n.GetList("defenders")) if (int.TryParse(id, out var i) && divById.TryGetValue(i, out var d)) { b.Defenders.Add(d); d.Battle = b; }
+                var ml = n.GetList("men_lost");
+                for (int i = 0; i + 1 < ml.Count; i += 2) if (w.GetCountry(ml[i]) is { } mc) b.MenLost[mc] = double.Parse(ml[i + 1], System.Globalization.CultureInfo.InvariantCulture);
+                var dl = n.GetList("data");
+                for (int i = 0; i + 1 < dl.Count; i += 2) b.Data[dl[i]] = double.Parse(dl[i + 1], System.Globalization.CultureInfo.InvariantCulture);
+                w.Battles.Add(b);
+            }
         }
 
         // ---- wars

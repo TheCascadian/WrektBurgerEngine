@@ -17,14 +17,14 @@ public static class SaveGuard
     /// <summary>Top-level blocks written by <see cref="SaveGame.Save"/>. Sections of systems and mods are added as <c>x_name</c> from the game itself.</summary>
     private static readonly HashSet<string> BaseBlocks = new(StringComparer.Ordinal)
     {
-        "meta", "countries", "states", "locations", "characters", "armies", "divisions", "wars", "generic_scopes", "scope_hierarchy",
+        "meta", "countries", "states", "locations", "characters", "armies", "divisions", "battles", "wars", "generic_scopes", "scope_hierarchy",
         "relations", "modifiers", "scheduled_events",
     };
 
     public const int MaxKeyLength = 128;
 
     /// <summary>Warn level: a save above it is still loaded, but the player is told (set from measured late-game saves, see docs/multiplayer-security.md).</summary>
-    public static long WarnNodes = 1_000_000;
+    public static long WarnParseBytes = 512L << 20;
     public static long WarnBytes = 64L << 20;
 
     /// <summary>Parses and validates. Throws <see cref="InvalidDataException"/> with the reason when the save is refused.</summary>
@@ -39,13 +39,11 @@ public static class SaveGuard
         try { text = new UTF8Encoding(false, true).GetString(utf8); } // invalid UTF-8 is an error, not a replacement character
         catch (DecoderFallbackException) { throw new InvalidDataException("save is not valid UTF-8"); }
         var root = ReadText(game, text);
-        long nodes = Count(root);
-        if (nodes > WarnNodes || utf8.LongLength > WarnBytes)
-            warning = $"the host's save is very large ({utf8.LongLength / (1 << 20)} MB, {nodes} entries; refused above {Wire.MaxSaveBytes >> 20} MB or {ScriptParser.ParseLimits.Save.MaxNodes} entries)";
+        long mem = ScriptParser.LastAllocBytes;
+        if (mem > WarnParseBytes || utf8.LongLength > WarnBytes)
+            warning = $"the host's save is very large ({utf8.LongLength >> 20} MB, {mem >> 20} MB to read; refused above {Wire.MaxSaveBytes >> 20} MB or {ScriptParser.ParseLimits.Save.MaxAllocBytes >> 20} MB to read)";
         return root;
     }
-
-    private static long Count(Node n) { long c = 1; if (n.Children != null) foreach (var k in n.Children) c += Count(k); return c; }
 
     public static Node ReadText(Game game, string text)
     {
