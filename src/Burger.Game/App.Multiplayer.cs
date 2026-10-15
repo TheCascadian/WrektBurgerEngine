@@ -8,22 +8,20 @@ namespace Burger.Runtime;
 /// <summary>Multiplayer plumbing: hosting, joining, pumping the session each frame, rebinding the view when the game is replaced.</summary>
 public sealed partial class App
 {
-    public LockstepSession? Mp { get; private set; }
-    public List<string> MpChat { get; } = new();
-    private TcpHostListener? _listener;
+    private readonly MpController _mpc = new();
+    public LockstepSession? Mp => _mpc.Session;
+    public List<string> MpChat => _mpc.Log;
     private string _joinCode = "", _joinName = Environment.UserName, _mpMessage = "";
     private bool _joinOpen;
+    private bool _mpWired;
     private string Project => Path.GetFileName(Path.GetFullPath(_gameRoot).TrimEnd('/', '\\'));
 
-    private void MpLog(string text) { MpChat.Add(text); if (MpChat.Count > 50) MpChat.RemoveAt(0); }
-
-    private void WireSession(LockstepSession mp)
+    private void WireController()
     {
-        Mp = mp;
-        MpChat.Clear();
-        mp.Toast += t => { MpLog("* " + t); Ui.SetStatus(t); _mpMessage = t; };
-        mp.Chat += (n, t) => MpLog($"{n}: {t}");
-        mp.GameReplaced += g => _pending = () => AdoptGame(g);
+        if (_mpWired) return;
+        _mpWired = true;
+        _mpc.Toast += t => Ui.SetStatus(t);
+        _mpc.GameReplaced += g => _pending = () => AdoptGame(g);
     }
 
     /// <summary>The session made a new game (first sync of a joiner, or a resync after a mismatch): show it.</summary>
@@ -44,76 +42,42 @@ public sealed partial class App
 
     public void HostMultiplayer(string? tag)
     {
+        WireController();
         MpStop();
         int seed = Environment.TickCount & 0x7fffffff;
         LoadGame(keepMap: true, seed: seed);
         if (Game == null) return;
         Game.StartNewGame(null);
-        var mp = LockstepSession.Host(Game, Project, seed, string.IsNullOrWhiteSpace(_joinName) ? "Host" : _joinName.Trim());
-        WireSession(mp);
-        try { _listener = new TcpHostListener(27960); } catch { _listener = new TcpHostListener(); }
-        string code = JoinCode.Make(JoinCode.LocalAddress(), _listener.Port, _listener.Secret);
-        MpLog("* Join code: " + code);
+        string code = _mpc.Host(Game, Project, seed, _joinName);
         EnterPlaying();
-        if (tag != null) mp.Pick(tag);
+        if (tag != null) Mp!.Pick(tag);
         Ui.SetStatus("Hosting. Join code " + code + " (paused: press Space to start)");
     }
 
     public void JoinMultiplayer(string code, string name)
     {
-        if (!JoinCode.TryParse(code, out var host, out int port, out var secret)) { _mpMessage = "That join code is not valid"; return; }
-        MpStop();
-        try
+        WireController();
+        _mpc.Join(code, name, (project, seed) =>
         {
-            var link = TcpTransport.Connect(host, port, secret);
-            var mp = LockstepSession.Join(link, string.IsNullOrWhiteSpace(name) ? "Player" : name.Trim(), (project, seed) =>
-            {
-                if (project != Project) throw new InvalidDataException($"this machine has '{Project}', the host plays '{project}'");
-                var g = Game.Load(_gameRoot, compileScripts: true, seed: seed);
-                g.StartNewGame(null);
-                return g;
-            });
-            WireSession(mp);
-            _mpMessage = "Connecting...";
-        }
-        catch (Exception e) { _mpMessage = "Cannot connect: " + e.Message; }
+            if (project != Project) throw new InvalidDataException($"this machine has '{Project}', the host plays '{project}'");
+            var g = Game.Load(_gameRoot, compileScripts: true, seed: seed);
+            g.StartNewGame(null);
+            return g;
+        });
+        _mpMessage = _mpc.Message;
     }
 
-    public void MpStop()
-    {
-        try { Mp?.Leave(); } catch { }
-        Mp = null;
-        _listener?.Dispose();
-        _listener = null;
-    }
+    public void MpStop() => _mpc.Stop();
 
     private void MpPump(float dt)
     {
-        var mp = Mp;
-        if (mp == null) return;
-        try
+        if (_mpc.Session == null) return;
+        if (!_mpc.Pump(dt))
         {
-            while (_listener != null && _listener.TryAccept(out var t)) mp.AddPeer(t);
-            var game = mp.Game;
-            if (game != null)
-            {
-                game.Clock.Paused = mp.Paused;
-                game.Clock.Speed = mp.Speed;
-            }
-            mp.Update(dt);
-            game = mp.Game;
-            if (game != null && mp.Me is { Tag.Length: > 0 } me && game.World.Player?.Tag != me.Tag)
-            {
-                var c = game.World.GetCountry(me.Tag);
-                if (c != null) game.World.Player = c;
-            }
+            _mpMessage = _mpc.Message;
+            if (_screen == AppScreen.Playing) _screen = AppScreen.Menu;
         }
-        catch (Exception ex)
-        {
-            Log.Error($"Multiplayer error: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
-            Ui.SetStatus("Multiplayer error: " + ex.Message);
-        }
-        if (mp.Disconnected && Mp == mp) { MpLog("* Disconnected"); _mpMessage = "Disconnected"; Mp = null; _listener?.Dispose(); _listener = null; if (_screen == AppScreen.Playing) { _screen = AppScreen.Menu; } }
+        else if (_mpc.Message != "" ) _mpMessage = _mpc.Message;
     }
 
     private void DrawMenuMultiplayer(float x, float y, float w, float half, float bh)

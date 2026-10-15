@@ -203,6 +203,8 @@ public static partial class Program
             ChannelAttacks(Check);
             SaveAttacks(project, tmp, Check);
             SumFlood(project, Check);
+            AppPathSmoke(project, Check);
+            PeerIdentity(Check);
 
             // ------------------------------------------------------------------ host authority + mod messages
             Console.WriteLine("Host authority and a legitimate mod over the network");

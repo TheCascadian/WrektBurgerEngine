@@ -104,28 +104,32 @@ internal static class SecureChannel
     public static byte[] Proof(byte[] psk, string role, byte[] certHash, byte[] first, byte[] second) =>
         HMACSHA256.HashData(psk, Concat(Encoding.ASCII.GetBytes("burger-mp-v3|" + role + "|"), certHash, first, second));
 
-    /// <summary>Key confirmation over the established TLS stream. Throws when the peer fails it.</summary>
-    public static void Confirm(SslStream tls, LineReader reader, bool server, byte[] psk, byte[] certHash)
+    /// <summary>Host side of the key confirmation: the peer proves it knows one of the <paramref name="candidates"/> (the session secret or a per-player token). Returns the label of the one it knew.</summary>
+    public static string ConfirmServer(SslStream tls, LineReader reader, IReadOnlyList<(string Label, byte[] Psk)> candidates, byte[] certHash)
     {
         if (tls.SslProtocol != SslProtocols.Tls13) throw new InvalidDataException("TLS 1.3 required");
-        if (server)
-        {
-            byte[] ns = RandomNumberGenerator.GetBytes(16);
-            WriteLine(tls, "A1|" + B(ns));
-            var f = Read(reader, "A2", 3);
-            byte[] nc = Unb(f[1], 16);
-            if (!CryptographicOperations.FixedTimeEquals(Unb(f[2], 32), Proof(psk, "client", certHash, ns, nc))) throw new InvalidDataException("wrong session secret");
-            WriteLine(tls, "A3|" + B(Proof(psk, "server", certHash, nc, ns)));
-        }
-        else
-        {
-            var f = Read(reader, "A1", 2);
-            byte[] ns = Unb(f[1], 16);
-            byte[] nc = RandomNumberGenerator.GetBytes(16);
-            WriteLine(tls, $"A2|{B(nc)}|{B(Proof(psk, "client", certHash, ns, nc))}");
-            var g = Read(reader, "A3", 2);
-            if (!CryptographicOperations.FixedTimeEquals(Unb(g[1], 32), Proof(psk, "server", certHash, nc, ns))) throw new InvalidDataException("the host does not know the session secret");
-        }
+        byte[] ns = RandomNumberGenerator.GetBytes(16);
+        WriteLine(tls, "A1|" + B(ns));
+        var f = Read(reader, "A2", 3);
+        byte[] nc = Unb(f[1], 16), got = Unb(f[2], 32);
+        int hit = -1;
+        for (int i = 0; i < candidates.Count; i++) // all candidates are checked, so the time does not show which one matched
+            if (CryptographicOperations.FixedTimeEquals(got, Proof(candidates[i].Psk, "client", certHash, ns, nc)) && hit < 0) hit = i;
+        if (hit < 0) throw new InvalidDataException("wrong session secret");
+        WriteLine(tls, "A3|" + B(Proof(candidates[hit].Psk, "server", certHash, nc, ns)));
+        return candidates[hit].Label;
+    }
+
+    /// <summary>Client side of the key confirmation. Throws when the host fails it.</summary>
+    public static void ConfirmClient(SslStream tls, LineReader reader, byte[] psk, byte[] certHash)
+    {
+        if (tls.SslProtocol != SslProtocols.Tls13) throw new InvalidDataException("TLS 1.3 required");
+        var f = Read(reader, "A1", 2);
+        byte[] ns = Unb(f[1], 16);
+        byte[] nc = RandomNumberGenerator.GetBytes(16);
+        WriteLine(tls, $"A2|{B(nc)}|{B(Proof(psk, "client", certHash, ns, nc))}");
+        var g = Read(reader, "A3", 2);
+        if (!CryptographicOperations.FixedTimeEquals(Unb(g[1], 32), Proof(psk, "server", certHash, nc, ns))) throw new InvalidDataException("the host does not know the session secret");
     }
 
     private static string[] Read(LineReader r, string tag, int fields)
@@ -186,6 +190,8 @@ public sealed class TcpTransport : ITransport
     private readonly object _sendLock = new();
 
     public bool Connected => _open;
+    /// <summary>On the host: the label of the token this peer joined with ("" for the session secret).</summary>
+    public string Identity { get; private set; } = "";
 
     private TcpTransport(TcpClient client, Stream stream, LineReader reader)
     {
@@ -200,7 +206,7 @@ public sealed class TcpTransport : ITransport
     }
 
     /// <summary>TLS 1.3 plus key confirmation on an accepted or connected socket. Throws (and closes the socket) when the peer fails in time.</summary>
-    internal static TcpTransport Secure(TcpClient client, bool server, byte[] joinSecret, X509Certificate2? cert = null)
+    internal static TcpTransport Secure(TcpClient client, bool server, Func<IReadOnlyList<(string Label, byte[] Psk)>>? candidates, byte[]? joinSecret, X509Certificate2? cert = null)
     {
         try
         {
@@ -228,9 +234,11 @@ public sealed class TcpTransport : ITransport
                 certHash = SHA256.HashData(tls.RemoteCertificate!.GetRawCertData());
             }
             var reader = new LineReader(tls);
-            SecureChannel.Confirm(tls, reader, server, SecureChannel.SecretKey(joinSecret), certHash);
+            string label = "";
+            if (server) label = SecureChannel.ConfirmServer(tls, reader, candidates!(), certHash);
+            else SecureChannel.ConfirmClient(tls, reader, SecureChannel.SecretKey(joinSecret!), certHash);
             client.ReceiveTimeout = 0; client.SendTimeout = 10000;
-            return new TcpTransport(client, tls, reader);
+            return new TcpTransport(client, tls, reader) { Identity = label };
         }
         catch { try { client.Close(); } catch { } throw; }
     }
@@ -239,7 +247,7 @@ public sealed class TcpTransport : ITransport
     {
         var c = new TcpClient();
         if (!c.ConnectAsync(host, port).Wait(timeoutMs)) { c.Dispose(); throw new IOException($"Could not reach {host}:{port}"); }
-        return Secure(c, false, joinSecret);
+        return Secure(c, false, null, joinSecret);
     }
 
     public void Send(string line)
@@ -274,7 +282,10 @@ public sealed class TcpHostListener : IDisposable
     public const int MaxPending = 16, MaxPerAddress = 3, MaxFailures = 5;
     public int Port { get; }
     /// <summary>The session secret that is part of the join code.</summary>
-    public byte[] Secret { get; }
+    public byte[] Secret { get; private set; }
+    /// <summary>When false the session secret is not accepted any more: only per-player tokens (<see cref="Issue"/>) get in. For public or large sessions.</summary>
+    public bool SessionSecretEnabled { get; set; } = true;
+    private readonly Dictionary<string, (byte[] Secret, DateTime Expires, TcpTransport? Live)> _tokens = new();
     /// <summary>Connections dropped before the handshake (flood limits).</summary>
     public int Refused { get; private set; }
 
@@ -295,7 +306,12 @@ public sealed class TcpHostListener : IDisposable
                     if (!Admit(ip)) { Refused++; c.Close(); continue; }
                     new Thread(() =>
                     {
-                        try { _accepted.Enqueue(TcpTransport.Secure(c, true, Secret, _cert)); Done(ip, false); }
+                        try
+                        {
+                            var t = TcpTransport.Secure(c, true, Candidates, null, _cert);
+                            if (!Claim(t)) { t.Close(); throw new InvalidDataException("token already in use or revoked"); }
+                            _accepted.Enqueue(t); Done(ip, false);
+                        }
                         catch { Done(ip, true); }
                     }) { IsBackground = true, Name = "mp-handshake" }.Start();
                 }
@@ -303,6 +319,54 @@ public sealed class TcpHostListener : IDisposable
             }
         }) { IsBackground = true, Name = "mp-accept" }.Start();
     }
+
+    private IReadOnlyList<(string Label, byte[] Psk)> Candidates()
+    {
+        var list = new List<(string, byte[])>();
+        lock (_tokens)
+        {
+            if (SessionSecretEnabled) list.Add(("", SecureChannel.SecretKey(Secret)));
+            foreach (var (label, t) in _tokens)
+                if (t.Expires > DateTime.UtcNow && (t.Live == null || !t.Live.Connected)) list.Add((label, SecureChannel.SecretKey(t.Secret)));
+        }
+        return list;
+    }
+
+    private bool Claim(TcpTransport t)
+    {
+        if (t.Identity.Length == 0) return SessionSecretEnabled;
+        lock (_tokens)
+        {
+            if (!_tokens.TryGetValue(t.Identity, out var e) || e.Expires <= DateTime.UtcNow || (e.Live != null && e.Live.Connected)) return false;
+            _tokens[t.Identity] = (e.Secret, e.Expires, t);
+            return true;
+        }
+    }
+
+    /// <summary>A join secret for one player: valid for <paramref name="lifetime"/>, usable by one connection at a time, revocable by label. Returns the secret for <see cref="JoinCode.Make"/>.</summary>
+    public byte[] Issue(string label, TimeSpan lifetime)
+    {
+        if (Sanitize.Name(label).Length == 0) throw new ArgumentException("label: letters, digits, space, '.', '-', '_'");
+        var secret = JoinCode.NewSecret();
+        lock (_tokens) _tokens[label] = (secret, DateTime.UtcNow + lifetime, null);
+        return secret;
+    }
+
+    /// <summary>Withdraws a token and ends the connection that joined with it.</summary>
+    public bool Revoke(string label)
+    {
+        TcpTransport? live;
+        lock (_tokens)
+        {
+            if (!_tokens.Remove(label, out var e)) return false;
+            live = e.Live;
+        }
+        live?.Close();
+        return true;
+    }
+
+    /// <summary>Replaces the session secret (old join codes stop working; connected players stay).</summary>
+    public byte[] RotateSessionSecret() { lock (_tokens) Secret = JoinCode.NewSecret(); return Secret; }
 
     private bool Admit(IPAddress ip)
     {

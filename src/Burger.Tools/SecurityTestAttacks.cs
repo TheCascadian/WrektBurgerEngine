@@ -332,3 +332,84 @@ public static partial class Program
         host.Leave();
     }
 }
+
+public static partial class Program
+{
+    /// <summary>The Game app's multiplayer path without a window: the same MpController calls that App.Multiplayer.cs makes (host, join by code, pump, leave).</summary>
+    private static void AppPathSmoke(string project, Action<bool, string> Check)
+    {
+        Console.WriteLine("Game app path (MpController, no window)");
+        Game Fresh(int seed) { var g = Game.Load(GameDir(project), true, seed); g.StartNewGame(null); return g; }
+        var hostGame = Fresh(21);
+        var hc = new MpController(); var cc = new MpController();
+        var hostToasts = new List<string>(); hc.Toast += t => hostToasts.Add(t);
+        Game? adopted = null; cc.GameReplaced += g => adopted = g;
+        string code = hc.Host(hostGame, "sec-test", 21, "  HostName  ", 0);
+        Check(hc.Session != null && hc.Listener != null && code.Length > 20 && hc.Log.Any(l => l.Contains(code)), "host starts a session and a join code ('" + code + "')");
+        Check(!cc.Join("not a code", "Ann", (_, s) => Fresh(s)) && cc.Message.Contains("not valid") && cc.Session == null, "an invalid join code gives a message and no session");
+        string wrong = JoinCode.Make(JoinCode.LocalAddress(), hc.Listener!.Port, JoinCode.NewSecret());
+        Check(!cc.Join(wrong, "Ann", (_, s) => Fresh(s)) && cc.Message.StartsWith("Cannot connect") && cc.Session == null, "a code with the wrong secret ends in 'Cannot connect' and no session");
+        Check(cc.Join(code, "Ann", (p, s) => p == "sec-test" ? Fresh(s) : throw new InvalidDataException("other project")), "join by code connects");
+        bool Until(Func<bool> c, int max = 2000) { for (int i = 0; i < max && !c(); i++) { hc.Pump(0.05f); cc.Pump(0.05f); if (i % 20 == 0) Thread.Sleep(2); } return c(); }
+        Check(Until(() => adopted != null && cc.Session!.Me != null && hc.Session!.Players.Count == 2), "client got the world and both players are listed");
+        var tags = hostGame.World.Countries.Where(c => c.Exists && hostGame.World.Divisions.Any(d => d.Owner == c)).Select(c => c.Tag).OrderBy(t => t, StringComparer.Ordinal).Take(2).ToList();
+        hc.Session!.Pick(tags[0]); cc.Session!.Pick(tags[1]);
+        Check(Until(() => cc.Session.Me!.Tag == tags[1] && hc.Session.Me!.Tag == tags[0]) && adopted!.World.Player?.Tag == tags[1], "each player holds a country and the client's game is bound to it");
+        hc.Session.SetSpeed(5); hc.Session.SetPaused(false);
+        Check(Until(() => cc.Session.Tick > 30 && !adopted!.Clock.Paused && adopted.Clock.Speed == 5), "pace reaches the client's game clock");
+        cc.Session.SendChat("hi"); Check(Until(() => hc.Log.Any(l => l.EndsWith(": hi"))), "chat reaches the host's log");
+        hc.Session.SetPaused(true); Until(() => cc.Session.Tick == hc.Session.Tick && cc.Session.Paused);
+        Check(StateChecksum.Compute(hostGame) == StateChecksum.Compute(adopted!), "both games are identical after a run");
+        hc.Stop();
+        bool ended = false; for (int i = 0; i < 200 && !ended; i++) { ended = !cc.Pump(0.05f); Thread.Sleep(5); }
+        Check(ended && cc.Session == null && cc.Message == "Disconnected", "the client's pump reports the end when the host leaves");
+        cc.Stop();
+    }
+}
+
+public static partial class Program
+{
+    /// <summary>Per-player join tokens: single use at a time, expiry, revocation, rotation, session secret switched off.</summary>
+    private static void PeerIdentity(Action<bool, string> Check)
+    {
+        Console.WriteLine("Per-peer tokens, revocation, rotation");
+        bool Fails(TcpHostListener l, byte[] secret) { try { TcpTransport.Connect("127.0.0.1", l.Port, secret).Close(); return false; } catch { return true; } }
+        using (var l = new TcpHostListener())
+        {
+            var ann = l.Issue("Ann", TimeSpan.FromMinutes(5)); var bob = l.Issue("Bob", TimeSpan.FromMinutes(5));
+            var a = TcpTransport.Connect("127.0.0.1", l.Port, ann);
+            ITransport? sa = null; for (int i = 0; i < 100 && !l.TryAccept(out sa); i++) Thread.Sleep(20);
+            Check(sa is TcpTransport { Identity: "Ann" }, "a token joins and the host knows which one (identity 'Ann')");
+            Check(Fails(l, ann), "the same token cannot be used by a second connection while the first is live");
+            var b = TcpTransport.Connect("127.0.0.1", l.Port, bob);
+            ITransport? sb = null; for (int i = 0; i < 100 && !l.TryAccept(out sb); i++) Thread.Sleep(20);
+            Check(sb is TcpTransport { Identity: "Bob" }, "another token joins as 'Bob'");
+            Check(l.Revoke("Ann"), "revoking a token reports success");
+            Thread.Sleep(300);
+            Check(!sa!.Connected, "revoking ends the live connection of that token");
+            Check(sb!.Connected, "other players stay connected");
+            Check(Fails(l, ann), "a revoked token cannot join again");
+            a.Close(); b.Close(); sb.Close();
+        }
+        using (var l = new TcpHostListener())
+        {
+            var shortLived = l.Issue("Temp", TimeSpan.FromMilliseconds(800));
+            Thread.Sleep(1000);
+            Check(Fails(l, shortLived), "an expired token is refused");
+            var keep = l.Issue("Cy", TimeSpan.FromMinutes(5));
+            l.SessionSecretEnabled = false;
+            Check(Fails(l, l.Secret), "with the session secret switched off, the join code alone is refused");
+            var c = TcpTransport.Connect("127.0.0.1", l.Port, keep);
+            Check(Accepted(l), "a per-player token still works when the session secret is off");
+            c.Close();
+        }
+        using (var l = new TcpHostListener())
+        {
+            byte[] old = l.Secret; l.RotateSessionSecret();
+            Check(Fails(l, old), "after rotation the old join code is refused");
+            var c = TcpTransport.Connect("127.0.0.1", l.Port, l.Secret);
+            Check(Accepted(l), "the new join code works");
+            c.Close();
+        }
+    }
+}
