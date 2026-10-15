@@ -132,6 +132,21 @@ public sealed partial class PoliticsSystem
     private static string Pick(List<string> list, List<string> fallback, Random rng)
         => list.Count > 0 ? list[rng.Next(list.Count)] : fallback.Count > 0 ? fallback[rng.Next(fallback.Count)] : "";
 
+    private List<Trait>? _traitPool;
+    private object? _traitPoolSrc;
+    private int _traitPoolCount = -1;
+
+    private List<Trait> TraitPool()
+    {
+        var src = _game.Data.Traits;
+        if (_traitPool == null || !ReferenceEquals(_traitPoolSrc, src) || _traitPoolCount != src.Count)
+        {
+            _traitPool = src.Values.Where(t => t.RandomWeight > 0).OrderBy(t => t.Key, StringComparer.Ordinal).ToList();
+            _traitPoolSrc = src; _traitPoolCount = src.Count;
+        }
+        return _traitPool;
+    }
+
     /// <summary>Generates one candidate of the seat's pop group, standing for <paramref name="party"/>; fully determined by <paramref name="rng"/>.</summary>
     private PoolCandidate MakeCandidate(Country c, Seat seat, string party, Random rng, int index)
     {
@@ -150,7 +165,7 @@ public sealed partial class PoliticsSystem
         cand.FirstName = Pick(cand.Female ? names.Female : names.Male, cand.Female ? def.Female : def.Male, rng);
         cand.Family = Pick(names.Family, def.Family, rng);
         foreach (var stat in _game.Data.Defines.CharacterStats) cand.Stats[stat] = 2 + rng.Next(7);
-        var traitPool = _game.Data.Traits.Values.Where(t => t.RandomWeight > 0).OrderBy(t => t.Key, StringComparer.Ordinal).ToList();
+        var traitPool = TraitPool();
         for (int i = 0, n = 1 + rng.Next(2); i < n && traitPool.Count > 0; i++)
         {
             var avail = traitPool.Where(t => !cand.Traits.Contains(t) && !cand.Traits.Any(o => o.Opposites.Contains(t.Key, StringComparer.OrdinalIgnoreCase) || t.Opposites.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();

@@ -926,7 +926,7 @@ public sealed class WarfareSystem
     /// <summary>Border pairs between a country's land and another country's land (fronts at peace).</summary>
     private List<(Location Own, Location Enemy)> PeaceBorderPairs(Country owner, Country other)
     {
-        long stamp = (long)_game.World.Date.TotalDays * 24 + _game.World.Date.Hour;
+        long stamp = Location.ControllerVersion;
         if (_peaceBorderCache.TryGetValue((owner, other), out var c) && c.Stamp == stamp) return c.Pairs;
         if (_peaceBorderCache.Count > 256) _peaceBorderCache.Clear();
         var pairs = new List<(Location Own, Location Enemy)>();
@@ -943,7 +943,7 @@ public sealed class WarfareSystem
 
     private List<(Location Own, Location Enemy)> BorderPairs(War war, Country owner)
     {
-        long stamp = (long)_game.World.Date.TotalDays * 24 + _game.World.Date.Hour;
+        long stamp = Location.ControllerVersion * 1000003L + war.Attackers.Count * 1009L + war.Defenders.Count;
         var key = war.SideOf(owner).FirstOrDefault() ?? owner; // one list per war side, shared by all its members
         if (_borderCache.TryGetValue((war, key), out var c) && c.Stamp == stamp) return c.Pairs;
         if (_borderCache.Count > 256) _borderCache.Clear();

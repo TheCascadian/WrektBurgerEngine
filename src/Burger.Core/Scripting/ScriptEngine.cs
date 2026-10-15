@@ -55,33 +55,31 @@ public sealed class ScriptEngine
     /// <summary>Looks up <paramref name="key"/> on <paramref name="n"/>'s cache; returns false if it is cold (and arms it).</summary>
     private bool CachedLookup(Node n, string key, out CachedLookups hit)
     {
-        var c = _nodeCache.GetValue(n, _ => new CachedLookups());
-        lock (c)
+        var old = n.LookupCache as CachedLookups;
+        if (old != null && old.Stamp == _registrationCounter && old.Key.Length == key.Length
+            && string.Equals(old.Key, key, StringComparison.OrdinalIgnoreCase))
         {
-            if (c.Stamp == _registrationCounter && c.Key.Length == key.Length
-                && string.Equals(c.Key, key, StringComparison.OrdinalIgnoreCase))
-            {
-                hit = c;
-                return true;
-            }
-            c.Stamp = _registrationCounter;
-            c.Key = key;
-            c.Trigger = _triggers.TryGetValue(key, out var t) ? t : null;
-            c.Effect = _effects.TryGetValue(key, out var e) ? e : null;
-            c.Value = _values.TryGetValue(key, out var v) ? v : null;
-            c.IteratorPrefix = -1;
-            c.IteratorName = "";
-            // NB: TrySplitIteratorParts does not require registration (it is also used by the legacy
-            // Describe path); check membership here so the cache never claims a bogus iterator.
-            if (TrySplitIteratorParts(key, out var prefix, out var iterName) && _iterators.ContainsKey(iterName))
-            {
-                c.IteratorPrefix = prefix switch { "any" => 0, "all" => 1, "every" => 2, "random" => 3, _ => 4 };
-                c.IteratorName = iterName;
-            }
-            c.ScopeChecked = false;
-            hit = c;
-            return false;
+            hit = old;
+            return true;
         }
+        var c = new CachedLookups
+        {
+            Stamp = _registrationCounter,
+            Key = key,
+            Trigger = _triggers.TryGetValue(key, out var t) ? t : null,
+            Effect = _effects.TryGetValue(key, out var e) ? e : null,
+            Value = _values.TryGetValue(key, out var v) ? v : null,
+        };
+        // NB: TrySplitIteratorParts does not require registration (it is also used by the legacy
+        // Describe path); check membership here so the cache never claims a bogus iterator.
+        if (TrySplitIteratorParts(key, out var prefix, out var iterName) && _iterators.ContainsKey(iterName))
+        {
+            c.IteratorPrefix = prefix switch { "any" => 0, "all" => 1, "every" => 2, "random" => 3, _ => 4 };
+            c.IteratorName = iterName;
+        }
+        n.LookupCache = c;
+        hit = c;
+        return false;
     }
 
     private static readonly HashSet<string> WeightKeys = new(StringComparer.OrdinalIgnoreCase) { "factor", "add", "base", "days", "months", "years" };

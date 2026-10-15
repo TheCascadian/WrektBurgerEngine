@@ -71,7 +71,15 @@ public sealed class Location : IScope
 
     // runtime
     /// <summary>Country that militarily controls the location (differs from the owner when occupied).</summary>
-    public Country? Controller;
+    public Country? Controller
+    {
+        get => _controller;
+        set { if (_controller != value) { _controller = value; Interlocked.Increment(ref _controllerVersion); } }
+    }
+    private Country? _controller;
+    private static int _controllerVersion;
+    /// <summary>Changes whenever any location changes controller (caches of border scans use it).</summary>
+    public static int ControllerVersion => Volatile.Read(ref _controllerVersion);
     public int Fort;
     public double SiegeProgress;
     public Country? Sieger;

@@ -19,7 +19,7 @@ public sealed partial class PoliticsSystem
     /// <summary>People are tracked when politics and population are both on.</summary>
     public bool PopsEnabled => Enabled && _game.Population.Enabled;
 
-    public static string PopKey(Pop pop) => $"{pop.Culture}|{pop.Religion}|{pop.Type}";
+    public static string PopKey(Pop pop) => pop.Key;
 
     /// <summary>The mood of a pop group (created on first use, with the group's objective already worked out).</summary>
     public PopMood MoodOf(Country c, State s, Pop pop)
@@ -56,12 +56,13 @@ public sealed partial class PoliticsSystem
         var radicalToward = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         double total = 0;
         int announced = 0;
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var s in c.OwnedStates)
         {
             if (!_game.Population.HasPops(s)) continue;
             var sp = _game.Population.Of(s);
             double stateTotal = sp.Total;
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            seen.Clear();
             foreach (var pop in sp.Pops)
             {
                 if (pop.Size <= 0) continue;

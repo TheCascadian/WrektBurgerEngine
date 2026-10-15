@@ -27,6 +27,9 @@ public enum Op
 /// </summary>
 public sealed class Node
 {
+    /// <summary>Script engine memo for this node (see ScriptEngine.CachedLookup).</summary>
+    internal object? LookupCache;
+
     public string Key = "";
     public Op Op = Op.None;
     public string? Value;

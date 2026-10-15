@@ -665,6 +665,27 @@ public class PoliticsRules
     /// attributes, minority parties of the group's culture or faith, the group's objective against the party's ideology, and
     /// radical groups drifting to extremist parties.
     /// </summary>
+    private static bool HasToken(string raw, string value)
+    {
+        var span = raw.AsSpan();
+        while (span.Length > 0)
+        {
+            int i = span.IndexOfAny(' ', ',');
+            var tok = i < 0 ? span : span[..i];
+            if (tok.Length > 0 && tok.Equals(value, StringComparison.OrdinalIgnoreCase)) return true;
+            if (i < 0) break;
+            span = span[(i + 1)..];
+        }
+        return false;
+    }
+
+    private static bool HasBranchIn(PoliticsSystem pol, GenericScope party, State s)
+    {
+        foreach (var b in pol.PartyUnitsOf(party, PoliticsSystem.PartyBranchKind))
+            if (pol.StateOfBranch(b) == s) return true;
+        return false;
+    }
+
     public virtual double PopPartyAffinity(Game game, Country c, State s, Pop pop, PopMood mood, string partyKey)
     {
         if (partyKey.StartsWith("culture:", StringComparison.OrdinalIgnoreCase)) return string.Equals(partyKey[8..], pop.Culture, StringComparison.OrdinalIgnoreCase) ? 3 : 0.05;
@@ -676,7 +697,7 @@ public class PoliticsRules
             bool Match(string attr, string? value, double hit, double miss)
             {
                 if (!party.Attributes.TryGetValue(attr, out var raw) || string.IsNullOrWhiteSpace(raw) || value == null) return true;
-                bool ok = raw.Split(new[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries).Contains(value, StringComparer.OrdinalIgnoreCase);
+                bool ok = HasToken(raw, value);
                 a *= ok ? hit : miss;
                 return ok;
             }
@@ -684,7 +705,7 @@ public class PoliticsRules
             Match("religion", pop.Religion, 1.7, 0.7);
             Match("class", pop.Type, 1.5, 0.8);
             // a regional branch in this very state makes the party known there
-            if (pol.PartyUnitsOf(party, PoliticsSystem.PartyBranchKind).Any(b => pol.StateOfBranch(b) == s)) a *= 1.4;
+            if (HasBranchIn(pol, party, s)) a *= 1.4;
         }
         if (pol.Ideology(pol.IdeologyKeyOfParty(partyKey)) is { } ideology)
         {

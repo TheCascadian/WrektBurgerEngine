@@ -70,6 +70,18 @@ public sealed class Pop
     /// <summary>Number of people.</summary>
     public double Size;
 
+    private string? _key, _kc, _kr, _kt;
+    /// <summary>"culture|religion|type", rebuilt only when one of the three changes.</summary>
+    public string Key
+    {
+        get
+        {
+            if (_key == null || !ReferenceEquals(_kc, Culture) || !ReferenceEquals(_kr, Religion) || !ReferenceEquals(_kt, Type))
+            { _key = $"{Culture}|{Religion}|{Type}"; _kc = Culture; _kr = Religion; _kt = Type; }
+            return _key;
+        }
+    }
+
     public bool Same(string culture, string? religion, string? type)
         => Culture == culture && Religion == religion && Type == type;
 }
