@@ -171,10 +171,10 @@ public sealed partial class Hud
                 var rect = new Rectangle(x, y, w, 20 * S);
                 bool gov = op.GovernmentOrganizations.Contains(seat.Party, StringComparer.OrdinalIgnoreCase);
                 Raylib.DrawCircleV(new Vector2(x + 7 * S, y + 10 * S), 4 * S, C(P.PartyColor(seat.Party)));
-                Gui.Label(Gui.Fit(seat.Holder?.DisplayName ?? "Vacant", w * 0.5f, 13), x + 18 * S, y + 1 * S, 13, gov ? Gui.Good : Gui.Text);
+                Gui.Label(Gui.Fit(seat.HolderName ?? "Unnamed", w * 0.5f, 13), x + 18 * S, y + 1 * S, 13, gov ? Gui.Good : Gui.Text);
                 string pn = Gui.Fit(P.PartyDisplayName(owner, seat.Party), w * 0.4f, 12);
                 Gui.Label(pn, x + w - Gui.Measure(pn, 12).X - 4 * S, y + 3 * S, 12, Gui.TextDim);
-                if (Gui.Hover(rect)) Gui.Tooltip(P.SeatText(seat) + $"\n{(gov ? "Government" : "Opposition")}");
+                if (Gui.Hover(rect)) Gui.Tooltip(P.SeatText(owner, seat) + $"\n{(gov ? "Government" : "Opposition")}");
                 y += 20 * S;
             }
             if (seats.Count > 8) { Gui.Label($"+{seats.Count - 8} more", x, y, 12, Gui.TextDim); y += 18 * S; }

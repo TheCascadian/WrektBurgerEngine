@@ -262,7 +262,16 @@ public static partial class Program
         Refused("unterminated block", "meta = { version = 1\n");
         Refused("control characters", good.Replace("meta", "me\u0001ta"));
         Refused("overlong string", "meta = { version = 1 name = \"" + new string('a', 100000) + "\" }");
-        Refused("too many entries", "meta = { version = 1 }\ncountries = {\n" + string.Concat(Enumerable.Range(0, 1_500_000).Select(i => $"a{i}={{}}\n")) + "}\n");
+        {
+            // the densest text there is (two bytes per entry) at the real limit: refused by measured memory, not by a count
+            string dense = "meta = { version = 1 }\nx_deep = { " + new System.Text.StringBuilder().Insert(0, "{}", 20_000_000) + " }\n";
+            GC.Collect(); long before = GC.GetTotalMemory(true);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            string? r = Try(() => SaveGuard.ReadText(game, dense));
+            Check(r != null && r.Contains("memory"), $"{dense.Length >> 20} MB of empty blocks refused before the parse needs more than {ScriptParser.ParseLimits.Save.MaxAllocBytes >> 20} MB ({r}, {sw.ElapsedMilliseconds} ms)");
+            dense = ""; GC.Collect();
+            Check(GC.GetTotalMemory(true) < before + (64 << 20), "and the memory is given back");
+        }
         Refused("non-tag country key", good.Replace("countries = {", "countries = {\n  \"../../etc\" = { }\n"));
         Refused("NaN gold", good.Replace("gold = ", "gold = NaN # "));
         Refused("invalid UTF-8", "");
@@ -422,6 +431,7 @@ public static partial class Program
     {
         int years = int.TryParse(Opt(args, "--years"), out var y) ? y : 0;
         int maxMinutes = int.TryParse(Opt(args, "--max-minutes"), out var mm) ? mm : 60;
+        bool blocks = args.Remove("--blocks");
         string project = ResolveProject(RequireProjectArg(args, "burger save-limits <project> [--years N] [--max-minutes M]"));
         var g = Game.Load(GameDir(project), true, 3); g.StartNewGame(null);
         string path = Path.Combine(Path.GetTempPath(), "burger_savelimits_" + Environment.ProcessId + ".sav");
@@ -433,12 +443,28 @@ public static partial class Program
                 Burger.Core.Save.SaveGame.Save(g, path);
                 byte[] raw = File.ReadAllBytes(path);
                 long gz; using (var ms = new MemoryStream()) { using (var z = new GZipStream(ms, CompressionLevel.Fastest, true)) z.Write(raw); gz = ms.Length; }
-                // measure with no count limit (same depth and string limits), then the verdict with the real limits
-                var measured = ScriptParser.ParseStrict(System.Text.Encoding.UTF8.GetString(raw), "save", lim with { MaxTokens = int.MaxValue, MaxNodes = int.MaxValue });
-                int tokens = ScriptParser.LastTokenCount;
+                // measure with no memory limit (same depth and string limits), then the verdict with the real limits
+                var measured = ScriptParser.ParseStrict(System.Text.Encoding.UTF8.GetString(raw), "save", lim with { MaxAllocBytes = long.MaxValue });
+                int tokens = ScriptParser.LastTokenCount; long mem = ScriptParser.LastAllocBytes;
                 long nodes = 0; int depth = 0; void Count(Burger.Core.Script.Node n, int d) { nodes++; depth = Math.Max(depth, d); foreach (var c in n.All) Count(c, d + 1); }
                 Count(measured, 0);
-                string head = $"{project} {when}: save {raw.Length / 1024} KB ({gz / 1024} KB on the wire), {tokens} tokens ({100.0 * tokens / lim.MaxTokens:0}% of {lim.MaxTokens}), {nodes} nodes ({100.0 * nodes / lim.MaxNodes:0}% of {lim.MaxNodes}), depth {depth}";
+                string head = $"{project} {when}: save {raw.Length / 1024} KB ({gz / 1024} KB on the wire), {tokens} tokens, {nodes} nodes, depth {depth}, {mem >> 20} MB to read ({100.0 * mem / lim.MaxAllocBytes:0}% of {lim.MaxAllocBytes >> 20} MB)";
+                if (blocks)
+                {
+                    // where the entries are: key paths with ids folded to *, by entry count
+                    var by = new Dictionary<string, long>(StringComparer.Ordinal);
+                    static string Fold(string k) => k.Length > 0 && (char.IsDigit(k[0]) || k[0] == '-' || (k.Length == 3 && k.All(char.IsUpper))) ? "*" : k;
+                    void Agg(Burger.Core.Script.Node n, string path, int d)
+                    {
+                        string p2 = d == 0 ? "" : path.Length == 0 ? Fold(n.Key) : path + "/" + Fold(n.Key);
+                        if (d > 0) by[p2] = by.GetValueOrDefault(p2) + 1;
+                        if (d < 4) foreach (var c in n.All) Agg(c, p2, d + 1);
+                    }
+                    Agg(measured, "", 0);
+                    foreach (var kv in by.Where(kv => !kv.Key.Contains('/')).OrderByDescending(kv => kv.Value)) Console.WriteLine($"    {kv.Key,-40} {kv.Value,10}");
+                    Console.WriteLine("    -- largest paths --");
+                    foreach (var kv in by.OrderByDescending(kv => kv.Value).Take(25)) Console.WriteLine($"    {kv.Key,-60} {kv.Value,10}");
+                }
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 try { SaveGuard.Read(g, raw, out var warn); Console.WriteLine($"{head}, checked in {sw.ElapsedMilliseconds} ms. {(warn != null ? "WARNED" : "Accepted")}."); return 0; }
                 catch (InvalidDataException e) { Console.WriteLine($"{head}. REFUSED: {e.Message}"); return 1; }
@@ -454,5 +480,55 @@ public static partial class Program
             rc |= Measure($"after {year} year(s), {g.World.Date}, {clock.Elapsed.TotalMinutes:0.0} min");
         }
         return rc;
+    }
+}
+
+public static partial class Program
+{
+    /// <summary>Runs a project for N years and checks that parliament members stay light records, are forgotten and noted once out of office, and that a save keeps all of it.</summary>
+    private static int ParliamentTest(List<string> args)
+    {
+        int years = int.TryParse(Opt(args, "--years"), out var y) ? y : 3;
+        string project = ResolveProject(RequireProjectArg(args, "burger parliament-test <project> [--years N]"));
+        var g = Game.Load(GameDir(project), true, 3); string player = g.World.Countries.First(c => c.Exists).Tag; g.StartNewGame(player);
+        int fails = 0;
+        void Check(bool ok, string what) { Console.WriteLine((ok ? "ok   " : "FAIL ") + what); if (!ok) fails++; }
+        for (int year = 1; year <= years; year++) for (int h = 0; h < 24 * 365; h++) g.Tick();
+        bool aiAnonymous = g.World.Countries.Where(c => !c.IsPlayer).All(c => g.Politics.ParliamentOf(c).Seats.All(x => !x.Occupied));
+        var seats = g.Politics.AllSeats.ToList();
+        int light = seats.Count(s => s.Member != null), full = seats.Count(s => s.Character != null), noted = g.Politics.ForgottenMembers;
+        int generated = g.World.Characters.Count(c => c.PopType != null);
+        Console.WriteLine($"{project} after {years} year(s): {seats.Count} seats, {light} light members, {full} full characters, {generated} generated characters in the world, {noted} former members noted");
+        Check(aiAnonymous, "AI countries have no named members");
+        Check(light > 0, "the player's seats are held by light records");
+        Check(generated == full, $"no generated character exists unless a seat asked for it ({generated} in the world, {full} on seats)");
+        Check(g.World.Characters.All(c => g.World.CharacterByKey.TryGetValue(c.Key, out var k) && k == c) && g.World.CharacterByKey.Count == g.World.Characters.Count, "character list and key index agree");
+        var again = seats.Where(s => s.TimesSeated > 1).ToList();
+        Console.WriteLine($"     members seated more than once: {again.Count}" + (again.Count > 0 ? $", most {again.Max(s => s.TimesSeated)}" : ""));
+        // ask for one full character
+        var country = g.World.Countries.First(c => g.Politics.ParliamentOf(c).Seats.Any(s => s.Member != null));
+        var seat = g.Politics.ParliamentOf(country).Seats.First(s => s.Member != null);
+        string name = seat.HolderName!; int times = seat.TimesSeated; int before = g.World.Characters.Count;
+        var made = g.Politics.CharacterOf(country, seat);
+        Check(made != null && made.DisplayName == name && made.ParliamentTimes == times && seat.Member == null && seat.Character == made && g.World.GetCharacter(made.Key) == made && g.World.Characters.Count == before + 1, "asking for a seat holder builds one registered character with the same name and count");
+        Check(g.Politics.CharacterOf(country, seat) == made && g.World.Characters.Count == before + 1, "asking again returns the same character");
+        string path = Path.Combine(Path.GetTempPath(), "burger_parltest_" + Environment.ProcessId + ".sav");
+        try
+        {
+            Burger.Core.Save.SaveGame.Save(g, path);
+            Console.WriteLine($"     save: {new FileInfo(path).Length / 1024} KB");
+            var g2 = Game.Load(GameDir(project), true, 3); g2.StartNewGame(player);
+            Burger.Core.Save.SaveGame.Load(g2, path);
+            var s2 = g2.Politics.AllSeats.ToList();
+            Check(g2.Politics.ForgottenMembers == noted, $"save keeps the notes ({g2.Politics.ForgottenMembers} of {noted})");
+            Check(s2.Count == seats.Count && s2.Count(s => s.Member != null) == light - 1 && s2.Count(s => s.Character != null) == full + 1, "save keeps light and full holders");
+            Check(s2.Zip(seats).All(p => p.First.HolderName == p.Second.HolderName && p.First.TimesSeated == p.Second.TimesSeated), "save keeps every name and count");
+            for (int h = 0; h < 24 * 365; h++) { g.Tick(); g2.Tick(); }
+            Check(g2.World.Characters.Count == g.World.Characters.Count && g2.Politics.ForgottenMembers == g.Politics.ForgottenMembers
+                  && g2.Politics.AllSeats.Zip(g.Politics.AllSeats).All(p => p.First.HolderName == p.Second.HolderName), "reloaded game continues the same for a year");
+        }
+        finally { try { File.Delete(path); } catch { } }
+        Console.WriteLine(fails == 0 ? "parliament-test passed" : $"parliament-test FAILED ({fails})");
+        return fails == 0 ? 0 : 1;
     }
 }

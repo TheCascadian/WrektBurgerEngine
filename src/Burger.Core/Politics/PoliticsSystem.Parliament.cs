@@ -15,6 +15,17 @@ public sealed partial class PoliticsSystem
 {
     private readonly Dictionary<Country, CountryParliament> _parliaments = new();
 
+    /// <summary>What is kept of a generated person who left parliament and was forgotten: their last age, when they left and how many times they sat.</summary>
+    private readonly record struct FormerMember(int Age, GameDate Left, int Times);
+    private readonly Dictionary<string, FormerMember> _former = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<Character> _retired = new();
+    /// <summary>How many forgotten former members are noted (their names, last ages and times seated).</summary>
+    public int ForgottenMembers => _former.Count;
+    /// <summary>Every seat built so far, in every country (does not build any).</summary>
+    public IEnumerable<Seat> AllSeats => _parliaments.Values.SelectMany(p => p.Seats);
+    private HashSet<Character>? _pinned;
+    private int _pinnedDay = int.MinValue;
+
     /// <summary>The seats of a country, built (or rebuilt when party totals or constituencies changed) on first use.</summary>
     public CountryParliament ParliamentOf(Country c)
     {
@@ -66,14 +77,15 @@ public sealed partial class PoliticsSystem
                         seat = new Seat { Party = party, State = state };
                     }
                     seat.Id = $"{party}@{state?.Key ?? "nation"}#{i + 1}";
-                    if (seat.PopGroup.Length == 0 || seat.Holder == null) seat.PopGroup = PickPopGroup(c, party, state, seat);
+                    if (seat.PopGroup.Length == 0 || !seat.Occupied) seat.PopGroup = PickPopGroup(c, party, state, seat);
                     seats.Add(seat);
                 }
             }
         }
-        // people whose seat disappeared are simply no longer seated
+        // people whose seat disappeared are no longer seated
+        foreach (var q in old.Values) foreach (var gone in q) Leave(gone);
         par.Seats = seats;
-        foreach (var seat in seats) if (seat.Holder == null || !seat.Holder.Alive) FillSeat(c, par, seat);
+        if (c.IsPlayer) foreach (var seat in seats) if (!seat.Occupied || seat.Character is { Alive: false }) FillSeat(c, par, seat);
     }
 
     /// <summary>Largest-remainder split of a party's seats over constituencies by population times how much its people lean to the party.</summary>
@@ -227,34 +239,136 @@ public sealed partial class PoliticsSystem
         Seat_Seat(c, seat, chosen);
     }
 
+    /// <summary>Seats the chosen candidate as a light record. The person who sat here before leaves first, so a same-named replacement is the same person again.</summary>
     private void Seat_Seat(Country c, Seat seat, PoolCandidate cand)
     {
         var now = _game.World.Date;
-        var ch = new Character
+        Leave(seat);
+        var stats = _game.Data.Defines.CharacterStats;
+        var m = new SeatMember
         {
             FirstName = cand.FirstName,
             Family = cand.Family,
             Female = cand.Female,
-            Country = c,
-            Culture = cand.Culture.Length > 0 ? cand.Culture : null,
-            Religion = cand.Religion,
-            PopType = cand.PopType,
-            HomeState = cand.StateKey,
             BirthDate = now.AddYears(-cand.Age),
-            Traits = new List<Trait>(cand.Traits),
+            Traits = cand.Traits.ToArray(),
+            Stats = stats.Select(k => (byte)Math.Clamp(cand.Stats.TryGetValue(k, out var v) ? v : 5, 0, 255)).ToArray(),
         };
-        foreach (var kv in cand.Stats) ch.Stats[kv.Key] = kv.Value;
-        _game.Characters.Register(ch);
-        seat.Holder = ch;
+        // somebody of this name sat before and was forgotten: it is the same person again, older by the years away
+        if (_former.Remove(m.FirstName + "|" + m.Family, out var back))
+        {
+            m.Times = back.Times + 1;
+            var birth = back.Left.AddYears(-back.Age);
+            if (GameDate.YearsBetween(birth, now) <= (int)Def("parliament_max_age", 90)) m.BirthDate = birth;
+        }
+        seat.Member = m;
         seat.CandidateId = cand.Id;
         seat.Faction = cand.Faction;
         seat.TermStart = now;
-        seat.TermEnd = now.AddMonths(TermMonths(c, seat, ch).Months);
-        seat.Text = null;
-        BuildSeatText(c, seat);
+        seat.TermEnd = now.AddMonths(TermMonths(c, seat).Months);
+    }
+
+    // ---- light records and full characters
+
+    /// <summary>A character object for a light record: not registered anywhere, so the world does not know it.</summary>
+    private Character Build(Country c, Seat seat, SeatMember m)
+    {
+        var (culture, religion, type) = SplitPopGroup(seat.PopGroup);
+        var ch = new Character
+        {
+            FirstName = m.FirstName, Family = m.Family, Female = m.Female, Country = c,
+            Culture = culture.Length > 0 ? culture : null, Religion = religion, PopType = type, HomeState = seat.State?.Key,
+            BirthDate = m.BirthDate, Traits = new List<Trait>(m.Traits), ParliamentTimes = m.Times,
+        };
+        var names = _game.Data.Defines.CharacterStats;
+        for (int i = 0; i < names.Count; i++) ch.Stats[names[i]] = i < m.Stats.Length ? m.Stats[i] : 5;
+        return ch;
+    }
+
+    /// <summary>The seat holder as a full, registered character, made on the first request (null for an empty seat). The only place a light record becomes a character.</summary>
+    public Character? CharacterOf(Country c, Seat seat)
+    {
+        if (seat.Character != null) return seat.Character;
+        if (seat.Member is not { } m) return null;
+        var ch = _game.Characters.Register(Build(c, seat, m));
+        seat.Character = ch;
+        seat.Member = null;
+        return ch;
+    }
+
+    /// <summary>The holder as something rules can read: the full character if there is one, else a short-lived copy of the record.</summary>
+    private Character? ViewOf(Country c, Seat seat) => seat.Character ?? (seat.Member is { } m ? Build(c, seat, m) : null);
+
+    // ---- forgetting
+
+    /// <summary>
+    /// The holder leaves the seat. A light record is dropped and noted (name, last age, when they left, times seated). A full character is also
+    /// removed from the world once nothing points at it: family, a post, an army, variables, remembered acts, scheduled events, modifiers, scope links.
+    /// </summary>
+    private void Leave(Seat seat)
+    {
+        var now = _game.World.Date;
+        if (seat.Member is { } m)
+        {
+            Note(m.FirstName + "|" + m.Family, m.Age(now), m.Times, now);
+        }
+        else if (seat.Character is { } ch && ch.PopType != null && _game.World.CharacterByKey.TryGetValue(ch.Key, out var reg) && reg == ch && !_retired.Contains(ch)
+                 && ch.Father == null && ch.Mother == null && ch.Spouse == null && ch.Children.Count == 0 && !ch.IsGeneral
+                 && ch.Vars.Flags.Count == 0 && ch.Vars.Vars.Count == 0 && !Pinned().Contains(ch))
+        {
+            Note(ch.FirstName + "|" + ch.Family, ch.Age(now), Math.Max(1, ch.ParliamentTimes), now);
+            _retired.Add(ch);
+        }
+        seat.Member = null;
+        seat.Character = null;
+    }
+
+    private void Note(string name, int age, int times, GameDate now)
+    {
+        if (_former.TryGetValue(name, out var old)) times = Math.Max(times, old.Times);
+        _former[name] = new FormerMember(age, now, times);
+    }
+
+    /// <summary>Removes the people retired so far from the character list (once a month, so the list is not rewritten per person).</summary>
+    private void FlushRetired()
+    {
+        _game.World.RemoveCharacters(_retired);
+        _retired.Clear();
+    }
+
+    /// <summary>Characters other systems point at; built once per day.</summary>
+    private HashSet<Character> Pinned()
+    {
+        var w = _game.World;
+        if (_pinned != null && _pinnedDay == w.Date.TotalDays) return _pinned;
+        var set = new HashSet<Character>(ReferenceEqualityComparer.Instance);
+        void Add(Character? c) { if (c != null) set.Add(c); }
+        void AddScope(IScope? s) { if (s is Character c) set.Add(c); }
+        foreach (var country in w.Countries)
+        {
+            Add(country.Ruler); Add(country.Heir);
+            foreach (var m in Of(country).Ministers.Values) Add(m);
+        }
+        foreach (var army in w.Armies) Add(army.General);
+        foreach (var scope in w.GenericScopes)
+            foreach (var v in scope.Attributes.Values) Add(w.GetCharacter(v));
+        foreach (var key in _game.Memory.CharacterKeys()) Add(w.GetCharacter(key));
+        foreach (var e in _game.Events.Scheduled)
+        {
+            AddScope(e.Root);
+            foreach (var s in e.Scopes.Values) AddScope(s);
+        }
+        foreach (var (scope, list) in _game.Modifiers.Active) if (list.Count > 0) AddScope(scope);
+        foreach (var (child, parent) in w.ScopeHierarchy.ParentLinks) { AddScope(child); AddScope(parent); }
+        _pinnedDay = w.Date.TotalDays;
+        return _pinned = set;
     }
 
     // ---- terms
+
+    /// <summary>Length of a term for whoever holds the seat (rules see a full character, or a short-lived copy of the light record).</summary>
+    public (int Months, List<(string Source, double Value)> Sources) TermMonths(Country c, Seat seat)
+        => ViewOf(c, seat) is { } holder ? TermMonths(c, seat, holder) : (1, new List<(string, double)>());
 
     /// <summary>Length of a term and where each modifier moved it: (months, [(source, value)]).</summary>
     public (int Months, List<(string Source, double Value)> Sources) TermMonths(Country c, Seat seat, Character holder)
@@ -266,61 +380,54 @@ public sealed partial class PoliticsSystem
         return (Math.Max(1, months), mods);
     }
 
-    // ---- text (collected once, then kept until the holder changes)
+    // ---- text (built when asked for, never stored)
 
-    private void BuildSeatText(Country c, Seat seat)
+    /// <summary>The seat's description, built from the seat's current data.</summary>
+    public string SeatText(Country c, Seat seat)
     {
-        if (seat.Holder is not { } h) return;
+        if (!seat.Occupied) return $"A seat for {seat.State?.DisplayName ?? c.DisplayName} held by {PartyDisplayName(c, seat.Party)}. Its member is not tracked.";
         var (culture, religion, _) = SplitPopGroup(seat.PopGroup);
+        var trait = seat.Character?.Traits.FirstOrDefault() ?? seat.Member?.Traits.FirstOrDefault();
+        var args = new Dictionary<string, string>
+        {
+            ["name"] = seat.HolderName ?? "",
+            ["party"] = PartyDisplayName(c, seat.Party),
+            ["faction"] = seat.Faction != null && _game.World.GetGenericScope(seat.Faction) is { } f ? f.DisplayName : "",
+            ["culture"] = culture.Length > 0 ? (_game.Population.Culture(culture)?.Name ?? Localisation.GetOrPretty(culture)) : "",
+            ["religion"] = religion != null ? (_game.Population.Religion(religion)?.Name ?? Localisation.GetOrPretty(religion)) : "",
+            ["province"] = seat.State?.DisplayName ?? c.DisplayName,
+            ["term_end"] = seat.TermEnd.ToDisplay(),
+            ["trait"] = trait?.Name ?? "",
+        };
         bool minority = IsMinorityParty(seat.Party);
-        seat.TextKey = minority ? "parliament_seat_minority" : "parliament_seat_default";
-        var args = seat.TextArgs;
-        args.Clear();
-        args["name"] = h.DisplayName;
-        args["party"] = PartyDisplayName(c, seat.Party);
-        args["faction"] = seat.Faction != null && _game.World.GetGenericScope(seat.Faction) is { } f ? f.DisplayName : "";
-        args["culture"] = culture.Length > 0 ? (_game.Population.Culture(culture)?.Name ?? Localisation.GetOrPretty(culture)) : "";
-        args["religion"] = religion != null ? (_game.Population.Religion(religion)?.Name ?? Localisation.GetOrPretty(religion)) : "";
-        args["province"] = seat.State?.DisplayName ?? c.DisplayName;
-        args["term_end"] = seat.TermEnd.ToDisplay();
-        args["trait"] = h.Traits.Count > 0 ? h.Traits[0].Name : "";
-        seat.Text = RenderSeatText(seat);
-    }
-
-    private static string RenderSeatText(Seat seat)
-    {
-        string template = Localisation.Has(seat.TextKey) ? Localisation.Get(seat.TextKey)
-            : seat.TextKey == "parliament_seat_minority"
+        string key = minority ? "parliament_seat_minority" : "parliament_seat_default";
+        string template = Localisation.Has(key) ? Localisation.Get(key)
+            : minority
                 ? "{name} sits for {province} for {party}, speaking for the {culture} {religion} people there. Term ends {term_end}."
                 : "{name} sits for {province} for {party}. Elected by {culture} {religion} voters. Term ends {term_end}.";
-        var sb = new StringBuilder(template);
-        foreach (var kv in seat.TextArgs) sb.Replace("{" + kv.Key + "}", kv.Value);
-        return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), @"\s{2,}", " ").Replace(" .", ".").Trim();
+        var sb = new System.Text.StringBuilder(template);
+        foreach (var kv in args) sb.Replace("{" + kv.Key + "}", kv.Value);
+        return sb.ToString();
     }
-
-    /// <summary>The seat's description, built once when its holder was seated and cached since.</summary>
-    public string SeatText(Seat seat) => seat.Text ??= RenderSeatText(seat);
 
     // ---- monthly upkeep and elections
 
     /// <summary>Refills seats whose holder died or whose term ended. Called monthly for every country.</summary>
     public void ParliamentMonthly(Country c)
     {
-        if (!Enabled) return;
+        // only a player's parliament has named members; an AI country's seats are just counts (party, constituency, pop group)
+        if (!Enabled || !c.IsPlayer) return;
         var par = ParliamentOf(c);
         if (par.Seats.Count == 0) return;
         var now = _game.World.Date;
         foreach (var seat in par.Seats.ToList())
         {
-            if (seat.Holder is { Alive: true } && seat.TermEnd.TotalDays > now.TotalDays) continue;
-            var previous = seat.Holder;
-            bool reelect = previous is { Alive: true } && SeatRng(c, seat, par.Epoch, "reelect").NextDouble() < Def("parliament_reelect_chance", 0.5);
-            if (reelect && previous != null)
+            bool gone = seat.Character != null ? !seat.Character.Alive : seat.Member == null || MemberDies(c, par, seat, now);
+            if (!gone && seat.TermEnd.TotalDays > now.TotalDays) continue;
+            if (!gone && SeatRng(c, seat, par.Epoch, "reelect").NextDouble() < Def("parliament_reelect_chance", 0.5))
             {
                 seat.TermStart = now;
-                seat.TermEnd = now.AddMonths(TermMonths(c, seat, previous).Months);
-                seat.Text = null;
-                BuildSeatText(c, seat);
+                seat.TermEnd = now.AddMonths(TermMonths(c, seat).Months);
                 continue;
             }
             seat.Draws++;
@@ -329,25 +436,31 @@ public sealed partial class PoliticsSystem
         }
     }
 
+    /// <summary>A light record ages like anyone: once a year, in a month fixed by the seat, it rolls the character death chance (the full character gets it from the yearly tick).</summary>
+    private bool MemberDies(Country c, CountryParliament par, Seat seat, GameDate now)
+    {
+        var m = seat.Member!;
+        if (Hash(seat.Id, c.Tag) % 12 + 1 != now.Month) return false;
+        var rng = new Random(Hash(_game.Seed.ToString(CultureInfo.InvariantCulture), c.Tag, seat.Id, "death", now.Year.ToString(CultureInfo.InvariantCulture)));
+        return rng.NextDouble() < _game.Rules.Characters.YearlyDeathChance(_game, Build(c, seat, m));
+    }
+
     /// <summary>A general election: everyone's term ends and every seat is drawn again (incumbents may be re-elected).</summary>
     public void ParliamentElection(Country c)
     {
         if (!Enabled) return;
         var par = ParliamentOf(c);
         par.Epoch++;
+        if (!c.IsPlayer) { foreach (var seat in par.Seats) { Leave(seat); seat.CandidateId = ""; seat.Draws = 0; } return; }
         foreach (var seat in par.Seats.ToList())
         {
-            var previous = seat.Holder;
-            bool reelect = previous is { Alive: true } && SeatRng(c, seat, par.Epoch, "reelect").NextDouble() < Def("parliament_reelect_chance", 0.5);
-            if (reelect && previous != null)
+            bool alive = seat.Character != null ? seat.Character.Alive : seat.Member != null;
+            if (alive && SeatRng(c, seat, par.Epoch, "reelect").NextDouble() < Def("parliament_reelect_chance", 0.5))
             {
                 seat.TermStart = _game.World.Date;
-                seat.TermEnd = seat.TermStart.AddMonths(TermMonths(c, seat, previous).Months);
-                seat.Text = null;
-                BuildSeatText(c, seat);
+                seat.TermEnd = seat.TermStart.AddMonths(TermMonths(c, seat).Months);
                 continue;
             }
-            seat.Holder = null;
             seat.CandidateId = "";
             seat.Draws = 0;
             FillSeat(c, par, seat);
@@ -358,6 +471,12 @@ public sealed partial class PoliticsSystem
 
     private void SaveParliaments(Node root)
     {
+        if (_former.Count > 0)
+        {
+            var former = root.AddBlock("former");
+            foreach (var kv in _former.OrderBy(k => k.Key, StringComparer.Ordinal))
+                former.Add("m", $"{kv.Key}|{kv.Value.Age}|{kv.Value.Left.ToScript()}|{kv.Value.Times}", true);
+        }
         foreach (var (c, par) in _parliaments)
         {
             if (par.Seats.Count == 0) continue;
@@ -372,22 +491,28 @@ public sealed partial class PoliticsSystem
                 b.Add("party", s.Party, true);
                 if (s.State != null) b.Add("state", s.State.Key);
                 b.Add("group", s.PopGroup, true);
-                if (s.Holder != null) b.Add("holder", s.Holder.Key);
+                if (s.Character != null) b.Add("holder", s.Character.Key);
+                else if (s.Member is { } m) b.Add("member", $"{m.FirstName.Replace('|', '/')}|{m.Family.Replace('|', '/')}|{(m.Female ? 1 : 0)}|{m.BirthDate.ToScript()}|{m.Times}|{string.Concat(m.Stats.Select(v => (char)('0' + Math.Min((int)v, 9))))}|{string.Join(",", m.Traits.Select(t => t.Key))}");
                 b.Add("candidate", s.CandidateId, true);
                 if (s.Faction != null) b.Add("faction", s.Faction);
                 b.Add("start", s.TermStart.ToScript());
                 b.Add("end", s.TermEnd.ToScript());
-                b.Add("draws", s.Draws.ToString(CultureInfo.InvariantCulture));
-                b.Add("text_key", s.TextKey);
-                if (s.Text != null) b.Add("text", s.Text, true);
-                var args = b.AddBlock("args");
-                foreach (var kv in s.TextArgs) args.Add(kv.Key, kv.Value, true);
+                if (s.Draws != 0) b.Add("draws", s.Draws.ToString(CultureInfo.InvariantCulture));
             }
         }
     }
 
     private void LoadParliaments(Node root)
     {
+        _former.Clear();
+        _retired.Clear();
+        _pinned = null;
+        foreach (var m in root.Get("former")?.GetAll("m") ?? Enumerable.Empty<Node>())
+        {
+            var parts = (m.Value ?? "").Split('|');
+            if (parts.Length < 5 || !int.TryParse(parts[^3], out var age) || !GameDate.TryParse(parts[^2], out var left) || !int.TryParse(parts[^1], out var times)) continue;
+            _former[string.Join("|", parts[..^3])] = new FormerMember(age, left, times);
+        }
         foreach (var n in root.GetAll("country"))
         {
             var c = _game.World.GetCountry(n.GetString("tag"));
@@ -397,25 +522,36 @@ public sealed partial class PoliticsSystem
             {
                 Character? holder = null;
                 if (b.GetString("holder") is { } hk && !_game.World.CharacterByKey.TryGetValue(hk, out holder)) continue;
+                SeatMember? member = b.GetString("member") is { } packed ? ReadMember(packed) : null;
                 var seat = new Seat
                 {
                     Id = b.GetString("id", "")!,
                     Party = b.GetString("party", "")!,
                     State = b.GetString("state") is { } sk ? _game.World.GetState(sk) : null,
                     PopGroup = b.GetString("group", "")!,
-                    Holder = holder,
+                    Character = holder,
+                    Member = member,
                     CandidateId = b.GetString("candidate", "")!,
                     Faction = b.GetString("faction"),
                     Draws = b.GetInt("draws"),
-                    TextKey = b.GetString("text_key", "")!,
-                    Text = b.GetString("text"),
                 };
                 if (GameDate.TryParse(b.GetString("start"), out var st)) seat.TermStart = st;
                 if (GameDate.TryParse(b.GetString("end"), out var en)) seat.TermEnd = en;
-                foreach (var kv in b.Get("args")?.All ?? Enumerable.Empty<Node>()) seat.TextArgs[kv.Key] = kv.Value ?? "";
                 par.Seats.Add(seat);
             }
             _parliaments[c] = par;
         }
+    }
+
+    private SeatMember? ReadMember(string packed)
+    {
+        var p = packed.Split('|');
+        if (p.Length != 7 || !GameDate.TryParse(p[3], out var birth) || !int.TryParse(p[4], out var times)) return null;
+        return new SeatMember
+        {
+            FirstName = p[0], Family = p[1], Female = p[2] == "1", BirthDate = birth, Times = Math.Max(1, times),
+            Stats = p[5].Select(ch => (byte)Math.Clamp(ch - '0', 0, 9)).ToArray(),
+            Traits = p[6].Split(',', StringSplitOptions.RemoveEmptyEntries).Select(k => _game.Data.Traits.GetValueOrDefault(k)).OfType<Trait>().ToArray(),
+        };
     }
 }

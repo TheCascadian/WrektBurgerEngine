@@ -62,25 +62,32 @@ public static class ScriptParser
         finally { _sink = old; }
     }
 
-    /// <summary>Hard limits for text that does not come from a trusted file (a save sent by a multiplayer host).</summary>
-    public sealed record ParseLimits(int MaxDepth, int MaxTokens, int MaxNodes, int MaxStringLength)
+    /// <summary>
+    /// Hard limits for text that does not come from a trusted file (a save sent by a multiplayer host). The cost that matters is
+    /// memory, so it is limited directly: the bytes the parse allocates on this thread are measured as it goes. Nesting is limited
+    /// because a stack overflow cannot be caught; string length because one string is one allocation.
+    /// </summary>
+    public sealed record ParseLimits(int MaxDepth, int MaxStringLength, long MaxAllocBytes)
     {
         /// <summary>No limit but nesting: a depth beyond this would overflow the stack, which no handler can catch.</summary>
-        public static readonly ParseLimits Trusted = new(256, int.MaxValue, int.MaxValue, int.MaxValue);
-        public static readonly ParseLimits Save = new(40, 6_000_000, 4_000_000, 4096);
+        public static readonly ParseLimits Trusted = new(256, int.MaxValue, long.MaxValue);
+        /// <summary>Set from measured late-game saves (docs/multiplayer-security.md).</summary>
+        public static ParseLimits Save = new(40, 4096, 2L << 30);
     }
 
     [ThreadStatic] private static ParseLimits? _limits;
-    [ThreadStatic] private static int _nodeCount;
-    /// <summary>Tokens of the last text parsed on this thread (for measuring saves against the limits).</summary>
-    [ThreadStatic] public static int LastTokenCount;
+    [ThreadStatic] private static long _allocLimit;
+    [ThreadStatic] private static int _sinceCheck;
+    /// <summary>Statistics of the last text parsed on this thread (for measuring saves against the limits).</summary>
+    [ThreadStatic] public static int LastTokenCount, LastNodeCount;
+    [ThreadStatic] public static long LastAllocBytes;
     private static ParseLimits Limits => _limits ?? ParseLimits.Trusted;
 
     /// <summary>Parses untrusted text. Throws <see cref="InvalidDataException"/> when a limit is exceeded or a syntax error is found.</summary>
     public static Node ParseStrict(string text, string fileName, ParseLimits limits)
     {
         var old = _limits; var oldSink = _sink; var errors = new List<(string Message, string Where)>();
-        _limits = limits; _sink = errors; _nodeCount = 0;
+        _limits = limits; _sink = errors;
         try
         {
             var root = Parse(text, fileName);
@@ -92,114 +99,189 @@ public static class ScriptParser
 
     public static Node Parse(string text, string fileName)
     {
-        var tokens = Tokenize(text, fileName);
-        LastTokenCount = tokens.Count;
+        long alloc0 = GC.GetAllocatedBytesForCurrentThread();
+        _allocLimit = Limits.MaxAllocBytes == long.MaxValue ? long.MaxValue : alloc0 + Limits.MaxAllocBytes;
+        _sinceCheck = 0; LastNodeCount = 0;
+        var lex = new Lexer(text, fileName, Limits.MaxStringLength, Limits.MaxAllocBytes != long.MaxValue);
         var root = Node.Root(fileName);
         var constants = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        int pos = 0;
-        ParseStatements(tokens, ref pos, root, fileName, constants, isRoot: true);
+        ParseStatements(lex, root, fileName, constants, isRoot: true);
+        LastTokenCount = lex.Count;
+        LastAllocBytes = GC.GetAllocatedBytesForCurrentThread() - alloc0;
         return root;
     }
 
-    private static List<Token> Tokenize(string s, string file)
+    /// <summary>Called for every token and entry: stops the parse once it has allocated more than the limit.</summary>
+    private static void Spend()
     {
-        var list = new List<Token>(s.Length / 4);
-        int i = 0, line = 1;
-        if (s.Length > 0 && s[0] == '﻿') i = 1; // BOM
-        int maxTokens = Limits.MaxTokens, maxStr = Limits.MaxStringLength;
-        while (i < s.Length)
+        if (++_sinceCheck < 4096) return;
+        _sinceCheck = 0;
+        if (GC.GetAllocatedBytesForCurrentThread() > _allocLimit) throw new InvalidDataException("the save needs too much memory to read");
+    }
+
+    /// <summary>Reads tokens one at a time from the text (no token list: memory stays that of the tree being built). Two tokens of look-ahead.</summary>
+    private sealed class Lexer
+    {
+        private readonly string _s, _file;
+        private readonly int _maxStr;
+        private int _i, _line = 1;
+        private readonly Token[] _buf = new Token[3];
+        private int _head, _n;
+        public int Count;
+        /// <summary>End offset of the last token taken.</summary>
+        public int LastEnd;
+        // repeated keys and values share one string; bounded so a hostile text cannot grow the pool itself without limit
+        private readonly Dictionary<string, string>? _pool;
+        private readonly Dictionary<ReadOnlyMemory<char>, string> _wordPool;
+        private const int PoolMax = 1 << 16, PoolLen = 48;
+
+        public Lexer(string s, string file, int maxStr, bool untrusted)
         {
-            if (list.Count > maxTokens) throw new InvalidDataException("too many tokens");
-            char c = s[i];
-            if (c == '\n') { line++; i++; continue; }
-            if (char.IsWhiteSpace(c)) { i++; continue; }
-            if (c == '#')
+            _s = s; _file = file; _maxStr = maxStr;
+            if (s.Length > 0 && s[0] == '\uFEFF') _i = 1; // BOM
+            _wordPool = new Dictionary<ReadOnlyMemory<char>, string>(MemoryComparer.Instance);
+            _pool = untrusted ? new Dictionary<string, string>(StringComparer.Ordinal) : null;
+        }
+
+        public Token Peek(int k = 0)
+        {
+            while (_n <= k) { _buf[(_head + _n) % 3] = Read(); _n++; }
+            return _buf[(_head + k) % 3];
+        }
+
+        public Token Take()
+        {
+            var t = Peek();
+            _head = (_head + 1) % 3; _n--;
+            LastEnd = t.End;
+            return t;
+        }
+
+        private string Word(int start, int len)
+        {
+            if (len > PoolLen) return _s.Substring(start, len);
+            var key = _s.AsMemory(start, len);
+            if (_wordPool.TryGetValue(key, out var w)) return w;
+            w = _s.Substring(start, len);
+            if (_wordPool.Count < PoolMax) _wordPool[w.AsMemory()] = w;
+            return w;
+        }
+
+        private string Quoted(string text)
+        {
+            if (_pool == null || text.Length > PoolLen) return text;
+            if (_pool.TryGetValue(text, out var p)) return p;
+            if (_pool.Count < PoolMax) _pool[text] = text;
+            return text;
+        }
+
+        private Token Read()
+        {
+            var s = _s;
+            int i = _i;
+            Spend();
+            while (i < s.Length)
             {
-                while (i < s.Length && s[i] != '\n') i++;
-                continue;
-            }
-            if (c == '{') { list.Add(new Token { Type = Tok.LBrace, Text = "{", Line = line, Start = i, End = i + 1 }); i++; continue; }
-            if (c == '}') { list.Add(new Token { Type = Tok.RBrace, Text = "}", Line = line, Start = i, End = i + 1 }); i++; continue; }
-            if (c == '=' || c == '<' || c == '>' || ((c == '!' || c == '?') && i + 1 < s.Length && s[i + 1] == '='))
-            {
-                int opStart = i;
-                Op op;
-                if (c == '=')
+                char c = s[i];
+                if (c == '\n') { _line++; i++; continue; }
+                if (char.IsWhiteSpace(c)) { i++; continue; }
+                if (c == '#')
                 {
-                    op = Op.Eq;
+                    while (i < s.Length && s[i] != '\n') i++;
+                    continue;
+                }
+                Count++;
+                if (c == '{') { _i = i + 1; return new Token { Type = Tok.LBrace, Text = "{", Line = _line, Start = i, End = i + 1 }; }
+                if (c == '}') { _i = i + 1; return new Token { Type = Tok.RBrace, Text = "}", Line = _line, Start = i, End = i + 1 }; }
+                if (c == '=' || c == '<' || c == '>' || ((c == '!' || c == '?') && i + 1 < s.Length && s[i + 1] == '='))
+                {
+                    int opStart = i;
+                    Op op;
+                    if (c == '=')
+                    {
+                        op = Op.Eq;
+                        i++;
+                        if (i < s.Length && s[i] == '=') i++; // allow ==
+                    }
+                    else if (c == '<')
+                    {
+                        if (i + 1 < s.Length && s[i + 1] == '=') { op = Op.Le; i += 2; } else { op = Op.Lt; i++; }
+                    }
+                    else if (c == '>')
+                    {
+                        if (i + 1 < s.Length && s[i + 1] == '=') { op = Op.Ge; i += 2; } else { op = Op.Gt; i++; }
+                    }
+                    else if (c == '!') { op = Op.Ne; i += 2; }
+                    else { op = Op.SafeEq; i += 2; }
+                    _i = i;
+                    return new Token { Type = Tok.Op, Op = op, Text = Node.OpToString(op), Line = _line, Start = opStart, End = i };
+                }
+                if (c == '"')
+                {
+                    int startLine = _line, strStart = i;
+                    var sb = new StringBuilder();
                     i++;
-                    if (i < s.Length && s[i] == '=') i++; // allow ==
+                    bool closed = false;
+                    while (i < s.Length)
+                    {
+                        char d = s[i];
+                        if (d == '\\' && i + 1 < s.Length)
+                        {
+                            char e = s[i + 1];
+                            sb.Append(e switch { 'n' => '\n', 't' => '\t', _ => e });
+                            i += 2;
+                            continue;
+                        }
+                        if (d == '"') { closed = true; i++; break; }
+                        if (d == '\n') _line++;
+                        if (sb.Length > _maxStr) throw new InvalidDataException("string too long");
+                        sb.Append(d);
+                        i++;
+                    }
+                    if (!closed) Err("Unterminated quoted string", $"{_file}:{startLine}");
+                    _i = i;
+                    return new Token { Type = Tok.String, Text = Quoted(sb.ToString()), Line = startLine, Start = strStart, End = i };
                 }
-                else if (c == '<')
-                {
-                    if (i + 1 < s.Length && s[i + 1] == '=') { op = Op.Le; i += 2; } else { op = Op.Lt; i++; }
-                }
-                else if (c == '>')
-                {
-                    if (i + 1 < s.Length && s[i + 1] == '=') { op = Op.Ge; i += 2; } else { op = Op.Gt; i++; }
-                }
-                else if (c == '!') { op = Op.Ne; i += 2; }
-                else { op = Op.SafeEq; i += 2; }
-                list.Add(new Token { Type = Tok.Op, Op = op, Text = Node.OpToString(op), Line = line, Start = opStart, End = i });
-                continue;
-            }
-            if (c == '"')
-            {
-                int startLine = line, strStart = i;
-                var sb = new StringBuilder();
-                i++;
-                bool closed = false;
+                // bare word
+                int start = i;
                 while (i < s.Length)
                 {
                     char d = s[i];
-                    if (d == '\\' && i + 1 < s.Length)
-                    {
-                        char e = s[i + 1];
-                        sb.Append(e switch { 'n' => '\n', 't' => '\t', _ => e });
-                        i += 2;
-                        continue;
-                    }
-                    if (d == '"') { closed = true; i++; break; }
-                    if (d == '\n') line++;
-                    if (sb.Length > maxStr) throw new InvalidDataException("string too long");
-                    sb.Append(d);
+                    if (i - start > _maxStr) throw new InvalidDataException("word too long");
+                    if (char.IsWhiteSpace(d) || d == '{' || d == '}' || d == '=' || d == '<' || d == '>' || d == '#' || d == '"') break;
+                    if ((d == '!' || d == '?') && i + 1 < s.Length && s[i + 1] == '=') break;
                     i++;
                 }
-                if (!closed) Err("Unterminated quoted string", $"{file}:{startLine}");
-                list.Add(new Token { Type = Tok.String, Text = sb.ToString(), Line = startLine, Start = strStart, End = i });
-                continue;
+                if (i == start) { i++; Count--; continue; } // should not happen; skip the char
+                _i = i;
+                return new Token { Type = Tok.Word, Text = Word(start, i - start), Line = _line, Start = start, End = i };
             }
-            // bare word
-            int start = i;
-            while (i < s.Length)
-            {
-                char d = s[i];
-                if (i - start > maxStr) throw new InvalidDataException("word too long");
-                if (char.IsWhiteSpace(d) || d == '{' || d == '}' || d == '=' || d == '<' || d == '>' || d == '#' || d == '"') break;
-                if ((d == '!' || d == '?') && i + 1 < s.Length && s[i + 1] == '=') break;
-                i++;
-            }
-            if (i == start) { i++; continue; } // should not happen; skip the char
-            list.Add(new Token { Type = Tok.Word, Text = s.Substring(start, i - start), Line = line, Start = start, End = i });
+            _i = i;
+            return new Token { Type = Tok.Eof, Text = "", Line = _line, Start = s.Length, End = s.Length };
         }
-        list.Add(new Token { Type = Tok.Eof, Text = "", Line = line, Start = s.Length, End = s.Length });
-        return list;
+    }
+
+    private sealed class MemoryComparer : IEqualityComparer<ReadOnlyMemory<char>>
+    {
+        public static readonly MemoryComparer Instance = new();
+        public bool Equals(ReadOnlyMemory<char> a, ReadOnlyMemory<char> b) => a.Span.SequenceEqual(b.Span);
+        public int GetHashCode(ReadOnlyMemory<char> m) => string.GetHashCode(m.Span);
     }
 
     [ThreadStatic] private static int _depth;
 
-    private static void ParseStatements(List<Token> t, ref int pos, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
+    private static void ParseStatements(Lexer t, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
     {
         if (++_depth > Limits.MaxDepth) { _depth = 0; throw new InvalidDataException("blocks nested too deeply"); }
-        try { ParseStatementsCore(t, ref pos, parent, file, constants, isRoot); }
+        try { ParseStatementsCore(t, parent, file, constants, isRoot); }
         finally { if (_depth > 0) _depth--; }
     }
 
-    private static void ParseStatementsCore(List<Token> t, ref int pos, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
+    private static void ParseStatementsCore(Lexer t, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
     {
         while (true)
         {
-            var tok = t[pos];
+            var tok = t.Peek();
             if (tok.Type == Tok.Eof)
             {
                 if (!isRoot) Err($"Missing closing '}}' for block '{parent.Key}' opened at line {parent.Line}", $"{file}:{tok.Line}");
@@ -207,7 +289,7 @@ public static class ScriptParser
             }
             if (tok.Type == Tok.RBrace)
             {
-                pos++;
+                t.Take();
                 if (isRoot)
                 {
                     Err("Unexpected '}' (too many closing braces)", $"{file}:{tok.Line}");
@@ -218,46 +300,46 @@ public static class ScriptParser
             if (tok.Type == Tok.LBrace)
             {
                 // anonymous block, e.g. inside a list of blocks
-                pos++;
+                t.Take();
                 var anon = new Node { Key = "", Op = Op.None, Children = new List<Node>(), File = file, Line = tok.Line, SpanStart = tok.Start };
-                ParseStatements(t, ref pos, anon, file, constants, isRoot: false);
-                anon.SpanEnd = t[pos - 1].End;
+                ParseStatements(t, anon, file, constants, isRoot: false);
+                anon.SpanEnd = t.LastEnd;
+                Added();
                 parent.Children!.Add(anon);
                 continue;
             }
             if (tok.Type == Tok.Op)
             {
                 Err($"Unexpected operator '{tok.Text}' (missing key?)", $"{file}:{tok.Line}");
-                pos++;
+                t.Take();
                 // skip the value too
-                if (t[pos].Type == Tok.Word || t[pos].Type == Tok.String) pos++;
-                else if (t[pos].Type == Tok.LBrace) { pos++; SkipBlock(t, ref pos); }
+                if (t.Peek().Type == Tok.Word || t.Peek().Type == Tok.String) t.Take();
+                else if (t.Peek().Type == Tok.LBrace) { t.Take(); SkipBlock(t); }
                 continue;
             }
 
             // word or string: key
-            pos++;
+            t.Take();
             var node = new Node { Key = tok.Text, KeyQuoted = tok.Type == Tok.String, File = file, Line = tok.Line, SpanStart = tok.Start };
-            if (t[pos].Type == Tok.Op)
+            if (t.Peek().Type == Tok.Op)
             {
-                node.Op = t[pos].Op;
-                pos++;
-                var v = t[pos];
+                node.Op = t.Take().Op;
+                var v = t.Peek();
                 if (v.Type == Tok.LBrace)
                 {
-                    pos++;
+                    t.Take();
                     node.Children = new List<Node>();
-                    ParseStatements(t, ref pos, node, file, constants, isRoot: false);
+                    ParseStatements(t, node, file, constants, isRoot: false);
                 }
                 else if (v.Type == Tok.Word || v.Type == Tok.String)
                 {
-                    pos++;
-                    if (v.Type == Tok.Word && t[pos].Type == Tok.LBrace && TypedBlockPrefixes.Contains(v.Text))
+                    t.Take();
+                    if (v.Type == Tok.Word && t.Peek().Type == Tok.LBrace && TypedBlockPrefixes.Contains(v.Text))
                     {
-                        pos++;
+                        t.Take();
                         node.BlockType = v.Text.ToLowerInvariant();
                         node.Children = new List<Node>();
-                        ParseStatements(t, ref pos, node, file, constants, isRoot: false);
+                        ParseStatements(t, node, file, constants, isRoot: false);
                     }
                     else
                     {
@@ -288,20 +370,22 @@ public static class ScriptParser
                 node.Op = Op.None; // list item
                 if (!node.KeyQuoted && node.Key.StartsWith('@') && constants.TryGetValue(node.Key, out var cv)) node.Key = cv;
             }
-            node.SpanEnd = t[pos - 1].End;
-            if (++_nodeCount > Limits.MaxNodes) throw new InvalidDataException("too many entries");
+            node.SpanEnd = t.LastEnd;
+            Added();
             parent.Children!.Add(node);
         }
     }
 
-    private static void SkipBlock(List<Token> t, ref int pos)
+    private static void Added() { LastNodeCount++; Spend(); }
+
+    private static void SkipBlock(Lexer t)
     {
         int depth = 1;
-        while (depth > 0 && t[pos].Type != Tok.Eof)
+        while (depth > 0 && t.Peek().Type != Tok.Eof)
         {
-            if (t[pos].Type == Tok.LBrace) depth++;
-            else if (t[pos].Type == Tok.RBrace) depth--;
-            pos++;
+            var k = t.Take().Type;
+            if (k == Tok.LBrace) depth++;
+            else if (k == Tok.RBrace) depth--;
         }
     }
 }

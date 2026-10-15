@@ -45,6 +45,7 @@ public static partial class Program
             {
                 "new" => New(rest),
                 "save-limits" => SaveLimits(rest),
+                "parliament-test" => ParliamentTest(rest),
                 "validate" => Validate(rest),
                 "validate-par" => ValidatePar(rest),
                 "mp-test" => MultiplayerTest(rest),

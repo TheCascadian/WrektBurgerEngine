@@ -53,6 +53,22 @@ public sealed class PoolCandidate
     public Dictionary<string, double> Stats = new(StringComparer.OrdinalIgnoreCase);
 }
 
+/// <summary>The light form of a generated seat holder: what a person needs to sit, age and be remembered. Culture, religion, class and home state are the seat's.</summary>
+public sealed class SeatMember
+{
+    public string FirstName = "", Family = "";
+    public bool Female;
+    public GameDate BirthDate;
+    /// <summary>How many separate times this person has sat in parliament.</summary>
+    public int Times = 1;
+    /// <summary>Base stats in the order of the game's character stats.</summary>
+    public byte[] Stats = Array.Empty<byte>();
+    public Trait[] Traits = Array.Empty<Trait>();
+
+    public string DisplayName => string.IsNullOrEmpty(Family) ? Localisation.Get(FirstName) : $"{Localisation.Get(FirstName)} {Localisation.Get(Family)}";
+    public int Age(GameDate now) => GameDate.YearsBetween(BirthDate, now);
+}
+
 /// <summary>One seat in a country's parliament.</summary>
 public sealed class Seat
 {
@@ -62,17 +78,21 @@ public sealed class Seat
     public State? State;
     /// <summary>The pop group the seat was won from: <c>culture|religion|class</c>.</summary>
     public string PopGroup = "";
-    public Character? Holder;
+    /// <summary>
+    /// Who sits here, in one of two forms: a light record (<see cref="Member"/>, the usual case) or, once the game has asked for it, a full
+    /// <see cref="Character"/> (see <c>PoliticsSystem.CharacterOf</c>); never both.
+    /// </summary>
+    public SeatMember? Member;
+    public Character? Character;
+    public bool Occupied => Member != null || Character != null;
+    public string? HolderName => Character?.DisplayName ?? Member?.DisplayName;
+    public int TimesSeated => Character?.ParliamentTimes ?? Member?.Times ?? 0;
     public string CandidateId = "";
     public string? Faction;
     public GameDate TermStart, TermEnd;
     /// <summary>Candidates drawn so far for this seat (seeds the next fallback candidate).</summary>
     public int Draws;
-    /// <summary>Localisation key of the description template and the data resolved for it, collected once when the seat was filled.</summary>
-    public string TextKey = "";
-    public Dictionary<string, string> TextArgs = new(StringComparer.OrdinalIgnoreCase);
-    /// <summary>The finished description; built once from <see cref="TextKey"/> and <see cref="TextArgs"/>, then kept until the holder changes.</summary>
-    public string? Text;
+
 }
 
 public sealed class CountryParliament

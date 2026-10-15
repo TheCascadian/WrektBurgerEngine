@@ -653,14 +653,15 @@ public sealed partial class Hud
         {
             string key = hitSeat.Party;
             bool gov = p.GovernmentOrganizations.Contains(key, StringComparer.OrdinalIgnoreCase);
-            var lines = new List<string> { hitSeat.Holder?.DisplayName ?? "Vacant seat", P.SeatText(hitSeat) };
+            var lines = new List<string> { hitSeat.HolderName ?? "Unnamed member", P.SeatText(c, hitSeat) };
             string status = P.IsPartyBanned(c, key) ? "banned by current law"
                 : p.RulingOrganization.Equals(key, StringComparison.OrdinalIgnoreCase) ? "leads the government"
                 : gov ? "coalition partner" : "opposition";
             lines.Add($"{P.PartyDisplayName(c, key)} · {status}");
-            if (hitSeat.Holder != null)
+            if (hitSeat.TimesSeated > 0) lines.Add($"In parliament {hitSeat.TimesSeated} {(hitSeat.TimesSeated == 1 ? "time" : "times")}");
+            if (hitSeat.Occupied)
             {
-                var term = P.TermMonths(c, hitSeat, hitSeat.Holder);
+                var term = P.TermMonths(c, hitSeat);
                 lines.Add($"Term: {term.Months} months, ends {hitSeat.TermEnd.ToDisplay()}"
                     + string.Concat(term.Sources.Select(t => $"\n  {t.Source}: {t.Value:+0%;-0%}")));
             }
@@ -1017,15 +1018,16 @@ public sealed partial class Hud
             var row = new Rectangle(x, y, w, rowH - 2 * S);
             bool gov = p.GovernmentOrganizations.Contains(seat.Party, StringComparer.OrdinalIgnoreCase);
             Gui.Card(row, new Color(29, 31, 37, 255));
-            string holder = seat.Holder?.DisplayName ?? "Vacant";
+            string holder = seat.HolderName ?? "Unnamed";
             Gui.Label(Gui.Fit(holder, w * 0.4f, 14, FontKind.Bold), row.X + 6 * S, row.Y + 5 * S, 14, gov ? Gui.Good : Gui.Text, FontKind.Bold);
             Gui.Label(Gui.Fit(P.PartyDisplayName(c, seat.Party), w * 0.26f, 13), row.X + w * 0.42f, row.Y + 6 * S, 13, Gui.TextDim);
             Gui.Label(Gui.Fit(seat.State?.DisplayName ?? "-", w * 0.2f, 13), row.X + w * 0.7f, row.Y + 6 * S, 13, Gui.TextDim);
             if (Gui.Hover(row))
             {
-                var term = seat.Holder != null ? P.TermMonths(c, seat, seat.Holder) : default;
+                var term = seat.Occupied ? P.TermMonths(c, seat) : default;
                 string terms = term.Sources == null ? "" : "\nTerm: " + term.Months + " months" + string.Concat(term.Sources.Select(t => $"\n  {t.Source}: {t.Value:+0%;-0%}"));
-                Gui.Tooltip(P.SeatText(seat) + $"\n{(gov ? "Government" : "Opposition")}" + terms);
+                string served = seat.TimesSeated > 0 ? $"\nIn parliament {seat.TimesSeated} {(seat.TimesSeated == 1 ? "time" : "times")}" : "";
+                Gui.Tooltip(P.SeatText(c, seat) + $"\n{(gov ? "Government" : "Opposition")}" + served + terms);
             }
             y += rowH;
         }

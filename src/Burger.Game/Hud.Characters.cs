@@ -158,7 +158,7 @@ public sealed partial class Hud
     {
         HashSet<Character>? seated = null;
         if (G.Politics.Enabled)
-            seated = G.Politics.ParliamentOf(country).Seats.Where(s => s.Holder != null).Select(s => s.Holder!).ToHashSet();
+            seated = G.Politics.ParliamentOf(country).Seats.Where(s => s.Character != null).Select(s => s.Character!).ToHashSet();
         bool Notable(Character c)
         {
             if (seated == null || !seated.Contains(c)) return true;

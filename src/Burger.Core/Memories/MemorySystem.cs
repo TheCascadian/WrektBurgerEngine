@@ -133,6 +133,20 @@ public sealed class MemorySystem
     }
 
     /// <summary>Every entry of every subject (for diagnostics).</summary>
+    /// <summary>Keys of every character that is the actor or the target of a remembered act.</summary>
+    public HashSet<string> CharacterKeys()
+    {
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string type = nameof(ScopeType.Character);
+        foreach (var list in _byActor.Values)
+            foreach (var e in list)
+            {
+                if (e.Actor.Type == type) keys.Add(e.Actor.Key);
+                if (e.Target is { } t && t.Type == type) keys.Add(t.Key);
+            }
+        return keys;
+    }
+
     public IEnumerable<MemoryEntry> All => _byActor.Values.SelectMany(l => l);
     public IEnumerable<MemoryKind> Kinds => _kinds.Values;
     public MemoryKind? Kind(string key) => _kinds.GetValueOrDefault(key);

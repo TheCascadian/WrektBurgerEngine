@@ -52,6 +52,8 @@ public sealed class Character : IScope
     public bool IsGeneral;
     /// <summary>Culture, religion and class of the pop group a generated character came from (null for hand-written characters).</summary>
     public string? Culture, Religion, PopType;
+    /// <summary>How many separate times this person has sat in parliament (any country; re-election in a row is one time). 0 for characters that never sat.</summary>
+    public int ParliamentTimes;
     /// <summary>Key of the state this character comes from (null when unknown).</summary>
     public string? HomeState;
     public VarStore Vars { get; } = new();

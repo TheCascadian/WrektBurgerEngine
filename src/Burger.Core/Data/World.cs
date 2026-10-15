@@ -62,6 +62,14 @@ public sealed class World
     public Location? GetLocation(string? key) => key != null && LocationByKey.TryGetValue(key, out var l) ? l : null;
     public Character? GetCharacter(string? key) => key != null && CharacterByKey.TryGetValue(key, out var c) ? c : null;
 
+    /// <summary>Takes characters out of the world for good: the list, the key index and the scope hierarchy.</summary>
+    public void RemoveCharacters(HashSet<Character> gone)
+    {
+        if (gone.Count == 0) return;
+        Characters.RemoveAll(gone.Contains);
+        foreach (var ch in gone) { CharacterByKey.Remove(ch.Key); ScopeHierarchy.Unregister(ch); }
+    }
+
     public GenericScope? GetGenericScope(string? key) => key != null && GenericScopeByKey.TryGetValue(key, out var s) ? s : null;
 
     /// <summary>Looks up an existing entity with a stable typed reference such as <c>country:GER</c> or <c>generic:org</c>.</summary>

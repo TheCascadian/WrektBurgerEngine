@@ -20,6 +20,14 @@ public sealed class ScopeHierarchy
         if (!_children.ContainsKey(scope)) _children.Add(scope, new List<IScope>());
     }
 
+    /// <summary>Forgets a scope that has no parent and no children; returns false (and keeps it) when it is linked.</summary>
+    public bool Unregister(IScope scope)
+    {
+        if (_parents.ContainsKey(scope) || (_children.TryGetValue(scope, out var kids) && kids.Count > 0)) return false;
+        _children.Remove(scope);
+        return true;
+    }
+
     /// <summary>Removes every registered scope and link.</summary>
     public void Clear()
     {
