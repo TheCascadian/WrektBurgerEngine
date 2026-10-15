@@ -72,6 +72,8 @@ public static class ScriptParser
 
     [ThreadStatic] private static ParseLimits? _limits;
     [ThreadStatic] private static int _nodeCount;
+    /// <summary>Tokens of the last text parsed on this thread (for measuring saves against the limits).</summary>
+    [ThreadStatic] public static int LastTokenCount;
     private static ParseLimits Limits => _limits ?? ParseLimits.Trusted;
 
     /// <summary>Parses untrusted text. Throws <see cref="InvalidDataException"/> when a limit is exceeded or a syntax error is found.</summary>
@@ -91,6 +93,7 @@ public static class ScriptParser
     public static Node Parse(string text, string fileName)
     {
         var tokens = Tokenize(text, fileName);
+        LastTokenCount = tokens.Count;
         var root = Node.Root(fileName);
         var constants = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         int pos = 0;

@@ -4,13 +4,17 @@ using Burger.Core.Modding;
 
 namespace Burger.Core.Multiplayer;
 
-/// <summary>Limits on what mod code may cost the host.</summary>
+/// <summary>Budgets for mod code that network data can reach (<c>validate</c> on the host, <c>apply</c> everywhere).</summary>
 public static class ModLimits
 {
-    /// <summary>Hard deadline for one mod <c>validate</c> call. A rule that does not return in time rejects the message and is switched off.</summary>
+    /// <summary>Steps (function entries, loop iterations, handlers; see <see cref="Fuel"/>) one <c>validate</c> call may take.</summary>
+    public static long ValidateSteps = 2_000_000;
+    /// <summary>Steps one <c>apply</c> call may take. Counted, not timed, so every machine stops at the same point.</summary>
+    public static long ApplySteps = 10_000_000;
+    /// <summary>Bytes one call may allocate.</summary>
+    public static long AllocBytes = 64L << 20;
+    /// <summary>Wall-clock limit for one <c>validate</c> call (time spent inside base-library calls is not counted in steps). A rule over it is switched off afterwards.</summary>
     public static int ValidateDeadlineMs = 100;
-    /// <summary>Runaway validate calls (cannot be killed in process) that are tolerated before every mod rule is refused.</summary>
-    public const int MaxRunaway = 4;
 }
 
 /// <summary>The custom messages of all loaded mods. Mods register typed messages; the session carries them as <c>mod_message</c> commands.</summary>
@@ -22,8 +26,7 @@ internal sealed class ModNetworkRegistry
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     public const int MaxMessages = 256;
     private readonly HashSet<string> _tripped = new(StringComparer.Ordinal);
-    private int _runaway;
-    /// <summary>Messages whose validate ran past the deadline (switched off for this session).</summary>
+    /// <summary>Messages whose validate or apply used up its budget (switched off for this session).</summary>
     public IReadOnlyCollection<string> Tripped => _tripped;
 
     /// <summary>Set by a running session: hands a message to the host. Returns false when it could not be sent.</summary>
@@ -51,22 +54,28 @@ internal sealed class ModNetworkRegistry
         var fields = args[1..];
         if (!e.Schema.Validate(fields, _game, out var err)) return err;
         if (!runModRule) return null;
-        if (_tripped.Contains(e.Key)) return "the mod's check is switched off (it ran too long)";
-        if (_runaway >= ModLimits.MaxRunaway) return "mod checks are switched off (too many ran too long)";
-        // The rule runs on its own thread so a loop cannot freeze the host. An in-process thread cannot be killed:
-        // after a timeout the message is rejected, the rule is switched off, and a few such threads are tolerated at most.
+        if (_tripped.Contains(e.Key)) return "the mod's message is switched off (it ran too long)";
+        // the rule runs metered on this thread: a loop, deep recursion or a large allocation stops it, the stop cannot be caught
         var msg = new ModMessage(e.Mod, e.Name, sender, e.Schema, fields);
-        string? result = null; Exception? error = null;
-        var worker = new Thread(() => { try { result = e.Validate(msg); } catch (Exception ex) { error = ex; } }) { IsBackground = true, Name = "mod-validate" };
-        worker.Start();
-        if (!worker.Join(ModLimits.ValidateDeadlineMs))
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        try
         {
-            _tripped.Add(e.Key); _runaway++;
-            Log.Error($"Mod message '{e.Key}' validate ran past {ModLimits.ValidateDeadlineMs} ms and was switched off", "scripts");
+            var result = Fuel.Run(ModLimits.ValidateSteps, ModLimits.AllocBytes, () => e.Validate(msg));
+            if (sw.ElapsedMilliseconds > ModLimits.ValidateDeadlineMs)
+            {
+                _tripped.Add(e.Key);
+                Log.Error($"Mod message '{e.Key}' validate took {sw.ElapsedMilliseconds} ms (limit {ModLimits.ValidateDeadlineMs}) and was switched off", "scripts");
+                return "the mod's check ran too long";
+            }
+            return result;
+        }
+        catch (ModBudgetException ex)
+        {
+            _tripped.Add(e.Key);
+            Log.Error($"Mod message '{e.Key}' validate stopped ({ex.Message}) and was switched off", "scripts");
             return "the mod's check ran too long";
         }
-        if (error != null) { Log.Error($"Mod message '{e.Key}' validate threw {error.GetType().Name}: {error.Message}", "scripts"); return "the mod's check failed"; }
-        return result;
+        catch (Exception ex) { Log.Error($"Mod message '{e.Key}' validate threw {ex.GetType().Name}: {ex.Message}", "scripts"); return "the mod's check failed"; }
     }
 
     /// <summary>Runs the mod's handler. Called at the same tick on every machine.</summary>
@@ -74,7 +83,14 @@ internal sealed class ModNetworkRegistry
     {
         if (Check(sender, args, false) != null) return false;
         var e = _entries[args[0]];
-        try { e.Apply(new ModMessage(e.Mod, e.Name, sender, e.Schema, args[1..])); }
+        var msg = new ModMessage(e.Mod, e.Name, sender, e.Schema, args[1..]);
+        try { Fuel.Run(ModLimits.ApplySteps, ModLimits.AllocBytes, () => { e.Apply(msg); return 0; }); }
+        catch (ModBudgetException ex)
+        {
+            // steps are counted, so every machine stops here at the same point; the host refuses the message from now on
+            _tripped.Add(e.Key);
+            Log.Error($"Mod message '{e.Key}' apply stopped ({ex.Message}) and was switched off", "scripts");
+        }
         catch (Exception ex) { Log.Error($"Mod message '{e.Key}' threw {ex.GetType().Name}: {ex.Message}", "scripts"); }
         return true;
     }

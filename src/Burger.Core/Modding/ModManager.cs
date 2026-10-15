@@ -255,7 +255,7 @@ global using Burger.Core.Technology;
         {
             using var sha = System.Security.Cryptography.SHA256.Create();
             void Add(string t) { sha.TransformBlock(System.Text.Encoding.UTF8.GetBytes(t + "\0"), 0, System.Text.Encoding.UTF8.GetByteCount(t) + 1, null, 0); }
-            Add(prefix); Add(Environment.Version.ToString()); Add(typeof(Game).Assembly.ManifestModule.ModuleVersionId.ToString());
+            Add(prefix); Add(sandbox ? FuelRewriter.Version : ""); Add(Environment.Version.ToString()); Add(typeof(Game).Assembly.ManifestModule.ModuleVersionId.ToString());
             foreach (var t in trees) { Add(t.FilePath); Add(t.ToString()); }
             if (extraRefs != null) foreach (var r in extraRefs) Add(r.Display ?? "");
             if (extraRefs != null) foreach (var r in extraRefs) if (r is PortableExecutableReference pe && pe.GetMetadata() is AssemblyMetadata am) Add(am.GetModules()[0].GetModuleVersionId().ToString());
@@ -293,6 +293,12 @@ global using Burger.Core.Technology;
             allowUnsafe: !sandbox,
             nullableContextOptions: NullableContextOptions.Annotations);
         var compilation = CSharpCompilation.Create(prefix + Guid.NewGuid().ToString("N"), trees, refs, options);
+        if (sandbox && !compilation.GetDiagnostics().Any(d => d.Severity == DiagnosticSeverity.Error))
+        {
+            // every function, loop and handler of a mod gets a step meter (Fuel); errors are reported on the mod's own source above
+            var metered = trees.Select(t => FuelRewriter.Rewrite(t, compilation.GetSemanticModel(t))).ToList();
+            compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(metered);
+        }
         using var ms = new MemoryStream();
         var result = compilation.Emit(ms);
         foreach (var d in result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error))

@@ -1,5 +1,7 @@
 # Multiplayer channel specification (protocol 2, channel version 3)
 
+> **Status: UNREVIEWED.** The key confirmation below is custom and has not been reviewed by a cryptographer. It is item 1 of `docs/external-review-plan.md`. Do not rely on it beyond the threat model in `docs/multiplayer-security.md` until that review is done. Checked 2026-10-15: `SslStream` exposes no TLS-PSK and no keying-material exporter in the target .NET version, so the standard bindings are not available (OPEN for later .NET releases; if one appears, replace the confirmation with it; a vetted Noise library is the other candidate).
+
 Code: `src/Burger.Core/Multiplayer/Net.cs` (`SecureChannel`, `TcpTransport`, `TcpHostListener`, `JoinCode`). Tests: `burger sec-test <project>`, sections "Encrypted channel", "Channel attacks" and "Per-peer tokens".
 
 ## Decision: vetted protocol underneath, a small binding on top

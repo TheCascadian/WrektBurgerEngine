@@ -55,6 +55,7 @@ public static class ModSandbox
     {
         ["System.Type"] = new(StringComparer.Ordinal) { "GetTypeFromHandle", "get_Name", "get_FullName", "IsAssignableFrom", "op_Equality", "op_Inequality", "Equals", "GetHashCode", "ToString", "get_IsEnum" },
         ["System.Reflection.MemberInfo"] = new(StringComparer.Ordinal) { "get_Name" },
+        ["System.Environment"] = new(StringComparer.Ordinal) { "get_CurrentManagedThreadId" }, // emitted by the compiler for every iterator (yield return)
         ["System.Runtime.CompilerServices.RuntimeHelpers"] = new(StringComparer.Ordinal) { "InitializeArray", "GetSubArray" },
         ["System.Delegate"] = new(StringComparer.Ordinal) { "Combine", "Remove", "Equals", "GetHashCode", "op_Equality", "op_Inequality" },
         ["System.MulticastDelegate"] = new(StringComparer.Ordinal) { "Equals", "GetHashCode", "op_Equality", "op_Inequality" },
@@ -191,7 +192,7 @@ public static class ModSandbox
         }
         if (assembly.Length == 0) return null; // a type of this assembly
         if (ns == "System.Diagnostics") return DiagnosticsAllowed.Contains(outermost) ? null : $"uses {outermost} (System.Diagnostics is not available to mods)";
-        if (outermost == "System.Reflection.MemberInfo") return null; // only for typeof(X).Name, which binds to it; every other member is refused (AllowedMembers)
+        if (outermost is "System.Reflection.MemberInfo" or "System.Environment") return null; // typeof(X).Name and iterators bind to these; every other member is refused (AllowedMembers)
         if (!AllowedNamespaces.Contains(ns)) return $"uses {outermost} ({ns} is not available to mods)";
         if (DeniedTypes.Contains(outermost)) return $"uses {outermost}, which mods may not use";
         if (ns == "System.Runtime.CompilerServices" && !CompilerServicesAllowed.Contains(outermost)) return $"uses {outermost}, which mods may not use";

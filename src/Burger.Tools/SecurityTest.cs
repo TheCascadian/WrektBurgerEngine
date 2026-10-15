@@ -274,36 +274,7 @@ namespace Gift { public class GiftMod : GameScript {
             Check(client.Tick == host.Tick && StateChecksum.Compute(hostGame) == StateChecksum.Compute(client.Game!), "checksums equal after the mod message");
             host.Leave(); client.Leave();
 
-            // a mod rule that never returns must not freeze the host
-            Console.WriteLine("Mod validate deadline");
-            string loopDir = CopyProject(project, Path.Combine(tmp, "loopmod"));
-            Directory.CreateDirectory(Path.Combine(loopDir, "scripts"));
-            File.WriteAllText(Path.Combine(loopDir, "scripts", "Loop.cs"), @"using Burger.Core; using Burger.Core.Modding;
-namespace Loop { public class LoopMod : GameScript {
-  public override void OnLoad() {
-    Network.Register(""spin"", ModMessageSchema.Create().Int(""n"", 1, 10), m => { while (true) { } }, m => { });
-    Network.Register(""fine"", ModMessageSchema.Create().Int(""n"", 1, 10), m => null, m => { m.Sender.Gold = 777777; });
-  } } }");
-            File.WriteAllText(Path.Combine(loopDir, "scripts", "mod.json"), "{\"permissions\":[\"network\"]}");
-            var lg = Load(loopDir, 6);
-            var lhost = LockstepSession.Host(lg, "sec-test", 6, "Host");
-            var lkey = lg.ModMessageKeys.First(k => k.EndsWith("/spin")); var fkey = lg.ModMessageKeys.First(k => k.EndsWith("/fine"));
-            var lc = lg.World.Countries.First(c => c.Exists && lg.World.Divisions.Any(d => d.Owner == c));
-            lhost.Pick(lc.Tag);
-            ModLimits.ValidateDeadlineMs = 100;
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            lhost.Submit(GameCommand.ModMessage, lkey, "1");
-            long first = sw.ElapsedMilliseconds; sw.Restart();
-            lhost.Submit(GameCommand.ModMessage, lkey, "1");
-            long second = sw.ElapsedMilliseconds;
-            Check(first < 1500, $"a validate that loops forever is cut off after the deadline ({first} ms)");
-            Check(second < 50, $"the rule is then switched off and later messages are refused at once ({second} ms)");
-            double g0 = lc.Gold;
-            lhost.Submit(GameCommand.ModMessage, fkey, "1");
-            lhost.SetSpeed(5); lhost.SetPaused(false);
-            for (int i = 0; i < 800 && lc.Gold < 700000; i++) lhost.Update(0.05);
-            Check(lc.Gold > 700000, "another mod message of the same mod still works");
-            lhost.Leave();
+            RunawayMods(project, tmp, Load, Check);
                     }
         finally { try { Directory.Delete(tmp, true); } catch { } }
         Console.WriteLine(failures == 0 ? "All security checks passed" : $"{failures} security check(s) FAILED");

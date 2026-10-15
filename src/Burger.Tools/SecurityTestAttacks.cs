@@ -417,24 +417,42 @@ public static partial class Program
 public static partial class Program
 {
     /// <summary><c>burger save-limits &lt;project&gt;</c>: saves a fresh game and checks that the strict reader accepts it, to see how close the real size is to the limits.</summary>
+    /// <summary>Saves a game (fresh, or after <c>--years N</c> of AI play) and checks the save against the limits a client applies to a host save.</summary>
     private static int SaveLimits(List<string> args)
     {
-        string project = ResolveProject(RequireProjectArg(args, "burger save-limits <project>"));
+        int years = int.TryParse(Opt(args, "--years"), out var y) ? y : 0;
+        int maxMinutes = int.TryParse(Opt(args, "--max-minutes"), out var mm) ? mm : 60;
+        string project = ResolveProject(RequireProjectArg(args, "burger save-limits <project> [--years N] [--max-minutes M]"));
         var g = Game.Load(GameDir(project), true, 3); g.StartNewGame(null);
         string path = Path.Combine(Path.GetTempPath(), "burger_savelimits_" + Environment.ProcessId + ".sav");
-        try
+        var lim = ScriptParser.ParseLimits.Save;
+        int Measure(string when)
         {
-            Burger.Core.Save.SaveGame.Save(g, path);
-            long bytes = new FileInfo(path).Length;
-            var sw = System.Diagnostics.Stopwatch.StartNew();
-            var root = SaveGuard.Read(g, File.ReadAllBytes(path));
-            long nodes = 0; void Count(Burger.Core.Script.Node n) { nodes++; foreach (var c in n.All) Count(c); }
-            Count(root);
-            var lim = ScriptParser.ParseLimits.Save;
-            Console.WriteLine($"{project}: save {bytes / 1024} KB, {nodes} nodes (limit {lim.MaxNodes}), parsed and checked in {sw.ElapsedMilliseconds} ms. Accepted.");
-            return 0;
+            try
+            {
+                Burger.Core.Save.SaveGame.Save(g, path);
+                byte[] raw = File.ReadAllBytes(path);
+                long gz; using (var ms = new MemoryStream()) { using (var z = new GZipStream(ms, CompressionLevel.Fastest, true)) z.Write(raw); gz = ms.Length; }
+                // measure with no count limit (same depth and string limits), then the verdict with the real limits
+                var measured = ScriptParser.ParseStrict(System.Text.Encoding.UTF8.GetString(raw), "save", lim with { MaxTokens = int.MaxValue, MaxNodes = int.MaxValue });
+                int tokens = ScriptParser.LastTokenCount;
+                long nodes = 0; int depth = 0; void Count(Burger.Core.Script.Node n, int d) { nodes++; depth = Math.Max(depth, d); foreach (var c in n.All) Count(c, d + 1); }
+                Count(measured, 0);
+                string head = $"{project} {when}: save {raw.Length / 1024} KB ({gz / 1024} KB on the wire), {tokens} tokens ({100.0 * tokens / lim.MaxTokens:0}% of {lim.MaxTokens}), {nodes} nodes ({100.0 * nodes / lim.MaxNodes:0}% of {lim.MaxNodes}), depth {depth}";
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                try { SaveGuard.Read(g, raw, out var warn); Console.WriteLine($"{head}, checked in {sw.ElapsedMilliseconds} ms. {(warn != null ? "WARNED" : "Accepted")}."); return 0; }
+                catch (InvalidDataException e) { Console.WriteLine($"{head}. REFUSED: {e.Message}"); return 1; }
+            }
+            catch (Exception e) { Console.WriteLine($"{project} {when}: REFUSED: {e.Message}"); return 1; }
+            finally { try { File.Delete(path); } catch { } }
         }
-        catch (Exception e) { Console.WriteLine($"{project}: REFUSED: {e.Message}"); return 1; }
-        finally { try { File.Delete(path); } catch { } }
+        int rc = Measure("fresh " + g.World.Date);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        for (int year = 1; year <= years && clock.Elapsed.TotalMinutes < maxMinutes; year++)
+        {
+            for (int h = 0; h < 24 * 365; h++) g.Tick();
+            rc |= Measure($"after {year} year(s), {g.World.Date}, {clock.Elapsed.TotalMinutes:0.0} min");
+        }
+        return rc;
     }
 }

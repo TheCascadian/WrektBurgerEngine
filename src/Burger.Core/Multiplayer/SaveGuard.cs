@@ -23,15 +23,29 @@ public static class SaveGuard
 
     public const int MaxKeyLength = 128;
 
+    /// <summary>Warn level: a save above it is still loaded, but the player is told (set from measured late-game saves, see docs/multiplayer-security.md).</summary>
+    public static long WarnNodes = 1_000_000;
+    public static long WarnBytes = 64L << 20;
+
     /// <summary>Parses and validates. Throws <see cref="InvalidDataException"/> with the reason when the save is refused.</summary>
-    public static Node Read(Game game, byte[] utf8)
+    public static Node Read(Game game, byte[] utf8) => Read(game, utf8, out _);
+
+    /// <summary>As <see cref="Read(Game, byte[])"/>; <paramref name="warning"/> is set when the save is accepted but above the warn level.</summary>
+    public static Node Read(Game game, byte[] utf8, out string? warning)
     {
+        warning = null;
         if (utf8.LongLength > Wire.MaxSaveBytes) throw new InvalidDataException("save too large");
         string text;
         try { text = new UTF8Encoding(false, true).GetString(utf8); } // invalid UTF-8 is an error, not a replacement character
         catch (DecoderFallbackException) { throw new InvalidDataException("save is not valid UTF-8"); }
-        return ReadText(game, text);
+        var root = ReadText(game, text);
+        long nodes = Count(root);
+        if (nodes > WarnNodes || utf8.LongLength > WarnBytes)
+            warning = $"the host's save is very large ({utf8.LongLength / (1 << 20)} MB, {nodes} entries; refused above {Wire.MaxSaveBytes >> 20} MB or {ScriptParser.ParseLimits.Save.MaxNodes} entries)";
+        return root;
     }
+
+    private static long Count(Node n) { long c = 1; if (n.Children != null) foreach (var k in n.Children) c += Count(k); return c; }
 
     public static Node ReadText(Game game, string text)
     {

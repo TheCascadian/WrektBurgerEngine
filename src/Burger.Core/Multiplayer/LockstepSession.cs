@@ -633,7 +633,8 @@ public sealed class LockstepSession
         _loadedForJoin = false;
         bool first = ReferenceEquals(g, Game) && Tick == 0;
         if (!ReferenceEquals(g, Game)) Attach(g); // before the check and the load: the multiplayer section is registered then
-        var tree = SaveGuard.Read(g, raw);
+        var tree = SaveGuard.Read(g, raw, out var warning);
+        if (warning != null) { Log.Warn(warning); Toast?.Invoke(char.ToUpperInvariant(warning[0]) + warning[1..]); }
         SaveGame.Load(g, tree);
         foreach (var c in g.World.Countries) c.IsPlayer = false;
         foreach (var tag in tags) { var c = g.World.GetCountry(tag); if (c != null) c.IsPlayer = true; }
