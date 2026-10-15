@@ -14,6 +14,7 @@ public enum AppScreen { Menu, Playing, Error }
 public sealed class App
 {
     public Game? Game { get; private set; }
+    private readonly List<Burger.Core.Model.Location> _geoWar = new();
     public MapRenderer? Renderer { get; private set; }
     public CameraController? Camera { get; private set; }
     public MapOverlay? Overlay { get; private set; }
@@ -50,6 +51,12 @@ public sealed class App
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
         Raylib.InitWindow(_opt.Width, _opt.Height, "BurgerEngine");
         Raylib.SetWindowMinSize(1024, 640);
+        int monitor = _opt.Monitor ?? (int.TryParse(Environment.GetEnvironmentVariable("BURGER_MONITOR"), out var em) ? em : -1);
+        if (monitor >= 0 && monitor < Raylib.GetMonitorCount())
+        {
+            // Wayland windows cannot place themselves, so the window goes full screen on that monitor
+            Raylib.SetWindowMonitor(monitor);
+        }
         Raylib.SetExitKey(KeyboardKey.Null);
         UserSettings.Load();
         Media.AudioEnabled = UserSettings.PortraitSound;
@@ -145,10 +152,11 @@ public sealed class App
         Raylib.EndDrawing();
     }
 
-    private void LoadGame()
+    private void LoadGame(bool keepMap = false)
     {
         DrawLoading("Loading...");
-        Renderer?.Dispose();
+        var keptRenderer = keepMap ? Renderer : null;
+        if (keptRenderer == null) Renderer?.Dispose();
         Renderer = null;
         Figures?.Dispose();
         Figures = null;
@@ -162,7 +170,11 @@ public sealed class App
         Log.SetLogFile(Path.Combine(_opt.LogDir ?? Path.Combine(Directory.GetCurrentDirectory(), "logs"), "error.log"));
         try
         {
-            var game = Burger.Core.Game.Load(_gameRoot, compileScripts: true);
+            Action<Burger.Core.Game> prewarm = MapRenderer.Prewarm;
+            if (keptRenderer == null) Burger.Core.Game.MapLoaded += prewarm; // the renderer's CPU work runs while the rest of the game loads
+            Burger.Core.Game game;
+            try { game = Burger.Core.Game.Load(_gameRoot, compileScripts: true); }
+            finally { Burger.Core.Game.MapLoaded -= prewarm; }
             Game = game;
             game.HistoricalBias = _opt.Bias ?? UserSettings.EffectiveBias;
             game.Ai.Enabled = !UserSettings.AiDisabled;
@@ -179,13 +191,83 @@ public sealed class App
             }
             Assets.Init(game.Data.Root, game.Interface.Theme);
             Gui.ApplyTheme(game.Interface.Theme);
-            DrawLoading("Building map...");
+            DrawLoading(keptRenderer != null ? "Loading..." : "Building map...");
             UserSettings.GlobeAllowed = game.Data.Info.GlobeAllowed && game.World.Map.Settings.WholeGlobe; // the globe needs the whole planet
-            Renderer = new MapRenderer(game);
+            if (keptRenderer != null && keptRenderer.CanRebind(game)) { Renderer = keptRenderer; Renderer.Rebind(game); keptRenderer = null; }
+            else { keptRenderer?.Dispose(); keptRenderer = null; var rsw = System.Diagnostics.Stopwatch.StartNew(); Renderer = MapRenderer.Create(game); Log.Info($"Map renderer built in {rsw.ElapsedMilliseconds} ms"); }
             Camera = new CameraController(Renderer);
             Overlay = new MapOverlay(game, Renderer);
             Particles = new MapParticles(game, Renderer);
             Figures = new MapFigures(game, Renderer) { Particles = Particles };
+            game.Commands.Register("geodate", "geodate <date|clear> - date shown by the Provinces map mode, e.g. geodate 1CE.1.1 or 300BCE.6.1", args =>
+            {
+                if (!game.Geo.Enabled) return "This project has no history/geography";
+                if (args.Length == 0 || args[0] == "clear") { Renderer!.GeoDay = null; Renderer.Dirty = true; return "Provinces map mode follows the game date"; }
+                if (!Burger.Core.Geography.HistoricalCalendar.TryParse(args[0], out int day, out var err)) return err ?? "bad date";
+                Renderer!.GeoDay = day; Renderer.Dirty = true;
+                return $"Provinces map mode shows {Burger.Core.Geography.HistoricalCalendar.Format(day)}: {game.Geo.Snapshot(day).Provinces.Count} provinces";
+            });
+            game.Commands.Register("geodebug", "geodebug [on|off] - Provinces map mode highlights dynamic provinces: orange = front line, cyan = growth split, yellow = merge; gray = same shape as at the start", args =>
+            {
+                Renderer!.GeoDebug = args.Length > 0 ? args[0] != "off" : !Renderer.GeoDebug;
+                if (Renderer.GeoDebug) Renderer.Mode = MapMode.Provinces;
+                Renderer.Dirty = true;
+                foreach (var op in game.Geo.DynamicOperations.Take(8)) Console.WriteLine($"geodebug: {Burger.Core.Geography.HistoricalCalendar.Format(op.Date)} {op.Kind} {string.Join("+", op.Parents)} -> {string.Join(",", op.Children.Select(c => c.Id + "/" + c.Atoms.Length))} [{op.Reason}] provinceReason={(game.Geo.Get(op.Children[0].Id)?.Reason ?? "null")}");
+                return Renderer.GeoDebug ? "Geo debug on: orange front line, cyan growth split, yellow merge, gray from data files" : "Geo debug off";
+            });
+            game.Commands.Register("geobase", "geobase [on|off] - overlay the start-layout province borders (magenta) above the current province shapes in the Provinces map mode", args =>
+            {
+                Renderer!.GeoBase = args.Length > 0 ? args[0] != "off" : !Renderer.GeoBase;
+                if (Renderer.GeoBase) Renderer.Mode = MapMode.Provinces;
+                Renderer.Dirty = true;
+                return Renderer.GeoBase ? "Initial shapes on: magenta lines are the province borders from the start" : "Initial shapes off";
+            });
+            game.Commands.Register("geolist", "geolist [n] - the last n (default 15) dynamic province changes with date, parents, children and reason", args =>
+            {
+                int n = args.Length > 0 && int.TryParse(args[0], out var k) ? k : 15;
+                var ops = game.Geo.DynamicOperations;
+                if (ops.Count == 0) return "No dynamic changes yet (geoskip advances time)";
+                return $"{ops.Count} dynamic changes ({game.GeoDynamics.Splits} splits, {game.GeoDynamics.Merges} merges), last {Math.Min(n, ops.Count)}:\n" +
+                    string.Join("\n", ops.Skip(Math.Max(0, ops.Count - n)).Select(o => $"  {Burger.Core.Geography.HistoricalCalendar.Format(o.Date)} {o.Kind}: {string.Join(" + ", o.Parents)} -> {string.Join(", ", o.Children.Select(c => c.Name ?? c.Id))} [{o.Reason}]"));
+            });
+            game.Commands.Register("geosplit", "geosplit <population> - test: set the population above which a province splits (default 400000); lower it to see growth splits", args =>
+            {
+                if (args.Length == 0 || !double.TryParse(args[0], out var v) || v <= 0) return $"Split population is {game.Geo.DynamicSettings.SplitPopulation:N0}. Usage: geosplit 100000";
+                game.Geo.DynamicSettings.SplitPopulation = v;
+                return "Split population is now " + game.GeoDynamics.Diagnose();
+            });
+            game.Commands.Register("geowar", "geowar [n] - test: occupy n border locations (default 60) so fronts form; geowar off ends it", args =>
+            {
+                foreach (var l in _geoWar) l.Controller = null;
+                _geoWar.Clear();
+                if (args.Length > 0 && args[0] == "off") { Renderer!.Dirty = true; return "Test occupation ended"; }
+                int n = args.Length > 0 && int.TryParse(args[0], out var k) ? k : 60;
+                var border = game.World.Locations.Where(l => l.IsLand && l.Owner != null && l.Neighbors.Any(x => x.To.IsLand && x.To.Owner != null && x.To.Owner != l.Owner)).OrderBy(l => l.Key, StringComparer.Ordinal).ToList();
+                int step = Math.Max(1, border.Count / Math.Max(1, n));
+                for (int i = 0; i < border.Count && _geoWar.Count < n; i += step)
+                {
+                    var foe = border[i].Neighbors.Select(a => a.To.Owner).First(o => o != null && o != border[i].Owner);
+                    border[i].Controller = foe; _geoWar.Add(border[i]);
+                }
+                Renderer!.Dirty = true;
+                return $"{_geoWar.Count} locations occupied; fronts become provinces at the next month start (use geoskip)";
+            });
+            game.Commands.Register("geoskip", "geoskip [n|ny] - run the simulation forward n months (default 1) or n years (e.g. 5y) and report province changes", args =>
+            {
+                int months = 1;
+                if (args.Length > 0)
+                {
+                    string a0 = args[0].ToLowerInvariant();
+                    bool years = a0.EndsWith('y');
+                    if (int.TryParse(years ? a0[..^1] : a0, out var m) && m > 0) months = years ? m * 12 : m;
+                }
+                int s0 = game.GeoDynamics.Splits, m0 = game.GeoDynamics.Merges;
+                for (int i = 0; i < months; i++) do game.Tick(); while (!(game.World.Date.Day == 1 && game.World.Date.Hour == 0));
+                Renderer!.Dirty = true;
+                Console.WriteLine("geoskip: " + game.GeoDynamics.Diagnose());
+                Console.WriteLine($"geoskip: {game.GeoDynamics.Splits} splits, {game.GeoDynamics.Merges} merges, {game.GeoDynamics.Shifts} border shifts so far; {_geoWar.Count} locations occupied");
+                return $"Now {Burger.Core.Geography.HistoricalCalendar.Format(game.World.Date.TotalDays)}: +{game.GeoDynamics.Splits - s0} splits, +{game.GeoDynamics.Merges - m0} merges, borders moved {game.GeoDynamics.Shifts}, {game.Geo.Snapshot(game.World.Date.TotalDays).Provinces.Count} provinces, {game.GeoDynamics.ChangedCount()} with a shape different from the start";
+            });
             game.Commands.Register("soldier_gag", "soldier_gag [scratch|pick_nose|scratch_pick_nose|fire|fire_side|fire_aggressive|off] - standing soldiers do a silly idle", args =>
             {
                 string name = args.Length > 0 ? args[0].ToLowerInvariant() : "";
@@ -251,7 +333,14 @@ public sealed class App
         }
         _opt.Exec.Clear();
         if (_opt.MapMode != null && Enum.TryParse<MapMode>(_opt.MapMode, true, out var mode)) { Renderer!.Mode = mode; Renderer.Dirty = true; }
-        if (_opt.Zoom != null) Camera!.LookAt(Camera.Target, _opt.Zoom.Value);
+        if (_opt.LookAt != null && Renderer != null)
+        {
+            var ll = _opt.LookAt.Split(',');
+            double lon = double.Parse(ll[0], System.Globalization.CultureInfo.InvariantCulture), lat = double.Parse(ll[1], System.Globalization.CultureInfo.InvariantCulture);
+            var mp = Renderer;
+            Camera!.LookAtFlat((float)((lon + 180) / 360 * mp.WorldWidth), (float)((90 - lat) / 180 * mp.WorldHeight), _opt.Zoom ?? 40f);
+        }
+        else if (_opt.Zoom != null) Camera!.LookAt(Camera.Target, _opt.Zoom.Value);
         if (_opt.NoFogShading) MapRenderer.FogShading = false;
         if (_opt.Open != null)
         {
@@ -309,7 +398,11 @@ public sealed class App
     }
 
     /// <summary>Reloads all game files and shows the main menu (runs between frames).</summary>
-    public void ReturnToMainMenu() => _pending = LoadGame;
+    /// <summary>Back to the main menu with a fresh world. The map's terrain, textures and shader are kept, only the game is read again.</summary>
+    public void ReturnToMainMenu() => _pending = () => LoadGame(keepMap: true);
+
+    /// <summary>Reads every game file again and rebuilds the map too (the Reload files button).</summary>
+    public void ReloadFiles() => _pending = () => LoadGame();
 
     /// <summary>Loads a save (runs between frames).</summary>
     public void LoadSave(string path) => _pending = () => DoLoadSave(path);
@@ -378,7 +471,7 @@ public sealed class App
 
     private void DoLoadSave(string path)
     {
-        LoadGame();
+        LoadGame(keepMap: true);
         if (Game == null) return;
         try
         {
@@ -690,7 +783,7 @@ public sealed class App
         if (Gui.Button(new Rectangle(x, y, half, bh), "Observe", true, "Watch the AI play")) { StartGame(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
         if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Load game", ListSaves().Count > 0)) Ui.SaveMenuOpen = !Ui.SaveMenuOpen;
         y += bh + 6 * s;
-        if (Gui.Button(new Rectangle(x, y, half, bh), "Reload files", true, "Re-read all game files (after editing them)")) ReturnToMainMenu();
+        if (Gui.Button(new Rectangle(x, y, half, bh), "Reload files", true, "Re-read all game files (after editing them)")) ReloadFiles();
         if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Quit")) _quit = true;
 
         if (Ui.ErrorsOpen) DrawMenuErrors();
@@ -751,19 +844,19 @@ public sealed class App
         float w = Raylib.GetScreenWidth() - 80 * s, h = Raylib.GetScreenHeight() - 80 * s;
         var r = new Rectangle(40 * s, 40 * s, w, h);
         Gui.Panel(r, "The game could not be loaded");
-        float y = r.Y + 40 * s;
-        y += Gui.Wrapped(_errorMessage, r.X + 16, y, w - 32, 17, Gui.Bad) + 10 * s;
-        Gui.Label($"Game folder: {Path.GetFullPath(_gameRoot)}", r.X + 16, y, 15, Gui.TextDim);
-        y += 26 * s;
+        float pad = 18 * s, y = r.Y + Gui.HeaderHeight + 14 * s;
+        y += Gui.Wrapped(_errorMessage, r.X + pad, y, w - 2 * pad, 17, Gui.Bad) + 12 * s;
+        Gui.Label($"Game folder: {Path.GetFullPath(_gameRoot)}", r.X + pad, y, 15, Gui.TextDim);
+        y += 30 * s;
         var entries = Log.Entries.Where(e => e.Level == LogLevel.Error).TakeLast(30).ToList();
         foreach (var e in entries)
         {
-            Gui.Label(e.ToString().Length > 180 ? e.ToString()[..177] + "..." : e.ToString(), r.X + 16, y, 14, Gui.Gold);
-            y += 19 * s;
+            Gui.Label(e.ToString().Length > 180 ? e.ToString()[..177] + "..." : e.ToString(), r.X + pad, y, 14, Gui.Gold);
+            y += 21 * s;
         }
-        if (Gui.Button(new Rectangle(r.X + 16, r.Y + h - 50 * s, 220 * s, 36 * s), "Retry (reload files)") || Raylib.IsKeyPressed(KeyboardKey.F5))
-            ReturnToMainMenu();
-        if (Gui.Button(new Rectangle(r.X + 250 * s, r.Y + h - 50 * s, 160 * s, 36 * s), "Quit")) _quit = true;
+        if (Gui.Button(new Rectangle(r.X + pad, r.Y + h - 62 * s, 300 * s, 44 * s), "Retry (reload files)") || Raylib.IsKeyPressed(KeyboardKey.F5))
+            ReloadFiles();
+        if (Gui.Button(new Rectangle(r.X + pad + 314 * s, r.Y + h - 62 * s, 180 * s, 44 * s), "Quit")) _quit = true;
         Gui.EndFrame();
         Raylib.EndDrawing();
     }

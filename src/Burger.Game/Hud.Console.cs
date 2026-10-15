@@ -22,6 +22,14 @@ public sealed partial class Hud
             _consoleInput += char.ConvertFromUtf32(ch);
         }
         _consoleSkipChar = false;
+        bool ctrl = Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl) || Raylib.IsKeyDown(KeyboardKey.LeftSuper) || Raylib.IsKeyDown(KeyboardKey.RightSuper);
+        if ((ctrl && Raylib.IsKeyPressed(KeyboardKey.V)) || (Raylib.IsKeyDown(KeyboardKey.LeftShift) && Raylib.IsKeyPressed(KeyboardKey.Insert)))
+        {
+            // paste: several lines become one chained line ("a; b; c")
+            string clip = Raylib.GetClipboardText_() ?? "";
+            var parts = clip.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            _consoleInput += new string(string.Join("; ", parts).Where(c => c >= ' ').ToArray());
+        }
         if ((Raylib.IsKeyPressed(KeyboardKey.Backspace) || Raylib.IsKeyPressedRepeat(KeyboardKey.Backspace)) && _consoleInput.Length > 0)
             _consoleInput = _consoleInput[..^1];
         if (Raylib.IsKeyPressed(KeyboardKey.Escape)) { Ui.ConsoleOpen = false; return; }

@@ -1,12 +1,13 @@
 using System.Numerics;
 using Burger.Core;
+using Burger.Core.Geography;
 using Burger.Core.Map;
 using Burger.Core.Model;
 using Raylib_cs;
 
 namespace Burger.Runtime;
 
-public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion }
+public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces }
 
 /// <summary>
 /// Builds and draws the 3D map from the province map, heightmap, terrain, tree and river inputs.
@@ -21,10 +22,15 @@ public sealed unsafe class MapRenderer : IDisposable
     private const int DefaultTileSize = 512; // cell size when no terrain has a texture file
     private const int AtlasPad = 32;         // wrapped border around each cell, so filtering and mipmaps never read a neighbor
 
-    private readonly Game _game;
-    private readonly MapData _map;
+    private Game _game;
+    private MapData _map;
     private Mesh[] _chunks = Array.Empty<Mesh>();
     private BoundingBox[] _chunkBoxes = Array.Empty<BoundingBox>();
+    // the same terrain at a quarter of the resolution, drawn when zoomed far out (its triangles are smaller than a pixel otherwise)
+    private Mesh[] _lodChunks = Array.Empty<Mesh>();
+    private BoundingBox[] _lodBoxes = Array.Empty<BoundingBox>();
+    private const int LodStride = 4;
+    private const float LodHeight = 90f;
     private Mesh _seaMesh;
     private Mesh _treeMesh;
     private bool _hasTrees;
@@ -35,6 +41,9 @@ public sealed unsafe class MapRenderer : IDisposable
     private Texture2D _lutTex;
     private Texture2D _atlasTex;
     private Texture2D _normalTex;
+    private Texture2D _blendTex0, _blendTex1; // terrain blend weights at half the map resolution (ids 0-3, 4-7)
+    private bool _hasBlendTex;
+    private Texture2D _riverTex; // river coverage at half the map resolution, filtered and mipmapped
     private bool _hasNormalMap;
     private Color[] _lut = Array.Empty<Color>();
     private int _blockRows;
@@ -48,7 +57,7 @@ public sealed unsafe class MapRenderer : IDisposable
     private int _mw, _mh;
 
     private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
-        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun;
+        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun;
     private int _visibilityVersion = -1;
 
     /// <summary>Draw the map on a globe instead of the flat, east-west wrapping map. Set through <see cref="CameraController.SetGlobe"/>.</summary>
@@ -61,6 +70,12 @@ public sealed unsafe class MapRenderer : IDisposable
     public float WorldWidth { get; }
     public float WorldHeight { get; }
     public MapMode Mode { get; set; } = MapMode.Political;
+    /// <summary>Date shown by the Provinces map mode (null = the game date). Set with the console command geodate.</summary>
+    public int? GeoDay;
+    /// <summary>Debug view of the Provinces mode: provinces whose shape differs from the start (made by the dynamic system and not reunited) are bright (orange front line, cyan growth split, yellow merge), each in its own shade; everything else is dim gray.</summary>
+    public bool GeoDebug;
+    public bool GeoBase; // overlay: borders of the start-layout provinces drawn over the current ones
+    private int _geoVersion = -1;
     /// <summary>A data/C# defined map mode (overrides <see cref="Mode"/> when set).</summary>
     public Burger.Core.Mechanics.MapModeDef? CustomMode { get; set; }
     public Location? Selected { get; set; }
@@ -70,12 +85,39 @@ public sealed unsafe class MapRenderer : IDisposable
     public Country? DiplomacyFocus { get; set; }
     public bool Dirty { get; set; } = true;
 
-    public MapRenderer(Game game)
+    // CPU-only products (no GL calls) are made on worker threads while the main thread builds the mesh and compiles the shader
+    private System.Threading.Tasks.Task<Image>? _riverTask, _atlasTask, _dataTask;
+    private System.Threading.Tasks.Task<(Image A, Image B)?>? _blendTask;
+    private static MapRenderer? _prewarmed;
+
+    /// <summary>Starts the CPU-only work (atlas, rivers, terrain blend) on worker threads. Call while the game is still loading; <see cref="Create"/> picks it up.</summary>
+    public static void Prewarm(Game game) => _prewarmed = new MapRenderer(game, true);
+
+    /// <summary>The renderer for <paramref name="game"/>, using work started by <see cref="Prewarm"/> when it was for this game.</summary>
+    public static MapRenderer Create(Game game)
+    {
+        var p = System.Threading.Interlocked.Exchange(ref _prewarmed, null);
+        if (p == null || !ReferenceEquals(p._game, game)) return new MapRenderer(game);
+        p.Finish();
+        return p;
+    }
+
+    public MapRenderer(Game game) : this(game, true) { Finish(); }
+
+    private MapRenderer(Game game, bool prepare)
     {
         _game = game;
         _map = game.World.Map;
         WorldWidth = _map.WorldWidth;
         WorldHeight = _map.WorldHeight;
+        _atlasTask = System.Threading.Tasks.Task.Run(MakeAtlasImage);
+        _dataTask = System.Threading.Tasks.Task.Run(MakeMapDataImage);
+        _riverTask = System.Threading.Tasks.Task.Run(MakeRiverImage);
+        _blendTask = System.Threading.Tasks.Task.Run(MakeBlendImages);
+    }
+
+    private void Finish()
+    {
         BuildTerrainMesh();
         BuildMapDataTexture();
         BuildLut();
@@ -83,7 +125,32 @@ public sealed unsafe class MapRenderer : IDisposable
         BuildShader();
         BuildTrees();
         _seaMesh = Raylib.GenMeshPlane(WorldWidth * 7, WorldHeight * 7, 8, 8);
+        _game.MapChanged += () => Dirty = true;
+    }
+
+    /// <summary>
+    /// True when <paramref name="game"/> (a fresh load of the same files) has the same map as the one this renderer was built for,
+    /// so the terrain mesh, textures, atlas, shader and trees can be kept (see <see cref="Rebind"/>).
+    /// </summary>
+    public bool CanRebind(Game game)
+        => game.World.Map.Width == _map.Width && game.World.Map.Height == _map.Height
+           && game.World.Locations.Count == _game.World.Locations.Count
+           && string.Equals(game.Data.Root, _game.Data.Root, StringComparison.Ordinal);
+
+    /// <summary>Points the renderer at a fresh game of the same map without rebuilding anything on the GPU. Only the per-location colors are rewritten (on the next draw).</summary>
+    public void Rebind(Game game)
+    {
+        _game = game;
+        _map = game.World.Map;
         game.MapChanged += () => Dirty = true;
+        Mode = MapMode.Political;
+        CustomMode = null;
+        Selected = Hovered = null;
+        HighlightState = null;
+        DiplomacyFocus = null;
+        GeoDay = null; GeoDebug = false; GeoBase = false;
+        _visibilityVersion = -1; _geoVersion = -1;
+        Dirty = true;
     }
 
     // ===============================================================================================
@@ -168,12 +235,15 @@ public sealed unsafe class MapRenderer : IDisposable
 
         // cut into chunks (so the camera can skip the ones it cannot see); normals come from the whole field, so chunk edges meet seamlessly
         float cellX = WorldWidth / (mw - 1f), cellZ = WorldHeight / (mh - 1f);
+        (Mesh[], BoundingBox[]) BuildSet(int st)
+        {
         var chunks = new List<Mesh>();
         var boxes = new List<BoundingBox>();
-        for (int z0 = 0; z0 < mh - 1; z0 += ChunkCells)
-            for (int x0 = 0; x0 < mw - 1; x0 += ChunkCells)
+        int cw = (mw - 2) / st + 1, ch = (mh - 2) / st + 1; // cells per side at this stride
+        for (int z0 = 0; z0 < ch; z0 += ChunkCells)
+            for (int x0 = 0; x0 < cw; x0 += ChunkCells)
             {
-                int nx = Math.Min(ChunkCells, mw - 1 - x0), nz = Math.Min(ChunkCells, mh - 1 - z0);
+                int nx = Math.Min(ChunkCells, cw - x0), nz = Math.Min(ChunkCells, ch - z0);
                 int vw = nx + 1, vh = nz + 1;
                 var mesh = new Mesh(vw * vh, nx * nz * 2);
                 mesh.AllocVertices(); mesh.AllocNormals(); mesh.AllocTexCoords(); mesh.AllocIndices();
@@ -185,9 +255,9 @@ public sealed unsafe class MapRenderer : IDisposable
                 for (int z = 0; z < vh; z++)
                     for (int x = 0; x < vw; x++)
                     {
-                        int gx = x0 + x, gz = z0 + z, v = z * vw + x;
+                        int gx = Math.Min((x0 + x) * st, mw - 1), gz = Math.Min((z0 + z) * st, mh - 1), v = z * vw + x;
                         float hh = _meshHeights[gz * mw + gx];
-                        int xa = Math.Max(gx - 1, 0), xb = Math.Min(gx + 1, mw - 1), za = Math.Max(gz - 1, 0), zb = Math.Min(gz + 1, mh - 1);
+                        int xa = Math.Max(gx - st, 0), xb = Math.Min(gx + st, mw - 1), za = Math.Max(gz - st, 0), zb = Math.Min(gz + st, mh - 1);
                         float dhx = (_meshHeights[gz * mw + xb] - _meshHeights[gz * mw + xa]) / ((xb - xa) * cellX);
                         float dhz = (_meshHeights[zb * mw + gx] - _meshHeights[za * mw + gx]) / ((zb - za) * cellZ);
                         vs[v] = new Vector3(gx * cellX, hh, gz * cellZ);
@@ -208,8 +278,10 @@ public sealed unsafe class MapRenderer : IDisposable
                 chunks.Add(mesh);
                 boxes.Add(new BoundingBox(lo, hi));
             }
-        _chunks = chunks.ToArray();
-        _chunkBoxes = boxes.ToArray();
+        return (chunks.ToArray(), boxes.ToArray());
+        }
+        (_chunks, _chunkBoxes) = BuildSet(1);
+        (_lodChunks, _lodBoxes) = BuildSet(LodStride);
         Log.Info($"Terrain mesh: {mw} x {mh} vertices in {_chunks.Length} chunks ({(long)(mw - 1) * (mh - 1) * 2:N0} triangles)");
     }
 
@@ -233,63 +305,204 @@ public sealed unsafe class MapRenderer : IDisposable
         return !(front || r || l || t || b);
     }
 
-    private void BuildMapDataTexture()
+    private Image MakeMapDataImage()
     {
         int w = _map.Width, h = _map.Height;
         var locs = _game.World.Locations;
         // distance (in pixels, up to CoastRange) from every water pixel to the nearest land: shallow water near coasts
         const int CoastRange = 24;
-        var dist = new byte[w * h];
-        var queue = new Queue<int>();
         bool IsWaterPx(int i) { int li = _map.PixelLocation[i]; return li < 0 || locs[li].IsWater; }
-        for (int i = 0; i < w * h; i++)
-            if (!IsWaterPx(i)) { dist[i] = 0; queue.Enqueue(i); }
-            else dist[i] = 255;
-        while (queue.Count > 0)
+        string cacheDir = MapCache.Dir(_game.Data);
+        string distKey = _map.ContentKey.Length == 0 ? "" : MapCache.Key(_map.ContentKey, "coastdist", string.Concat(locs.Select(l => l.IsWater ? '1' : '0')));
+        var dist = distKey.Length > 0 ? MapCache.Load<byte>(cacheDir, "coastdist", distKey, out _) : null;
+        if (dist == null || dist.Length != w * h)
         {
-            int i = queue.Dequeue();
-            int d = dist[i];
-            if (d >= CoastRange) continue;
-            int x = i % w, y = i / w;
-            void Visit(int j) { if (dist[j] == 255) { dist[j] = (byte)(d + 1); queue.Enqueue(j); } }
-            if (x > 0) Visit(i - 1);
-            if (x < w - 1) Visit(i + 1);
-            if (y > 0) Visit(i - w);
-            if (y < h - 1) Visit(i + w);
+            dist = new byte[w * h];
+            var queue = new Queue<int>();
+            for (int i = 0; i < w * h; i++)
+                if (!IsWaterPx(i)) { dist[i] = 0; queue.Enqueue(i); }
+                else dist[i] = 255;
+            while (queue.Count > 0)
+            {
+                int i = queue.Dequeue();
+                int d = dist[i];
+                if (d >= CoastRange) continue;
+                int x = i % w, y = i / w;
+                void Visit(int j) { if (dist[j] == 255) { dist[j] = (byte)(d + 1); queue.Enqueue(j); } }
+                if (x > 0) Visit(i - 1);
+                if (x < w - 1) Visit(i + 1);
+                if (y > 0) Visit(i - w);
+                if (y < h - 1) Visit(i + w);
+            }
+            if (distKey.Length > 0) MapCache.Save(cacheDir, "coastdist", distKey, Array.Empty<int>(), dist);
         }
         Image img = Raylib.GenImageColor(w, h, Color.Blank);
         byte* px = (byte*)img.Data;
-        for (int i = 0; i < w * h; i++)
+        System.Threading.Tasks.Parallel.For(0, h, row =>
         {
-            int li = _map.PixelLocation[i] + 1; // 0 = none
-            int o = i * 4;
-            px[o] = (byte)(li & 0xFF);
-            px[o + 1] = (byte)((li >> 8) & 0xFF);
-            px[o + 2] = _map.PixelTerrain[i];
-            // land: river flag. water: closeness to the coast (240 next to land, 0 far out)
-            px[o + 3] = IsWaterPx(i) ? (byte)(dist[i] == 255 ? 0 : Math.Max(0, CoastRange - dist[i]) * 10) : _map.RiverMap[i];
-        }
+            for (int i = row * w, end = i + w; i < end; i++)
+            {
+                int li = _map.PixelLocation[i] + 1; // 0 = none
+                int o = i * 4;
+                px[o] = (byte)(li & 0xFF);
+                px[o + 1] = (byte)((li >> 8) & 0xFF);
+                px[o + 2] = _map.PixelTerrain[i];
+                // land: river flag. water: closeness to the coast (240 next to land, 0 far out); lake water: 245 (the shader keeps it still)
+                int lw = _map.PixelLocation[i];
+                px[o + 3] = lw >= 0 && locs[lw].IsLake ? (byte)245 : IsWaterPx(i) ? (byte)(dist[i] == 255 ? 0 : Math.Max(0, CoastRange - dist[i]) * 10) : _map.RiverMap[i];
+            }
+        });
+        return img;
+    }
+
+    private void BuildMapDataTexture()
+    {
+        var img = _dataTask!.Result;
+        int w = _map.Width, h = _map.Height;
         _mapDataTex = Raylib.LoadTextureFromImage(img);
         Raylib.UnloadImage(img);
         Raylib.SetTextureFilter(_mapDataTex, TextureFilter.Point);
         Raylib.SetTextureWrap(_mapDataTex, TextureWrap.Clamp);
+
+        // rivers are read from a downsampled copy: each texel is the share of river pixels in a 2x2 block, so the shader gets
+        // coverage, bank and zoomed-out threads from one or two filtered lookups instead of a loop over single map pixels
+        var rimg = _riverTask!.Result;
+        _riverTex = Raylib.LoadTextureFromImage(rimg);
+        Raylib.UnloadImage(rimg);
+        Raylib.GenTextureMipmaps(ref _riverTex);
+        Raylib.SetTextureFilter(_riverTex, TextureFilter.Trilinear);
+        Raylib.SetTextureWrap(_riverTex, TextureWrap.Clamp);
+        var blend = _blendTask!.Result;
+        if (blend != null) UploadBlendTextures(blend.Value.A, blend.Value.B);
     }
+
+    /// <summary>
+    /// The shader blends the terrain types over a wide smooth kernel; summed per terrain it only depends on the map, so it is baked once:
+    /// per half-resolution texel the normalized kernel weight of each terrain id (up to 8 ids in two RGBA textures).
+    /// </summary>
+    private Image MakeRiverImage()
+    {
+        int w = _map.Width, h = _map.Height;
+        var locs = _game.World.Locations;
+        int rw = Math.Max(1, w / 2), rh = Math.Max(1, h / 2);
+        Image rimg = Raylib.GenImageColor(rw, rh, Color.Black);
+        byte* rp = (byte*)rimg.Data;
+        System.Threading.Tasks.Parallel.For(0, rh, y =>
+        {
+            for (int x = 0; x < rw; x++)
+            {
+                int n = 0;
+                for (int j = 0; j < 2; j++)
+                    for (int i = 0; i < 2; i++)
+                    {
+                        int sx = Math.Min(w - 1, x * 2 + i), sy = Math.Min(h - 1, y * 2 + j);
+                        int si = sy * w + sx;
+                        int sl = _map.PixelLocation[si];
+                        if (_map.RiverMap[si] == 255 && !(sl < 0 || locs[sl].IsWater)) n++;
+                    }
+                byte v = (byte)(n * 255 / 4);
+                int o = (y * rw + x) * 4;
+                rp[o] = rp[o + 1] = rp[o + 2] = v; rp[o + 3] = 255;
+            }
+        });
+        Raylib.ImageFormat(ref rimg, PixelFormat.UncompressedGrayscale);
+        return rimg;
+    }
+
+    private (Image A, Image B)? MakeBlendImages()
+    {
+        int w = _map.Width, h = _map.Height;
+        if (_game.Data.Terrains.Count > 8) return null;
+        int bw = Math.Max(1, w / 2), bh = Math.Max(1, h / 2);
+        Image a = Raylib.GenImageColor(bw, bh, Color.Black), b = Raylib.GenImageColor(bw, bh, Color.Black);
+        byte* pa = (byte*)a.Data, pb = (byte*)b.Data;
+        var ter = _map.PixelTerrain;
+        System.Threading.Tasks.Parallel.For(0, bh, y =>
+        {
+            Span<float> acc = stackalloc float[8];
+            for (int x = 0; x < bw; x++)
+            {
+                acc.Clear();
+                // texel center in map pixel units (pixel centers are integers): between pixels 2x and 2x+1
+                float cx = 2 * x + 0.5f, cy = 2 * y + 0.5f, tot = 0;
+                for (int j = (int)MathF.Ceiling(cy - 2.7f); j <= (int)MathF.Floor(cy + 2.7f); j++)
+                    for (int i = (int)MathF.Ceiling(cx - 2.7f); i <= (int)MathF.Floor(cx + 2.7f); i++)
+                    {
+                        float dx = (i - cx) / 2.7f, dy = (j - cy) / 2.7f;
+                        float kw = Math.Max(1f - (dx * dx + dy * dy), 0f);
+                        kw *= kw;
+                        if (kw <= 0f) continue;
+                        int id = ter[Math.Clamp(j, 0, h - 1) * w + Math.Clamp(i, 0, w - 1)];
+                        if (id < 8) acc[id] += kw;
+                        tot += kw;
+                    }
+                int o = (y * bw + x) * 4;
+                float inv = tot > 0 ? 255f / tot : 0f;
+                for (int k = 0; k < 4; k++) { pa[o + k] = (byte)Math.Min(255f, acc[k] * inv + 0.5f); pb[o + k] = (byte)Math.Min(255f, acc[k + 4] * inv + 0.5f); }
+            }
+        });
+        return (a, b);
+    }
+
+    private void UploadBlendTextures(Image a, Image b)
+    {
+        _blendTex0 = Raylib.LoadTextureFromImage(a); _blendTex1 = Raylib.LoadTextureFromImage(b);
+        Raylib.UnloadImage(a); Raylib.UnloadImage(b);
+        foreach (var t in new[] { _blendTex0, _blendTex1 })
+        {
+            Raylib.SetTextureFilter(t, TextureFilter.Bilinear);
+            Raylib.SetTextureWrap(t, TextureWrap.Clamp);
+        }
+        _hasBlendTex = true;
+    }
+
 
     private void BuildLut()
     {
         int n = _game.World.Locations.Count;
         _blockRows = Math.Max(1, (n + LutWidth - 1) / LutWidth);
-        _lut = new Color[LutWidth * _blockRows * 3];
-        Image img = Raylib.GenImageColor(LutWidth, _blockRows * 3, Color.Blank);
+        _lut = new Color[LutWidth * _blockRows * 4];
+        Image img = Raylib.GenImageColor(LutWidth, _blockRows * 4, Color.Blank);
         _lutTex = Raylib.LoadTextureFromImage(img);
         Raylib.UnloadImage(img);
         Raylib.SetTextureFilter(_lutTex, TextureFilter.Point);
     }
 
-    private void BuildAtlas()
+    private Image MakeAtlasImage()
     {
         var terrains = _game.Data.Terrains;
         _atlasGrid = Math.Max(1, (int)Math.Ceiling(Math.Sqrt(terrains.Count)));
+        string cacheDir = MapCache.Dir(_game.Data);
+        string atlasKey = MapCache.Enabled
+            ? MapCache.Key(new[] { "atlas2", AtlasPad.ToString(), MaxTileSize.ToString(), DefaultTileSize.ToString() }
+                .Concat(terrains.Select(t => { string? tp = t.Texture != null ? _game.Data.PathOf(t.Texture) : null; return tp != null && File.Exists(tp) ? "file:" + tp : "none:" + t.DisplayColor.Packed; })).ToArray())
+            : "";
+        int[] atlasMeta = Array.Empty<int>();
+        var cachedAtlas = atlasKey.Length > 0 ? MapCache.Load<byte>(cacheDir, "atlas", atlasKey, out atlasMeta) : null;
+        Image atlas;
+        if (cachedAtlas != null && atlasMeta.Length >= 2 && cachedAtlas.Length == atlasMeta[0] * atlasMeta[0] * 4)
+        {
+            _tilePx = atlasMeta[1]; _padPx = AtlasPad;
+            atlas = Raylib.GenImageColor(atlasMeta[0], atlasMeta[0], Color.Gray);
+            System.Runtime.InteropServices.Marshal.Copy(cachedAtlas, 0, (IntPtr)atlas.Data, cachedAtlas.Length);
+        }
+        else atlas = BuildAtlasImage(terrains, atlasKey, cacheDir);
+        return atlas;
+    }
+
+    private void BuildAtlas()
+    {
+        var atlas = _atlasTask!.Result;
+        _atlasTex = Raylib.LoadTextureFromImage(atlas);
+        Raylib.UnloadImage(atlas);
+        Raylib.GenTextureMipmaps(ref _atlasTex);
+        Raylib.SetTextureFilter(_atlasTex, TextureFilter.Trilinear);
+        Raylib.SetTextureWrap(_atlasTex, TextureWrap.Clamp);
+    }
+
+
+    private Image BuildAtlasImage(List<TerrainType> terrains, string atlasKey, string cacheDir)
+    {
         // load every texture first: the cell is as large as the biggest one, capped at MaxTileSize
         var tiles = new Image?[terrains.Count];
         int tileSize = 0;
@@ -329,11 +542,13 @@ public sealed unsafe class MapRenderer : IDisposable
             Raylib.UnloadImage(tile);
         }
         Log.Info($"Terrain atlas: {size}x{size}, {tileSize}px per terrain (+{pad}px wrapped border)");
-        _atlasTex = Raylib.LoadTextureFromImage(atlas);
-        Raylib.UnloadImage(atlas);
-        Raylib.GenTextureMipmaps(ref _atlasTex);
-        Raylib.SetTextureFilter(_atlasTex, TextureFilter.Trilinear);
-        Raylib.SetTextureWrap(_atlasTex, TextureWrap.Clamp);
+        if (atlasKey.Length > 0)
+        {
+            var raw = new byte[size * size * 4];
+            System.Runtime.InteropServices.Marshal.Copy((IntPtr)atlas.Data, raw, 0, raw.Length);
+            MapCache.Save(cacheDir, "atlas", atlasKey, new[] { size, tileSize }, raw);
+        }
+        return atlas;
     }
 
     private void BuildShader()
@@ -362,6 +577,7 @@ public sealed unsafe class MapRenderer : IDisposable
         _locStripe = Raylib.GetShaderLocation(_shader, "stripePeriod");
         _locStateBorders = Raylib.GetShaderLocation(_shader, "stateBorders");
         _locShowBorders = Raylib.GetShaderLocation(_shader, "showProvinceBorders");
+        _locGeoBase = Raylib.GetShaderLocation(_shader, "geoBase");
         _locTint = Raylib.GetShaderLocation(_shader, "tintStrength");
         _locViewPos = Raylib.GetShaderLocation(_shader, "viewPos");
         _locFog = Raylib.GetShaderLocation(_shader, "fogStrength");
@@ -369,11 +585,13 @@ public sealed unsafe class MapRenderer : IDisposable
         _locGlobeRadius = Raylib.GetShaderLocation(_shader, "globeRadius");
         _locMapData = _locLut = 0;
 
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "seaH"), _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "waveAmp"), 0.3f * 2f / 255f * _map.Settings.HeightScale, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "heightScale"), _map.Settings.HeightScale, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "latRange"), new Vector2((float)_map.Settings.NorthLat, (float)_map.Settings.SouthLat), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locMapSize, new Vector2(_map.Width, _map.Height), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locWorldSize, new Vector2(WorldWidth, WorldHeight), ShaderUniformDataType.Vec2);
-        Raylib.SetShaderValue(_shader, _locLutSize, new Vector2(LutWidth, _blockRows * 3), ShaderUniformDataType.Vec2);
+        Raylib.SetShaderValue(_shader, _locLutSize, new Vector2(LutWidth, _blockRows * 4), ShaderUniformDataType.Vec2);
         Raylib.SetShaderValue(_shader, _locBlockRows, (float)_blockRows, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locAtlasGrid, (float)_atlasGrid, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locTileScale, 0.35f, ShaderUniformDataType.Float);
@@ -411,6 +629,17 @@ public sealed unsafe class MapRenderer : IDisposable
             Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Roughness, _normalTex);
             Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture3"), 3, ShaderUniformDataType.Int);
         }
+        // the river texture rides the occlusion slot: texture unit 4
+        Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Occlusion, _riverTex);
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture4"), 4, ShaderUniformDataType.Int);
+        if (_hasBlendTex)
+        {
+            Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Emission, _blendTex0);
+            Raylib.SetMaterialTexture(ref _material, MaterialMapIndex.Height, _blendTex1);
+            Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture5"), 5, ShaderUniformDataType.Int);
+            Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture6"), 6, ShaderUniformDataType.Int);
+        }
+        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "hasBlendTex"), _hasBlendTex ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "hasNormalMap"), _hasNormalMap ? 1f : 0f, ShaderUniformDataType.Float);
     }
 
@@ -784,6 +1013,15 @@ public sealed unsafe class MapRenderer : IDisposable
         int block = LutWidth * _blockRows;
         _visibilityVersion = _game.VisibilityVersion;
         Array.Clear(_lut);
+        // historical provinces (opt-in layer): the province covering each location on the shown date, numbered for border drawing
+        Dictionary<string, int>? geoIndex = null;
+        int geoDay = GeoDay ?? w.Date.TotalDays;
+        if (Mode == MapMode.Provinces) _game.GeoDynamics.EnsureSynced();
+        if (Mode == MapMode.Provinces && CustomMode == null && _game.Geo.Enabled)
+        {
+            geoIndex = new(StringComparer.Ordinal);
+            foreach (var gp in _game.Geo.Snapshot(geoDay).Provinces) geoIndex[gp.Id] = geoIndex.Count + 1;
+        }
         foreach (var l in w.Locations)
         {
             int i = l.Index;
@@ -826,6 +1064,27 @@ public sealed unsafe class MapRenderer : IDisposable
                 case MapMode.Religion:
                     if (l.IsLand && l.State != null && _game.Population.Religion(_game.Population.MajorityReligion(l.State)) is { } rel) col = C(rel.Color, 225);
                     break;
+                case MapMode.Provinces:
+                    if (geoIndex != null && GeoDebug && l.IsLand && _game.Geo.ProvinceOfAtom(l.Key, geoDay) is { } gd)
+                    {
+                        float v = 0.62f + 0.38f * ((geoIndex[gd.Id] * 0.6180339f) % 1f);
+                        string r = gd.Reason ?? "";
+                        if (!r.StartsWith("dynamic:", StringComparison.Ordinal) || !_game.GeoDynamics.IsChanged(gd)) col = new Color(105, 105, 115, 215);
+                        else if (r.Contains("reunited") || r.Contains("consolidation")) col = new Color((int)(255 * v), (int)(225 * v), 40, 245);
+                        else if (r.Contains("growth")) col = new Color(30, (int)(220 * v), (int)(255 * v), 245);
+                        else col = new Color((int)(255 * v), (int)(110 * v), 20, 245);
+                    }
+                    else if (geoIndex != null && l.IsLand && _game.Geo.ProvinceOfAtom(l.Key, geoDay) is { } gp2)
+                    {
+                        // the province's owner on that date, shaded per province so neighbors of one owner stay distinct
+                        var gOwner = _game.Geo.Owner(gp2.Id, geoDay) is { } tag ? w.GetCountry(tag) : null;
+                        var baseCol = gOwner != null ? C(gOwner.Color, 230) : new Color(120, 120, 120, 200);
+                        float k = 0.78f + 0.22f * ((geoIndex[gp2.Id] * 0.6180339f) % 1f);
+                        var ctl = _game.Geo.Controller(gp2.Id, geoDay);
+                        col = new Color((byte)(baseCol.R * k), (byte)(baseCol.G * k), (byte)(baseCol.B * k), baseCol.A);
+                        if (ctl != null && gOwner != null && !string.Equals(ctl, gOwner.Tag, StringComparison.OrdinalIgnoreCase)) col = new Color((byte)Math.Min(255, col.R + 60), (byte)Math.Min(255, col.G + 60), (byte)Math.Min(255, col.B + 60), col.A);
+                    }
+                    break;
                 case MapMode.Terrain:
                     break;
                 case MapMode.Supply:
@@ -863,6 +1122,7 @@ public sealed unsafe class MapRenderer : IDisposable
             int stateId = l.State != null ? l.State.Index + 1 : 0;
             // the air map mode draws region borders instead of state borders
             if (Mode == MapMode.Air && CustomMode == null && _game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && _game.Air.RegionOf(l) is { } ar) stateId = ar.Index + 1;
+            if (geoIndex != null && l.IsLand) stateId = _game.Geo.ProvinceOfAtom(l.Key, geoDay) is { } gp3 && geoIndex.TryGetValue(gp3.Id, out int gi) ? gi : 0; // province borders instead of state borders
             _lut[block + i] = new Color(ownerId & 0xFF, (ownerId >> 8) & 0xFF, stateId & 0xFF, (stateId >> 8) & 0xFF);
 
             int flags = 0;
@@ -877,6 +1137,11 @@ public sealed unsafe class MapRenderer : IDisposable
             if (l.State?.Demilitarized == true && !l.IsWater) flags |= 128; // demilitarized zone: hatched
             var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
             _lut[block * 2 + i] = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
+            if (GeoBase && geoIndex != null && l.IsLand)
+            {
+                int bid = _game.GeoDynamics.BaselineIdOf(l.Key);
+                _lut[block * 3 + i] = new Color(bid & 0xFF, (bid >> 8) & 0xFF, 0, 255);
+            }
         }
         Raylib.UpdateTexture(_lutTex, _lut);
         Dirty = false;
@@ -955,6 +1220,7 @@ public sealed unsafe class MapRenderer : IDisposable
     public void Draw(Camera3D cam, float time)
     {
         if (_game.VisibilityVersion != _visibilityVersion) Dirty = true;
+        if (Mode == MapMode.Provinces && _game.Geo.Enabled && _game.Geo.Version != _geoVersion) { _geoVersion = _game.Geo.Version; Dirty = true; }
         if (Dirty) UpdateLut();
         Raylib.SetShaderValue(_shader, _locTime, time, ShaderUniformDataType.Float);
         if (Globe) DrawSpace(cam);
@@ -974,7 +1240,10 @@ public sealed unsafe class MapRenderer : IDisposable
         // continuously makes the stripes crawl and flicker
         float stripe = MathF.Pow(2f, MathF.Round(MathF.Log2(Math.Max(0.05f, camH * 0.045f))));
         Raylib.SetShaderValue(_shader, _locStripe, stripe, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(_shader, _locShowBorders, camH < 120 ? 1.0f : 0.0f, ShaderUniformDataType.Float);
+        // the Provinces map mode draws only real province borders: the thin lines between the locations inside one province would hide merges
+        Raylib.SetShaderValue(_shader, _locGeoBase, GeoBase && Mode == MapMode.Provinces ? 1.0f : 0.0f, ShaderUniformDataType.Float);
+        bool provincesOnly = Mode == MapMode.Provinces && CustomMode == null && _game.Geo.Enabled;
+        Raylib.SetShaderValue(_shader, _locShowBorders, camH < 120 && !provincesOnly ? 1.0f : 0.0f, ShaderUniformDataType.Float);
         // state borders fade out when zoomed out (country borders stay)
         float stateFade = Math.Clamp((StrategicZoom * 0.6f - camH) / (StrategicZoom * 0.25f), 0f, 1f);
         if (HighlightState != null) stateFade = Math.Max(stateFade, 0.6f);
@@ -1010,13 +1279,19 @@ public sealed unsafe class MapRenderer : IDisposable
         var upV = Vector3.Cross(right, fwd);
         float tanY = MathF.Tan(cam.FovY * MathF.PI / 360f) * 1.08f, tanX = tanY * Viewport.W / Math.Max(1f, Viewport.H);
         bool trees = !Globe && _hasTrees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
+        // far out a map pixel is smaller than a screen pixel: the coarse mesh looks the same and costs a sixteenth of the triangles
+        bool lod = camH > LodHeight;
+        GlMultisample.Set(!lod); // adaptive MSAA: smooth edges up close, none where triangles are sub-pixel anyway
         for (int c = 0; c < copies; c++)
         {
             float shift = (c == 0 ? 0 : c == 1 ? -1 : 1) * WorldWidth;
             var at = Raymath.MatrixTranslate(shift, 0, 0);
             if (!Bench.Skip.Contains("terrain"))
-                for (int k = 0; k < _chunks.Length; k++)
-                    if (!cull || ChunkVisible(_chunkBoxes[k], shift, cam, fwd, right, upV, tanX, tanY)) Raylib.DrawMesh(_chunks[k], _material, at);
+            {
+                var set = lod ? _lodChunks : _chunks; var sb = lod ? _lodBoxes : _chunkBoxes;
+                for (int k = 0; k < set.Length; k++)
+                    if (!cull || ChunkVisible(sb[k], shift, cam, fwd, right, upV, tanX, tanY)) Raylib.DrawMesh(set[k], _material, at);
+            }
             if (trees) Raylib.DrawMesh(_treeMesh, _treeMaterial, at);
         }
         // endless sea beyond the map's north and south edges (the globe has none)
@@ -1063,9 +1338,12 @@ public sealed unsafe class MapRenderer : IDisposable
         Raylib.UnloadTexture(_mapDataTex);
         Raylib.UnloadTexture(_lutTex);
         Raylib.UnloadTexture(_atlasTex);
+        Raylib.UnloadTexture(_riverTex);
+        if (_hasBlendTex) { Raylib.UnloadTexture(_blendTex0); Raylib.UnloadTexture(_blendTex1); }
         if (_hasNormalMap) Raylib.UnloadTexture(_normalTex);
         Raylib.UnloadShader(_shader);
         foreach (var c in _chunks) Raylib.UnloadMesh(c);
+        foreach (var c in _lodChunks) Raylib.UnloadMesh(c);
         Raylib.UnloadMesh(_seaMesh);
         if (_hasTrees) Raylib.UnloadMesh(_treeMesh);
     }

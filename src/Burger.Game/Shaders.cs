@@ -3,7 +3,30 @@ namespace Burger.Runtime;
 /// <summary>GLSL 330 shaders for the map.</summary>
 internal static class Shaders
 {
-    public const string TerrainVertex = @"#version 330
+    // Shared uniforms plus the swell that lifts the water vertices: smooth value noise that repeats a whole number of times across the
+    // map width (the three copies of the flat map meet without a crack), bent by a slow warp so the sea never settles into a pattern.
+    private const string WaveGlsl = @"
+uniform float time;
+uniform vec2 worldSize;
+float whash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float pn(vec2 p, float freq)
+{
+    float period = max(2.0, floor(worldSize.x * freq + 0.5));
+    vec2 q = vec2(p.x * period / worldSize.x, p.y * freq);
+    vec2 i = floor(q), f = fract(q);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float x0 = mod(i.x, period), x1 = mod(i.x + 1.0, period);
+    return mix(mix(whash(vec2(x0, i.y)), whash(vec2(x1, i.y)), u.x), mix(whash(vec2(x0, i.y + 1.0)), whash(vec2(x1, i.y + 1.0)), u.x), u.y);
+}
+float waveLift(vec2 p)
+{
+    float t = time * 0.35;
+    p += (vec2(pn(p + vec2(0.0, t), 0.02), pn(p + vec2(t, 5.0), 0.02)) - 0.5) * 9.0;
+    return (pn(p + vec2(t * 1.3, t * 0.7), 0.07) - 0.5) * 1.6 + (pn(p - vec2(t * 0.8, t * 1.1), 0.16) - 0.5) * 0.8;
+}
+";
+
+    public const string TerrainVertex = "#version 330\n" + WaveGlsl + @"
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
@@ -12,7 +35,11 @@ uniform mat4 matModel;
 uniform mat4 matNormal;
 uniform float globe;        // 1: bend the flat map onto a sphere (the fragment shader still reads the flat map position)
 uniform float globeRadius;
-uniform vec2 worldSize;
+uniform float heightScale;
+uniform sampler2D texture0; // map data (alpha: coast closeness, 245 on lake water)
+uniform vec2 mapSize;
+uniform float seaH;      // sea level in world height
+uniform float waveAmp;   // swell height in world units (0: flat)
 out vec2 fragTexCoord;
 out vec3 fragNormal;
 out vec3 fragPos;    // flat map position: every map lookup, border and highlight uses this, in both modes
@@ -26,6 +53,24 @@ void main()
     fragNormal = normalize(vec3(matNormal * vec4(vertexNormal, 0.0)));
     vec3 fp = vec3(matModel * vec4(vertexPosition, 1.0));
     fragPos = fp;
+    // water is the same mesh as the land: vertices at sea level ride the swell; land and the coast fade it out
+    float gap = 2.0 / 255.0 * heightScale;
+    float lift = 0.0;
+    float vy = vertexPosition.y + matModel[3].y - seaH;
+    float ww = waveAmp > 0.0 ? 1.0 - smoothstep(0.25 * gap, 0.75 * gap, vy) : 0.0;
+    if (ww > 0.0)
+    {
+        // open sea: full swell. Near a coast it calms, and on a lake it is gone (the endless sea mesh sits below sea level and has no map data)
+        float calm = 1.0;
+        if (vy > -0.015)
+        {
+            float a = texelFetch(texture0, ivec2(clamp(vertexTexCoord * mapSize, vec2(0.0), mapSize - 1.0)), 0).a * 255.0;
+            calm = abs(a - 245.0) < 2.0 ? 0.0 : 1.0 - 0.7 * clamp(a / 240.0, 0.0, 1.0);
+        }
+        if (calm > 0.0) lift = waveAmp * waveLift(fp.xz) * ww * calm;
+    }
+    vec3 vp = vertexPosition + vec3(0.0, lift, 0.0);
+    fp.y += lift;
     if (globe > 0.5)
     {
         float lon = (fp.x / worldSize.x - 0.5) * 6.28318530718;
@@ -45,12 +90,12 @@ void main()
         fragU = vec3(0.0, 1.0, 0.0);
         fragS = vec3(0.0, 0.0, 1.0);
         fragWorld = fp;
-        gl_Position = mvp * vec4(vertexPosition, 1.0);
+        gl_Position = mvp * vec4(vp, 1.0);
     }
 }
 ";
 
-    public const string TerrainFragment = @"#version 330
+    public const string TerrainFragment = "#version 330\n" + WaveGlsl + @"
 in vec2 fragTexCoord;
 in vec3 fragNormal;
 in vec3 fragPos;
@@ -65,12 +110,15 @@ uniform sampler2D texture0; // map data: RG = location index + 1, B = terrain in
 uniform sampler2D texture1; // per-location lookup: block0 color, block1 owner/state ids, block2 stripe color + flags
 uniform sampler2D texture2; // terrain texture atlas
 uniform sampler2D texture3; // optional normal map (only read when hasNormalMap is 1)
+uniform sampler2D texture4; // river coverage at half the map resolution (mipmapped)
+uniform sampler2D texture5; // terrain weights, ids 0-3, at half the map resolution (the blend kernel baked in)
+uniform sampler2D texture6; // terrain weights, ids 4-7
+uniform float hasBlendTex;
 uniform float hasNormalMap;
 uniform float heightScale;  // world height of the highest point (heightmap value 255)
 uniform vec2 latRange;      // latitude (degrees) of the top and bottom edge of the map
 uniform vec4 colDiffuse;
 uniform vec2 mapSize;
-uniform vec2 worldSize;
 uniform vec2 lutSize;
 uniform float blockRows;
 uniform float atlasGrid;
@@ -78,10 +126,10 @@ uniform float tileScale;
 uniform vec2 atlasTile;   // texture size in pixels, wrapped border in pixels
 uniform vec3 waterColor;
 uniform vec3 riverColor;
-uniform float time;
 uniform float borderScale;
 uniform float stateBorders; // 1 up close, fades to 0 when zoomed out
 uniform float showProvinceBorders;
+uniform float geoBase;       // 1: draw the start-layout province borders over the map (lut block 3)
 uniform float tintStrength;
 uniform float stripePeriod;  // occupation stripes: width in world units, steps by powers of two with the zoom (never a per pixel value)
 uniform float fogStrength;   // 0 when zoomed far out (strategic view)   // how strongly map mode colors cover the terrain (stronger when zoomed out)
@@ -116,6 +164,7 @@ vec4 lut(int idx, int block)
 
 int ownerOf(int idx) { vec4 v = lut(idx, 1); return int(v.r * 255.0 + 0.5) + int(v.g * 255.0 + 0.5) * 256; }
 int stateOf(int idx) { vec4 v = lut(idx, 1); return int(v.b * 255.0 + 0.5) + int(v.a * 255.0 + 0.5) * 256; }
+int baseOf(int idx) { vec4 v = lut(idx, 3); return int(v.r * 255.0 + 0.5) + int(v.g * 255.0 + 0.5) * 256; }
 int flagsOf(int idx) { if (idx < 0) return 1; return int(lut(idx, 2).a * 255.0 + 0.5); }
 
 float terrainAt(ivec2 p) { return floor(texelFetch(texture0, clampPix(p), 0).b * 255.0 + 0.5); }
@@ -145,8 +194,6 @@ float vnoise3(vec3 p)
     return mix(mix(mix(vhash3(i), vhash3(i + vec3(1, 0, 0)), u.x), mix(vhash3(i + vec3(0, 1, 0)), vhash3(i + vec3(1, 1, 0)), u.x), u.y),
                mix(mix(vhash3(i + vec3(0, 0, 1)), vhash3(i + vec3(1, 0, 1)), u.x), mix(vhash3(i + vec3(0, 1, 1)), vhash3(i + vec3(1, 1, 1)), u.x), u.y), u.z);
 }
-// river flag of a map pixel: land texels carry 255 in alpha (water texels carry the coast distance, at most 240)
-float riv(ivec2 p) { return texelFetch(texture0, clampPix(p), 0).a > 0.98 ? 1.0 : 0.0; }
 
 // ripples stretched along the flow: x runs downstream, y across the channel
 float streak(vec2 q, float t, float speed)
@@ -154,17 +201,58 @@ float streak(vec2 q, float t, float speed)
     return noise(vec2(q.x * 1.3 - t * speed, q.y * 4.5)) * 0.6 + noise(vec2(q.x * 3.2 - t * speed * 1.7, q.y * 10.0)) * 0.4;
 }
 
-float swell(vec2 p, float detail)
+// Water after the Water + Terrain shader by Frank Hugenroth (Shadertoy, CC BY-NC-SA 3.0): crossing ocean swells plus folded-noise
+// ripples; the slope of this field is the water normal. T is the water clock (0 on a lake: it never moves).
+const mat2 stM = mat2(0.72, -1.60, 1.60, 0.72);
+// value noise with its slope: x is the value, yz the gradient
+vec3 noised(vec2 p)
 {
-    float t = time;
-    return noise(p * 0.35 + vec2(t * 0.04, t * 0.02)) * 0.50
-         + noise(p * 0.90 + vec2(-t * 0.06, t * 0.05)) * 0.30
-         + noise(p * 2.10 + vec2(t * 0.10, -t * 0.07)) * 0.15 * detail
-         + noise(p * 4.70 + vec2(-t * 0.15, t * 0.12)) * 0.05 * detail;
+    vec2 i = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f), du = 6.0 * f * (1.0 - f);
+    float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
+    float k1 = b - a, k2 = c - a, k4 = a - b - c + d;
+    return vec3(a + k1 * u.x + k2 * u.y + k4 * u.x * u.y, du * vec2(k1 + k4 * u.y, k2 + k4 * u.x));
 }
-float waves(vec2 p)
+// The slope of stWater, worked out exactly in one pass (the three evaluations of a finite difference cost three times as much)
+vec2 stWaterGrad(vec2 p, float detail, float T)
 {
-    return noise(p * 0.9 + vec2(time * 0.05, time * 0.03)) * 0.6 + noise(p * 2.3 - vec2(time * 0.07, -time * 0.04)) * 0.4;
+    vec3 n0 = noised(p), n1 = noised(p * stM), n2 = noised(p * stM * stM);
+    float f = 0.6 * n0.x + 0.25 * n1.x + 0.1666 * n2.x;
+    vec2 gf = 0.6 * n0.yz + 0.25 * (stM * n1.yz) + 0.1666 * ((stM * stM) * n2.yz);
+    vec3 nm = noised(p * 0.05 + 4.0);
+    float mA = nm.x; vec2 gm = 0.05 * nm.yz;
+    vec3 na = noised(p * 0.3), nb = noised(p * 0.27 + 9.0);
+    float a1 = 2.48 * (p.x + p.y) + T * 1.6 + na.x * 6.0;
+    float a2 = 4.0 * dot(p, vec2(-0.74, 0.43)) - T * 1.1 + nb.x * 6.0;
+    vec2 ga1 = vec2(2.48) + 1.8 * na.yz, ga2 = 4.0 * vec2(-0.74, 0.43) + 1.62 * nb.yz;
+    float s1 = sin(a1), s2 = sin(a2);
+    float mix12 = s1 * mA + s2 * (1.0 - mA);
+    vec2 gmix = cos(a1) * ga1 * mA + s1 * gm + cos(a2) * ga2 * (1.0 - mA) - s2 * gm;
+    vec2 g = 0.5 * (gf * mix12 + f * gmix);
+    // ripples: folded noise; the chain rule carries the slope back through the rotations and scalings of the octaves
+    vec2 shift1 = 0.001 * vec2(T * 320.0, T * 240.0);
+    mat2 J = mat2(0.5);
+    vec2 q = p * 0.5;
+    float amp = 1.0, sp = 0.5;
+    int n = 4 + int(detail * 3.0 + 0.5);
+    vec2 gr = vec2(0.0);
+    for (int i = 0; i < 7; i++)
+    {
+        if (i >= n) break;
+        q = stM * q * 0.947; J = (stM * J) * 0.947;
+        vec3 nn = noised(q + shift1 * sp);
+        float sa = (nn.x - 0.5) * 2.0;
+        gr -= amp * sign(sin(sa)) * cos(sa) * 2.0 * (nn.yz * J);
+        amp *= 0.59; sp *= -1.329;
+    }
+    return g + gr * 0.6;
+}
+float stNautic(vec2 p, float T)
+{
+    p *= 18.0;
+    float f = 0.0, amp = 1.0, sp = 0.5;
+    for (int i = 0; i < 3; i++) { p = stM * p * 1.2; f += amp * abs(smoothstep(0.0, 1.0, noise(p + T * sp)) - 0.5); amp *= 0.5; sp *= -1.227; }
+    return pow(1.0 - f, 5.0);
 }
 
 // Distance in screen pixels from a smoothed border: m0..m3 say whether each of the 4 nearest map pixels
@@ -193,13 +281,26 @@ void main()
     vec2 f = fract(pp);
     ivec2 o4[4] = ivec2[4](ivec2(0, 0), ivec2(1, 0), ivec2(0, 1), ivec2(1, 1));
     float wt[4] = float[4]((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y), (1.0 - f.x) * f.y, f.x * f.y);
-    int L[4]; int O[4]; int ST[4]; int WA[4];
-    for (int k = 0; k < 4; k++)
+    int L[4]; int O[4]; int ST[4]; int WA[4]; int FL[4];
+    L[0] = locAt(b); L[1] = locAt(b + o4[1]); L[2] = locAt(b + o4[2]); L[3] = locAt(b + o4[3]);
+    if (L[1] == L[0] && L[2] == L[0] && L[3] == L[0])
     {
-        L[k] = locAt(b + o4[k]);
-        O[k] = ownerOf(L[k]);
-        ST[k] = stateOf(L[k]);
-        WA[k] = flagsOf(L[k]) & 1;
+        // all four map pixels are one location (most of the screen): one lookup of its data instead of four
+        vec4 v1 = lut(L[0], 1);
+        int fl = flagsOf(L[0]);
+        int ow = int(v1.r * 255.0 + 0.5) + int(v1.g * 255.0 + 0.5) * 256, sg = int(v1.b * 255.0 + 0.5) + int(v1.a * 255.0 + 0.5) * 256;
+        for (int k = 0; k < 4; k++) { O[k] = ow; ST[k] = sg; FL[k] = fl; WA[k] = fl & 1; }
+    }
+    else
+    {
+        for (int k = 0; k < 4; k++)
+        {
+            vec4 v1 = lut(L[k], 1);
+            O[k] = int(v1.r * 255.0 + 0.5) + int(v1.g * 255.0 + 0.5) * 256;
+            ST[k] = int(v1.b * 255.0 + 0.5) + int(v1.a * 255.0 + 0.5) * 256;
+            FL[k] = flagsOf(L[k]);
+            WA[k] = FL[k] & 1;
+        }
     }
     // this fragment belongs to the location with the most weight (smooth outlines instead of pixel steps)
     int best = 0; float bestW = -1.0;
@@ -212,7 +313,7 @@ void main()
     int loc = L[best];
     int owner = O[best];
     int st = ST[best];
-    int flags = flagsOf(loc);
+    int flags = FL[best];
     // outside the map (the endless sea): open water, fogged like the map edge next to it
     bool outside = pix.x < 0.0 || pix.y < 0.0 || pix.x > mapSize.x || pix.y > mapSize.y;
     if (outside) flags = 1 | (flags & 32);
@@ -232,6 +333,14 @@ void main()
     float dCountry = water ? 1e4 : edgePx(mCountry[0], mCountry[1], mCountry[2], mCountry[3], f, tpp);
     float dState = water ? 1e4 : edgePx(mState[0], mState[1], mState[2], mState[3], f, tpp);
     if (outside) { dProv = 1e4; dCoast = 1e4; }
+    float dBase = 1e4;
+    if (geoBase > 0.5 && !water && !outside)
+    {
+        int bb = baseOf(loc);
+        float mB[4];
+        for (int k = 0; k < 4; k++) mB[k] = (WA[k] == 0 && baseOf(L[k]) != bb) ? 0.0 : 1.0;
+        dBase = edgePx(mB[0], mB[1], mB[2], mB[3], f, tpp);
+    }
 
     // zoomed far out several map pixels share one screen pixel: look further away so borders stay visible
     float far = smoothstep(0.6, 1.4, tpp);
@@ -264,43 +373,61 @@ void main()
     if (water)
     {
         // deep water is dark blue, water near the coast lighter and greener
-        float shallow = outside ? 0.0 : clamp(data.a * 255.0 / 240.0, 0.0, 1.0);
-        shallow = shallow * shallow;
-        vec3 deep = waterColor * 0.72;
+        bool lake = (flags & 16) != 0;
+        // closeness to the coast, 1 at the shore and 0 in the open sea, blended between the four map pixels so it has no steps
+        float cl = 0.0;
+        if (!outside && !lake && tpp > 2.5) cl = clamp(data.a * 255.0 / 240.0, 0.0, 1.0); // far out: one fetch instead of four
+        else if (!outside && !lake)
+            for (int k = 0; k < 4; k++)
+                cl += wt[k] * (WA[k] == 0 ? 1.0 : clamp(texelFetch(texture0, clampPix(b + o4[k]), 0).a * 255.0 / 240.0, 0.0, 1.0));
+        float shallow = lake ? 0.25 : cl * cl;
         vec3 shore = mix(waterColor, vec3(0.30, 0.62, 0.66), 0.55) * 1.15;
-        col = mix(deep, shore, shallow);
-        // layered, drifting swell: four noise octaves; the fine ones fade out with distance so far water stays calm and does not shimmer
         vec2 wp = fragPos.xz;
         if (globe > 0.5)
         {
             vec3 an = abs(normalize(fragWorld)); // surface coordinates instead of map coordinates (those stretch into rays at the poles)
             wp = (an.y >= an.x && an.y >= an.z) ? fragWorld.xz : (an.x >= an.z ? fragWorld.yz : fragWorld.xy);
         }
-        float e = 0.05;
-        float h0 = swell(wp, detail), hx = swell(wp + vec2(e, 0.0), detail), hz = swell(wp + vec2(0.0, e), detail);
-        float amp = 0.10 + 0.55 * detail;
-        vec3 wn = normalize(vec3((h0 - hx) / e * amp * 0.5, 1.0, (h0 - hz) / e * amp * 0.5));
-        wn = normalize(fragE * wn.x + fragU * wn.y + fragS * wn.z);
-        // water takes on the sky: Schlick fresnel, so it is dark and clear looking down and mirror-like at a grazing angle
-        // daylight on this water: the sky reflection, glitter and foam are lit by the sun, so they go dark with it at night
-        float day = smoothstep(-0.12, 0.3, globe > 0.5 ? dot(fragU, sunDir) : sunDir.y);
-        float ndv = max(dot(wn, viewDir), 0.0);
-        float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-        vec3 rd = reflect(-viewDir, wn);
-        float skyUp = clamp(dot(rd, fragU), 0.0, 1.0);
-        vec3 sky = mix(vec3(0.66, 0.78, 0.90), vec3(0.22, 0.42, 0.76), sqrt(skyUp));
-        col *= 0.88 + 0.24 * h0;
-        // light scattering through thin crests
-        col += vec3(0.04, 0.13, 0.12) * smoothstep(0.55, 0.85, h0) * (0.4 + 0.6 * detail);
-        col = mix(col, sky * (0.06 + 0.94 * day), clamp(fres * 0.9, 0.0, 0.85));
-        // sun glitter: a tight highlight plus a soft sheen
-        vec3 hv = normalize(sunDir + viewDir);
-        float nh = max(dot(wn, hv), 0.0);
-        col += vec3(1.0, 0.94, 0.82) * (pow(nh, 260.0) * 1.6 * (0.3 + 0.7 * detail) + pow(nh, 28.0) * 0.10) * day;
+        float day = sunUp;
+        // the water clock: slow, and stopped on a lake
+        float T = lake ? 0.0 : time * 0.5;
+        vec3 wn = fragU;
+        if (detail > 0.02 && !lake)
+        {
+            // open water is bent by a slow warp so its pattern never repeats; the ripples are strongest at the coast and fade
+            // smoothly into calm open sea; a lake is a flat mirror
+            vec2 warp = (vec2(noise(wp * 0.045 + vec2(T * 0.02, 3.3)), noise(wp * 0.045 + vec2(8.1, -T * 0.017))) - 0.5) * 10.0;
+            vec2 wpos = (wp + warp) * 0.35;
+            vec2 gw = stWaterGrad(wpos, detail, T);
+            float tilt = (0.25 + 0.75 * detail) * (0.55 + 0.45 * smoothstep(0.0, 1.0, cl));
+            vec3 wl = vec3(-gw.x * 0.02 * tilt, 0.125, -gw.y * 0.02 * tilt);
+            wn = normalize(fragE * wl.x + fragU * wl.y + fragS * wl.z);
+        }
+        // depth: 0 at the coast, 1 in the open sea; the seabed shows through the shallows
+        float depth = 1.0 - shallow;
+        float coastfade = smoothstep(0.0, 1.0, clamp(depth / 0.5, 0.0, 1.0));
+        float coastfade2 = clamp(depth / 0.9, 0.0, 1.0);
+        vec3 bed = vec3(0.52, 0.47, 0.38) * (0.55 + 0.45 * day);
+        float lum = dot(bed, vec3(0.2126, 0.7152, 0.0722));
+        vec3 wc = mix(mix(vec3(0.43, 0.60, 0.66) * lum, waterColor * 0.45, 0.5), waterColor * 0.30, smoothstep(0.0, 1.0, coastfade2));
+        float grad = dot(wn, sunDir);
+        float spec = pow(max(grad, 0.0), 15.0), spec2 = pow(max(grad, 0.0), 120.0);
+        float spec1 = smoothstep(0.0, 1.0, pow(max(dot(fragU, sunDir), 0.0), 5.0));
+        wc *= 2.8;
+        wc += ((grad - 1.0) * 0.5 + spec) * 0.25 * day;
+        wc /= (1.0 + spec1 * 1.25);
+        wc += spec2 * vec3(1.3, 1.3, 0.9) * day * (0.3 + 0.7 * detail);
+        // a faint drifting streak in the shallows (none on a lake)
+        if (!lake && detail > 0.3) wc += coastfade * (1.0 - coastfade2) * vec3(0.5, 0.6, 0.7) * stNautic(wp * 0.35 / 15.0, T) * 0.10 * day;
+        wc *= 0.12 + 0.88 * day;
+        col = mix(bed * (0.5 + 0.5 * day), wc, mix(0.6, 1.0, coastfade));
         // foam along the coast, broken up by noise so it laps in and out
-        float lap = noise(wp * 0.9 + vec2(time * 0.2, -time * 0.15));
-        col = mix(col, vec3(0.88, 0.93, 0.92) * (0.10 + 0.90 * day), line(dCoast + (lap - 0.5) * 3.0, 1.5) * 0.55);
-        if ((flags & 16) != 0) col = mix(col, shore, 0.4);
+        if (!lake)
+        {
+            float lap = noise(wp * 0.9 + vec2(T * 0.2, -T * 0.15));
+            col = mix(col, vec3(0.80, 0.86, 0.86) * (0.10 + 0.90 * day), line(dCoast + (lap - 0.5) * 3.0, 1.5) * 0.14);
+        }
+        if (lake) col = mix(col, shore, 0.4);
     }
     else
     {
@@ -315,47 +442,71 @@ void main()
         }
         // gather the terrain of a wide neighborhood (6x6 map pixels) with a smooth kernel, around a position that noise has bent, so the
         // edge is neither a map pixel staircase nor a straight fade; weights are summed per terrain, then each terrain is sampled once
-        vec2 wq = pp + (vec2(noise(pix * 0.8 + 3.1), noise(pix * 0.8 + 17.7)) - 0.5) * 2.6
-                     + (vec2(noise(pix * 2.1 + 5.0), noise(pix * 2.1 + 9.0)) - 0.5) * 1.1;
-        ivec2 qb = ivec2(floor(wq));
-        float tId[6]; float tW[6]; int tN = 0;
-        for (int j = -2; j <= 3; j++)
-            for (int i = -2; i <= 3; i++)
+        // zoomed far out (many map pixels per screen pixel) the blend cannot be seen: take the one terrain under the pixel (mip-mapped)
+        float farMix = smoothstep(1.5, 3.0, tpp);
+        col = vec3(0.0);
+        if (farMix < 1.0)
+        {
+            vec2 wq = pp + (vec2(noise(pix * 0.8 + 3.1), noise(pix * 0.8 + 17.7)) - 0.5) * 2.6
+                         + (vec2(noise(pix * 2.1 + 5.0), noise(pix * 2.1 + 9.0)) - 0.5) * 1.1;
+            float tId[8]; float tW[8]; int tN = 0;
+            if (hasBlendTex > 0.5)
             {
-                ivec2 c = qb + ivec2(i, j);
-                vec2 d = (vec2(c) - wq) / 2.7;
-                float kw = max(1.0 - dot(d, d), 0.0);
-                kw *= kw;
-                if (kw <= 0.0) continue;
-                float id = terrainAt(c);
-                int k = 0;
-                while (k < tN && tId[k] != id) k++;
-                if (k == tN) { if (tN >= 6) continue; tId[tN] = id; tW[tN] = 0.0; tN++; }
-                tW[k] += kw;
+                // the kernel below, already summed per terrain for every half-resolution texel: two filtered lookups at the bent position
+                vec2 buv = (wq + 0.5) / mapSize;
+                vec4 w0 = texture(texture5, buv), w1 = texture(texture6, buv);
+                float bw[8] = float[8](w0.r, w0.g, w0.b, w0.a, w1.r, w1.g, w1.b, w1.a);
+                for (int k = 0; k < 8; k++)
+                    if (bw[k] > 0.012) { tId[tN] = float(k); tW[tN] = bw[k]; tN++; }
             }
-        float tot = 0.0;
-        for (int k = 0; k < tN; k++) tot += tW[k];
-        vec3 tC[6]; float tH[6]; float tMax = 0.0;
-        for (int k = 0; k < tN; k++)
-        {
-            tW[k] /= max(tot, 1e-4);
-            if (tW[k] < 0.004) { tW[k] = 0.0; continue; }
-            tC[k] = atlas(tId[k], tuv);
-            // a texture's own brightness lets its bumps push through its neighbor (height blending)
-            tH[k] = tW[k] + dot(tC[k], vec3(0.3, 0.59, 0.11)) * 0.25;
-            tMax = max(tMax, tH[k]);
+            else
+            {
+            ivec2 qb = ivec2(floor(wq));
+            for (int j = -2; j <= 3; j++)
+                for (int i = -2; i <= 3; i++)
+                {
+                    ivec2 c = qb + ivec2(i, j);
+                    vec2 d = (vec2(c) - wq) / 2.7;
+                    float kw = max(1.0 - dot(d, d), 0.0);
+                    kw *= kw;
+                    if (kw <= 0.0) continue;
+                    float id = terrainAt(c);
+                    int k = 0;
+                    while (k < tN && tId[k] != id) k++;
+                    if (k == tN) { if (tN >= 8) continue; tId[tN] = id; tW[tN] = 0.0; tN++; }
+                    tW[k] += kw;
+                }
+            }
+            float tot = 0.0;
+            for (int k = 0; k < tN; k++) tot += tW[k];
+            vec3 tC[8]; float tH[8]; float tMax = 0.0;
+            for (int k = 0; k < tN; k++)
+            {
+                tW[k] /= max(tot, 1e-4);
+                if (tW[k] < 0.004) { tW[k] = 0.0; continue; }
+                tC[k] = atlas(tId[k], tuv);
+                // a texture's own brightness lets its bumps push through its neighbor (height blending)
+                tH[k] = tW[k] + dot(tC[k], vec3(0.3, 0.59, 0.11)) * 0.25;
+                tMax = max(tMax, tH[k]);
+            }
+            col = vec3(0.0); float cw = 0.0;
+            for (int k = 0; k < tN; k++)
+            {
+                if (tW[k] <= 0.0) continue;
+                float w = max(tH[k] - (tMax - 0.5), 0.0);
+                col += tC[k] * w; cw += w;
+            }
+            col /= max(cw, 1e-4);
         }
-        col = vec3(0.0); float cw = 0.0;
-        for (int k = 0; k < tN; k++)
+        if (farMix > 0.0)
         {
-            if (tW[k] <= 0.0) continue;
-            float w = max(tH[k] - (tMax - 0.5), 0.0);
-            col += tC[k] * w; cw += w;
+            vec3 farCol = atlas(terrainAt(ivec2(floor(pix))), tuv);
+            col = farMix >= 1.0 ? farCol : mix(col, farCol, farMix);
         }
-        col /= max(cw, 1e-4);
         // large scale variation hides the texture repeating
         // (on the globe this noise is taken in 3D: in map coordinates it stretches into rays at the poles)
-        if (globe > 0.5) col *= 0.90 + 0.20 * vnoise3(fragWorld * 0.11) * (0.5 + 0.5 * vnoise3(fragWorld * 0.37));
+        if (farMix >= 1.0) { }
+        else if (globe > 0.5) col *= 0.90 + 0.20 * vnoise3(fragWorld * 0.11) * (0.5 + 0.5 * vnoise3(fragWorld * 0.37));
         else col *= 0.90 + 0.20 * noise(fragPos.xz * 0.11) * (0.5 + 0.5 * noise(fragPos.xz * 0.37));
         vec3 ln = fragNormal;
         if (hasNormalMap > 0.5 && !outside)
@@ -365,7 +516,7 @@ void main()
             ln = normalize(vec3(ln.x + t.x, ln.y, ln.z - t.y));
         }
         float slopeAmt = 1.0 - clamp(ln.y, 0.0, 1.0);
-        float rockN = noise(fragPos.xz * 1.9) * 0.6 + noise(fragPos.xz * 5.3) * 0.4;
+        float rockN = farMix >= 1.0 ? 0.5 : noise(fragPos.xz * 1.9) * 0.6 + noise(fragPos.xz * 5.3) * 0.4;
         float lumT = dot(col, vec3(0.3, 0.59, 0.11));
         // steep ground shows bare rock, darker in the cracks
         float rockAmt = smoothstep(0.22, 0.48, slopeAmt + (rockN - 0.5) * 0.12);
@@ -379,22 +530,21 @@ void main()
         float snowAmt = smoothstep(snowLine, snowLine + 0.09, hN + (rockN - 0.5) * 0.07) * (1.0 - smoothstep(0.28, 0.62, slopeAmt) * 0.75);
         col = mix(col, vec3(0.90, 0.93, 0.98) * (0.88 + 0.12 * rockN), snowAmt * 0.85);
         float rcov = 0.0, bank = 0.0;
-        if (tpp < 1.0)
         {
-            float r00 = riv(b), r10 = riv(b + ivec2(1, 0)), r01 = riv(b + ivec2(0, 1)), r11 = riv(b + ivec2(1, 1));
-            float rv = mix(mix(r00, r10, f.x), mix(r01, r11, f.x), f.y);
-            rcov = smoothstep(0.18, 0.55, rv);
-            float sb = 0.0;
-            for (int j = -2; j <= 2; j++) for (int i = -2; i <= 2; i++) sb += riv(ivec2(floor(pix)) + ivec2(i, j));
-            bank = clamp(sb * 0.35, 0.0, 1.0);
-        }
-        else
-        {
-            // zoomed out: widen the line with the zoom so a river stays a thin, visible thread instead of vanishing
-            float sw = 0.0, spacing = tpp * 0.9;
-            for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) sw += riv(ivec2(floor(pix + vec2(i, j) * spacing)));
-            rcov = clamp(sw * 0.4, 0.0, 1.0) * (1.0 - smoothstep(6.0, 14.0, tpp));
-            bank = rcov * 0.5;
+            // one filtered lookup in the downsampled river texture (coverage of a 2x2 block); the mip chain widens it as you zoom out
+            vec2 ruv = pix / mapSize;
+            float rv = texture(texture4, ruv).r;
+            if (tpp < 1.0)
+            {
+                rcov = smoothstep(0.10, 0.38, rv);
+                bank = clamp(textureLod(texture4, ruv, 2.0).r * 5.0, 0.0, 1.0);
+            }
+            else
+            {
+                // zoomed out: widen the line with the zoom so a river stays a thin, visible thread instead of vanishing
+                rcov = clamp(rv * tpp * 1.6, 0.0, 1.0) * (1.0 - smoothstep(6.0, 14.0, tpp));
+                bank = rcov * 0.5;
+            }
         }
         if (rcov > 0.01 || bank > 0.01)
         {
@@ -476,6 +626,7 @@ void main()
         col = mix(col, vec3(0.08), line(dState, 0.9) * 0.55 * stateBorders);
         col = mix(col, vec3(0.03), line(dCountry, 1.1 + 0.5 * borderScale) * 0.92);
         col = mix(col, vec3(0.14, 0.12, 0.10), line(dCoast, 0.9) * 0.6);
+        col = mix(col, vec3(1.0, 0.0, 0.9), line(dBase, 1.3) * 0.95 * geoBase);
     }
     if (water) col = mix(col, waterColor * 0.6, line(dProv, 0.6) * 0.18 * showProvinceBorders);
 

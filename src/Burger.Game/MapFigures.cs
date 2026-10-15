@@ -177,6 +177,7 @@ public sealed class MapFigures : IDisposable
             stand.Animator.Advance(dt);
             var skin = stand.Animator.Skin();
             var place = FigureRenderer.Placement(model, pos, stand.Yaw, drawHeight, stand.Up);
+            FigureShadows.Draw(new ShadowContext(model, skin, place, pos, stand.Up, stand.Yaw, drawHeight, radius, cam));
             _renderer.Draw(model, skin, place, Color.White);
             if (Particles != null && stand.Events.Count > 0 && model.Rig.Find("rifle") is var rj and >= 0)
             {

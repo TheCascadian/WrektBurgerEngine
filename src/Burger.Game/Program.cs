@@ -9,6 +9,7 @@ public sealed class AppOptions
     public string? LogDir;
     public string? Tag;
     public bool Observe;
+    public int? Monitor;
     public string? LoadSave;
     public int Width = 1600;
     public int Height = 900;
@@ -27,6 +28,8 @@ public sealed class AppOptions
     public List<string> Exec = new();
     public string? MapMode;
     public float? Zoom;
+    /// <summary>Camera target as longitude,latitude in degrees (testing).</summary>
+    public string? LookAt;
     public bool NoFogShading;
     public bool NoUnits;
     /// <summary>Historical bias 0-1 for this run (default: the player's setting).</summary>
@@ -50,6 +53,7 @@ public static class Program
   --observe    skip the menu and watch the AI
   --load       load a save file
   --log-dir <folder>     write error.log and --perf output to this folder
+  --monitor N  open the window on monitor N (0 = first); BURGER_MONITOR does the same
   --screenshot <file.png> [--frames N] [--days D]   render, save a screenshot and quit (testing)
   --figure-sheet <file.png> [--figure KEY]          render a figure and its animations to an image and quit
   --figure-frames <folder> [--figure KEY] [--figure-clip a,b]  render each (or the named) animation as frames on a turntable (see tools/figure-gifs.sh)
@@ -79,6 +83,7 @@ public static class Program
                     case "--frames": opt.ScreenshotFrame = int.Parse(Next()); break;
                     case "--days": opt.TicksBeforeScreenshot = int.Parse(Next()) * 24; break;
                     case "--hidden": opt.Hidden = true; break;
+                    case "--monitor": opt.Monitor = int.Parse(Next()); break;
                     case "--figure-sheet": opt.FigureSheet = Path.GetFullPath(Next()); break;
                     case "--figure-frames": opt.FigureFrames = Path.GetFullPath(Next()); break;
                     case "--figure-gif": opt.FigureGifs = Path.GetFullPath(Next()); break;
@@ -95,6 +100,7 @@ public static class Program
                     case "--no-units": opt.NoUnits = true; break;
                     case "--bias": opt.Bias = double.Parse(Next(), System.Globalization.CultureInfo.InvariantCulture); break;
                     case "--zoom": opt.Zoom = float.Parse(Next(), System.Globalization.CultureInfo.InvariantCulture); break;
+                    case "--lookat": opt.LookAt = Next(); break;
                     case "--open": opt.Open = Next(); break;
                     case "--speed": opt.Speed = int.Parse(Next()); break;
                     case "--perf": opt.Perf = true; break;
@@ -166,7 +172,13 @@ public static class Program
     /// <summary>Locates the game folder: argument, then 'game' next to the exe, then 'game' in the working directory.</summary>
     public static string FindGameRoot(string arg)
     {
-        if (!string.IsNullOrEmpty(arg)) return Path.GetFullPath(arg);
+        if (!string.IsNullOrEmpty(arg))
+        {
+            // A project folder (projects/NAME) keeps its game files in a 'game' subfolder.
+            string full = Path.GetFullPath(arg), sub = Path.Combine(full, "game");
+            bool IsGame(string d) => File.Exists(Path.Combine(d, "game.txt")) || Directory.Exists(Path.Combine(d, "common"));
+            return !IsGame(full) && IsGame(sub) ? sub : full;
+        }
         var candidates = new List<string>();
         string? exeDir = Path.GetDirectoryName(Environment.ProcessPath);
         if (exeDir != null) candidates.Add(Path.Combine(exeDir, "game"));
