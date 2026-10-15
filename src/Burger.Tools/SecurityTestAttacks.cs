@@ -413,3 +413,28 @@ public static partial class Program
         }
     }
 }
+
+public static partial class Program
+{
+    /// <summary><c>burger save-limits &lt;project&gt;</c>: saves a fresh game and checks that the strict reader accepts it, to see how close the real size is to the limits.</summary>
+    private static int SaveLimits(List<string> args)
+    {
+        string project = ResolveProject(RequireProjectArg(args, "burger save-limits <project>"));
+        var g = Game.Load(GameDir(project), true, 3); g.StartNewGame(null);
+        string path = Path.Combine(Path.GetTempPath(), "burger_savelimits_" + Environment.ProcessId + ".sav");
+        try
+        {
+            Burger.Core.Save.SaveGame.Save(g, path);
+            long bytes = new FileInfo(path).Length;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var root = SaveGuard.Read(g, File.ReadAllBytes(path));
+            long nodes = 0; void Count(Burger.Core.Script.Node n) { nodes++; foreach (var c in n.All) Count(c); }
+            Count(root);
+            var lim = ScriptParser.ParseLimits.Save;
+            Console.WriteLine($"{project}: save {bytes / 1024} KB, {nodes} nodes (limit {lim.MaxNodes}), parsed and checked in {sw.ElapsedMilliseconds} ms. Accepted.");
+            return 0;
+        }
+        catch (Exception e) { Console.WriteLine($"{project}: REFUSED: {e.Message}"); return 1; }
+        finally { try { File.Delete(path); } catch { } }
+    }
+}

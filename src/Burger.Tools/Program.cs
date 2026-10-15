@@ -44,6 +44,7 @@ public static partial class Program
             return cmd switch
             {
                 "new" => New(rest),
+                "save-limits" => SaveLimits(rest),
                 "validate" => Validate(rest),
                 "validate-par" => ValidatePar(rest),
                 "mp-test" => MultiplayerTest(rest),
