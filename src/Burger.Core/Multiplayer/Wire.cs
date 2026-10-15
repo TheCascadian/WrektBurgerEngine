@@ -15,7 +15,7 @@ public static class Wire
     public const int MaxLine = 64 * 1024;
     public const int SyncChunk = 32 * 1024;
     public const long MaxSyncBytes = 96L * 1024 * 1024;       // compressed save
-    public const long MaxSaveBytes = 512L * 1024 * 1024;      // after decompression
+    public const long MaxSaveBytes = 256L * 1024 * 1024;      // after decompression
     public const int MaxArgs = 16, MaxArgLen = 256;
 
     public enum Dir { ToHost, ToClient }

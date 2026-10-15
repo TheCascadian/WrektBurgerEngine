@@ -126,37 +126,10 @@ public static partial class Program
                     Check(back != null && back.Length == 20000, "large line arrives intact");
                     good.Close(); srv.Close();
                 }
-                // man in the middle that flips one bit of a sealed line
-                using var relayL = new TcpListener(System.Net.IPAddress.Loopback, 0); relayL.Start();
-                int relayPort = ((System.Net.IPEndPoint)relayL.LocalEndpoint).Port;
-                int seen = 0;
-                var relay = new Thread(() =>
-                {
-                    try
-                    {
-                        using var a = relayL.AcceptTcpClient(); using var b = new TcpClient("127.0.0.1", listener.Port);
-                        var ra = new StreamReader(a.GetStream()); var rb = new StreamReader(b.GetStream());
-                        var wa = new StreamWriter(a.GetStream()) { AutoFlush = true, NewLine = "\n" }; var wb = new StreamWriter(b.GetStream()) { AutoFlush = true, NewLine = "\n" };
-                        var t2 = new Thread(() => { try { string? l; while ((l = rb.ReadLine()) != null) wa.WriteLine(l); } catch { } }) { IsBackground = true }; t2.Start();
-                        string? x; while ((x = ra.ReadLine()) != null)
-                        {
-                            if (++seen > 2 && x.Length > 8) { var c = x.ToCharArray(); c[4] = c[4] == 'A' ? 'B' : 'A'; x = new string(c); }
-                            wb.WriteLine(x);
-                        }
-                    }
-                    catch { }
-                }) { IsBackground = true }; relay.Start();
-                var viaRelay = TcpTransport.Connect("127.0.0.1", relayPort, listener.Secret);
-                ITransport? srv2 = null; for (int i = 0; i < 100 && !listener.TryAccept(out srv2); i++) Thread.Sleep(20);
-                if (srv2 != null)
-                {
-                    viaRelay.Send("tampered"); Thread.Sleep(400);
-                    Check(!srv2.TryReceive(out _) && !srv2.Connected, "a line altered on the way is rejected and the link ends");
-                    srv2.Close();
-                }
-                else Check(false, "relay handshake");
-                viaRelay.Close();
             }
+            ChannelAttacks(Check);
+            SaveAttacks(project, tmp, Check);
+            SumFlood(project, Check);
 
             // ------------------------------------------------------------------ host authority + mod messages
             Console.WriteLine("Host authority and a legitimate mod over the network");

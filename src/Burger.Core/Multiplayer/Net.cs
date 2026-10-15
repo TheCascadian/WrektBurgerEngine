@@ -1,7 +1,10 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -66,92 +69,78 @@ public sealed class MemoryTransport : ITransport
 }
 
 /// <summary>
-/// The encrypted channel under every TCP link. Handshake: both sides send an ephemeral ECDH P-256 key and a nonce, then prove they know the
-/// session secret (from the join code) with an HMAC over the whole transcript. Keys come from HKDF over the shared point, the secret and the
-/// transcript, one per direction. Each line is then AES-GCM sealed with a strict counter as nonce, so a replayed, reordered, dropped or
-/// altered line fails and ends the link. A peer without the secret never gets past the handshake.
+/// The channel under every TCP link: TLS 1.3 (only; no older version is offered, so there is no downgrade) with a throw-away ECDSA P-256 certificate
+/// per host session, plus key confirmation bound to that certificate. The certificate itself proves nothing (anybody can make one), so after the
+/// TLS handshake both sides prove they know the session secret of the join code with an HMAC that covers the role, both nonces and the
+/// SHA-256 of the host certificate. A man in the middle ends up with a different certificate on each side, so the proofs do not match.
+/// Specification: docs/channel-spec.md.
 /// </summary>
 internal static class SecureChannel
 {
     public const int HandshakeMs = 5000;
+    public const string TargetHost = "burger-host";
 
-    public static byte[] SecretKey(byte[] joinSecret) => SHA256.HashData(Concat(Encoding.ASCII.GetBytes("burger-mp-psk-v2"), joinSecret));
+    public static byte[] SecretKey(byte[] joinSecret) => SHA256.HashData(Concat(Encoding.ASCII.GetBytes("burger-mp-psk-v3"), joinSecret));
+
+    public static X509Certificate2 NewCertificate()
+    {
+        using var key = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var req = new CertificateRequest("CN=" + TargetHost, key, HashAlgorithmName.SHA256);
+        using var cert = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow.AddDays(1));
+        return new X509Certificate2(cert.Export(X509ContentType.Pfx)); // re-imported so the private key survives on every platform
+    }
 
     private static byte[] Concat(params byte[][] parts) => parts.SelectMany(p => p).ToArray();
     private static string B(byte[] b) => Convert.ToBase64String(b);
 
-    private static byte[] Unb(string s, int min, int max)
+    private static byte[] Unb(string s, int size)
     {
-        if (s.Length > max * 2) throw new InvalidDataException("handshake field too long");
+        if (s.Length > 128) throw new InvalidDataException("handshake field too long");
         var b = Convert.FromBase64String(s);
-        if (b.Length < min || b.Length > max) throw new InvalidDataException("handshake field size");
+        if (b.Length != size) throw new InvalidDataException("handshake field size");
         return b;
     }
 
-    /// <summary>Runs the handshake on <paramref name="stream"/>; returns the two keys, or throws when the peer fails it.</summary>
-    public static (byte[] Send, byte[] Recv) Handshake(Stream stream, LineReader reader, bool server, byte[] psk)
+    public static byte[] Proof(byte[] psk, string role, byte[] certHash, byte[] first, byte[] second) =>
+        HMACSHA256.HashData(psk, Concat(Encoding.ASCII.GetBytes("burger-mp-v3|" + role + "|"), certHash, first, second));
+
+    /// <summary>Key confirmation over the established TLS stream. Throws when the peer fails it.</summary>
+    public static void Confirm(SslStream tls, LineReader reader, bool server, byte[] psk, byte[] certHash)
     {
-        using var ecdh = ECDiffieHellman.Create(ECCurve.NamedCurves.nistP256);
-        byte[] myPub = ecdh.PublicKey.ExportSubjectPublicKeyInfo();
-        byte[] myNonce = RandomNumberGenerator.GetBytes(16);
-        byte[] theirPub, theirNonce;
-        byte[] cPub, sPub, cNonce, sNonce;
-        if (!server)
+        if (tls.SslProtocol != SslProtocols.Tls13) throw new InvalidDataException("TLS 1.3 required");
+        if (server)
         {
-            WriteLine(stream, $"K1|{B(myPub)}|{B(myNonce)}");
-            var f = Read(reader, "K2", 4);
-            theirPub = Unb(f[1], 60, 200); theirNonce = Unb(f[2], 16, 16);
-            cPub = myPub; cNonce = myNonce; sPub = theirPub; sNonce = theirNonce;
-            var keys = Derive(ecdh, theirPub, psk, cPub, sPub, cNonce, sNonce, out var transcript);
-            if (!CryptographicOperations.FixedTimeEquals(Unb(f[3], 32, 32), Proof(psk, "server", transcript))) throw new InvalidDataException("the host does not know the session secret");
-            WriteLine(stream, "K3|" + B(Proof(psk, "client", transcript)));
-            return (keys.C2S, keys.S2C);
+            byte[] ns = RandomNumberGenerator.GetBytes(16);
+            WriteLine(tls, "A1|" + B(ns));
+            var f = Read(reader, "A2", 3);
+            byte[] nc = Unb(f[1], 16);
+            if (!CryptographicOperations.FixedTimeEquals(Unb(f[2], 32), Proof(psk, "client", certHash, ns, nc))) throw new InvalidDataException("wrong session secret");
+            WriteLine(tls, "A3|" + B(Proof(psk, "server", certHash, nc, ns)));
         }
         else
         {
-            var f = Read(reader, "K1", 3);
-            theirPub = Unb(f[1], 60, 200); theirNonce = Unb(f[2], 16, 16);
-            cPub = theirPub; cNonce = theirNonce; sPub = myPub; sNonce = myNonce;
-            var keys = Derive(ecdh, theirPub, psk, cPub, sPub, cNonce, sNonce, out var transcript);
-            WriteLine(stream, $"K2|{B(myPub)}|{B(myNonce)}|{B(Proof(psk, "server", transcript))}");
-            var g = Read(reader, "K3", 2);
-            if (!CryptographicOperations.FixedTimeEquals(Unb(g[1], 32, 32), Proof(psk, "client", transcript))) throw new InvalidDataException("wrong session secret");
-            return (keys.S2C, keys.C2S);
+            var f = Read(reader, "A1", 2);
+            byte[] ns = Unb(f[1], 16);
+            byte[] nc = RandomNumberGenerator.GetBytes(16);
+            WriteLine(tls, $"A2|{B(nc)}|{B(Proof(psk, "client", certHash, ns, nc))}");
+            var g = Read(reader, "A3", 2);
+            if (!CryptographicOperations.FixedTimeEquals(Unb(g[1], 32), Proof(psk, "server", certHash, nc, ns))) throw new InvalidDataException("the host does not know the session secret");
         }
     }
 
     private static string[] Read(LineReader r, string tag, int fields)
     {
-        string? l = r.ReadLine();
+        string? l = r.ReadLine(1024);
         if (l == null) throw new IOException("closed during handshake");
         var f = l.Split('|');
-        if (f.Length != fields || f[0] != tag || l.Length > 1024) throw new InvalidDataException("bad handshake");
+        if (f.Length != fields || f[0] != tag) throw new InvalidDataException("bad handshake");
         return f;
     }
-
-    private static (byte[] C2S, byte[] S2C) Derive(ECDiffieHellman mine, byte[] theirSpki, byte[] psk, byte[] cPub, byte[] sPub, byte[] cNonce, byte[] sNonce, out byte[] transcript)
-    {
-        using var theirs = ECDiffieHellman.Create();
-        theirs.ImportSubjectPublicKeyInfo(theirSpki, out _);
-        byte[] shared = mine.DeriveRawSecretAgreement(theirs.PublicKey);
-        transcript = SHA256.HashData(Concat(Encoding.ASCII.GetBytes("burger-mp-v2"), cPub, sPub, cNonce, sNonce));
-        byte[] okm = HKDF.DeriveKey(HashAlgorithmName.SHA256, shared, 64, psk, transcript);
-        return (okm[..32], okm[32..]);
-    }
-
-    private static byte[] Proof(byte[] psk, string who, byte[] transcript) => HMACSHA256.HashData(psk, Concat(Encoding.ASCII.GetBytes(who), transcript));
 
     public static void WriteLine(Stream s, string line)
     {
         var b = Encoding.UTF8.GetBytes(line + "\n");
         s.Write(b, 0, b.Length); s.Flush();
-    }
-
-    public static byte[] Nonce(ulong counter)
-    {
-        var n = new byte[12];
-        for (int i = 0; i < 8; i++) n[11 - i] = (byte)(counter >> (8 * i));
-        return n;
     }
 }
 
@@ -165,7 +154,7 @@ internal sealed class LineReader
     public LineReader(Stream s) { _s = s; }
 
     /// <summary>The next line, or null at end of stream. Throws when a line exceeds the raw limit.</summary>
-    public string? ReadLine()
+    public string? ReadLine(int max = Wire.MaxRawLine)
     {
         while (true)
         {
@@ -178,7 +167,7 @@ internal sealed class LineReader
                     _line.SetLength(0);
                     return t;
                 }
-                if (_line.Length >= Wire.MaxRawLine) throw new InvalidDataException("line too long");
+                if (_line.Length >= max) throw new InvalidDataException("line too long");
                 _line.WriteByte(c);
             }
             _len = _s.Read(_buf, 0, _buf.Length); _pos = 0;
@@ -187,55 +176,61 @@ internal sealed class LineReader
     }
 }
 
-/// <summary>An encrypted TCP connection carrying one line per message.</summary>
+/// <summary>A TLS 1.3 TCP connection carrying one line per message.</summary>
 public sealed class TcpTransport : ITransport
 {
     private readonly TcpClient _client;
     private readonly Stream _stream;
-    private readonly AesGcm _sendAes, _recvAes;
-    private ulong _sendCtr, _recvCtr;
     private readonly ConcurrentQueue<string> _in = new();
     private volatile bool _open = true;
     private readonly object _sendLock = new();
 
     public bool Connected => _open;
 
-    private TcpTransport(TcpClient client, Stream stream, LineReader reader, byte[] sendKey, byte[] recvKey)
+    private TcpTransport(TcpClient client, Stream stream, LineReader reader)
     {
         _client = client; _stream = stream;
-        _sendAes = new AesGcm(sendKey, 16); _recvAes = new AesGcm(recvKey, 16);
         new Thread(() =>
         {
-            try
-            {
-                string? l;
-                while (_open && (l = reader.ReadLine()) != null)
-                {
-                    var raw = Convert.FromBase64String(l);
-                    if (raw.Length < 16) throw new InvalidDataException("short frame");
-                    var plain = new byte[raw.Length - 16];
-                    _recvAes.Decrypt(SecureChannel.Nonce(_recvCtr++), raw.AsSpan(0, plain.Length), raw.AsSpan(plain.Length), plain);
-                    _in.Enqueue(Encoding.UTF8.GetString(plain));
-                }
-            }
+            try { string? l; while (_open && (l = reader.ReadLine()) != null) _in.Enqueue(l); }
             catch { }
             _open = false;
             try { _client.Close(); } catch { }
         }) { IsBackground = true, Name = "mp-read" }.Start();
     }
 
-    /// <summary>Handshake on an accepted or connected socket. Throws (and closes the socket) when the peer fails it in time.</summary>
-    internal static TcpTransport Secure(TcpClient client, bool server, byte[] joinSecret)
+    /// <summary>TLS 1.3 plus key confirmation on an accepted or connected socket. Throws (and closes the socket) when the peer fails in time.</summary>
+    internal static TcpTransport Secure(TcpClient client, bool server, byte[] joinSecret, X509Certificate2? cert = null)
     {
         try
         {
             client.NoDelay = true;
             client.ReceiveTimeout = client.SendTimeout = SecureChannel.HandshakeMs;
-            var stream = client.GetStream();
-            var reader = new LineReader(stream);
-            var (send, recv) = SecureChannel.Handshake(stream, reader, server, SecureChannel.SecretKey(joinSecret));
-            client.ReceiveTimeout = 0;
-            return new TcpTransport(client, stream, reader, send, recv);
+            var tls = new SslStream(client.GetStream(), false);
+            byte[] certHash;
+            if (server)
+            {
+                tls.AuthenticateAsServer(new SslServerAuthenticationOptions
+                {
+                    ServerCertificate = cert, ClientCertificateRequired = false, EnabledSslProtocols = SslProtocols.Tls13,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                });
+                certHash = SHA256.HashData(cert!.RawData);
+            }
+            else
+            {
+                tls.AuthenticateAsClient(new SslClientAuthenticationOptions
+                {
+                    TargetHost = SecureChannel.TargetHost, EnabledSslProtocols = SslProtocols.Tls13,
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    RemoteCertificateValidationCallback = (_, _, _, _) => true, // identity is proven by the session secret, bound to this certificate
+                });
+                certHash = SHA256.HashData(tls.RemoteCertificate!.GetRawCertData());
+            }
+            var reader = new LineReader(tls);
+            SecureChannel.Confirm(tls, reader, server, SecureChannel.SecretKey(joinSecret), certHash);
+            client.ReceiveTimeout = 0; client.SendTimeout = 10000;
+            return new TcpTransport(client, tls, reader);
         }
         catch { try { client.Close(); } catch { } throw; }
     }
@@ -250,16 +245,7 @@ public sealed class TcpTransport : ITransport
     public void Send(string line)
     {
         if (!_open) return;
-        try
-        {
-            lock (_sendLock)
-            {
-                var plain = Encoding.UTF8.GetBytes(line);
-                var buf = new byte[plain.Length + 16];
-                _sendAes.Encrypt(SecureChannel.Nonce(_sendCtr++), plain, buf.AsSpan(0, plain.Length), buf.AsSpan(plain.Length));
-                SecureChannel.WriteLine(_stream, Convert.ToBase64String(buf));
-            }
-        }
+        try { lock (_sendLock) SecureChannel.WriteLine(_stream, line); }
         catch { _open = false; }
     }
 
@@ -273,17 +259,24 @@ public sealed class TcpTransport : ITransport
     }
 }
 
-/// <summary>Accepts joining players. A connection is handed out only after it passed the secure handshake; slow or wrong ones are dropped.</summary>
+/// <summary>
+/// Accepts joining players. A connection is handed out only after the TLS handshake and the key confirmation; slow or wrong ones are dropped.
+/// Limits against floods: 16 handshakes at once, 3 per address, and an address with 5 failed handshakes in a minute is refused for that minute.
+/// </summary>
 public sealed class TcpHostListener : IDisposable
 {
     private readonly TcpListener _listener;
     private readonly ConcurrentQueue<ITransport> _accepted = new();
+    private readonly X509Certificate2 _cert = SecureChannel.NewCertificate();
+    private readonly Dictionary<IPAddress, (int Active, List<DateTime> Failures)> _ips = new();
     private volatile bool _run = true;
     private int _pending;
-    private const int MaxPending = 16;
+    public const int MaxPending = 16, MaxPerAddress = 3, MaxFailures = 5;
     public int Port { get; }
     /// <summary>The session secret that is part of the join code.</summary>
     public byte[] Secret { get; }
+    /// <summary>Connections dropped before the handshake (flood limits).</summary>
+    public int Refused { get; private set; }
 
     public TcpHostListener(int port = 0, byte[]? secret = null)
     {
@@ -298,12 +291,12 @@ public sealed class TcpHostListener : IDisposable
                 try
                 {
                     var c = _listener.AcceptTcpClient();
-                    if (Interlocked.Increment(ref _pending) > MaxPending) { Interlocked.Decrement(ref _pending); c.Close(); continue; }
+                    var ip = ((IPEndPoint)c.Client.RemoteEndPoint!).Address;
+                    if (!Admit(ip)) { Refused++; c.Close(); continue; }
                     new Thread(() =>
                     {
-                        try { _accepted.Enqueue(TcpTransport.Secure(c, true, Secret)); }
-                        catch { }
-                        finally { Interlocked.Decrement(ref _pending); }
+                        try { _accepted.Enqueue(TcpTransport.Secure(c, true, Secret, _cert)); Done(ip, false); }
+                        catch { Done(ip, true); }
                     }) { IsBackground = true, Name = "mp-handshake" }.Start();
                 }
                 catch { if (!_run) break; }
@@ -311,8 +304,34 @@ public sealed class TcpHostListener : IDisposable
         }) { IsBackground = true, Name = "mp-accept" }.Start();
     }
 
+    private bool Admit(IPAddress ip)
+    {
+        lock (_ips)
+        {
+            if (_pending >= MaxPending) return false;
+            _ips.TryGetValue(ip, out var e);
+            e.Failures ??= new();
+            e.Failures.RemoveAll(t => (DateTime.UtcNow - t).TotalSeconds > 60);
+            if (e.Active >= MaxPerAddress || e.Failures.Count >= MaxFailures) { _ips[ip] = e; return false; }
+            e.Active++; _pending++;
+            _ips[ip] = e;
+            return true;
+        }
+    }
+
+    private void Done(IPAddress ip, bool failed)
+    {
+        lock (_ips)
+        {
+            _pending--;
+            var e = _ips[ip]; e.Active--;
+            if (failed) e.Failures.Add(DateTime.UtcNow);
+            _ips[ip] = e;
+        }
+    }
+
     public bool TryAccept(out ITransport t) => _accepted.TryDequeue(out t!);
-    public void Dispose() { _run = false; try { _listener.Stop(); } catch { } }
+    public void Dispose() { _run = false; try { _listener.Stop(); } catch { } _cert.Dispose(); }
 }
 
 /// <summary>

@@ -62,6 +62,32 @@ public static class ScriptParser
         finally { _sink = old; }
     }
 
+    /// <summary>Hard limits for text that does not come from a trusted file (a save sent by a multiplayer host).</summary>
+    public sealed record ParseLimits(int MaxDepth, int MaxTokens, int MaxNodes, int MaxStringLength)
+    {
+        /// <summary>No limit but nesting: a depth beyond this would overflow the stack, which no handler can catch.</summary>
+        public static readonly ParseLimits Trusted = new(256, int.MaxValue, int.MaxValue, int.MaxValue);
+        public static readonly ParseLimits Save = new(40, 6_000_000, 4_000_000, 4096);
+    }
+
+    [ThreadStatic] private static ParseLimits? _limits;
+    [ThreadStatic] private static int _nodeCount;
+    private static ParseLimits Limits => _limits ?? ParseLimits.Trusted;
+
+    /// <summary>Parses untrusted text. Throws <see cref="InvalidDataException"/> when a limit is exceeded or a syntax error is found.</summary>
+    public static Node ParseStrict(string text, string fileName, ParseLimits limits)
+    {
+        var old = _limits; var oldSink = _sink; var errors = new List<(string Message, string Where)>();
+        _limits = limits; _sink = errors; _nodeCount = 0;
+        try
+        {
+            var root = Parse(text, fileName);
+            if (errors.Count > 0) throw new InvalidDataException("syntax error: " + errors[0].Message);
+            return root;
+        }
+        finally { _limits = old; _sink = oldSink; }
+    }
+
     public static Node Parse(string text, string fileName)
     {
         var tokens = Tokenize(text, fileName);
@@ -77,8 +103,10 @@ public static class ScriptParser
         var list = new List<Token>(s.Length / 4);
         int i = 0, line = 1;
         if (s.Length > 0 && s[0] == '﻿') i = 1; // BOM
+        int maxTokens = Limits.MaxTokens, maxStr = Limits.MaxStringLength;
         while (i < s.Length)
         {
+            if (list.Count > maxTokens) throw new InvalidDataException("too many tokens");
             char c = s[i];
             if (c == '\n') { line++; i++; continue; }
             if (char.IsWhiteSpace(c)) { i++; continue; }
@@ -130,6 +158,7 @@ public static class ScriptParser
                     }
                     if (d == '"') { closed = true; i++; break; }
                     if (d == '\n') line++;
+                    if (sb.Length > maxStr) throw new InvalidDataException("string too long");
                     sb.Append(d);
                     i++;
                 }
@@ -142,6 +171,7 @@ public static class ScriptParser
             while (i < s.Length)
             {
                 char d = s[i];
+                if (i - start > maxStr) throw new InvalidDataException("word too long");
                 if (char.IsWhiteSpace(d) || d == '{' || d == '}' || d == '=' || d == '<' || d == '>' || d == '#' || d == '"') break;
                 if ((d == '!' || d == '?') && i + 1 < s.Length && s[i + 1] == '=') break;
                 i++;
@@ -153,7 +183,16 @@ public static class ScriptParser
         return list;
     }
 
+    [ThreadStatic] private static int _depth;
+
     private static void ParseStatements(List<Token> t, ref int pos, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
+    {
+        if (++_depth > Limits.MaxDepth) { _depth = 0; throw new InvalidDataException("blocks nested too deeply"); }
+        try { ParseStatementsCore(t, ref pos, parent, file, constants, isRoot); }
+        finally { if (_depth > 0) _depth--; }
+    }
+
+    private static void ParseStatementsCore(List<Token> t, ref int pos, Node parent, string file, Dictionary<string, string> constants, bool isRoot)
     {
         while (true)
         {
@@ -247,6 +286,7 @@ public static class ScriptParser
                 if (!node.KeyQuoted && node.Key.StartsWith('@') && constants.TryGetValue(node.Key, out var cv)) node.Key = cv;
             }
             node.SpanEnd = t[pos - 1].End;
+            if (++_nodeCount > Limits.MaxNodes) throw new InvalidDataException("too many entries");
             parent.Children!.Add(node);
         }
     }

@@ -24,6 +24,7 @@ public sealed class PlayerInfo
     internal int? VoteSpeed;
     internal double PingSentAt;
     internal int Strikes;
+    internal double LastResyncAt = -1e9;
     private double _tokens = 400, _tokenAt = -1;
 
     /// <summary>Message budget: a burst of 400, refilled at 200 per second. A peer that floods runs dry and collects strikes.</summary>
@@ -434,6 +435,9 @@ public sealed class LockstepSession
                 if (!Wire.Int(f[1], 0, Tick, out long tick) || f[2].Length != 16) { Strike(p, "bad SUM"); break; }
                 if (_sums.TryGetValue(tick, out var mine) && f[2] != mine.ToString("x16"))
                 {
+                    // a full save is expensive: a peer that reports a mismatch again within 30 s is lying or broken, not unlucky
+                    if (Now() - p.LastResyncAt < 30000) { Strike(p, "repeated checksum mismatch"); break; }
+                    p.LastResyncAt = Now();
                     Resyncs++;
                     ToastAll($"Desync of {p.Name} at {Game.World.Date.ToDisplay()}: sending a full save");
                     _resync.Add(p);
@@ -575,7 +579,13 @@ public sealed class LockstepSession
             {
                 var buf = _syncBuf; _syncBuf = null;
                 if (buf == null || !Wire.Int(f[1], 0, int.MaxValue, out int n) || n != _syncSeq || buf.Length != _syncLen) throw new InvalidDataException("bad SYNCEND");
-                Sync(_syncTick, _syncTags, buf.ToArray());
+                try { Sync(_syncTick, _syncTags, buf.ToArray()); }
+                catch (Exception e)
+                {
+                    // a half-loaded game cannot be trusted: leave
+                    Disconnected = true; _hostLink!.Close();
+                    Toast?.Invoke("Left: the host sent an invalid save (" + Sanitize.Text(e.Message, 80) + ")");
+                }
                 break;
             }
             case "PLAYERS": ReadPlayers(f[1]); break;
@@ -603,26 +613,28 @@ public sealed class LockstepSession
 
     private void Sync(long tick, string[] tags, byte[] gz)
     {
-        string path = Path.Combine(Path.GetTempPath(), $"burger_mp_{Environment.ProcessId}_in.sav");
+        // expand with a hard cap, then parse and validate the whole save before any game state is touched
+        byte[] raw;
         using (var ms = new MemoryStream(gz))
         using (var z = new GZipStream(ms, CompressionMode.Decompress))
-        using (var fs = File.Create(path))
+        using (var outMs = new MemoryStream())
         {
             var chunk = new byte[81920]; long total = 0; int n;
             while ((n = z.Read(chunk, 0, chunk.Length)) > 0)
             {
                 total += n;
-                if (total > Wire.MaxSaveBytes) { fs.Close(); try { File.Delete(path); } catch { } throw new InvalidDataException("save too large"); }
-                fs.Write(chunk, 0, n);
+                if (total > Wire.MaxSaveBytes) throw new InvalidDataException("save too large");
+                outMs.Write(chunk, 0, n);
             }
+            raw = outMs.ToArray();
         }
         // the very first sync reuses the game loaded at WELCOME; later ones (desync) need a fresh game
         Game g = _loadedForJoin ? Game : _loader!(Project, Seed);
         _loadedForJoin = false;
         bool first = ReferenceEquals(g, Game) && Tick == 0;
-        if (!ReferenceEquals(g, Game)) Attach(g); // before the load: its multiplayer section is read then
-        SaveGame.Load(g, path);
-        try { File.Delete(path); } catch { }
+        if (!ReferenceEquals(g, Game)) Attach(g); // before the check and the load: the multiplayer section is registered then
+        var tree = SaveGuard.Read(g, raw);
+        SaveGame.Load(g, tree);
         foreach (var c in g.World.Countries) c.IsPlayer = false;
         foreach (var tag in tags) { var c = g.World.GetCountry(tag); if (c != null) c.IsPlayer = true; }
         g.World.Player = null;

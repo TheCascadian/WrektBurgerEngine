@@ -37,6 +37,7 @@ public static partial class Program
             var (a, b) = MemoryTransport.Pair();
             host.AddPeer(b);
             clients.Add(LockstepSession.Join(a, i == 0 ? "Bob" : "Cy", LoadStarted));
+            { var cl = clients[^1]; cl.Toast += t => Console.WriteLine($"    [{cl.Me?.Name}] {t}"); }
         }
         void Frame(double dt = 0.05)
         {
@@ -87,10 +88,12 @@ public static partial class Program
         Until(() => Days() >= start + days / 3);
 
         // a desync: one client's gold drifts
+        Check(host.Resyncs == 0 && clients.All(c => c.Resyncs == 0), "no resync before the injected drift (a natural desync would show here)");
         int resyncsBefore = host.Resyncs;
         clients[1].Game.World.GetCountry(tags[2])!.Gold += 1;
         Until(() => host.Resyncs > resyncsBefore && clients[1].Resyncs > 0, 20000);
         Check(host.Resyncs > resyncsBefore && clients[1].Resyncs > 0, "checksum caught the drift and the client was resynced");
+        Check(host.Resyncs == 1 && clients[0].Resyncs == 0, "exactly one resync: the injected one, only for the drifted client");
 
         if (args.Contains("--diag"))
         {
@@ -116,7 +119,8 @@ public static partial class Program
         ulong hs = StateChecksum.Compute(hostGame);
         foreach (var c in clients) Check(StateChecksum.Compute(c.Game) == hs, $"{c.Me!.Name} checksum equals the host's ({hs:x16})");
         Check(host.Players.Any(p => p.Id > 0 && p.Active && p.PingMs >= 0), "ping tracked");
-        Console.WriteLine($"Ran {host.Tick} ticks ({hostGame.World.Date.ToDisplay()}), resyncs {host.Resyncs}");
+        Check(host.Resyncs == 1, "no resync other than the injected one by the end");
+        Console.WriteLine($"Ran {host.Tick} ticks ({hostGame.World.Date.ToDisplay()}), resyncs {host.Resyncs} (1 injected on purpose)");
         Console.WriteLine($"    pending proposals host {hostGame.PendingProposals.Count}: " + string.Join(", ", hostGame.PendingProposals.Select(p => p.Kind + ":" + p.From.Tag + ">" + p.To.Tag)));
         foreach (var t in toasts.Where(t => t.Contains("Desync"))) Console.WriteLine("    " + t);
         foreach (var c in clients) c.Leave();

@@ -351,9 +351,11 @@ public static class SaveGame
     }
 
     /// <summary>Loads a save into a freshly loaded <see cref="Game"/> (call <see cref="Game.Load"/> first, not StartNewGame).</summary>
-    public static void Load(Game game, string path)
+    public static void Load(Game game, string path) => Load(game, ScriptParser.ParseFile(path, Path.GetFileName(path)));
+
+    /// <summary>Loads an already parsed (and, for a save from another machine, already validated) save.</summary>
+    public static void Load(Game game, Node root)
     {
-        var root = ScriptParser.ParseFile(path, Path.GetFileName(path));
         var w = game.World;
         var data = game.Data;
         var meta = root.Get("meta") ?? throw new InvalidDataException("Not a BurgerEngine save (no meta block)");
