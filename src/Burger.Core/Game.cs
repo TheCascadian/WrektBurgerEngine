@@ -145,6 +145,7 @@ public sealed class Game
     /// <summary>Custom panels and map modes from interface/ (or added from C#).</summary>
     public InterfaceRegistry Interface { get; } = new();
     public ModManager Mods { get; }
+    internal Burger.Core.Multiplayer.ModNetworkRegistry ModNet { get; }
     /// <summary>The AI. Replace with your own subclass from a C# mod: <c>Game.Ai = new MyAi(Game);</c></summary>
     public AiSystem Ai { get; set; }
     public GameClock Clock { get; }
@@ -204,6 +205,7 @@ public sealed class Game
         Memory = new Burger.Core.Memories.MemorySystem(this);
         Figures = new Burger.Core.Figures.FigureSystem(this);
         Mods = new ModManager(this);
+        ModNet = new Burger.Core.Multiplayer.ModNetworkRegistry(this);
         Ai = new AiSystem(this);
         // cross-system reactions: each system owns what it does when another one changes
         Memory.Subscribe(Hub);

@@ -17,6 +17,8 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     public const string WhitePeace = "white_peace";
     /// <summary>Answers any other proposal (args: kind, sender tag, 1 accept or 0 decline).</summary>
     public const string Respond = "respond";
+    /// <summary>A custom message of a mod (args: message key, then the typed fields of its schema).</summary>
+    public const string ModMessage = "mod_message";
     public const string QueueProduction = "queue_production";
     /// <summary>Answers an event (args: event id, option index).</summary>
     public const string EventOption = "event_option";
@@ -25,7 +27,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption or Respond;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption or Respond or ModMessage;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -97,6 +99,7 @@ public static class CommandExecutor
                 g.Events.ChooseOption(pe, Math.Clamp(opt, 0, Math.Max(0, pe.Def.Options.Count - 1)));
                 return true;
             }
+            case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
             case GameCommand.QueueProduction:
             {
                 if (!g.Data.Equipment.TryGetValue(A(0), out var eq)) return false;
@@ -106,5 +109,65 @@ public static class CommandExecutor
             }
         }
         return false;
+    }
+}
+
+/// <summary>
+/// The host's check of a player's request before it is stamped and broadcast: shape, ranges, ownership, and that it can happen right now.
+/// A refused request changes nothing and reaches nobody. (Every machine checks again when it applies the command.)
+/// </summary>
+public static class CommandValidator
+{
+    /// <summary>Returns null when the command is acceptable for <paramref name="tag"/>, otherwise the reason.</summary>
+    public static string? Check(Game g, string tag, string type, string[] args)
+    {
+        var w = g.World;
+        var country = Sanitize.Tag(tag).Length == 0 ? null : w.GetCountry(tag);
+        if (country == null || !country.Exists) return "you have no country";
+        if (!GameCommand.IsPlayerCommand(type)) return "not a player command";
+        if (!Wire.ArgsOk(args)) return "bad arguments";
+        string A(int i) => i < args.Length ? args[i] : "";
+        switch (type)
+        {
+            case GameCommand.Move:
+            {
+                if (args.Length is < 2 or > 3 || !Sanitize.Int(A(0), 0, int.MaxValue, out long id)) return "bad move";
+                if (A(2) != "" && A(2) != "q") return "bad move";
+                var div = w.Divisions.FirstOrDefault(d => d.Id == id);
+                if (div == null || div.Owner != country) return "not your division";
+                return w.GetLocation(A(1)) == null ? "unknown location" : null;
+            }
+            case GameCommand.DeclareWar:
+            {
+                if (args.Length != 1) return "bad declaration";
+                var t = w.GetCountry(A(0));
+                if (t == null || !t.Exists || t == country) return "no such country";
+                return w.WarBetween(country, t) != null ? "already at war" : null;
+            }
+            case GameCommand.AcceptPeace:
+            case GameCommand.RefusePeace:
+                return args.Length == 1 && g.PendingProposals.Any(x => x.Kind == ProposalKind.Peace && x.To == country && x.From.Tag == A(0)) ? null : "no such proposal";
+            case GameCommand.WhitePeace:
+            {
+                if (args.Length != 1) return "bad offer";
+                var enemy = w.GetCountry(A(0));
+                return enemy != null && w.WarBetween(country, enemy) != null ? null : "not at war with that country";
+            }
+            case GameCommand.QueueProduction:
+                if (args.Length != 2 || !g.Data.Equipment.ContainsKey(A(0)) || !Sanitize.Int(A(1), 0, 50, out _)) return "bad production order";
+                return null;
+            case GameCommand.EventOption:
+            {
+                var pe = args.Length == 2 ? g.Events.PlayerQueue.FirstOrDefault(x => x.Def.Id == A(0) && Scripting.ScopeHelpers.CountryOf(x.Context.Root) == country) : null;
+                if (pe == null || !Sanitize.Int(A(1), 0, Math.Max(0, pe.Def.Options.Count - 1), out _)) return "no such event option";
+                return null;
+            }
+            case GameCommand.Respond:
+                if (args.Length != 3 || !Enum.TryParse<ProposalKind>(A(0), out var kind) || !Enum.IsDefined(kind) || (A(2) != "0" && A(2) != "1")) return "bad answer";
+                return g.PendingProposals.Any(x => x.Kind == kind && x.To == country && x.From.Tag == A(1)) ? null : "no such proposal";
+            case GameCommand.ModMessage:
+                return g.ModNet.Check(country, args, true);
+        }
+        return "unknown command";
     }
 }

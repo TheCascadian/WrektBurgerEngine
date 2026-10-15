@@ -24,6 +24,13 @@ public abstract class GameScript
     /// <summary>The running game. Available from <see cref="OnLoad"/> onwards.</summary>
     public Game Game { get; internal set; } = null!;
 
+    /// <summary>Custom network messages (needs the "network" permission). See <see cref="IModNetwork"/>.</summary>
+    public IModNetwork Network => _network ?? throw new InvalidOperationException("not loaded yet");
+    /// <summary>Read access to <c>scripts/content/</c> (needs the "content" permission).</summary>
+    public IModContent Content => _content ?? throw new InvalidOperationException("not loaded yet");
+    internal IModNetwork? _network;
+    internal IModContent? _content;
+
     /// <summary>Lower runs first.</summary>
     public virtual int Priority => 0;
 

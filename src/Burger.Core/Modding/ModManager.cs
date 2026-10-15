@@ -49,9 +49,14 @@ global using Burger.Core.Technology;
 ";
 
     /// <summary>Adds a script instance written in normal (pre-compiled) C# code.</summary>
-    public void Add(GameScript script)
+    public void Add(GameScript script) => Add(script, ModPermissions.All);
+
+    public void Add(GameScript script, ModPermissions permissions)
     {
         script.Game = _game;
+        string mod = script.GetType().Name;
+        script._network = new Burger.Core.Multiplayer.ModNetworkHandle(_game.ModNet, mod, permissions.Network);
+        script._content = new Burger.Core.Multiplayer.ModContentHandle(_game.Data.Root, permissions.Content);
         _scripts.Add(script);
         _scripts.Sort((a, b) => a.Priority.CompareTo(b.Priority));
     }
@@ -126,6 +131,7 @@ global using Burger.Core.Technology;
         var files = FindScriptFiles(root);
         if (files.Count > 0)
         {
+            Permissions = ReadManifest(root, new List<string>());
             var asm = Compile(files, root, CompileErrors, extraRefs, out _);
             if (asm != null)
             {
@@ -170,7 +176,7 @@ global using Burger.Core.Technology;
         {
             try
             {
-                if (Activator.CreateInstance(type) is GameScript s) Add(s);
+                if (Activator.CreateInstance(type) is GameScript s) Add(s, where == "backend" ? ModPermissions.All : Permissions);
             }
             catch (Exception ex)
             {
@@ -202,9 +208,40 @@ global using Burger.Core.Technology;
     public static Assembly? Compile(List<string> files, string gameRoot, List<string> errors)
         => Compile(files, gameRoot, errors, null, out _);
 
+    /// <summary>What the scripts folder asked for in <c>scripts/mod.json</c>.</summary>
+    public ModPermissions Permissions { get; private set; } = ModPermissions.None;
+
+    /// <summary>Reads <c>scripts/mod.json</c> (optional): <c>{ "id": "...", "version": "...", "permissions": ["network", "content"] }</c>.</summary>
+    public static ModPermissions ReadManifest(string gameRoot, List<string> errors)
+    {
+        string path = Path.Combine(gameRoot, "scripts", "mod.json");
+        if (!File.Exists(path)) return ModPermissions.None;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+            var names = new List<string>();
+            if (doc.RootElement.TryGetProperty("permissions", out var arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+                foreach (var e in arr.EnumerateArray()) if (e.ValueKind == System.Text.Json.JsonValueKind.String) names.Add(e.GetString()!);
+            return ModPermissions.Parse(names, errors);
+        }
+        catch (Exception ex) { errors.Add("scripts/mod.json: " + ex.Message); return ModPermissions.None; }
+    }
+
     public static Assembly? Compile(List<string> files, string gameRoot, List<string> errors, List<MetadataReference>? extraRefs, out byte[]? image, string prefix = "GameScripts_")
     {
         image = null;
+        // scripts (moddable by players) are verified against the sandbox policy; the backend is the developer's own locked code
+        bool sandbox = prefix == "GameScripts_";
+        var manifestErrors = new List<string>();
+        var perms = sandbox ? ReadManifest(gameRoot, manifestErrors) : ModPermissions.None;
+        foreach (var e in manifestErrors) { Log.Error(e, "scripts"); errors.Add(e); }
+        bool Allowed(byte[] img, string source)
+        {
+            if (!sandbox) return true;
+            var v = ModSandbox.Verify(img, perms);
+            foreach (var m in v) { string msg = $"Sandbox: the scripts {m}"; Log.Error(msg, "scripts"); errors.Add(msg); }
+            return v.Count == 0;
+        }
         var parse = new CSharpParseOptions(LanguageVersion.Latest);
         var trees = new List<SyntaxTree> { CSharpSyntaxTree.ParseText(GlobalUsings, parse, path: "GlobalUsings.g.cs") };
         foreach (var f in files)
@@ -234,6 +271,7 @@ global using Burger.Core.Technology;
                     if (bytes.Length > kl && System.Text.Encoding.ASCII.GetString(bytes, 0, kl) == cacheKey)
                     {
                         image = bytes[kl..];
+                        if (!Allowed(image, "cache")) { image = null; return null; }
                         var hit = Assembly.Load(image);
                         RegisterInMemory(hit);
                         return hit;
@@ -252,7 +290,7 @@ global using Burger.Core.Technology;
         if (extraRefs != null) refs.AddRange(extraRefs);
         var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
             optimizationLevel: OptimizationLevel.Release,
-            allowUnsafe: true,
+            allowUnsafe: !sandbox,
             nullableContextOptions: NullableContextOptions.Annotations);
         var compilation = CSharpCompilation.Create(prefix + Guid.NewGuid().ToString("N"), trees, refs, options);
         using var ms = new MemoryStream();
@@ -269,6 +307,7 @@ global using Burger.Core.Technology;
         }
         if (!result.Success) return null;
         image = ms.ToArray();
+        if (!Allowed(image, "build")) { image = null; return null; }
         if (cacheFile.Length > 0)
         {
             try
