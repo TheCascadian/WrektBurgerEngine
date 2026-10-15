@@ -621,7 +621,7 @@ public sealed partial class PopulationSystem
         Independence.Clear();
         IndependenceWars.Clear();
         FreedTotal = 0;
-        _colonyCountDay = -1;
+        _colonyCountDay = int.MinValue;
         InvalidateMajorities();
         _home.Clear();
         _countryModsDirty = true;
@@ -723,7 +723,7 @@ public sealed partial class PopulationSystem
         }
         LoadIndependence(root);
         InvalidateMajorities();
-        _colonyCountDay = -1;
+        _colonyCountDay = int.MinValue;
         _countryModsDirty = true;
     }
 }

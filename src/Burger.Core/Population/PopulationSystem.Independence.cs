@@ -53,13 +53,13 @@ public sealed partial class PopulationSystem
     public double DecolonisationPressure => Rules.DecolonisationPressure(_game, FreedTotal);
 
     private readonly Dictionary<Country, int> _colonyCount = new();
-    private int _colonyCountDay = -1;
+    private int _colonyCountDay = int.MinValue; // not -1: days before 1 CE are negative
 
     /// <summary>Number of colonies (see <see cref="IsColony"/>) a country holds (recounted monthly).</summary>
     public int ColonyCount(Country c)
     {
         int today = _game.World.Date.TotalDays;
-        if (_colonyCountDay < 0 || today - _colonyCountDay >= 30)
+        if (_colonyCountDay == int.MinValue || today - _colonyCountDay >= 30)
         {
             _colonyCount.Clear();
             foreach (var s in _game.World.States)

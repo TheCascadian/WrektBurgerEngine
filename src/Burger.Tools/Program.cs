@@ -515,9 +515,14 @@ public static partial class Program
         if (scorecard) { recorder = new ScorecardRecorder(game); game.Mods.Add(recorder); }
         game.Profiling = args.Contains("--profile");
         int warsAtDecade = 0;
+        bool tickStats = args.Contains("--tick-stats");
+        var tickMs = tickStats ? new List<double>(days * 24) : null;
         for (int d = 0; d < days; d++)
         {
-            for (int h = 0; h < 24; h++) game.Tick();
+            if (tickMs != null)
+                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); game.Tick(); tickMs.Add((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency); }
+            else
+                for (int h = 0; h < 24; h++) game.Tick();
             recorder?.Daily();
             if (reloadAt > 0 && d + 1 == reloadAt)
             {
@@ -557,6 +562,26 @@ public static partial class Program
         Console.WriteLine($"  simulated {days} days in {sw.ElapsedMilliseconds} ms - date {game.World.Date.ToDisplay()}, " +
                           $"{wars} wars declared, {battles} battles, {game.World.Wars.Count} active wars, {game.World.Divisions.Count} divisions, " +
                           $"{game.World.Characters.Count(c => c.Alive)} living characters, {game.World.Countries.Count(c => c.Exists)} countries");
+        if (tickMs != null && tickMs.Count > 0)
+        {
+            var sorted = tickMs.OrderBy(x => x).ToList();
+            double At(double q) => sorted[Math.Min(sorted.Count - 1, (int)(q * sorted.Count))];
+            // Frame model, speed 3 (4 days a second = 1.6 ticks a frame): a frame runs the ticks it is owed, like GameClock.Update with its 14 ms budget,
+            // and lasts as long as the slower of 1/60 s and its simulation (rendering not counted).
+            var frames = new List<double>();
+            double acc = 0; int i = 0;
+            while (i < tickMs.Count)
+            {
+                acc += 1.6; double used = 0;
+                while (acc >= 1 && i < tickMs.Count && used < 14) { used += tickMs[i++]; acc -= 1; }
+                if (acc > 48) acc = 48;
+                frames.Add(Math.Max(1000.0 / 60, used));
+            }
+            double fps = frames.Count / (frames.Sum() / 1000.0);
+            var fs = frames.OrderBy(x => x).ToList();
+            double low1 = 1000.0 / fs[Math.Min(fs.Count - 1, (int)(0.99 * fs.Count))];
+            Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
+        }
         foreach (var w in game.World.Wars) Console.WriteLine($"    {w.Name}: war score {w.WarScore:0}");
         Console.WriteLine("  memory: " + string.Join(", ", game.Memory.All.GroupBy(e => $"{e.Actor.Type}/{e.Kind}").OrderByDescending(g => g.Count()).Take(14).Select(g => $"{g.Key} {g.Count()}")));
         if (args.Contains("--diag-wars"))
