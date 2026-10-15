@@ -282,7 +282,7 @@ public class PopulationRules
 
     /// <summary>Colony progress lost this month because natives attacked the colonists (0 = no attack): now and then (native_resistance) where natives live.</summary>
     public virtual double NativeAttack(Game game, State s, Country c, double nativeShare)
-        => nativeShare > 0.05 && game.Rng.NextDouble() < game.Data.Defines.Get("native_resistance", 0.05) * nativeShare ? 15 : 0;
+        => nativeShare > 0.05 && game.Rngs.Population.NextDouble() < game.Data.Defines.Get("native_resistance", 0.05) * nativeShare ? 15 : 0;
 
     /// <summary>People of the colonizer's culture that settle a finished colony (colony_settlers).</summary>
     public virtual double ColonySettlers(Game game, State s, Country c) => game.Data.Defines.Get("colony_settlers", 1000);
@@ -431,8 +431,8 @@ public class PopulationRules
     {
         var pop = game.Population;
         if (m.Progress < 70) return IndependenceResponse.None;
-        if (pop.CannotSuppressIndependence(m) == null && game.Rng.NextDouble() < 0.35) return IndependenceResponse.Suppress;
-        if (m.Progress > 90 && game.Rng.NextDouble() < 0.1 && pop.SeparatistStates(c, m.Culture).All(pop.IsColony)) return IndependenceResponse.Grant;
+        if (pop.CannotSuppressIndependence(m) == null && game.Rngs.Population.NextDouble() < 0.35) return IndependenceResponse.Suppress;
+        if (m.Progress > 90 && game.Rngs.Population.NextDouble() < 0.1 && pop.SeparatistStates(c, m.Culture).All(pop.IsColony)) return IndependenceResponse.Grant;
         return IndependenceResponse.None;
     }
 }

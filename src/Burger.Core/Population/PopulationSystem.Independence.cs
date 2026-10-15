@@ -221,7 +221,7 @@ public sealed partial class PopulationSystem
         var landSet = land.ToHashSet();
         double defect = Rules.GarrisonDefectChance(_game, origin, rebel);
         foreach (var d in _game.World.Divisions.Where(d => d.Owner == origin && d.VolunteerFrom == null && landSet.Contains(d.Location)).ToList())
-            if (_game.Rng.NextDouble() < defect)
+            if (_game.Rngs.Population.NextDouble() < defect)
             {
                 _game.Warfare.StopDivision(d);
                 _game.Warfare.AssignToArmy(d, null);

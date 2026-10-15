@@ -209,7 +209,7 @@ public sealed class EventSystem
             total += weights[i];
         }
         if (total <= 0) return firstAvailable;
-        double r = _game.Rng.NextDouble() * total;
+        double r = _game.Rngs.Events.NextDouble() * total;
         for (int i = 0; i < weights.Length; i++)
         {
             r -= weights[i];
@@ -292,7 +292,7 @@ public sealed class EventSystem
         if (!_game.Script.EvalTrigger(e.Trigger, ctx)) return;
         double mtth = e.MtthBlock != null ? _game.Script.EvalMtthDays(e.MtthBlock, ctx) : 365;
         double p = 1 - Math.Pow(0.5, 30.0 / mtth);
-        if (_game.Rng.NextDouble() < p) FireEvent(e, scope, null, checkTrigger: false);
+        if (_game.Rngs.Events.NextDouble() < p) FireEvent(e, scope, null, checkTrigger: false);
     }
 
     /// <summary>Runs an on_action from <c>common/on_actions</c>: its effects, events and random events.</summary>
@@ -311,7 +311,7 @@ public sealed class EventSystem
         if (oa.RandomEvents.Count > 0)
         {
             double total = oa.RandomEvents.Sum(r => r.Weight);
-            double r = _game.Rng.NextDouble() * total;
+            double r = _game.Rngs.Events.NextDouble() * total;
             foreach (var (w, id) in oa.RandomEvents)
             {
                 r -= w;

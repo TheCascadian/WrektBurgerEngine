@@ -13,6 +13,9 @@ namespace Burger.Core.Warfare;
 /// </summary>
 public sealed class WarfareSystem
 {
+    /// <summary>Order-sensitive int mix with a fixed seed (HashCode.Combine is randomized per process, so a change-detection collision would differ between runs).</summary>
+    private static int Mix(int hash, int v) => unchecked((hash * 16777619) ^ v);
+
     private readonly Game _game;
     private readonly Dictionary<Location, List<Division>> _byLocation = new();
     private readonly Dictionary<string, int> _nameCounters = new();
@@ -893,8 +896,8 @@ public sealed class WarfareSystem
         if (pairs.Count == 0) army.Objective = null;
 
         int hash = pairs.Count;
-        foreach (var p in pairs) hash = HashCode.Combine(hash, p.Own.Index, p.Enemy.Index);
-        hash = HashCode.Combine(hash, army.Divisions.Count);
+        foreach (var p in pairs) hash = Mix(Mix(hash, p.Own.Index), p.Enemy.Index);
+        hash = Mix(hash, army.Divisions.Count);
         if (hash != army.FrontHash)
         {
             army.FrontHash = hash;
@@ -973,8 +976,8 @@ public sealed class WarfareSystem
         pairs.Clear();
         for (int i = 0; i < line.Count; i++) pairs.Add(line[i]);
         army.FrontPairs.Clear();
-        int hash = HashCode.Combine(-1, army.Divisions.Count);
-        foreach (var (l, _) in line) hash = HashCode.Combine(hash, l.Index);
+        int hash = Mix(-1, army.Divisions.Count);
+        foreach (var (l, _) in line) hash = Mix(hash, l.Index);
         if (hash != army.FrontHash)
         {
             army.FrontHash = hash;

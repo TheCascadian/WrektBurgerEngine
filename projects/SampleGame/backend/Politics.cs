@@ -104,11 +104,11 @@ public class GamePoliticsRules : PoliticsRules
         }
         // political crises: now and then (political_crisis_chance, about once in eight years) a scandal, a slump or a
         // strike wave turns people away from the government and towards one of the others (extremists when things are bad)
-        if (pol.Ideologies.Count > 1 && game.Rng.NextDouble() < d.Get("political_crisis_chance", 0.01))
+        if (pol.Ideologies.Count > 1 && game.Rngs.Politics.NextDouble() < d.Get("political_crisis_chance", 0.01))
         {
             var others = pol.Ideologies.Where(i => i.Key != p.Ruling).ToList();
             double Weight(IdeologyDef i) => 0.5 + p.Popularity.GetValueOrDefault(i.Key) + (i.Extremist && stability < 50 ? 1 : 0);
-            double pick = game.Rng.NextDouble() * others.Sum(Weight);
+            double pick = game.Rngs.Politics.NextDouble() * others.Sum(Weight);
             var gainer = others[^1];
             foreach (var i in others) { pick -= Weight(i); if (pick <= 0) { gainer = i; break; } }
             double swing = d.Get("political_crisis_swing", 10);
@@ -125,7 +125,7 @@ public class GamePoliticsRules : PoliticsRules
             if (cur < floor) Add(p.Ruling, (floor - cur) * 100 * 0.15);
         }
         // chance
-        foreach (var i in pol.Ideologies) Add(i.Key, (game.Rng.NextDouble() - 0.5) * d.Get("random_drift", 0.4));
+        foreach (var i in pol.Ideologies) Add(i.Key, (game.Rngs.Politics.NextDouble() - 0.5) * d.Get("random_drift", 0.4));
         // an old parliamentary tradition (profile trait democratic_roots) holds the extremists back, whatever feeds them: war, neighbours, lost land
         if (game.AiProfiles.Enabled && game.AiProfiles.PersonalityOf(c).Trait("democratic_roots", 0) is var roots && roots > 0)
             foreach (var i in pol.Ideologies.Where(i => i.Extremist && i.Key != p.Ruling))
@@ -267,7 +267,7 @@ public class GamePoliticsRules : PoliticsRules
         var p = game.Politics.Of(c);
         var votes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         double noise = game.Data.Defines.Get("election_noise", 0.03);
-        foreach (var kv in p.Popularity) votes[kv.Key] = Math.Max(0, kv.Value + (game.Rng.NextDouble() * 2 - 1) * noise);
+        foreach (var kv in p.Popularity) votes[kv.Key] = Math.Max(0, kv.Value + (game.Rngs.Politics.NextDouble() * 2 - 1) * noise);
         double sum = votes.Values.Sum();
         if (sum > 0) foreach (var k in votes.Keys.ToList()) votes[k] /= sum;
         return votes;

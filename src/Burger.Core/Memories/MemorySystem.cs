@@ -258,8 +258,8 @@ public sealed class MemorySystem
             n.Add("actor_type", e.Actor.Type);
             if (e.Target is { } t) { n.Add("target", t.Key); n.Add("target_type", t.Type); }
             n.Add("date", e.Date.ToScript());
-            n.Add("weight", e.Weight.ToString("0.###", CultureInfo.InvariantCulture));
-            n.Add("decay", e.DecayPerYear.ToString("0.###", CultureInfo.InvariantCulture));
+            n.Add("weight", e.Weight.ToString("R", CultureInfo.InvariantCulture));
+            n.Add("decay", e.DecayPerYear.ToString("R", CultureInfo.InvariantCulture));
             if (e.Note.Length > 0) n.Add("note", e.Note, true);
         }
     }

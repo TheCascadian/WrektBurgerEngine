@@ -189,7 +189,7 @@ public sealed partial class PoliticsSystem
         double noise = _game.Data.Defines.Get("election_noise", 0.03);
         var votes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var key in PartyKeysOf(country))
-            votes[key] = Math.Max(0, state.PartyPopularity.GetValueOrDefault(key) * CohesionVoteFactor(key) + (_game.Rng.NextDouble() * 2 - 1) * noise);
+            votes[key] = Math.Max(0, state.PartyPopularity.GetValueOrDefault(key) * CohesionVoteFactor(key) + (_game.Rngs.Politics.NextDouble() * 2 - 1) * noise);
         double sum = votes.Values.Sum();
         if (sum > 0) foreach (var key in votes.Keys.ToList()) votes[key] /= sum;
         return votes;

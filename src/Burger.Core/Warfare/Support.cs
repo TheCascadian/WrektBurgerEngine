@@ -225,7 +225,7 @@ public sealed class SupportSystem
             if (_game.Features.Has(FeatureSet.Production) && CannotLendLease(c, f) == null)
                 foreach (var e in _game.Data.Equipment.Values.Where(e => e.Category.Equals("army", StringComparison.OrdinalIgnoreCase)))
                     if (c.Stockpile.GetValueOrDefault(e.Key) > 200 && DealOf(c, f, e) == null) SetLendLease(c, f, e, 0.1);
-            if (CannotSendVolunteers(c, f) == null && w.Divisions.Count(d => d.Owner == c) >= 4 && _game.Rng.NextDouble() < 0.4)
+            if (CannotSendVolunteers(c, f) == null && w.Divisions.Count(d => d.Owner == c) >= 4 && _game.Rngs.Combat.NextDouble() < 0.4)
                 SendVolunteers(c, f, 1);
         }
         // deals with countries that are no longer friends end
@@ -241,7 +241,7 @@ public sealed class SupportSystem
             n.Add("from", d.From.Tag);
             n.Add("to", d.To.Tag);
             n.Add("equipment", d.Equipment.Key);
-            n.Add("share", d.Share.ToString("0.####", CultureInfo.InvariantCulture));
+            n.Add("share", d.Share.ToString("R", CultureInfo.InvariantCulture));
         }
     }
 

@@ -172,7 +172,7 @@ public class GameAiProfileRules : AiProfileRules
         if (Environment.GetEnvironmentVariable("BURGER_PURSUIT_LOG") is { } pl && pl.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && game.World.Date.Day == 1)
             Console.WriteLine($"PURSUIT {game.World.Date.ToDisplay()} {c.Tag}: best {best?.Tag} score {bestScore:0.00} wars {game.World.WarsOf(c).Count()}");
         if (best == null || bestScore < 0.3) return null;
-        if (game.Rng.NextDouble() > Math.Min(0.95, game.Data.Defines.Get("pursuit_chance", 0.9) * bestScore * h)) return null;
+        if (game.Rngs.Diplomacy.NextDouble() > Math.Min(0.95, game.Data.Defines.Get("pursuit_chance", 0.9) * bestScore * h)) return null;
         // (a non-aggression pact is torn up first: Germany's with the Low Countries, Italy's with Greece)
         if (game.World.Relations.HasPact(c, best, game.World.Date) && game.Data.DiplomaticActions.GetValueOrDefault("break_non_aggression_pact") is { } breakPact && game.Diplomacy.CanUse(breakPact, c, best)) return (breakPact, best);
         if (war != null && game.Diplomacy.CanUse(war, c, best)) return (war, best);
@@ -255,7 +255,7 @@ public class GameAiProfileRules : AiProfileRules
             double score = friend + CommonCause(game, c, t) * 0.5;
             if (score >= 1.5 && score > bestScore && game.Diplomacy.CanUse(action, c, t) && game.Diplomacy.Acceptance(action, c, t) > 0) { bestScore = score; best = t; }
         }
-        if (best == null || game.Rng.NextDouble() > game.Data.Defines.Get("courtship_chance", 0.3) * h) return null;
+        if (best == null || game.Rngs.Diplomacy.NextDouble() > game.Data.Defines.Get("courtship_chance", 0.3) * h) return null;
         return (action, best);
     }
 

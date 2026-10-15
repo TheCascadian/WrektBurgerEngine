@@ -352,13 +352,12 @@ public sealed partial class PoliticsSystem
             n.Add("signature", par.Signature, true);
             foreach (var s in par.Seats)
             {
-                if (s.Holder == null) continue;
                 var b = n.AddBlock("seat");
                 b.Add("id", s.Id, true);
                 b.Add("party", s.Party, true);
                 if (s.State != null) b.Add("state", s.State.Key);
                 b.Add("group", s.PopGroup, true);
-                b.Add("holder", s.Holder.Key);
+                if (s.Holder != null) b.Add("holder", s.Holder.Key);
                 b.Add("candidate", s.CandidateId, true);
                 if (s.Faction != null) b.Add("faction", s.Faction);
                 b.Add("start", s.TermStart.ToScript());
@@ -381,7 +380,8 @@ public sealed partial class PoliticsSystem
             var par = new CountryParliament { Epoch = n.GetInt("epoch"), Signature = n.GetString("signature", "")! };
             foreach (var b in n.GetAll("seat"))
             {
-                if (b.GetString("holder") is not { } hk || !_game.World.CharacterByKey.TryGetValue(hk, out var holder)) continue;
+                Character? holder = null;
+                if (b.GetString("holder") is { } hk && !_game.World.CharacterByKey.TryGetValue(hk, out holder)) continue;
                 var seat = new Seat
                 {
                     Id = b.GetString("id", "")!,

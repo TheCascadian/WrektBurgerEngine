@@ -95,7 +95,7 @@ public static partial class Builtins
             bool ex = ctx.This switch { Country c => c.Exists, Character ch => ch.Alive, null => false, _ => true };
             return YesNo(n, ex);
         });
-        s.RegisterTrigger("random_chance", (ctx, n) => game.Rng.NextDouble() * 100 < s.ResolveNumber(n.Value, ctx));
+        s.RegisterTrigger("random_chance", (ctx, n) => game.Rngs.Script.NextDouble() * 100 < s.ResolveNumber(n.Value, ctx));
         s.RegisterTrigger("date", (ctx, n) =>
         {
             if (!GameDate.TryParse(n.Value, out var d)) { Log.ErrorOnce("date:" + n.Location, $"Invalid date '{n.Value}' (use 1936.1.1)", n.Location); return false; }

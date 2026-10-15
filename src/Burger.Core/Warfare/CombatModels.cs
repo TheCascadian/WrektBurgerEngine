@@ -149,9 +149,9 @@ public sealed class Hoi4CombatModel : ICombatModel
                          * CombatMath.GeneralMultiplier(game, b.Defenders, "general_defense");
 
         foreach (var a in frontA)
-            Attack(game, b, a, frontD[game.Rng.Next(frontD.Count)], attMult, "defense", defMult);
+            Attack(game, b, a, frontD[game.Rngs.Combat.Next(frontD.Count)], attMult, "defense", defMult);
         foreach (var x in frontD)
-            Attack(game, b, x, frontA[game.Rng.Next(frontA.Count)], defMult, "breakthrough", attMult);
+            Attack(game, b, x, frontA[game.Rngs.Combat.Next(frontA.Count)], defMult, "breakthrough", attMult);
         CombatMath.UpdateProgress(b);
     }
 
@@ -165,7 +165,7 @@ public sealed class Hoi4CombatModel : ICombatModel
         double defense = tgt.Stat(tgtDefStat) * tgtMult * (0.4 + 0.6 * tgt.StrengthFraction) / 10.0;
         double blocked = Math.Min(attacks, defense);
         double hits = blocked * 0.1 + (attacks - blocked) * 0.4;
-        double rnd = 0.75 + 0.5 * game.Rng.NextDouble();
+        double rnd = 0.75 + 0.5 * game.Rngs.Combat.NextDouble();
         double orgMult = src.Stat("armor") > tgt.Stat("piercing") ? 1.5 : 1.0;
         CombatMath.Damage(b, tgt, hits * d.Hoi4StrengthDamage * rnd * 10, hits * d.Hoi4OrgDamage * rnd * 10 * orgMult);
     }
@@ -198,7 +198,7 @@ public sealed class Eu4CombatModel : ICombatModel
         var frontD = CombatMath.Frontline(b.Defenders, width);
         if (frontA.Count == 0 || frontD.Count == 0) return;
 
-        int rollA = game.Rng.Next(10), rollD = game.Rng.Next(10);
+        int rollA = game.Rngs.Combat.Next(10), rollD = game.Rngs.Combat.Next(10);
         double skillA = CombatMath.GeneralSkill(game, b.Attackers), skillD = CombatMath.GeneralSkill(game, b.Defenders);
         // general pips: difference in skill, halved (EU4 generals have 0-6 pips)
         double pipsA = Math.Max(0, (skillA - skillD) / 2), pipsD = Math.Max(0, (skillD - skillA) / 2);
@@ -262,7 +262,7 @@ public sealed class ImperatorCombatModel : ICombatModel
         if (frontA.Count == 0 || frontD.Count == 0) return;
 
         double martialA = CombatMath.GeneralSkill(game, b.Attackers), martialD = CombatMath.GeneralSkill(game, b.Defenders);
-        int rollA = 1 + game.Rng.Next(6), rollD = 1 + game.Rng.Next(6);
+        int rollA = 1 + game.Rngs.Combat.Next(6), rollD = 1 + game.Rngs.Combat.Next(6);
         double tacticA = 1 + 0.1 * (rollA - rollD) + 0.05 * (martialA - martialD) - (CombatMath.RiverCrossing(b) ? def.RiverAttackPenalty : 0);
         double tacticD = 1 + 0.1 * (rollD - rollA) + 0.05 * (martialD - martialA) + b.Location.Terrain.DefenseModifier + b.Location.Fort * def.FortDefenseBonus;
 

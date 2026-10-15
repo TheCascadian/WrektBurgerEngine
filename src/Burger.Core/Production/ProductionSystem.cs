@@ -342,7 +342,7 @@ public sealed class ProductionSystem
     }
 
     // ------------------------------------------------------------------------------------- save
-    private static string F(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
 
     private void Save(Node root)
     {

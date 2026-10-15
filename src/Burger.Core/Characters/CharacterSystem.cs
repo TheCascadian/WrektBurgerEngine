@@ -108,7 +108,7 @@ public sealed class CharacterSystem
         else c.Country = defaultCountry;
 
         c.Female = n.GetBool("female", false);
-        if (!n.Has("female") && n.Has("random_gender")) c.Female = _game.Rng.NextDouble() < 0.5;
+        if (!n.Has("female") && n.Has("random_gender")) c.Female = _game.Rngs.Characters.NextDouble() < 0.5;
         var names = c.Country?.Names ?? _game.Data.DefaultNames;
         c.FirstName = n.GetString("first_name") ?? n.GetString("name") ?? RandomName(names, c.Female);
         c.Family = n.GetString("family") ?? n.GetString("dynasty") ?? (n.Has("family") ? "" : RandomFamily(names));
@@ -117,12 +117,12 @@ public sealed class CharacterSystem
             c.BirthDate = GameDate.Parse(n.GetString("birth_date")!, w.Date.AddYears(-30));
         else
         {
-            int age = n.Has("age") ? (int)ResolveNum(n, "age", ctx, 30) : 20 + _game.Rng.Next(30);
-            c.BirthDate = w.Date.AddYears(-age).AddDays(-_game.Rng.Next(365));
+            int age = n.Has("age") ? (int)ResolveNum(n, "age", ctx, 30) : 20 + _game.Rngs.Characters.Next(30);
+            c.BirthDate = w.Date.AddYears(-age).AddDays(-_game.Rngs.Characters.Next(365));
         }
 
         foreach (var stat in d.CharacterStats)
-            c.Stats[stat] = n.Has(stat) ? ResolveNum(n, stat, ctx, 5) : 2 + _game.Rng.Next(7);
+            c.Stats[stat] = n.Has(stat) ? ResolveNum(n, stat, ctx, 5) : 2 + _game.Rngs.Characters.Next(7);
         // extra numeric keys become stats too (e.g. a custom "prestige" stat)
         foreach (var kv in n.All)
             if (kv.Value != null && !CharacterKnownKeys.Contains(kv.Key) && !c.Stats.ContainsKey(kv.Key) && Node.TryParseDouble(kv.Value, out var v))
@@ -139,7 +139,7 @@ public sealed class CharacterSystem
             if (_game.Data.Traits.TryGetValue(t, out var trait)) { if (!c.Traits.Contains(trait)) c.Traits.Add(trait); }
             else Log.Error($"Unknown trait '{t}'", n.Location);
         }
-        int randomTraits = n.GetInt("random_traits", n.Has("traits") ? 0 : 1 + _game.Rng.Next(2));
+        int randomTraits = n.GetInt("random_traits", n.Has("traits") ? 0 : 1 + _game.Rngs.Characters.Next(2));
         AddRandomTraits(c, randomTraits);
 
         foreach (var f in n.GetList("flags")) c.Vars.SetFlag(f);
@@ -206,13 +206,13 @@ public sealed class CharacterSystem
     {
         var list = female ? names.Female : names.Male;
         if (list.Count == 0) list = female ? _game.Data.DefaultNames.Female : _game.Data.DefaultNames.Male;
-        return list.Count == 0 ? "Nameless" : list[_game.Rng.Next(list.Count)];
+        return list.Count == 0 ? "Nameless" : list[_game.Rngs.Characters.Next(list.Count)];
     }
 
     public string RandomFamily(NameList names)
     {
         var list = names.Family.Count > 0 ? names.Family : _game.Data.DefaultNames.Family;
-        return list.Count == 0 ? "" : list[_game.Rng.Next(list.Count)];
+        return list.Count == 0 ? "" : list[_game.Rngs.Characters.Next(list.Count)];
     }
 
     public void AddRandomTraits(Character c, int count)
@@ -223,7 +223,7 @@ public sealed class CharacterSystem
             var candidates = pool.Where(t => !c.Traits.Contains(t) && !c.Traits.Any(o => o.Opposites.Contains(t.Key, StringComparer.OrdinalIgnoreCase) || t.Opposites.Contains(o.Key, StringComparer.OrdinalIgnoreCase))).ToList();
             if (candidates.Count == 0) break;
             double total = candidates.Sum(t => t.RandomWeight);
-            double r = _game.Rng.NextDouble() * total;
+            double r = _game.Rngs.Characters.NextDouble() * total;
             foreach (var t in candidates)
             {
                 r -= t.RandomWeight;
@@ -244,10 +244,10 @@ public sealed class CharacterSystem
         var names = country?.Names ?? _game.Data.DefaultNames;
         c.FirstName = RandomName(names, c.Female);
         c.Family = family ?? RandomFamily(names);
-        int a = age ?? (25 + _game.Rng.Next(30));
-        c.BirthDate = _game.World.Date.AddYears(-a).AddDays(-_game.Rng.Next(365));
-        foreach (var stat in d.CharacterStats) c.Stats[stat] = 2 + _game.Rng.Next(7);
-        AddRandomTraits(c, 1 + _game.Rng.Next(2));
+        int a = age ?? (25 + _game.Rngs.Characters.Next(30));
+        c.BirthDate = _game.World.Date.AddYears(-a).AddDays(-_game.Rngs.Characters.Next(365));
+        foreach (var stat in d.CharacterStats) c.Stats[stat] = 2 + _game.Rngs.Characters.Next(7);
+        AddRandomTraits(c, 1 + _game.Rngs.Characters.Next(2));
         return Register(c);
     }
 
@@ -311,7 +311,7 @@ public sealed class CharacterSystem
     private void Succession(Country country, Character oldRuler)
     {
         var next = _game.Rules.Characters.ChooseSuccessor(_game, country, oldRuler)
-                   ?? Generate(country, false, 30 + _game.Rng.Next(20));
+                   ?? Generate(country, false, 30 + _game.Rngs.Characters.Next(20));
         country.Ruler = null;
         SetRuler(country, next);
         _game.NotifyPlayer($"{next.DisplayName} is the new ruler of {country.Name}.", NotificationKind.Character, country);
@@ -322,7 +322,7 @@ public sealed class CharacterSystem
     {
         if (c.Ruler == null || !c.Ruler.Alive || c.Ruler.Country != c)
         {
-            var r = _game.Rules.Characters.ChooseSuccessor(_game, c, null) ?? Generate(c, false, 35 + _game.Rng.Next(20));
+            var r = _game.Rules.Characters.ChooseSuccessor(_game, c, null) ?? Generate(c, false, 35 + _game.Rngs.Characters.Next(20));
             c.Ruler = r;
         }
         if (c.Heir != null && (!c.Heir.Alive || c.Heir.Country != c || c.Heir == c.Ruler)) c.Heir = null;
@@ -340,8 +340,8 @@ public sealed class CharacterSystem
         var rules = _game.Rules.Characters;
         foreach (var c in w.Characters.Where(c => c.Alive).ToList())
         {
-            if (_game.Rng.NextDouble() < rules.YearlyDeathChance(_game, c)) { Kill(c); continue; }
-            if (c.Female && _game.Rng.NextDouble() < rules.YearlyBirthChance(_game, c)) Birth(c);
+            if (_game.Rngs.Characters.NextDouble() < rules.YearlyDeathChance(_game, c)) { Kill(c); continue; }
+            if (c.Female && _game.Rngs.Characters.NextDouble() < rules.YearlyBirthChance(_game, c)) Birth(c);
         }
     }
 
@@ -353,7 +353,7 @@ public sealed class CharacterSystem
         var child = new Character
         {
             Country = country,
-            Female = _game.Rng.NextDouble() < 0.5,
+            Female = _game.Rngs.Characters.NextDouble() < 0.5,
             Mother = mother,
             Father = father,
             BirthDate = _game.World.Date,
@@ -363,10 +363,10 @@ public sealed class CharacterSystem
         foreach (var stat in _game.Data.Defines.CharacterStats)
         {
             double parentAvg = ((father?.Stats.GetValueOrDefault(stat) ?? 5) + mother.Stats.GetValueOrDefault(stat)) / 2;
-            child.Stats[stat] = Math.Clamp(Math.Round(parentAvg + _game.Rng.Next(-2, 3)), 0, 20);
+            child.Stats[stat] = Math.Clamp(Math.Round(parentAvg + _game.Rngs.Characters.Next(-2, 3)), 0, 20);
         }
         foreach (var t in mother.Traits.Concat(father?.Traits ?? new List<Trait>()))
-            if (t.InheritChance > 0 && _game.Rng.NextDouble() < t.InheritChance) AddTrait(child, t);
+            if (t.InheritChance > 0 && _game.Rngs.Characters.NextDouble() < t.InheritChance) AddTrait(child, t);
         Register(child);
         mother.Children.Add(child);
         father?.Children.Add(child);

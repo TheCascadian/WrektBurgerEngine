@@ -38,8 +38,8 @@ public sealed class CustomCombat : ICombatModel
         defendPower *= 1 + b.Location.Terrain.DefenseModifier + b.Location.Fort * game.Data.Defines.FortDefenseBonus;
 
         // 3. a bit of luck
-        attackPower *= 0.8 + 0.4 * game.Rng.NextDouble();
-        defendPower *= 0.8 + 0.4 * game.Rng.NextDouble();
+        attackPower *= 0.8 + 0.4 * game.Rngs.Combat.NextDouble();
+        defendPower *= 0.8 + 0.4 * game.Rngs.Combat.NextDouble();
 
         // 4. spread the damage over the enemy frontline: strength (men) and organisation
         foreach (var d in defenders) CombatMath.Damage(b, d, attackPower * 0.02 / defenders.Count, attackPower * 0.1 / defenders.Count);

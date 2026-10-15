@@ -863,7 +863,7 @@ public sealed partial class DiplomacySystem
     // Save
     // =============================================================================================
 
-    private static string F(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
 
     private void SaveWarGoals(Node root)
     {

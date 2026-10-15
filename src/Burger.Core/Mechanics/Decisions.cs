@@ -131,7 +131,7 @@ public sealed class DecisionSystem
         {
             if (d.AiWillDo == null || !CanTake(d, c)) continue;
             double w = _game.Script.EvalWeight(d.AiWillDo, Ctx(d, c), 0);
-            if (w > 0 && _game.Rng.NextDouble() < Math.Min(1, w * _game.Data.Defines.Get("ai_decision_speed", 0.1))) { Take(d, c); return; }
+            if (w > 0 && _game.Rngs.Decisions.NextDouble() < Math.Min(1, w * _game.Data.Defines.Get("ai_decision_speed", 0.1))) { Take(d, c); return; }
         }
     }
 }

@@ -254,7 +254,7 @@ public sealed class FocusSystem
 
     private void AiPick(Country c)
     {
-        if (_game.Rng.NextDouble() > Rules.AiStartChance(_game, c)) return;
+        if (_game.Rngs.Focus.NextDouble() > Rules.AiStartChance(_game, c)) return;
         var options = new List<(FocusDef F, double W)>();
         foreach (var f in FocusesOf(c))
         {
@@ -264,7 +264,7 @@ public sealed class FocusSystem
             if (w > 0) options.Add((f, w));
         }
         if (options.Count == 0) return;
-        double r = _game.Rng.NextDouble() * options.Sum(o => o.W);
+        double r = _game.Rngs.Focus.NextDouble() * options.Sum(o => o.W);
         foreach (var (f, w) in options)
         {
             r -= w;

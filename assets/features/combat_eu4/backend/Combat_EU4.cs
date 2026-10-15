@@ -31,7 +31,7 @@ public sealed class Eu4Combat : ICombatModel
         var frontD = CombatMath.Frontline(b.Defenders, width);
         if (frontA.Count == 0 || frontD.Count == 0) return;
 
-        int rollA = game.Rng.Next(10), rollD = game.Rng.Next(10);
+        int rollA = game.Rngs.Combat.Next(10), rollD = game.Rngs.Combat.Next(10);
         double skillA = CombatMath.GeneralSkill(game, b.Attackers), skillD = CombatMath.GeneralSkill(game, b.Defenders);
         // general pips: difference in skill, halved (EU4 generals have 0-6 pips)
         double pipsA = Math.Max(0, (skillA - skillD) / 2), pipsD = Math.Max(0, (skillD - skillA) / 2);

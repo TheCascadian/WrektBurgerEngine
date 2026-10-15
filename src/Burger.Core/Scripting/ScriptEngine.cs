@@ -506,7 +506,7 @@ public sealed class ScriptEngine
                 {
                     double chance = ResolveNumber(n.GetString("chance"), ctx, 50);
                     if (chance <= 1 && n.GetString("chance")?.Contains('.') == true) chance *= 100;
-                    if (_game.Rng.NextDouble() * 100 < chance) Execute(n, ctx, ChanceKeys);
+                    if (_game.Rngs.Script.NextDouble() * 100 < chance) Execute(n, ctx, ChanceKeys);
                     return;
                 }
             case "random_list":
@@ -538,7 +538,7 @@ public sealed class ScriptEngine
             if (prefix == "random")
             {
                 if (items.Count == 0) return;
-                var pick = items[_game.Rng.Next(items.Count)];
+                var pick = items[_game.Rngs.Script.Next(items.Count)];
                 Execute(n, ctx.Enter(pick), IteratorReservedKeys);
             }
             else
@@ -576,7 +576,7 @@ public sealed class ScriptEngine
         }
         double total = options.Sum(o => o.W);
         if (total <= 0) return;
-        double r = _game.Rng.NextDouble() * total;
+        double r = _game.Rngs.Script.NextDouble() * total;
         foreach (var (w, block) in options)
         {
             r -= w;

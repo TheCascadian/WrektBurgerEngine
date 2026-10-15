@@ -316,7 +316,7 @@ public sealed partial class PoliticsSystem
             }
         }
         var leaving = PartiesOf(c).SelectMany(FactionsOf).Where(f => RestlessMonths(f) > 0 && CanSplinter(f))
-            .OrderByDescending(FactionInfluence).FirstOrDefault(f => _game.Rng.NextDouble() < SplinterChance(c, f));
+            .OrderByDescending(FactionInfluence).FirstOrDefault(f => _game.Rngs.Politics.NextDouble() < SplinterChance(c, f));
         if (leaving != null && Splinter(c, leaving) != null) changed = true;
         if (!c.IsPlayer) AiFactions(c);
         if (changed) _modsDirty.Add(c);
@@ -371,7 +371,7 @@ public sealed partial class PoliticsSystem
     private bool GovernmentCollapsed(Country c)
     {
         double chance = CollapseChance(c);
-        return chance > 0 && _game.Rng.NextDouble() < chance;
+        return chance > 0 && _game.Rngs.Politics.NextDouble() < chance;
     }
 
     private IEnumerable<(string Source, string Key, double Value)> FactionModifierSources(Country c)

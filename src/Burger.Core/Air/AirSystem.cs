@@ -604,7 +604,7 @@ public sealed class AirSystem
     }
 
     // ------------------------------------------------------------------------------------- save
-    private static string F(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
     private static string I(int v) => v.ToString(CultureInfo.InvariantCulture);
 
     private void Save(Node root)

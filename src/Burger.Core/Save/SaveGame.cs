@@ -11,7 +11,7 @@ namespace Burger.Core.Save;
 /// </summary>
 public static class SaveGame
 {
-    private static string F(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
     private static string I(int v) => v.ToString(CultureInfo.InvariantCulture);
 
     public static void Save(Game game, string path)

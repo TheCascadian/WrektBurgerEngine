@@ -124,7 +124,7 @@ public sealed partial class PoliticsSystem
     private void AiLaws(Country c)
     {
         if (!LawsEnabled || LawGroups.Count == 0) return;
-        var g = LawGroups[_game.Rng.Next(LawGroups.Count)];
+        var g = LawGroups[_game.Rngs.Politics.Next(LawGroups.Count)];
         if (LawCooldownLeft(c, g) > 0) return;
         var current = LawOf(c, g);
         double Weight(LawDef l) => l.AiWillDo == null ? (l == current ? 1 : 0) : _game.Script.EvalWeight(l.AiWillDo, _game.Context(c), 0);
@@ -183,7 +183,7 @@ public sealed partial class PoliticsSystem
             int have = list.Count(ch => (OrganizationOf(ch, c) ?? MinisterParty(ch)) == org);
             for (int i = have; i < 3 + Math.Min(2, factions.Count); i++)
             {
-                var ch = _game.Characters.Generate(c, null, 35 + _game.Rng.Next(30));
+                var ch = _game.Characters.Generate(c, null, 35 + _game.Rngs.Politics.Next(30));
                 SetAffiliation(ch, org, factions.Count > 0 ? factions[i % factions.Count].Key : null);
                 list.Add(ch);
             }

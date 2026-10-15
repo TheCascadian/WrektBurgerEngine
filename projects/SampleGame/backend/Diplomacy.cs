@@ -194,9 +194,9 @@ public class GameDiplomacyRules : DiplomacyRules
         if (game.Diplomacy.WarExhaustion(ally) >= game.Data.Defines.Get("exhausted_refuse_war", 12)) return false;
         double opinion = game.Diplomacy.Opinion(ally, caller);
         // a country with a history joins the wars its history cares about (the enemy is one it has an awakened ambition on) - the rest it leaves alone
-        if (game.AiProfiles.Enabled && game.Rng.NextDouble() > game.Rules.AiProfile.JoinFactor(game, ally, enemyLeader, caller, asAttacker)) return false;
+        if (game.AiProfiles.Enabled && game.Rngs.Diplomacy.NextDouble() > game.Rules.AiProfile.JoinFactor(game, ally, enemyLeader, caller, asAttacker)) return false;
         if (!asAttacker) return opinion > -50; // defensive calls are usually honoured
-        return opinion > 0 && game.Rng.NextDouble() < 0.75;
+        return opinion > 0 && game.Rngs.Diplomacy.NextDouble() < 0.75;
     }
 
     /// <summary>War-score value of a location (capitals are worth more).</summary>
@@ -308,7 +308,7 @@ public class GameDiplomacyRules : DiplomacyRules
     {
         var d = game.Data.Defines;
         if (!PrefersPuppets(game, overlord) || game.World.WarsOf(overlord).Any()) return false;
-        return game.Diplomacy.LibertyDesire(subject) >= d.Get("grant_independence_liberty", 60) && game.Rng.NextDouble() < d.Get("overlord_release_chance", 0.03);
+        return game.Diplomacy.LibertyDesire(subject) >= d.Get("grant_independence_liberty", 60) && game.Rngs.Diplomacy.NextDouble() < d.Get("overlord_release_chance", 0.03);
     }
 
     /// <summary>

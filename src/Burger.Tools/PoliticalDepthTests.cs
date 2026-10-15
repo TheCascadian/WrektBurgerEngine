@@ -213,7 +213,7 @@ public static partial class Program
                 double chance = P.CollapseChance(govt);
                 Check(chance > 0 && chance < 1, $"depth: a divided government risks collapse ({chance:P0} a month), not certainty");
                 int fell = 0;
-                for (int k = 0; k < 200; k++) if (P.CollapseChance(govt) > 0 && g.Rng.NextDouble() < chance) fell++;
+                for (int k = 0; k < 200; k++) if (P.CollapseChance(govt) > 0 && g.Rngs.Politics.NextDouble() < chance) fell++;
                 Check(fell > 0 && fell < 200, "depth: collapse happens in some months and not others");
             }
         }

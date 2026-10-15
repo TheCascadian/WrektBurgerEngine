@@ -25,7 +25,7 @@ public sealed class ImperatorCombat : ICombatModel
         if (frontA.Count == 0 || frontD.Count == 0) return;
 
         double martialA = CombatMath.GeneralSkill(game, b.Attackers), martialD = CombatMath.GeneralSkill(game, b.Defenders);
-        int rollA = 1 + game.Rng.Next(6), rollD = 1 + game.Rng.Next(6);
+        int rollA = 1 + game.Rngs.Combat.Next(6), rollD = 1 + game.Rngs.Combat.Next(6);
         double tacticA = 1 + 0.1 * (rollA - rollD) + 0.05 * (martialA - martialD) - (CombatMath.RiverCrossing(b) ? def.RiverAttackPenalty : 0);
         double tacticD = 1 + 0.1 * (rollD - rollA) + 0.05 * (martialD - martialA) + b.Location.Terrain.DefenseModifier + b.Location.Fort * def.FortDefenseBonus;
 

@@ -45,6 +45,7 @@ public static partial class Program
             {
                 "new" => New(rest),
                 "validate" => Validate(rest),
+                "validate-par" => ValidatePar(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
                 "run" => Run(rest),
                 "export" => Export(rest),
@@ -479,7 +480,6 @@ public static partial class Program
         Console.WriteLine($"  within band {ok}, too rare {low}, too common {high}, not arisen {na}; weighted score {(allW > 0 ? okW / allW : 0):P0}");
     }
 
-    // ===============================================================================================
     private static int Validate(List<string> args)
     {
         if (Opt(args, "--seeds") is { } seedList) return ValidateSeeds(args, seedList);
@@ -489,7 +489,8 @@ public static partial class Program
         Log.EchoToConsole = false;
         Console.WriteLine($"Validating {GameDir(project)}");
         var sw = Stopwatch.StartNew();
-        var game = Game.Load(GameDir(project), compileScripts: true, seed: int.Parse(Opt(args, "--seed") ?? "1234"));
+        int runSeed = int.Parse(Opt(args, "--seed") ?? "1234");
+        var game = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
         Console.WriteLine($"  loaded in {sw.ElapsedMilliseconds} ms: {game.World.Countries.Count} countries, {game.World.States.Count} states, " +
                           $"{game.World.Locations.Count} locations, {game.World.Characters.Count} characters, {game.World.Divisions.Count} divisions, " +
                           $"{game.Data.Events.Count} events, {game.Mods.Scripts.Count} C# scripts");
@@ -497,6 +498,10 @@ public static partial class Program
         int loadErrors = Log.ErrorCount;
         int expectedSelfTestErrors = 0;
 
+        if (Opt(args, "--parallelism") is { } parText && int.Parse(parText) > 0) Burger.Core.AI.AiSystem.Parallelism = int.Parse(parText);
+        int digestEvery = int.Parse(Opt(args, "--digest") ?? "0");
+        int reloadAt = int.Parse(Opt(args, "--reload-at") ?? "0"); // save here, load into a fresh game and play both on (validate-par: save/load equality)
+        Game? reloaded = null;
         Console.WriteLine($"Simulating {days} days (all AI)...");
         if (Opt(args, "--bias") is { } biasText) game.HistoricalBias = double.Parse(biasText, System.Globalization.CultureInfo.InvariantCulture);
         game.StartNewGame(null);
@@ -514,6 +519,22 @@ public static partial class Program
         {
             for (int h = 0; h < 24; h++) game.Tick();
             recorder?.Daily();
+            if (reloadAt > 0 && d + 1 == reloadAt)
+            {
+                string savePath = Path.Combine(Path.GetTempPath(), $"burger_reload_{Environment.ProcessId}.sav");
+                SaveGame.Save(game, savePath);
+                reloaded = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
+                reloaded.StartNewGame(null);
+                SaveGame.Load(reloaded, savePath);
+                try { File.Delete(savePath); } catch { }
+                Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
+            }
+            else if (reloaded != null)
+            {
+                for (int h = 0; h < 24; h++) reloaded.Tick();
+                if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
+            }
+            if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"DIGEST|{d + 1}|{StateDigest(game)}");
             if (watchTags.Length > 0 && game.World.Date.Day == 1 && game.World.Date.Month % 6 == 1 && game.World.Date.Hour == 0 && game.Politics.Enabled)
                 foreach (var wt in watchTags.Select(t => game.World.GetCountry(t)).Where(c => c != null))
                     Console.WriteLine($"  watch {game.World.Date.ToDisplay()} {wt!.Tag} {game.Politics.Of(wt).Ruling} stab {game.Rules.Politics.StabilityOf(game, wt):0} " +

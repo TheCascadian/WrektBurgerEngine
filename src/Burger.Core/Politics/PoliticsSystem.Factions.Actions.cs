@@ -14,7 +14,7 @@ public sealed partial class PoliticsSystem
     private const double MinWeight = 0.25, MaxWeight = 8;
 
     private void SetWeight(GenericScope f, double w)
-        => f.Attributes["weight"] = Math.Clamp(w, MinWeight, MaxWeight).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        => f.Attributes["weight"] = Math.Clamp(w, MinWeight, MaxWeight).ToString("R", System.Globalization.CultureInfo.InvariantCulture);
 
     private string? CannotReshape(Country c, GenericScope faction, string what)
     {

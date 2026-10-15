@@ -8,9 +8,9 @@ namespace Burger.Core.AI;
 /// Default AI. Every method is virtual: subclass it in a C# script and assign <c>Game.Ai = new MyAi(Game);</c>
 /// to replace any part of it.
 /// The per-country work runs on several threads (<see cref="Parallelism"/>); country-scoped randomness uses
-/// deterministic per-country streams (<see cref="CountryRng"/>) instead of the shared <see cref="Game.Rng"/>.
+/// per-country named streams (<c>ai:TAG</c>, see <see cref="RngService"/>), also ambient for every system the country calls.
 /// Overriding the per-country methods with old signatures still works, but those overrides will draw from the
-/// shared <see cref="Game.Rng"/>: prefer the overloads that take an <see cref="AiRng"/>.
+/// country stream: prefer the overloads that take an <see cref="AiRng"/>.
 /// </summary>
 public class AiSystem
 {
@@ -28,18 +28,13 @@ public class AiSystem
     /// </summary>
     public static int? Parallelism = null;
 
-    private CountryRng? _countryRng;
-    private int _countryRngSeed;
     // DailyTick and MonthlyTick run sequentially. Reuse their work buffer, but
     // rebuild membership each time to observe existence/player changes while
     // preserving the deterministic order of World.Countries.
     private readonly List<Country> _activeAiCountries = new();
 
-    /// <summary>Per-country deterministic random streams, seeded from the last seed passed to <see cref="ResetRng"/>.</summary>
-    protected CountryRng RngStreams => _countryRng ??= new CountryRng(_countryRngSeed);
-
-    /// <summary>Called by <see cref="Game"/> after (re)seeding <see cref="Game.Rng"/> so AI streams match the game seed.</summary>
-    public void ResetRng(int seed) { _countryRngSeed = seed; _countryRng = new CountryRng(seed); }
+    /// <summary>Kept for mods that call it; the AI streams now live in <see cref="Game.Rngs"/>.</summary>
+    public void ResetRng(int seed) { }
 
     // ---- border cache: which countries touch each other's land (the old Borders() scan was O(6400 locations) per pair) ----
     private long _borderStamp = -1;
@@ -94,11 +89,18 @@ public class AiSystem
         if (countries.Count == 0) return;
         if (Parallelism == 1 || countries.Count == 1)
         {
-            foreach (var c in countries) work(c);
+            foreach (var c in countries) WithAiStream(c, work);
             return;
         }
         var options = new ParallelOptions { MaxDegreeOfParallelism = Parallelism ?? Environment.ProcessorCount };
-        Parallel.For(0, countries.Count, options, i => work(countries[i]));
+        Parallel.For(0, countries.Count, options, i => WithAiStream(countries[i], work));
+    }
+
+    /// <summary>Runs one country's work with its own named stream (<c>ai:TAG</c>) as the ambient stream of every system it calls.</summary>
+    private void WithAiStream(Country c, Action<Country> work)
+    {
+        var stream = Game.Rngs.Ai(c);
+        using (RngService.Enter(stream)) work(c);
     }
 
     private List<Country> ActiveAiCountries()
@@ -121,7 +123,7 @@ public class AiSystem
         var countries = ActiveAiCountries();
         ForEachAi(countries, c =>
         {
-            var rng = RngStreams.For(c.Index);
+            var rng = Game.Rngs.Ai(c);
             if ((day + c.Index) % 2 == 0 && military) Game.P("Ai.Military", () => ManageMilitary(c, new AiRng(Game, rng)));
             if ((day + c.Index) % 2 == 1 && navy) Game.P("Ai.Fleets", () => MoveFleets(c));
             if (air) Game.P("Ai.Air", () => AssignAirWings(c));
@@ -138,7 +140,7 @@ public class AiSystem
         if (diplomacy) _ = BorderCache;
         ForEachAi(countries, c =>
         {
-            var rng = RngStreams.For(c.Index);
+            var rng = Game.Rngs.Ai(c);
             var ar = new AiRng(Game, rng);
             if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", c.Tag, () => Recruit(c));
             if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", c.Tag, () => ManageAir(c));
@@ -157,7 +159,7 @@ public class AiSystem
     }
 
     // ------------------------------------------------------------------------------------------- military
-    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rng"/>.</summary>
+    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rngs"/>.</summary>
     public virtual void ManageMilitary(Country c) => ManageMilitary(c, new AiRng(Game, null));
 
     /// <summary>Per-country army/front management. <paramref name="rng"/> is this country's private random stream.</summary>
@@ -311,7 +313,7 @@ public class AiSystem
     public virtual void ManagePopulation(Country c) => Game.Population.AiMonthly(c);
 
     // ------------------------------------------------------------------------------------------- diplomacy
-    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rng"/>.</summary>
+    /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rngs"/>.</summary>
     public virtual void Diplomacy(Country c) => Diplomacy(c, new AiRng(Game, null));
 
     /// <summary>Set BURGER_AI_CHECK=1 to compare the fast diplomacy filter with the full one and log any difference.</summary>
@@ -365,7 +367,7 @@ public class AiSystem
             Log.Info($"AI diplomacy {c.Tag}: " + (stats.Count == 0 ? "no action passed" : string.Join(", ", stats.Select(kv => $"{kv.Key} pass={kv.Value.Pass} w>0={kv.Value.Pos}"))));
         if (options.Count == 0) return;
         double total = options.Sum(o => o.Weight);
-        double r = Game.Rng.NextDouble() * total;
+        double r = Game.Rngs.Diplomacy.NextDouble() * total;
         if (Environment.GetEnvironmentVariable("BURGER_AI_LOG") is { } logTag && logTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && Game.World.Date.Day == 1)
             Console.WriteLine($"AI {Game.World.Date.ToDisplay()} {c.Tag}: total {total:0.0}, top " + string.Join(", ", options.OrderByDescending(o => o.Weight).Take(5).Select(o => $"{o.Action.Key}>{o.Target.Tag} {o.Weight:0.0}")) +
                               "; wars " + string.Join(", ", options.Where(o => o.Action.Key == "declare_war").OrderByDescending(o => o.Weight).Take(4).Select(o => $"{o.Target.Tag} {o.Weight:0.00}")));

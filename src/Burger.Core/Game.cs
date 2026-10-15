@@ -81,8 +81,9 @@ public sealed class Game
 {
     public GameData Data { get; private set; } = new();
     public World World { get; private set; } = new();
-    public Random Rng { get; private set; } = new();
-    /// <summary>The seed that seeded <see cref="Rng"/> (a random one if none was given). Systems with per-entity RNG streams use it.</summary>
+    /// <summary>Named random streams (combat, events, politics, ai:TAG ...). Saved with the game.</summary>
+    public RngService Rngs { get; private set; } = new(0);
+    /// <summary>The seed that seeded <see cref="Rngs"/> (a random one if none was given). Systems with per-entity RNG streams use it.</summary>
     public int Seed { get; private set; } = Environment.TickCount;
     public GameRules Rules { get; } = new();
     /// <summary>The mechanics this game uses (game/features.txt). Systems of missing features do not run.</summary>
@@ -135,6 +136,8 @@ public sealed class Game
     public Burger.Core.Memories.MemorySystem Memory { get; }
     /// <summary>Historical provinces over time (<c>history/geography</c>). Empty and inert unless a project has that folder.</summary>
     public Burger.Core.Geography.GeoRegistry Geo { get; } = new();
+    /// <summary>Provinces that split and merge while the simulation runs (only active when the project has a geography layer).</summary>
+    public Burger.Core.Geography.GeoDynamics GeoDynamics { get; }
     /// <summary>The Figures: the animated bodies (the human rig and its idle/walk/run clips) everything that shows a person draws (see <see cref="Burger.Core.Figures.FigureSystem"/>).</summary>
     public Burger.Core.Figures.FigureSystem Figures { get; }
     /// <summary>The Particles: effects from common/particles.txt and the requests to show them (see <see cref="Burger.Core.Particles.ParticleSystem"/>).</summary>
@@ -172,6 +175,7 @@ public sealed class Game
 
     public Game()
     {
+        SaveSections.Add(new Burger.Core.Modding.SaveSection { Name = "rng", Early = true, Write = n => Rngs.Write(n), Read = n => { Rngs.Read(n); if (n.Has("seed")) Seed = Rngs.Seed; } });
         Script = new ScriptEngine(this);
         Events = new EventSystem(this);
         Characters = new CharacterSystem(this);
@@ -187,6 +191,7 @@ public sealed class Game
         Support = new Burger.Core.Warfare.SupportSystem(this);
         Politics = new Burger.Core.Politics.PoliticsSystem(this);
         Population = new Burger.Core.Population.PopulationSystem(this);
+        GeoDynamics = new Burger.Core.Geography.GeoDynamics(this);
         Tech = new Burger.Core.Technology.TechSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
@@ -225,12 +230,15 @@ public sealed class Game
     /// <param name="gameRoot">Path to the game folder.</param>
     /// <param name="compileScripts">Compile C# scripts in scripts/ (disable for pure data validation).</param>
     /// <param name="seed">RNG seed for deterministic ticks; defaults to the current time when null.</param>
+    /// <summary>Raised on the loading thread as soon as the map arrays and locations exist, while the rest of the game is still loading. A renderer can start its CPU-only work here.</summary>
+    public static event Action<Game>? MapLoaded;
+    internal void RaiseMapLoaded() => MapLoaded?.Invoke(this);
+
     public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null)
     {
         var game = new Game();
         game.Seed = seed ?? Environment.TickCount;
-        game.Rng = new Random(game.Seed);
-        game.Ai.ResetRng(game.Seed); // per-country AI streams derive from the same seed (deterministic under parallel ticks)
+        game.Rngs.Reset(game.Seed);
         game.Data.Root = Path.GetFullPath(gameRoot);
         if (!File.Exists(Path.Combine(game.Data.Root, "game.txt")) && !Directory.Exists(Path.Combine(game.Data.Root, "common")))
             throw new GameLoadException($"'{game.Data.Root}' is not a game folder (no game.txt or common/ folder found).");
@@ -244,7 +252,6 @@ public sealed class Game
         game.AiProfiles.LoadDefinitions(game.Data);
         game.Figures.Load(game.Data.Root);
         if (compileScripts) game.Mods.CompileAndLoad();
-        game.Ai.ResetRng(game.Seed); // mods may have replaced Game.Ai (OnLoad): reseed the active AI's streams
         WorldLoader.LoadWorld(game);
         game.Commodities.LoadWorld();
         game.Diplomacy.LoadDemilitarized();
@@ -490,6 +497,7 @@ public sealed class Game
         }
         if (Features.Has(F.Economy) || Features.Has(F.Military)) P("Economy.MonthlyTick", () => Economy.MonthlyTick()); // gold (economy) and manpower (military)
         if (Features.Has(F.LendLease)) P("Support.MonthlyTick", () => Support.MonthlyTick());
+        if (Geo.Enabled) P("Geo.MonthlyTick", () => GeoDynamics.MonthlyTick());
         P("Memory.MonthlyTick", () => Memory.MonthlyTick());
         P("Resources.MonthlyTick", () => Resources.MonthlyTick());
         P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick());

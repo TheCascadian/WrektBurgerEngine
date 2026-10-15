@@ -278,7 +278,7 @@ public sealed partial class PoliticsSystem
     {
         foreach (var k in p.Popularity.Keys.ToList()) if (p.Popularity[k] < 0 || double.IsNaN(p.Popularity[k])) p.Popularity[k] = 0;
         double sum = p.Popularity.Values.Sum();
-        if (sum <= 0) return;
+        if (sum <= 0 || Math.Abs(sum - 1) < 1e-12) return; // already 100%: dividing again only shifts the last bits (and a reloaded save would then differ from the game it came from)
         foreach (var k in p.Popularity.Keys.ToList()) p.Popularity[k] /= sum;
     }
 
@@ -590,13 +590,21 @@ public sealed partial class PoliticsSystem
     private readonly HashSet<string> _modifierKeys = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
     private readonly HashSet<Country> _modsDirty = new();
+    private long _modsStamp = long.MinValue;
 
     /// <summary>Modifier total this system adds to a scope (used by <see cref="Mechanics.ModifierSystem.Sum"/>).</summary>
     public double ModifierValue(IScope scope, string key)
     {
         if (scope is not Country c || !_modifierKeys.Contains(key) || !Enabled) return 0;
-        if (_modsDirty.Remove(c) || !_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeModifiers(c);
-        return m.GetValueOrDefault(key);
+        // The cache is rebuilt every game hour, so it is a pure function of the state: a game loaded from a save (empty cache) and the game that was saved agree.
+        // The lock is re-entrant: the AI ticks run on several threads and a computation can ask for other modifiers.
+        lock (_mods)
+        {
+            long stamp = _game.World.Date.TotalHours;
+            if (stamp != _modsStamp) { _mods.Clear(); _modsDirty.Clear(); _modsStamp = stamp; }
+            if (_modsDirty.Remove(c) || !_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeModifiers(c);
+            return m.GetValueOrDefault(key);
+        }
     }
 
     /// <summary>Where a country's political modifiers come from (for tooltips): (source, key, value).</summary>
@@ -628,12 +636,14 @@ public sealed partial class PoliticsSystem
 
     /// <summary>
     /// How wealthy a country is compared to the world: its wealth per person (rule WealthPerPerson) divided by the
-    /// median of all countries (1 = typical, 0.3 = poor, 2 = rich; recounted monthly).
+    /// median of all countries (1 = typical, 0.3 = poor, 2 = rich; recounted daily).
     /// </summary>
     public double WealthIndex(Country c)
     {
         int today = _game.World.Date.TotalDays;
-        if (_wealthDay == int.MinValue || today - _wealthDay >= 30 || today < _wealthDay)
+        lock (_wealth)
+        {
+        if (_wealthDay != today) // recounted daily (a pure function of the state, so a loaded save agrees with the game it came from)
         {
             _wealth.Clear();
             _wealthDay = today;
@@ -643,6 +653,7 @@ public sealed partial class PoliticsSystem
             foreach (var (country, wealth) in all) _wealth[country] = median > 0 ? Math.Clamp(wealth / median, 0, 3) : 1;
         }
         return _wealth.GetValueOrDefault(c, 1);
+        }
     }
 
     private Dictionary<string, double> ComputeModifiers(Country c)
@@ -712,7 +723,7 @@ public sealed partial class PoliticsSystem
     // Save
     // =============================================================================================
 
-    private static string F(double v) => v.ToString("0.#####", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
 
     private void Save(Node root)
     {
@@ -795,7 +806,8 @@ public sealed partial class PoliticsSystem
             ReadNumbers(n.Get("popularity"), p.Popularity);
             foreach (var i in Ideologies) if (!p.Popularity.ContainsKey(i.Key)) p.Popularity[i.Key] = 0;
             foreach (var k in p.Popularity.Keys.Where(k => !IdeologyByKey.ContainsKey(k)).ToList()) p.Popularity.Remove(k);
-            Normalize(p);
+            // a save already holds normalized numbers: dividing again would change the last bits and a loaded game would drift from the one that was saved
+            if (Math.Abs(p.Popularity.Values.Sum() - 1) > 1e-6) Normalize(p);
             foreach (var s in n.Get("seats")?.All ?? Enumerable.Empty<Node>()) if (IdeologyByKey.ContainsKey(s.Key) || IsMinorityParty(s.Key)) p.Seats[s.Key] = (int)s.AsDouble();
             if (GameDate.TryParse(n.GetString("last_election"), out var le)) p.LastElection = le;
             if (GameDate.TryParse(n.GetString("next_election"), out var ne)) p.NextElection = ne;
@@ -812,7 +824,7 @@ public sealed partial class PoliticsSystem
             p.RulingOrganization = n.GetString("ruling_organization", "")!;
             p.GovernmentOrganizations.AddRange(n.GetList("government_organizations"));
             if (p.PartyPopularity.Count == 0) InitializePartyPopularity(c, p);
-            else RebuildIdeologyPopularityFromParties(c, p);
+            else if (n.Get("popularity") == null) RebuildIdeologyPopularityFromParties(c, p); // a save holds both sets of numbers exactly: rebuilding would shift the last bits
             if (p.PartySeats.Count == 0) p.PartySeats = DistributeLegacySeats(c, p, p.Seats);
             if (p.GovernmentOrganizations.Count == 0 || string.IsNullOrWhiteSpace(p.RulingOrganization)) AssignGovernmentOrganizations(c, p);
             _state[c] = p;

@@ -21,8 +21,8 @@ public class NavyRules
         bool capitalTarget = target.Type.Category.Equals("capital", StringComparison.OrdinalIgnoreCase);
         double attack = capitalTarget ? Math.Max(shooter.Type.Stat("heavy_attack"), shooter.Type.Stat("light_attack") * 0.3) : shooter.Type.Stat("light_attack") + shooter.Type.Stat("heavy_attack") * 0.5;
         double armor = target.Type.Stat("armor");
-        double hit = game.Rng.NextDouble() < 0.35 ? 1 : 0;
-        return attack * hit * (0.5 + game.Rng.NextDouble()) * 10 / (10 + armor) * shooter.HpFraction;
+        double hit = game.Rngs.Navy.NextDouble() < 0.35 ? 1 : 0;
+        return attack * hit * (0.5 + game.Rngs.Navy.NextDouble()) * 10 / (10 + armor) * shooter.HpFraction;
     }
 
     /// <summary>Chooses what a ship shoots at: screens shield capital ships while they last.</summary>
@@ -36,8 +36,8 @@ public class NavyRules
         // capital ships can only be reached once most screens are gone (screening)
         if (!heavy && pool.Count == 0) pool = alive;
         if (heavy && pool.Count == 0) pool = alive;
-        if (!heavy && screens.Count > 0 && game.Rng.NextDouble() < 0.85) pool = screens;
-        return pool[game.Rng.Next(pool.Count)];
+        if (!heavy && screens.Count > 0 && game.Rngs.Navy.NextDouble() < 0.85) pool = screens;
+        return pool[game.Rngs.Navy.Next(pool.Count)];
     }
 
     /// <summary>A side whose ships have less than this share of their hit points left retreats.</summary>
@@ -507,7 +507,7 @@ public sealed class NavySystem
     private static double Dist(Location a, Location b) => Math.Sqrt((a.CenterX - b.CenterX) * (a.CenterX - b.CenterX) + (a.CenterY - b.CenterY) * (a.CenterY - b.CenterY));
 
     // ------------------------------------------------------------------------------------- save
-    private static string F(double v) => v.ToString("0.####", CultureInfo.InvariantCulture);
+    private static string F(double v) => v.ToString("R", CultureInfo.InvariantCulture);
     private static string I(int v) => v.ToString(CultureInfo.InvariantCulture);
 
     private void Save(Node root)

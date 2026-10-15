@@ -139,7 +139,7 @@ public class GameAi : AiSystem
                 .Where(ch => !used.Contains(ch) && ch.Age(now) >= Game.Data.Defines.AdultAge && !ch.IsRuler && !ch.Female)
                 .OrderByDescending(ch => ch.IsGeneral).ThenByDescending(ch => ch.GetStat(stat)).FirstOrDefault();
             if (candidate == null && !Game.Features.Has(FeatureSet.Characters)) continue; // no characters: armies have no generals
-            candidate ??= Game.Characters.Generate(c, false, 35 + Game.Rng.Next(20));
+            candidate ??= Game.Characters.Generate(c, false, 35 + Game.Rngs.Diplomacy.Next(20));
             Game.Warfare.SetGeneral(army, candidate);
         }
     }
@@ -196,7 +196,7 @@ public class GameAi : AiSystem
         // (a country's history is pursued every month, not only on the months its diplomats are busy)
         if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Pursuit(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } early) { Game.Diplomacy.Use(early.Action, c, early.Target); return; }
         if (Game.AiProfiles.Enabled && Game.Rules.AiProfile.Courtship(Game, c, Game.AiProfiles.PersonalityOf(c)) is { } court) { Game.Diplomacy.Use(court.Action, c, court.Target); return; }
-        if (Game.Rng.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
+        if (Game.Rngs.Diplomacy.NextDouble() > Game.Data.Defines.AiDiplomacyChance) return;
         var options = new List<(ActionDef Action, Country Target, double Weight)>();
         var personality = Game.AiProfiles.PersonalityOf(c);
         var profiles = Game.AiProfiles.Enabled ? Game.Rules.AiProfile : null;
@@ -225,7 +225,7 @@ public class GameAi : AiSystem
         }
         if (options.Count == 0) return;
         double total = options.Sum(o => o.Weight);
-        double r = Game.Rng.NextDouble() * total;
+        double r = Game.Rngs.Diplomacy.NextDouble() * total;
         if (Environment.GetEnvironmentVariable("BURGER_AI_LOG") is { } logTag && logTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && Game.World.Date.Day == 1)
             Console.WriteLine($"AI {Game.World.Date.ToDisplay()} {c.Tag}: total {total:0.0}, top " + string.Join(", ", options.OrderByDescending(o => o.Weight).Take(5).Select(o => $"{o.Action.Key}>{o.Target.Tag} {o.Weight:0.0}")) +
                               "; wars " + string.Join(", ", options.Where(o => o.Action.Key == "declare_war").OrderByDescending(o => o.Weight).Take(4).Select(o => $"{o.Target.Tag} {o.Weight:0.00}")));

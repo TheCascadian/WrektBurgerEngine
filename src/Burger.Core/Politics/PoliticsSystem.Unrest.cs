@@ -63,14 +63,14 @@ public sealed partial class PoliticsSystem
             g.Strength = Math.Clamp(g.Strength + (0.5 - g.Satisfaction) * d.Get("interest_strength_rate", 4), 5, 100);
         }
         double chance = Rules.MovementIncidentChance(_game, c, m);
-        if (chance > 0 && _game.Rng.NextDouble() < chance) Incident(c, m, ideology);
+        if (chance > 0 && _game.Rngs.Politics.NextDouble() < chance) Incident(c, m, ideology);
     }
 
     /// <summary>A violent act from the group that is denied most: protests for freedom, riots and bombings for security, a mutiny for the army.</summary>
     private void Incident(Country c, Movement m, IdeologyDef ideology)
     {
         var weights = m.Groups.Select(g => g.Strength * (1 - g.Satisfaction) + 1).ToList();
-        double roll = _game.Rng.NextDouble() * weights.Sum();
+        double roll = _game.Rngs.Politics.NextDouble() * weights.Sum();
         int pick = 0;
         for (; pick < weights.Count - 1 && roll >= weights[pick]; pick++) roll -= weights[pick];
         var group = m.Groups[pick];
@@ -240,9 +240,9 @@ public sealed partial class PoliticsSystem
                 if (DemandOf(c, p, i.Key) == null && !Rules.CanSeizePower(_game, c, i)) continue;
                 // (the civil war first: in a poor, unstable or war-weary country it needs less support than a coup)
                 double chance = Rules.CivilWarChance(_game, c, i, pop);
-                if (chance > 0 && _game.Rng.NextDouble() < chance) { Revolt(c, i.Key, pop, "civil war"); break; }
+                if (chance > 0 && _game.Rngs.Politics.NextDouble() < chance) { Revolt(c, i.Key, pop, "civil war"); break; }
                 double coup = Rules.CoupChance(_game, c, i, pop);
-                if (coup > 0 && _game.Rng.NextDouble() < coup) { Coup(c, i.Key); break; }
+                if (coup > 0 && _game.Rngs.Politics.NextDouble() < coup) { Coup(c, i.Key); break; }
             }
         }
     }
@@ -331,7 +331,7 @@ public sealed partial class PoliticsSystem
         var (success, cost) = Rules.CrackdownOdds(_game, c, m);
         Pay(c, SuppressCost);
         AddStability(c, -cost);
-        bool worked = _game.Rng.NextDouble() < success;
+        bool worked = _game.Rngs.Politics.NextDouble() < success;
         if (worked)
         {
             m.Progress = Math.Max(0, m.Progress - d.Get("suppress_movement_progress", 25));
@@ -373,9 +373,9 @@ public sealed partial class PoliticsSystem
         {
             if (m.Progress < 40 && m.Grievance < 60) continue;
             // give in to legalisation; a government that could work with the movement may hand it power, the rest fight it
-            if (m.Demand == MovementDemand.Legalize && _game.Rng.NextDouble() < 0.5) GiveIn(m);
-            else if (_game.Rng.NextDouble() < Rules.AiGivesIn(_game, c, m, PopularityOf(c, m.Ideology))) GiveIn(m);
-            else if (m.Progress >= 40 && m.Grievance >= 40 && m.Crackdowns < 3 && CannotConcede(m) == null && _game.Rng.NextDouble() < 0.25) Concede(m);
+            if (m.Demand == MovementDemand.Legalize && _game.Rngs.Politics.NextDouble() < 0.5) GiveIn(m);
+            else if (_game.Rngs.Politics.NextDouble() < Rules.AiGivesIn(_game, c, m, PopularityOf(c, m.Ideology))) GiveIn(m);
+            else if (m.Progress >= 40 && m.Grievance >= 40 && m.Crackdowns < 3 && CannotConcede(m) == null && _game.Rngs.Politics.NextDouble() < 0.25) Concede(m);
             else if (m.Progress >= 60 && CannotSuppress(m) == null) Suppress(m);
         }
     }
@@ -514,7 +514,7 @@ public sealed partial class PoliticsSystem
             var rest = mine.Where(d => d.Owner == c && !d.InBattle).OrderBy(d => d.Id).ToList();
             for (int k = 0; defected < want && k < rest.Count; k++)
             {
-                if (rest.Count - k > want - defected && _game.Rng.NextDouble() < 0.5) continue;
+                if (rest.Count - k > want - defected && _game.Rngs.Politics.NextDouble() < 0.5) continue;
                 Defect(rest[k], rebel, true);
                 defected++;
             }

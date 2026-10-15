@@ -58,7 +58,7 @@ public class GameTechRules : TechRules
     {
         double score = 10 - Math.Min(9, Math.Max(0, game.World.Date.Year - t.Year)) * 0.2;
         score *= game.AiProfiles.CategoryWeight(c, t.Category);
-        score += game.Rng.NextDouble() * 0.5;
+        score += game.Rngs.Tech.NextDouble() * 0.5;
         return score / Math.Max(1, Cost(game, c, t) / 40.0);
     }
 }

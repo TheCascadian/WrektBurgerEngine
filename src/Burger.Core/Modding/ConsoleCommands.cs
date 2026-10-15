@@ -27,6 +27,9 @@ public sealed class ConsoleCommands
     {
         line = line.Trim();
         if (line.Length == 0) return "";
+        // "a; b; c" runs each command in turn (effect/trigger keep the whole line: their script text may hold ';')
+        if (line.Contains(';') && line.Split(' ', 2)[0] is not ("effect" or "trigger" or "e" or "t"))
+            return string.Join("\n", line.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(Execute));
         int sp = line.IndexOf(' ');
         string cmd = sp < 0 ? line : line[..sp];
         string rest = sp < 0 ? "" : line[(sp + 1)..].Trim();

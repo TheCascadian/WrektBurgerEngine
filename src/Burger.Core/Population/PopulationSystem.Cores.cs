@@ -317,7 +317,7 @@ public sealed partial class PopulationSystem
             foreach (var b in options.OrderBy(GoldCost))
             {
                 if (c.Gold < GoldCost(b) + reserve || CannotGoldBuild(c, b, s) != null) continue;
-                if (_game.Rng.NextDouble() < 0.5) continue;
+                if (_game.Rngs.Population.NextDouble() < 0.5) continue;
                 GoldBuild(c, b, s);
                 return;
             }
@@ -326,12 +326,12 @@ public sealed partial class PopulationSystem
     /// <summary>Production games: now and then the AI queues a building that helps its people (modern buildings).</summary>
     private void AiProductionBuild(Country c)
     {
-        if (!_game.Features.Has(FeatureSet.Production) || c.Construction.Count >= 4 || _game.Rng.NextDouble() > 0.25) return;
+        if (!_game.Features.Has(FeatureSet.Production) || c.Construction.Count >= 4 || _game.Rngs.Population.NextDouble() > 0.25) return;
         var options = _game.Data.BuildingTypes.Values.Where(b => _buildingMods.ContainsKey(b.Key) || _buildingCountryMods.ContainsKey(b.Key)).ToList();
         if (options.Count == 0) return;
         foreach (var s in c.OwnedStates.OrderByDescending(TotalOf).Take(3))
         {
-            var b = options[_game.Rng.Next(options.Count)];
+            var b = options[_game.Rngs.Population.Next(options.Count)];
             if (_game.Production.QueueBuilding(c, b, s) == null) return;
         }
     }
