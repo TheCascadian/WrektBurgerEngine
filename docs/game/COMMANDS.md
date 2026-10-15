@@ -102,7 +102,58 @@ dotnet src/Burger.Game/bin/Release/net8.0/Burger.Game.dll --game projects/Earth1
 dotnet src/Burger.Studio/bin/Release/net8.0/BurgerStudio.dll
 ```
 
-Common runtime options are `--game <folder>`, `--observe`, `--perf`, `--size WIDTHxHEIGHT`, `--log-dir <folder>`, and `--tag <TAG>` where supported. Runtime errors normally go to `logs/error.log`.
+### Game flags
+
+Run with `./BurgerEngine.sh run <Project> <flags>` or the `Burger.Game.dll` directly. A bare folder argument also works as `--game`.
+
+| Flag | Meaning |
+| --- | --- |
+| `--game <folder>` | Game folder (default: `game` next to the exe). |
+| `--tag <TAG>` | Skip the menu and play as that country tag. |
+| `--observe` | Skip the menu and watch the AI. |
+| `--load <save>` | Load a save file. |
+| `--size WxH` | Window size, for example `1600x900`. |
+| `--log-dir <folder>` | Folder for `error.log` and `--perf` output. |
+| `--perf` | Log per-stage frame timings. |
+| `--bench` | Scripted render benchmark (see below). Implies `--observe`, vsync and frame cap off. |
+| `--speed <n>` | Starting game speed. |
+| `--open <screen>` | Open a screen at start. |
+| `--exec <command>` | Run a console command at start; repeatable. |
+| `--bias <0-1>` | Historical bias for this run (default: the player's setting). |
+| `--mapmode <mode>` | Start in a map mode, for example `terrain`. |
+| `--zoom <n>` | Starting camera zoom. |
+| `--lookat <lon,lat>` | Aim the camera at a longitude and latitude (degrees); `--zoom` sets the distance (testing). |
+| `--no-fog-shading` | Turn off fog shading. |
+| `--no-units` | Hide units. |
+| `--hidden` | Hidden window (testing). |
+| `--screenshot <file.png>` | Render, save a screenshot and quit. |
+| `--frames <N>` | Frames to render before the screenshot. |
+| `--days <D>` | Days of simulation before the screenshot. |
+| `-h`, `--help` | Print usage. |
+
+Figure tools (each renders and quits): `--figure-sheet <png>`, `--figure-frames <dir>`, `--figure-gif <dir>`, `--figure-gear <png>`, `--figure-people <png>`, `--figure-variants <dir>`, with `--figure KEY[,KEY...|all]`, `--figure-clip a,b`, `--figure-size N` (default 480) and `--figure-force`.
+
+Examples:
+
+```bash
+./BurgerEngine.sh run World500BCE --size 1600x900 --observe --zoom 0.15 --mapmode terrain --screenshot shot.png --frames 150
+./BurgerEngine.sh run Earth1930 --bench --size 1920x1080 --log-dir logs
+```
+
+### Benchmark (`--bench`)
+
+One continuous camera pass (far, mid and near views, pans and a zoom sweep, no jumps). The log gets a `BENCH` line per leg plus an `ALL` line and one stage breakdown for the whole run. Variants use environment variables:
+
+| Variable | Effect |
+| --- | --- |
+| `BENCH_SKIP=map,sea,terrain,trees,ui` | Comma list of parts to skip. |
+| `BURGER_NO_MSAA=1` | Turn off 4x MSAA. |
+
+`tools/profile-render.sh [Project]` (env `DURATION`, `SIZE`, `OUT`, `GPU=nvidia`) builds, runs with `--perf` and collects host and GPU info; `tools/profile-sim.sh` does the same for simulation.
+
+### Debug logging variables
+
+Set to `1` before a run to log that system: `BURGER_AI_LOG`, `BURGER_AI_DEBUG`, `BURGER_AI_CHECK`, `BURGER_PURSUIT_LOG`, `BURGER_AMB_LOG`, `BURGER_ALLY_LOG`, `BURGER_DIPLO_LOG`, `BURGER_WAR_LOG`, `BURGER_WARCAUSE_LOG`, `BURGER_WARSCORE_LOG`, `BURGER_PEACE_LOG`, `BURGER_FACT_LOG`, `BURGER_FOCUS_LOG`, `BURGER_DECISION_LOG`, `BURGER_GOV_LOG`, `BURGER_LABEL_DEBUG`. Runtime errors normally go to `logs/error.log`.
 
 ## UI and asset tools
 
@@ -200,3 +251,7 @@ Avoid committing temporary logs, saves, previews, or build output unless the gen
 ## Geography
 
 - `burger geo [project]` reports on historical provinces; `burger geo test` runs the self-test and scale test. Console: `geo <location>`. See [GEOGRAPHY.md](GEOGRAPHY.md).
+- `burger geo simulate <project> [--years N] [--war] [--split-population P]` runs the sim headless and reports dynamic splits and merges, validator errors, determinism and save/load.
+- Console: `geodate <date|clear>`, `geowar [n|off]` (test occupation), `geoskip [months]` (advance and report province changes).
+- Console debug view: `geodebug [on|off]` switches Provinces mode to a debug palette (orange = made by a front line, cyan = growth split, yellow = merge, gray = from data files); `geolist [n]` prints the last n dynamic changes with date, parents, children and reason.
+- Console overlay: `geobase [on|off]` draws the province borders from the start of the game as magenta lines above the current shapes in Provinces mode (display only, not interactive). Also: `geosplit <pop>` sets the growth split level, commands chain with `;`, and `geoskip` takes years (`geoskip 30y`).

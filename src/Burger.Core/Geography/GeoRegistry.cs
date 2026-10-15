@@ -154,6 +154,24 @@ public sealed class GeoRegistry
 
     public IReadOnlyList<(string Subject, string Prop, int Day, string Value, string Where)> ExplicitValues => _explicit;
 
+    /// <summary>Settings of the runtime province system (see <see cref="GeoDynamics"/>).</summary>
+    public GeoDynamicSettings DynamicSettings = new();
+
+    /// <summary>
+    /// Records a value computed from the running simulation (the owner or controller a province has today). Unlike <see cref="SetValue"/> it is not
+    /// part of the data files: it is recomputed from the game state after a load, so it is never saved. Returns false if the day is already taken by an other value.
+    /// </summary>
+    public bool SetDerived(string subject, string prop, int day, string value)
+    {
+        var key = (subject, prop.ToLowerInvariant());
+        NoteProp(key.Item2);
+        if (!_tracks.TryGetValue(key, out var tl)) _tracks[key] = tl = new Timeline<string>();
+        if (tl.TryAt(day, out var cur) && cur == value) return true;
+        bool ok = tl.TrySet(day, value);
+        if (ok) Touch();
+        return ok;
+    }
+
     public Timeline<string>? Track(string subject, string prop) => _tracks.TryGetValue((subject, prop.ToLowerInvariant()), out var t) ? t : null;
 
     /// <summary>
@@ -331,6 +349,8 @@ public sealed class GeoRegistry
             foreach (var c in created) p.Children.Add(c.Id);
         }
         Derive(op, parents, created, parentValues);
+        foreach (var (c, spec) in created.Zip(op.Children))
+            if (!string.IsNullOrEmpty(spec.Name)) SetDerived(c.Id, "name", op.Date, spec.Name);
         _applied.Add(op);
         Touch();
         return null;

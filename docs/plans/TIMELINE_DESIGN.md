@@ -64,7 +64,7 @@ Loop: inputs (war, succession, inequality, repression) -> pressure (trust falls 
 Era Packs are overrides on the single ruleset, built on the feature packaging system (`feature.txt`, requires, conflicts, install/uninstall). A pack can switch a mechanic on or off, or override defines, from a given date. Per era: map, cultures and religions, tech list, event set. All content original; log AI-assisted content for Steam disclosure.
 
 ## 6. Kernel requirements derived from the design
-Named RNG streams, event bus, registered definition types, save registry, test project. The tick structure is not changed. See REBUILD_REPORT.md section 6.
+Named RNG streams, event bus, registered definition types, save registry, test project. The tick structure is not changed. See .ARCHIVE/docs/REBUILD_REPORT.md section 6.
 
 ## 7. Release and legal
 - Business decisions other than the ones above are DEFERRED, including revenue split terms, the possible third developer, and Steam submission details.

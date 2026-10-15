@@ -51,6 +51,13 @@ public static class GeoLoader
                     reg.RequireFullCoverage = string.Equals(n.GetString("coverage"), "full", StringComparison.OrdinalIgnoreCase);
                     if (n.GetString("coverage_date") is { } cd) { if (TryDate(reg, cd, n, out int d)) reg.CoverageDay = d; }
                     reg.DensityProperty = n.GetString("density_property", reg.DensityProperty)!;
+                    var ds = reg.DynamicSettings;
+                    if (n.Has("dynamic")) ds.Enabled = n.GetBool("dynamic");
+                    if (n.Has("split_population")) ds.SplitPopulation = n.GetDouble("split_population");
+                    if (n.Has("merge_ceiling")) ds.MergeCeiling = n.GetDouble("merge_ceiling");
+                    if (n.Has("min_age_days")) ds.MinAgeDays = (int)n.GetDouble("min_age_days");
+                    if (n.Has("front_min_age_days")) ds.FrontMinAgeDays = (int)n.GetDouble("front_min_age_days");
+                    if (n.Has("max_changes_per_month")) ds.MaxChangesPerMonth = (int)n.GetDouble("max_changes_per_month");
                     break;
                 case "property":
                     {
@@ -136,7 +143,7 @@ public static class GeoLoader
         {
             op.Children.Add(new GeoChildSpec
             {
-                Id = c.GetString("id") ?? "", Atoms = c.GetList("atoms").ToArray(), Archipelago = c.GetBool("archipelago"),
+                Id = c.GetString("id") ?? "", Name = c.GetString("name"), Atoms = c.GetList("atoms").ToArray(), Archipelago = c.GetBool("archipelago"),
                 Share = c.Has("share") ? c.GetDouble("share") : null,
             });
         }
@@ -166,7 +173,7 @@ public static class GeoLoader
         game.SaveSections.Add(new Burger.Core.Modding.SaveSection
         {
             Name = "geography",
-            Reset = reg.ResetRuntime,
+            Reset = () => { reg.ResetRuntime(); game.GeoDynamics.Invalidate(); },
             Write = root =>
             {
                 root.Add("version", "1");
@@ -205,6 +212,7 @@ public static class GeoLoader
         {
             var cb = n.AddBlock("child");
             cb.Add("id", c.Id);
+            if (!string.IsNullOrEmpty(c.Name)) cb.Add("name", c.Name, true);
             if (c.Share.HasValue) cb.Add("share", c.Share.Value.ToString("R", CultureInfo.InvariantCulture));
             if (c.Archipelago) cb.Add("archipelago", "yes");
             var atoms = cb.AddBlock("atoms");

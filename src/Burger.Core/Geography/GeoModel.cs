@@ -43,6 +43,8 @@ public sealed class GeoChildSpec
     /// <summary>Explicit fraction of a single parent's extensive quantities (splits only); null = by area of the atoms.</summary>
     public double? Share;
     public bool Archipelago;
+    /// <summary>Optional display name given to the child on the day it is created.</summary>
+    public string? Name;
 }
 
 /// <summary>A reorganization on one day: parents are retired and children created covering exactly the same atoms (split = 1:n, merge = n:1, redraw = n:m).</summary>

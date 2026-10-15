@@ -13,6 +13,9 @@ public static partial class Program
     /// <summary>burger geo: load a project, validate its historical provinces and report on a date.</summary>
     private static int Geo(List<string> args)
     {
+        if (args.Count > 0 && args[0].Equals("generate", StringComparison.OrdinalIgnoreCase)) return GeoGenerate(args.Skip(1).ToList());
+        if (args.Count > 0 && args[0].Equals("pipeline", StringComparison.OrdinalIgnoreCase)) return GeoPipeline(args.Skip(1).ToList());
+        if (args.Count > 0 && args[0].Equals("simulate", StringComparison.OrdinalIgnoreCase)) return GeoSimulate(args.Skip(1).ToList());
         if (args.Count > 0 && args[0].Equals("test", StringComparison.OrdinalIgnoreCase))
         {
             _failedChecks = 0;
@@ -308,5 +311,69 @@ split = {{ date = 1000.1.1 parent = geo_test_whole child = {{ id = geo_test_west
         Check(g3.Geo.Get("geo_test_e1") == null && g3.Geo.Get("geo_test_east") != null, "a save without a geography section loads with only the data-file history");
         // the shared test game must not keep the fixture
         File.Delete(tmp); File.Delete(legacy);
+    }
+
+    /// <summary>burger geo simulate: runs the real simulation headless and reports what the dynamic province system did.</summary>
+    private static int GeoSimulate(List<string> args)
+    {
+        int years = int.TryParse(Opt(args, "--years"), out var y) ? y : 10;
+        double? splitPop = double.TryParse(Opt(args, "--split-population"), out var sp) ? sp : null;
+        bool war = Flag(args, "--war");
+        string project = ResolveProject(RequireProjectArg(args, "burger geo simulate <project> [--years N] [--split-population P] [--war]"));
+        Log.EchoToConsole = false;
+        string Run(out Game game, out int splits, out int merges, bool report)
+        {
+            game = Game.Load(GameDir(project), compileScripts: false, seed: 7);
+            if (!game.Geo.Enabled) { splits = merges = 0; return "none"; }
+            if (splitPop != null) game.Geo.DynamicSettings.SplitPopulation = splitPop.Value;
+            game.StartNewGame(null);
+            var occupied = new List<Burger.Core.Model.Location>();
+            int months = years * 12;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            for (int m = 0; m < months; m++)
+            {
+                if (war) // a rolling war: each month the front moves; locations next to a foreign country are taken for a while
+                {
+                    foreach (var l in occupied) l.Controller = null;
+                    occupied.Clear();
+                    var cands = game.World.Locations.Where(l => l.IsLand && l.Owner != null).OrderBy(l => l.Key, StringComparer.Ordinal).ToList();
+                    for (int i = (m * 37) % 11; i < cands.Count && occupied.Count < 60; i += 11)
+                    {
+                        var foe = cands[i].Neighbors.Select(a => a.To.Owner).FirstOrDefault(o => o != null && o != cands[i].Owner);
+                        if (foe == null) continue;
+                        cands[i].Controller = foe; occupied.Add(cands[i]);
+                    }
+                }
+                do game.Tick(); while (!(game.World.Date.Day == 1 && game.World.Date.Hour == 0));
+            }
+            splits = game.GeoDynamics.Splits; merges = game.GeoDynamics.Merges;
+            int day = game.World.Date.TotalDays;
+            if (report) Console.WriteLine($"  simulated {years} years in {sw.Elapsed.TotalSeconds:F1}s; now {HistoricalCalendar.Format(day)}");
+            return string.Join(";", game.Geo.Snapshot(day).Provinces.OrderBy(p => p.Id, StringComparer.Ordinal).Select(p => p.Id + ":" + string.Join(",", p.Atoms)));
+        }
+        string a = Run(out var g1, out var s1, out var m1, true);
+        PrintLog();
+        if (a == "none") { Console.WriteLine("No geography layer in this project."); return 1; }
+        var reg = g1.Geo;
+        int endDay = g1.World.Date.TotalDays;
+        Console.WriteLine($"  dynamic splits: {s1}, merges: {m1}; active provinces now {reg.Snapshot(endDay).Provinces.Count}");
+        foreach (var op in reg.DynamicOperations.Take(12))
+            Console.WriteLine($"    {HistoricalCalendar.Format(op.Date)} {op.Kind} {string.Join("+", op.Parents)} -> {string.Join(", ", op.Children.Select(c => c.Name ?? c.Id))}  [{op.Reason}]");
+        var issues = GeoValidator.Run(reg, g1.World, endDay);
+        int errs = issues.Count(i => i.Severity == GeoSeverity.Error);
+        Console.WriteLine($"  validator errors at the end: {errs}");
+        foreach (var i in issues.Where(i => i.Severity == GeoSeverity.Error).Take(5)) Console.WriteLine("    " + i);
+        string b = Run(out _, out var s2, out var m2, false);
+        bool det = a == b && s1 == s2 && m1 == m2;
+        Console.WriteLine($"  deterministic (two identical runs agree): {(det ? "yes" : "NO")}");
+        string tmp = Path.Combine(Path.GetTempPath(), "burger_geo_sim.sav");
+        SaveGame.Save(g1, tmp);
+        var g2 = Game.Load(GameDir(project), compileScripts: false, seed: 7);
+        SaveGame.Load(g2, tmp);
+        string c = string.Join(";", g2.Geo.Snapshot(endDay).Provinces.OrderBy(p => p.Id, StringComparer.Ordinal).Select(p => p.Id + ":" + string.Join(",", p.Atoms)));
+        bool rt = c == a;
+        Console.WriteLine($"  save/load keeps the dynamic provinces: {(rt ? "yes" : "NO")}");
+        try { File.Delete(tmp); } catch { }
+        return errs == 0 && det && rt ? 0 : 1;
     }
 }

@@ -2,7 +2,7 @@ TASK: Build the 500 BCE world map for BurgerEngine as a deterministic, programma
 
 READ FIRST (do not skip, do not summarize from memory)
 - docs/plans/TIMELINE_DESIGN.md (all sections, especially 0, 9.5, 11.1)
-- docs/plans/REBUILD_REPORT.md sections 1.3 and 1.4 (map and folder contracts)
+- .ARCHIVE/docs/REBUILD_REPORT.md sections 1.3 and 1.4 (map and folder contracts)
 - tools/earth/README.txt and tools/earth/make_earth.py (existing generator, for structure only)
 Quote any rule you rely on, with the file and line, in your plan.
 
