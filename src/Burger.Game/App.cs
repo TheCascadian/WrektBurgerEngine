@@ -11,7 +11,7 @@ namespace Burger.Runtime;
 public enum AppScreen { Menu, Playing, Error }
 
 /// <summary>Window, main loop, main menu and game loading.</summary>
-public sealed class App
+public sealed partial class App
 {
     public Game? Game { get; private set; }
     private readonly List<Burger.Core.Model.Location> _geoWar = new();
@@ -84,6 +84,7 @@ public sealed class App
             if (Game != null) Gui.CheckTheme(Game.Interface.Theme);
             Gui.Scale = Gui.ScaleFor(Raylib.GetScreenHeight());
             Gui.BeginFrame();
+            MpPump(dt);
             switch (_screen)
             {
                 case AppScreen.Error: FrameError(); break;
@@ -152,7 +153,7 @@ public sealed class App
         Raylib.EndDrawing();
     }
 
-    private void LoadGame(bool keepMap = false)
+    private void LoadGame(bool keepMap = false, Burger.Core.Game? adopt = null, int? seed = null)
     {
         DrawLoading("Loading...");
         var keptRenderer = keepMap ? Renderer : null;
@@ -173,11 +174,14 @@ public sealed class App
             Action<Burger.Core.Game> prewarm = MapRenderer.Prewarm;
             if (keptRenderer == null) Burger.Core.Game.MapLoaded += prewarm; // the renderer's CPU work runs while the rest of the game loads
             Burger.Core.Game game;
-            try { game = Burger.Core.Game.Load(_gameRoot, compileScripts: true); }
+            try { game = adopt ?? Burger.Core.Game.Load(_gameRoot, compileScripts: true, seed: seed); }
             finally { Burger.Core.Game.MapLoaded -= prewarm; }
             Game = game;
-            game.HistoricalBias = _opt.Bias ?? UserSettings.EffectiveBias;
-            game.Ai.Enabled = !UserSettings.AiDisabled;
+            if (adopt == null && seed == null) // multiplayer games use the same settings on every machine
+            {
+                game.HistoricalBias = _opt.Bias ?? UserSettings.EffectiveBias;
+                game.Ai.Enabled = !UserSettings.AiDisabled;
+            }
             Raylib.SetWindowTitle(game.Data.Info.Name);
             if (!string.IsNullOrEmpty(game.Data.Info.Icon))
             {
@@ -545,6 +549,7 @@ public sealed class App
         Raylib.EndDrawing();
         _renderPerf?.End(Raylib.GetFrameTime() * 1000.0);
 
+        if (Mp != null) return; // the session runs the ticks
         try
         {
             game.Clock.Update(dt);
@@ -739,7 +744,7 @@ public sealed class App
         Gui.Label("Choose a country (or click it on the map):", x, y, 16);
         y += 26 * s;
         var playable = game.World.Countries.Where(c => c.Playable && c.Exists).OrderBy(c => c.Name).ToList();
-        float listH = panel.Y + panel.Height - y - 250 * s;
+        float listH = panel.Y + panel.Height - y - 296 * s;
         var countryList = new Rectangle(x, y, w, Math.Max(40 * s, listH));
         float top = Gui.BeginScroll("menu-countries", countryList, playable.Count * 40 * s);
         float cy = top;
@@ -785,9 +790,12 @@ public sealed class App
         y += bh + 6 * s;
         if (Gui.Button(new Rectangle(x, y, half, bh), "Reload files", true, "Re-read all game files (after editing them)")) ReloadFiles();
         if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Quit")) _quit = true;
+        y += bh + 6 * s;
+        DrawMenuMultiplayer(x, y, w, half, bh);
 
         if (Ui.ErrorsOpen) DrawMenuErrors();
         if (Ui.SaveMenuOpen) DrawMenuSaves();
+        DrawMenuJoin();
         Gui.EndFrame();
         Raylib.EndDrawing();
     }

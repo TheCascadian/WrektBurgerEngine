@@ -77,6 +77,9 @@ public static partial class Program
         var enemyTag = hostGame.World.Countries.Where(c => c.Exists && !tags.Contains(c.Tag) && hostGame.World.Divisions.Any(d => d.Owner == c)).Select(c => c.Tag).OrderBy(t => t, StringComparer.Ordinal).FirstOrDefault();
         var myDiv = hostGame.World.Divisions.FirstOrDefault(d => d.Owner == hostCountry);
         if (myDiv != null && myDiv.Location.Neighbors.Count > 0) host.Submit(GameCommand.Move, myDiv.Id.ToString(), myDiv.Location.Neighbors[0].To.Key);
+        if (myDiv != null && myDiv.Location.Neighbors.Count > 1) host.Submit(GameCommand.Move, myDiv.Id.ToString(), myDiv.Location.Neighbors[1].To.Key, "q");
+        if (hostGame.Data.Equipment.Keys.FirstOrDefault() is { } eqKey) host.Submit(GameCommand.QueueProduction, eqKey, "0");
+        clients[1].Submit(GameCommand.Respond, "CallToArms", tags[0], "1"); // nothing pending: refused everywhere, no drift
         if (enemyTag != null) clients[0].Submit(GameCommand.DeclareWar, enemyTag);
         var eq = hostGame.Data.Equipment.Keys.OrderBy(k => k, StringComparer.Ordinal).FirstOrDefault();
         if (eq != null) clients[1].Submit(GameCommand.QueueProduction, eq, "2");

@@ -17,11 +17,16 @@ Code: `src/Burger.Core/Multiplayer/`. Test: `burger mp-test <project> [--days N]
 - Anything a human decides must be a `GameCommand`, or it cannot be replayed.
 - Anything that affects the sim must be in the save, or a resync drifts. The checksum is only as strong as what it hashes.
 
+## UI and routing (done)
+- Main menu: "Host game" (selected country, generated seed, join code shown in the chat log, port 27960) and "Join game" (name and code).
+- In game: a player panel (flag, name, ready tick, ping, AI tag; Ctrl+click kicks as host), chat box, toasts as status line and chat lines, and a country list for joiners without a country.
+- Routed through `Session.Submit`: clock keys and buttons (host sets, clients vote), unit moves (also shift-queued; army moves go out as per-division moves), event options, every proposal answer (`respond` for non-peace kinds), production lines. Event and proposal dialogs only show the local country's items.
+- Multiplayer games ignore the local historical bias and AI toggle (they must match on all machines).
+
 ## Not done
-- No UI: start screen (host, seed, join code, free-country pick), player list panel, chat box, toasts. The session has the data and events for all of them (`Players`, `Chat`, `Toast`, `GameReplaced`).
-- Hud actions still call the sim directly: they must call `Session.Submit` while a session runs. Only 8 command types exist.
+- Still direct (they change only the local sim and the monthly checksum will revert them): navy and air orders and lines, declare war from the Hud (needs a casus belli in the command), sending peace offers from the Hud (`white_peace` exists, terms do not), decisions, focus, research, laws, designer, production changes of existing lines, recruiting.
 - `World.Player` and fog of war are per machine; `Clock.Paused` set by events (pause on event) is local and the session ignores it.
 - Join codes carry an IPv4 address: LAN or a forwarded port. No relay, no NAT punch.
-- Resync sends one base64 line. Large worlds need chunking.
+- Resync sends one base64 line; the reader has no line limit so it works, but there is no progress display.
 - Mid-game player takeover of a country with a pending human proposal is untested.
 - Host-side `Notify` and AI notifications are per machine and not part of the checksum.

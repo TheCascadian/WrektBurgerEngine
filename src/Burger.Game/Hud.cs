@@ -2,6 +2,7 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
+using Burger.Core.Multiplayer;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -41,11 +42,11 @@ public sealed partial class Hud
         }
         if (Ui.ConsoleOpen || Gui.TextFocused) return;
         var clock = G.Clock;
-        if (Raylib.IsKeyPressed(KeyboardKey.Space)) clock.Paused = !clock.Paused;
+        if (Raylib.IsKeyPressed(KeyboardKey.Space)) SetPace(!clock.Paused, null);
         for (int i = 1; i <= 5; i++)
-            if (Raylib.IsKeyPressed(KeyboardKey.Zero + i)) { clock.Speed = i; clock.Paused = false; }
-        if (Raylib.IsKeyPressed(KeyboardKey.KpAdd) || Raylib.IsKeyPressed(KeyboardKey.Equal)) clock.Speed = Math.Min(5, clock.Speed + 1);
-        if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract) || Raylib.IsKeyPressed(KeyboardKey.Minus)) clock.Speed = Math.Max(1, clock.Speed - 1);
+            if (Raylib.IsKeyPressed(KeyboardKey.Zero + i)) SetPace(false, i);
+        if (Raylib.IsKeyPressed(KeyboardKey.KpAdd) || Raylib.IsKeyPressed(KeyboardKey.Equal)) SetPace(null, Math.Min(5, clock.Speed + 1));
+        if (Raylib.IsKeyPressed(KeyboardKey.KpSubtract) || Raylib.IsKeyPressed(KeyboardKey.Minus)) SetPace(null, Math.Max(1, clock.Speed - 1));
         if (Raylib.IsKeyPressed(KeyboardKey.Tab)) CycleMapMode();
         if (Raylib.IsKeyPressed(KeyboardKey.F) && Has(FeatureSet.FogOfWar)) MapRenderer.FogShading = !MapRenderer.FogShading;
         if (Raylib.IsKeyPressed(KeyboardKey.H) && (Has(FeatureSet.Military) || Has(FeatureSet.Navy))) MapOverlay.ShowUnits = !MapOverlay.ShowUnits;
@@ -211,6 +212,13 @@ public sealed partial class Hud
         {
             int ok = 0;
             bool queue = Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift);
+            if (Mp != null)
+            {
+                var mine = Ui.SelectedDivisions.Where(d => IsMine(d.Owner)).ToList();
+                MpMove(mine, loc, queue);
+                Ui.SetStatus(mine.Count > 0 ? $"{mine.Count} division(s) ordered to {loc.DisplayName}" : "Not your divisions");
+                return;
+            }
             foreach (var d in Ui.SelectedDivisions)
             {
                 if (d.Army != null && d.Army.FrontEnemy != null) d.FrontPost = null;
@@ -220,7 +228,8 @@ public sealed partial class Hud
         }
         else if (Ui.SelectedArmy != null)
         {
-            G.Warfare.MoveArmy(Ui.SelectedArmy, loc);
+            if (Mp != null) MpMove(Ui.SelectedArmy.Divisions.Where(d => IsMine(d.Owner)).ToList(), loc, false);
+            else G.Warfare.MoveArmy(Ui.SelectedArmy, loc);
             Ui.SetStatus($"{Ui.SelectedArmy.Name} moving to {loc.DisplayName}");
         }
         else if (loc.Owner != null)
@@ -298,6 +307,7 @@ public sealed partial class Hud
         }
         DrawMapModes();
         DrawSelectedDivisions();
+        DrawMultiplayer();
         DrawNotifications();
         DrawStatus();
         if (Ui.ErrorsOpen) DrawErrorLog();
@@ -376,7 +386,7 @@ public sealed partial class Hud
         Gui.LabelCentered(clock.Paused ? "PAUSE" : "LIVE", stateR, 10, Color.White, FontKind.Bold);
         if (Gui.Hover(dateR)) Gui.Tooltip($"{date}\n{(clock.Paused ? "Paused" : $"Running at {clock.ActualDaysPerSecond:0.#} days per second")}\nSpace: pause/unpause; 1-5: speed; + / -: adjust speed\nWheel: zoom; middle-drag / WASD: pan");
         Gui.Block(dateR);
-        if (Gui.Clicked(dateR)) clock.Paused = !clock.Paused;
+        if (Gui.Clicked(dateR)) SetPace(!clock.Paused, null);
         rx -= 5 * 18 * S + 10 * S;
         for (int i = 1; i <= 5; i++)
         {
@@ -388,7 +398,7 @@ public sealed partial class Hud
             Raylib.DrawRectangleLinesEx(r, 1, hover ? Color.White : new Color(0, 0, 0, 200));
             Gui.Block(r);
             if (hover) Gui.Tooltip($"Speed {i}");
-            if (Gui.Clicked(r)) { clock.Speed = i; clock.Paused = false; }
+            if (Gui.Clicked(r)) SetPace(false, i);
         }
         rx -= 8 * S;
         if (Has(FeatureSet.Diplomacy))

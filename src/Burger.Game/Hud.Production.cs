@@ -1,3 +1,4 @@
+using Burger.Core.Multiplayer;
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
@@ -87,7 +88,7 @@ public sealed partial class Hud
                 if (pick)
                 {
                     if (_changingLine != null) P.ChangeLine(_changingLine, e);
-                    else P.AddLine(c, e, Math.Min(1, P.FreeFactories(c, P.UsesDockyards(e))));
+                    else if (!Send(GameCommand.QueueProduction, e.Key, Math.Min(1, P.FreeFactories(c, P.UsesDockyards(e))).ToString())) P.AddLine(c, e, Math.Min(1, P.FreeFactories(c, P.UsesDockyards(e))));
                     _addingLine = false;
                     _changingLine = null;
                 }

@@ -1,4 +1,5 @@
 using Burger.Core;
+using Burger.Core.Multiplayer;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -7,7 +8,7 @@ public sealed partial class Hud
 {
     private void DrawEvents()
     {
-        var queue = G.Events.PlayerQueue;
+        var queue = Mp == null ? G.Events.PlayerQueue : G.Events.PlayerQueue.Where(e => IsMine(Burger.Core.Scripting.ScopeHelpers.CountryOf(e.Context.Root))).ToList();
         if (queue.Count == 0) return;
         var pe = queue[0];
         float w = 560 * S;
@@ -33,7 +34,7 @@ public sealed partial class Hud
             string tip = lines.Count == 0 ? "No effects" : string.Join("\n", lines);
             if (Gui.Button(new Rectangle(r.X + 16 * S, y, w - 32 * S, 32 * S), G.Events.OptionName(pe, i), avail, tip, pe.Def.Options[i].Highlight, 16))
             {
-                G.Events.ChooseOption(pe, i);
+                if (!Send(GameCommand.EventOption, pe.Def.Id, i.ToString())) G.Events.ChooseOption(pe, i);
                 return;
             }
             y += 38 * S;
@@ -43,8 +44,8 @@ public sealed partial class Hud
 
     private void DrawProposals()
     {
-        var list = G.PendingProposals;
-        if (list.Count == 0 || G.Events.PlayerQueue.Count > 0) return;
+        var list = Mp == null ? G.PendingProposals : G.PendingProposals.Where(x => IsMine(x.To)).ToList();
+        if (list.Count == 0 || (Mp == null ? G.Events.PlayerQueue.Count : G.Events.PlayerQueue.Count(e => IsMine(Burger.Core.Scripting.ScopeHelpers.CountryOf(e.Context.Root)))) > 0) return;
         var p = list[0];
         float w = 480 * S;
         float textH = Gui.WrappedHeight(p.Text, w - 32 * S, 17);
@@ -63,7 +64,17 @@ public sealed partial class Hud
             if (effects.Count > 0) hint = "If accepted:\n" + string.Join("\n", effects);
         }
         float by = r.Y + h - 44 * S;
-        if (Gui.Button(new Rectangle(r.X + 16 * S, by, w / 2 - 24 * S, 32 * S), "Accept", true, hint, false, 17)) { G.Diplomacy.Respond(p, true); return; }
-        if (Gui.Button(new Rectangle(r.X + w / 2 + 8 * S, by, w / 2 - 24 * S, 32 * S), "Decline", true, null, false, 17)) G.Diplomacy.Respond(p, false);
+        if (Gui.Button(new Rectangle(r.X + 16 * S, by, w / 2 - 24 * S, 32 * S), "Accept", true, hint, false, 17)) { Answer(p, true); return; }
+        if (Gui.Button(new Rectangle(r.X + w / 2 + 8 * S, by, w / 2 - 24 * S, 32 * S), "Decline", true, null, false, 17)) Answer(p, false);
+    }
+
+    private void Answer(Proposal p, bool accept)
+    {
+        if (Mp != null)
+        {
+            if (p.Kind == ProposalKind.Peace) Mp.Submit(accept ? GameCommand.AcceptPeace : GameCommand.RefusePeace, p.From.Tag);
+            else Mp.Submit(GameCommand.Respond, p.Kind.ToString(), p.From.Tag, accept ? "1" : "0");
+        }
+        else G.Diplomacy.Respond(p, accept);
     }
 }

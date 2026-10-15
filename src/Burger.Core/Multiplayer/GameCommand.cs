@@ -15,6 +15,8 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     public const string AcceptPeace = "accept_peace";
     public const string RefusePeace = "refuse_peace";
     public const string WhitePeace = "white_peace";
+    /// <summary>Answers any other proposal (args: kind, sender tag, 1 accept or 0 decline).</summary>
+    public const string Respond = "respond";
     public const string QueueProduction = "queue_production";
     /// <summary>Answers an event (args: event id, option index).</summary>
     public const string EventOption = "event_option";
@@ -23,7 +25,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption or Respond;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -55,7 +57,8 @@ public static class CommandExecutor
                 var div = w.Divisions.FirstOrDefault(d => d.Id == id);
                 var to = w.GetLocation(A(1));
                 if (div == null || to == null || div.Owner != country) return false;
-                return g.Warfare.OrderMove(div, to);
+                if (div.Army != null && div.Army.FrontEnemy != null) div.FrontPost = null;
+                return A(2) == "q" ? g.Warfare.QueueMove(div, to) : g.Warfare.OrderMove(div, to);
             }
             case GameCommand.DeclareWar:
             {
@@ -69,6 +72,14 @@ public static class CommandExecutor
                 var p = g.PendingProposals.FirstOrDefault(x => x.Kind == ProposalKind.Peace && x.To == country && x.From.Tag == A(0));
                 if (p == null) return false;
                 g.Diplomacy.Respond(p, c.Type == GameCommand.AcceptPeace);
+                return true;
+            }
+            case GameCommand.Respond:
+            {
+                if (!Enum.TryParse<ProposalKind>(A(0), out var kind)) return false;
+                var p = g.PendingProposals.FirstOrDefault(x => x.Kind == kind && x.To == country && x.From.Tag == A(1));
+                if (p == null) return false;
+                g.Diplomacy.Respond(p, A(2) == "1");
                 return true;
             }
             case GameCommand.WhitePeace:
@@ -89,7 +100,7 @@ public static class CommandExecutor
             case GameCommand.QueueProduction:
             {
                 if (!g.Data.Equipment.TryGetValue(A(0), out var eq)) return false;
-                int factories = int.TryParse(A(1), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? Math.Clamp(n, 1, 50) : 1;
+                int factories = int.TryParse(A(1), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? Math.Clamp(n, 0, 50) : 1;
                 g.Production.AddLine(country, eq, factories);
                 return true;
             }
