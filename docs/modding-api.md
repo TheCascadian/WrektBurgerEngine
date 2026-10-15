@@ -43,7 +43,9 @@ Checked on the compiled image (also for cached images). A violation stops the sc
 
 - Assemblies other than core library, collections, LINQ, numerics, memory and the engine.
 - Namespaces: `System.IO`, `System.Net`, `System.Reflection`, `System.Runtime.InteropServices`, `System.Diagnostics` (except compiler attributes), `System.Threading`, `System.Security`, `System.Runtime.Loader` and anything else not on the allow list (new namespaces start blocked).
-- Types: `Activator`, `Environment`, `AppDomain`, `GC`, `Random`, `Console`, `Unsafe`, ... Members: `DateTime.Now/UtcNow`, `Guid.NewGuid`, `String.Intern`.
+- Types: `Activator`, `Environment`, `AppDomain`, `GC`, `Random`, `Console`, `Unsafe`, `TimeProvider`, `IntPtr`/`UIntPtr` (`nint`), `WeakReference`, `Uri`, `Vector`/`Vector<T>` (SIMD width differs per CPU), `System.Buffers` (pools), `Memory<T>` ... Members: `DateTime.Now/UtcNow/Today`, `Guid.NewGuid/CreateVersion7`, `String.Intern`, `CultureInfo.CurrentCulture` (read or write), `Type` members other than names and equality, `Delegate` members other than combine and equality, `MemberInfo` other than `Name`.
+- Allowed and tested: collections, LINQ, `Math`, strings and `StringBuilder`, `Convert`, formatting with `CultureInfo.InvariantCulture`, `BigInteger`, `ImmutableList` and friends, `Span<T>` on the stack, tuples, records, pattern matching, exceptions. The test suite compiles a mod that uses all of them (`sec-test`).
+- `validate` has a hard deadline of 100 ms (`ModLimits.ValidateDeadlineMs`). If it does not return, the message is rejected, that message type is switched off for the session and a log line is written. Keep `validate` short and free of loops over big data. `apply` has no deadline (it must run on every machine); keep it bounded.
 - Native code: P/Invoke, explicit struct layout, `unsafe` (compile fails).
 - Engine internals: `ModManager`, `ModSandbox`, `Game.Load`, `Burger.Core.Multiplayer`, `Burger.Core.Save`, loaders, writers and compilers.
 
