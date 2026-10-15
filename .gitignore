@@ -35,3 +35,8 @@ projects/World500Test/
 
 # Local scenario project
 projects/WrektMap/
+projects/*/game/cache/
+
+# Active test projects (local scorecards and generated worlds)
+projects/World500BCE_PTest/
+projects/World500BCE_GeoTest/
