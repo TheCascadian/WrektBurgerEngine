@@ -176,15 +176,24 @@ public static class ModSandbox
             return null;
         }
         if (assembly.Length == 0) return null; // a type of this assembly
+        if (ns == "System.Diagnostics") return DiagnosticsAllowed.Contains(outermost) ? null : $"uses {outermost} (System.Diagnostics is not available to mods)";
         if (!AllowedNamespaces.Contains(ns)) return $"uses {outermost} ({ns} is not available to mods)";
         if (DeniedTypes.Contains(outermost)) return $"uses {outermost}, which mods may not use";
         if (ns == "System.Runtime.CompilerServices" && !CompilerServicesAllowed.Contains(outermost)) return $"uses {outermost}, which mods may not use";
         return null;
     }
 
+    /// <summary>Only attributes of System.Diagnostics: the compiler emits them, they do nothing at run time.</summary>
+    private static readonly HashSet<string> DiagnosticsAllowed = new(StringComparer.Ordinal)
+    {
+        "System.Diagnostics.DebuggableAttribute", "System.Diagnostics.DebuggerHiddenAttribute", "System.Diagnostics.DebuggerStepThroughAttribute",
+        "System.Diagnostics.DebuggerDisplayAttribute", "System.Diagnostics.DebuggerBrowsableAttribute", "System.Diagnostics.DebuggerBrowsableState",
+        "System.Diagnostics.DebuggerNonUserCodeAttribute", "System.Diagnostics.DebuggerTypeProxyAttribute", "System.Diagnostics.StackTraceHiddenAttribute",
+    };
+
     private static readonly HashSet<string> CompilerServicesAllowed = new(StringComparer.Ordinal)
     {
-        "System.Runtime.CompilerServices.CompilerGeneratedAttribute", "System.Runtime.CompilerServices.IsExternalInit", "System.Runtime.CompilerServices.NullableAttribute",
+        "System.Runtime.CompilerServices.CompilerGeneratedAttribute", "System.Runtime.CompilerServices.CompilationRelaxationsAttribute", "System.Runtime.CompilerServices.RuntimeCompatibilityAttribute", "System.Runtime.CompilerServices.RefSafetyRulesAttribute", "System.Runtime.CompilerServices.ScopedRefAttribute", "System.Runtime.CompilerServices.CallerMemberNameAttribute", "System.Runtime.CompilerServices.CallerFilePathAttribute", "System.Runtime.CompilerServices.CallerLineNumberAttribute", "System.Runtime.CompilerServices.TupleElementNamesAttribute", "System.Runtime.CompilerServices.ExtensionAttribute", "System.Runtime.CompilerServices.IteratorStateMachineAttribute", "System.Runtime.CompilerServices.IAsyncStateMachine", "System.Runtime.CompilerServices.AsyncStateMachineAttribute", "System.Runtime.CompilerServices.StateMachineAttribute", "System.Runtime.CompilerServices.IsReadOnlyAttribute", "System.Runtime.CompilerServices.IsByRefLikeAttribute", "System.Runtime.CompilerServices.ParamCollectionAttribute", "System.Runtime.CompilerServices.CollectionBuilderAttribute", "System.Runtime.CompilerServices.RequiredMemberAttribute", "System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute", "System.Runtime.CompilerServices.InlineArrayAttribute", "System.Runtime.CompilerServices.SpecialNameAttribute", "System.Runtime.CompilerServices.IsExternalInit", "System.Runtime.CompilerServices.NullableAttribute",
         "System.Runtime.CompilerServices.NullableContextAttribute", "System.Runtime.CompilerServices.RuntimeHelpers", "System.Runtime.CompilerServices.DefaultInterpolatedStringHandler",
         "System.Runtime.CompilerServices.InterpolatedStringHandlerAttribute", "System.Runtime.CompilerServices.InterpolatedStringHandlerArgumentAttribute", "System.Runtime.CompilerServices.ITuple",
         "System.Runtime.CompilerServices.TupleElementNamesAttribute", "System.Runtime.CompilerServices.ExtensionAttribute", "System.Runtime.CompilerServices.IteratorStateMachineAttribute",

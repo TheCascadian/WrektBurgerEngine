@@ -146,6 +146,8 @@ public sealed class Game
     public InterfaceRegistry Interface { get; } = new();
     public ModManager Mods { get; }
     internal Burger.Core.Multiplayer.ModNetworkRegistry ModNet { get; }
+    /// <summary>Keys (mod/name) of the custom network messages the loaded mods registered.</summary>
+    public IEnumerable<string> ModMessageKeys => ModNet.Keys;
     /// <summary>The AI. Replace with your own subclass from a C# mod: <c>Game.Ai = new MyAi(Game);</c></summary>
     public AiSystem Ai { get; set; }
     public GameClock Clock { get; }

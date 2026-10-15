@@ -78,7 +78,7 @@ public static class Sanitize
         if (string.IsNullOrEmpty(rel) || rel.Length > 200) return null;
         if (rel[0] == '/' || rel.Contains('\\') || rel.Contains(':') || rel.Any(char.IsControl)) return null;
         foreach (var seg in rel.Split('/'))
-            if (seg.Length == 0 || seg is "." or ".." || seg.EndsWith('.') || seg.EndsWith(' ') || seg.StartsWith('~')) return null;
+            if (seg.Length == 0 || seg.StartsWith('.') || seg.EndsWith('.') || seg.EndsWith(' ') || seg.StartsWith('~')) return null;
         string rootFull = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         string full = Path.GetFullPath(Path.Combine(rootFull, rel));
         if (!full.StartsWith(rootFull + Path.DirectorySeparatorChar, StringComparison.Ordinal)) return null;
