@@ -4,6 +4,15 @@ using Burger.Core.Modding;
 
 namespace Burger.Core.Multiplayer;
 
+/// <summary>Limits on what mod code may cost the host.</summary>
+public static class ModLimits
+{
+    /// <summary>Hard deadline for one mod <c>validate</c> call. A rule that does not return in time rejects the message and is switched off.</summary>
+    public static int ValidateDeadlineMs = 100;
+    /// <summary>Runaway validate calls (cannot be killed in process) that are tolerated before every mod rule is refused.</summary>
+    public const int MaxRunaway = 4;
+}
+
 /// <summary>The custom messages of all loaded mods. Mods register typed messages; the session carries them as <c>mod_message</c> commands.</summary>
 internal sealed class ModNetworkRegistry
 {
@@ -12,6 +21,10 @@ internal sealed class ModNetworkRegistry
     private readonly Game _game;
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     public const int MaxMessages = 256;
+    private readonly HashSet<string> _tripped = new(StringComparer.Ordinal);
+    private int _runaway;
+    /// <summary>Messages whose validate ran past the deadline (switched off for this session).</summary>
+    public IReadOnlyCollection<string> Tripped => _tripped;
 
     /// <summary>Set by a running session: hands a message to the host. Returns false when it could not be sent.</summary>
     public Func<string, string[], bool>? Outbound;
@@ -38,8 +51,22 @@ internal sealed class ModNetworkRegistry
         var fields = args[1..];
         if (!e.Schema.Validate(fields, _game, out var err)) return err;
         if (!runModRule) return null;
-        try { return e.Validate(new ModMessage(e.Mod, e.Name, sender, e.Schema, fields)); }
-        catch (Exception ex) { Log.Error($"Mod message '{e.Key}' validate threw {ex.GetType().Name}: {ex.Message}", "scripts"); return "the mod's check failed"; }
+        if (_tripped.Contains(e.Key)) return "the mod's check is switched off (it ran too long)";
+        if (_runaway >= ModLimits.MaxRunaway) return "mod checks are switched off (too many ran too long)";
+        // The rule runs on its own thread so a loop cannot freeze the host. An in-process thread cannot be killed:
+        // after a timeout the message is rejected, the rule is switched off, and a few such threads are tolerated at most.
+        var msg = new ModMessage(e.Mod, e.Name, sender, e.Schema, fields);
+        string? result = null; Exception? error = null;
+        var worker = new Thread(() => { try { result = e.Validate(msg); } catch (Exception ex) { error = ex; } }) { IsBackground = true, Name = "mod-validate" };
+        worker.Start();
+        if (!worker.Join(ModLimits.ValidateDeadlineMs))
+        {
+            _tripped.Add(e.Key); _runaway++;
+            Log.Error($"Mod message '{e.Key}' validate ran past {ModLimits.ValidateDeadlineMs} ms and was switched off", "scripts");
+            return "the mod's check ran too long";
+        }
+        if (error != null) { Log.Error($"Mod message '{e.Key}' validate threw {error.GetType().Name}: {error.Message}", "scripts"); return "the mod's check failed"; }
+        return result;
     }
 
     /// <summary>Runs the mod's handler. Called at the same tick on every machine.</summary>

@@ -21,7 +21,7 @@ public static class ModSandbox
     private static readonly HashSet<string> AllowedAssemblies = new(StringComparer.Ordinal)
     {
         "System.Private.CoreLib", "System.Runtime", "System.Collections", "System.Linq", "System.Collections.Immutable",
-        "System.Memory", "System.Runtime.Numerics", "System.Numerics.Vectors", "System.ObjectModel", "netstandard", "mscorlib",
+        "System.Runtime.Numerics", "System.ObjectModel", "netstandard", "mscorlib",
         "Burger.Core", "Burger.Backend",
     };
 
@@ -29,7 +29,7 @@ public static class ModSandbox
     private static readonly HashSet<string> AllowedNamespaces = new(StringComparer.Ordinal)
     {
         "System", "System.Collections", "System.Collections.Generic", "System.Collections.ObjectModel", "System.Collections.Immutable",
-        "System.Linq", "System.Text", "System.Globalization", "System.Numerics", "System.Buffers",
+        "System.Linq", "System.Text", "System.Globalization", "System.Numerics",
         "System.Diagnostics.CodeAnalysis", "System.Runtime.Versioning", "System.Runtime.CompilerServices",
     };
 
@@ -44,12 +44,17 @@ public static class ModSandbox
         "System.Runtime.CompilerServices.AsyncTaskMethodBuilder", "System.Runtime.CompilerServices.TaskAwaiter",
         "System.Threading.Thread", // System.Threading is not allowed anyway; listed for the error message
         "System.GCCollectionMode", "System.GCMemoryInfo", "System.Memory`1", // Memory<T> can wrap pinned native memory
+        "System.TimeProvider", "System.IntPtr", "System.UIntPtr", "System.WeakReference", "System.WeakReference`1", "System.Uri", "System.UriBuilder",
+        "System.Progress`1", // clock, native handles, GC-dependent state, URLs, synchronization contexts
+        "System.Numerics.Vector", "System.Numerics.Vector`1", // SIMD width differs per CPU: results could differ between machines
+        "System.Globalization.RegionInfo", // machine-local settings: not the same on every machine
     };
 
     /// <summary>For some allowed types only certain members are fine. A member not listed is refused.</summary>
     private static readonly Dictionary<string, HashSet<string>> AllowedMembers = new(StringComparer.Ordinal)
     {
         ["System.Type"] = new(StringComparer.Ordinal) { "GetTypeFromHandle", "get_Name", "get_FullName", "IsAssignableFrom", "op_Equality", "op_Inequality", "Equals", "GetHashCode", "ToString", "get_IsEnum" },
+        ["System.Reflection.MemberInfo"] = new(StringComparer.Ordinal) { "get_Name" },
         ["System.Runtime.CompilerServices.RuntimeHelpers"] = new(StringComparer.Ordinal) { "InitializeArray", "GetSubArray" },
         ["System.Delegate"] = new(StringComparer.Ordinal) { "Combine", "Remove", "Equals", "GetHashCode", "op_Equality", "op_Inequality" },
         ["System.MulticastDelegate"] = new(StringComparer.Ordinal) { "Equals", "GetHashCode", "op_Equality", "op_Inequality" },
@@ -62,7 +67,8 @@ public static class ModSandbox
     {
         ["System.DateTime"] = new(StringComparer.Ordinal) { "get_Now", "get_UtcNow", "get_Today" },
         ["System.DateTimeOffset"] = new(StringComparer.Ordinal) { "get_Now", "get_UtcNow" },
-        ["System.Guid"] = new(StringComparer.Ordinal) { "NewGuid" },
+        ["System.Globalization.CultureInfo"] = new(StringComparer.Ordinal) { "set_CurrentCulture", "set_CurrentUICulture", "set_DefaultThreadCurrentCulture", "set_DefaultThreadCurrentUICulture", "get_CurrentCulture", "get_CurrentUICulture", "get_InstalledUICulture", "GetCultures", "GetCultureInfo" },
+        ["System.Guid"] = new(StringComparer.Ordinal) { "NewGuid", "CreateVersion7" },
         ["System.String"] = new(StringComparer.Ordinal) { "Intern", "IsInterned" },
         ["System.Exception"] = new(StringComparer.Ordinal) { "get_TargetSite" },
     };
@@ -112,7 +118,7 @@ public static class ModSandbox
             foreach (var h in md.TypeDefinitions)
             {
                 var td = md.GetTypeDefinition(h);
-                if ((td.Attributes & System.Reflection.TypeAttributes.ExplicitLayout) != 0) errors.Add($"type '{md.GetString(td.Name)}' uses explicit field layout");
+                if ((td.Attributes & System.Reflection.TypeAttributes.ExplicitLayout) != 0 && !IsArrayInitBlob(md, td)) errors.Add($"type '{md.GetString(td.Name)}' uses explicit field layout");
             }
 
             foreach (var h in md.TypeReferences)
@@ -164,6 +170,14 @@ public static class ModSandbox
         return ns.Length == 0 ? name : ns + "." + name;
     }
 
+    /// <summary>The compiler's own size-only value type for constant array data (<c>new[] {1,2,3}</c>): nested in &lt;PrivateImplementationDetails&gt;, no fields, no methods.</summary>
+    private static bool IsArrayInitBlob(MetadataReader md, TypeDefinition td)
+    {
+        if (!md.GetString(td.Name).StartsWith("__StaticArrayInitTypeSize=", StringComparison.Ordinal)) return false;
+        if (td.GetFields().Count != 0 || td.GetMethods().Count != 0 || td.GetDeclaringType().IsNil) return false;
+        return md.GetString(md.GetTypeDefinition(td.GetDeclaringType()).Name).StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal);
+    }
+
     private static string? CheckType(string full, string assembly, ModPermissions perms)
     {
         string outermost = full.Split('+')[0];
@@ -177,6 +191,7 @@ public static class ModSandbox
         }
         if (assembly.Length == 0) return null; // a type of this assembly
         if (ns == "System.Diagnostics") return DiagnosticsAllowed.Contains(outermost) ? null : $"uses {outermost} (System.Diagnostics is not available to mods)";
+        if (outermost == "System.Reflection.MemberInfo") return null; // only for typeof(X).Name, which binds to it; every other member is refused (AllowedMembers)
         if (!AllowedNamespaces.Contains(ns)) return $"uses {outermost} ({ns} is not available to mods)";
         if (DeniedTypes.Contains(outermost)) return $"uses {outermost}, which mods may not use";
         if (ns == "System.Runtime.CompilerServices" && !CompilerServicesAllowed.Contains(outermost)) return $"uses {outermost}, which mods may not use";

@@ -44,6 +44,55 @@ public static partial class Program
                 ("mod manager", "var m = Game.Mods;"),
                 ("threads", "new System.Threading.Thread(() => { }).Start();"),
                 ("unsafe pointer", "unsafe { int x = 1; int* p = &x; }"),
+                // routes through APIs that look harmless (audit of the allowed surface; see docs/multiplayer-security.md)
+                ("type to assembly", "var a = typeof(string).Assembly;"),
+                ("type to module", "var m = \"x\".GetType().Module;"),
+                ("type by name", "var t = System.Type.GetType(\"System.IO.File\");"),
+                ("type members list", "var ms = typeof(int).GetMethods();"),
+                ("type invoke member", "typeof(object).InvokeMember(\"ToString\", System.Reflection.BindingFlags.InvokeMethod, null, new object(), null);"),
+                ("delegate method info", "Func<int> f = () => 1; var mi = f.Method;"),
+                ("delegate dynamic invoke", "Func<int> f = () => 1; f.DynamicInvoke();"),
+                ("delegate create", "var d = System.Delegate.CreateDelegate(typeof(Action), null, \"x\");"),
+                ("exception target site", "var s = new Exception().TargetSite;"),
+                ("runtime helpers", "System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(object).TypeHandle);"),
+                ("unsafe class", "var x = System.Runtime.CompilerServices.Unsafe.SizeOf<int>();"),
+                ("intptr", "var p = System.IntPtr.Zero;"),
+                ("native library", "System.Runtime.InteropServices.NativeLibrary.Load(\"libc\");"),
+                ("memory pool", "var p = System.Buffers.MemoryPool<byte>.Shared;"),
+                ("array pool", "var p = System.Buffers.ArrayPool<byte>.Shared;"),
+                ("explicit layout", "[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Explicit)] struct S { [System.Runtime.InteropServices.FieldOffset(0)] int a; }"),
+                ("time provider", "var t = System.TimeProvider.System.GetUtcNow();"),
+                ("utc now", "var t = System.DateTime.UtcNow;"),
+                ("date today", "var t = System.DateTime.Today;"),
+                ("offset now", "var t = System.DateTimeOffset.UtcNow;"),
+                ("guid v7", "var g = System.Guid.CreateVersion7();"),
+                ("tick count", "var t = System.Environment.TickCount64;"),
+                ("stopwatch", "var t = System.Diagnostics.Stopwatch.GetTimestamp();"),
+                ("unseeded random", "var r = System.Random.Shared.Next();"),
+                ("new random", "var r = new System.Random().Next();"),
+                ("crypto random", "var r = System.Security.Cryptography.RandomNumberGenerator.GetInt32(5);"),
+                ("sleep", "System.Threading.Thread.Sleep(1);"),
+                ("task run", "System.Threading.Tasks.Task.Run(() => { });"),
+                ("interlocked", "int x = 0; System.Threading.Interlocked.Increment(ref x);"),
+                ("lock statement", "var o = new object(); lock (o) { }"),
+                ("thread pool", "System.Threading.ThreadPool.QueueUserWorkItem(_ => { });"),
+                ("timer", "new System.Threading.Timer(_ => { });"),
+                ("gc", "System.GC.Collect();"),
+                ("weak reference", "var w = new System.WeakReference(new object());"),
+                ("uri", "var u = new System.Uri(\"file:///etc/passwd\");"),
+                ("set culture", "System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;"),
+                ("read culture", "var c = System.Globalization.CultureInfo.CurrentCulture;"),
+                ("regex", "System.Text.RegularExpressions.Regex.IsMatch(\"a\", \"a\");"),
+                ("vector simd", "var v = System.Numerics.Vector<float>.One;"),
+                ("process id", "var p = System.Environment.ProcessId;"),
+                ("app context", "var s = System.AppContext.BaseDirectory;"),
+                ("console", "System.Console.WriteLine(\"x\");"),
+                ("string intern", "var s = string.Intern(\"x\");"),
+                ("linq expression compile", "System.Linq.Expressions.Expression.Lambda<Func<int>>(System.Linq.Expressions.Expression.Constant(1)).Compile();"),
+                ("member info", "var m = typeof(object).GetMember(\"ToString\");"),
+                ("member info module", "var m = typeof(object).Module;"),
+                ("type interfaces", "var m = typeof(object).GetInterfaces();"),
+                ("dynamic", "dynamic d = 1; d.Foo();"),
             };
             string header = "using System; using Burger.Core; using Burger.Core.Modding;\nnamespace Esc { public class M : GameScript { public override void OnLoad() { ";
             foreach (var (name, code) in escapes)
@@ -56,6 +105,30 @@ public static partial class Program
                 var errs = new List<string>();
                 var asm = ModManager.Compile(new List<string> { file }, dir, errs);
                 Check(asm == null && errs.Count > 0 && !errs[0].Contains("Attribute"), $"refused: {name}" + (errs.Count > 0 ? " (" + errs[0].Split('\n')[0][..Math.Min(70, errs[0].Split('\n')[0].Length)] + ")" : ""));
+            }
+
+            // the API that mods are meant to use must keep compiling (so the audit above did not cripple modding)
+            {
+                string dir = Path.Combine(tmp, "allowed_api"); Directory.CreateDirectory(Path.Combine(dir, "scripts"));
+                string file = Path.Combine(dir, "scripts", "M.cs");
+                File.WriteAllText(file, header + @"
+  var l = new System.Collections.Generic.List<int> { 3, 1, 2 }; l.Sort();
+  var d = new System.Collections.Generic.Dictionary<string, double>(); d[""a""] = System.Math.Sqrt(2) + System.Math.Abs(-1.5);
+  var sb = new System.Text.StringBuilder(); sb.Append(l.Count).Append(string.Join("","", l.Select(x => x * 2)));
+  string s = 12.5.ToString(System.Globalization.CultureInfo.InvariantCulture) + sb + System.Convert.ToString(7) + string.Format(""{0:N2}"", 3.14159);
+  var big = System.Numerics.BigInteger.Pow(2, 100);
+  var imm = System.Collections.Immutable.ImmutableList.Create(1, 2, 3);
+  Span<int> span = stackalloc int[4]; span[0] = 1;
+  var tuple = (a: 1, b: ""x""); var (a1, b1) = tuple;
+  Func<int, int> f = x => x + 1; Action<string> act = _ => { }; act(f(1).ToString());
+  var q = from x in l where x > 1 orderby x descending select x;
+  var e = Enum.Parse<System.DayOfWeek>(""Monday""); var t = typeof(Game).Name; var ts = new TimeSpan(1, 2, 3); var dt = new DateTime(2020, 1, 1).AddDays(5);
+  try { throw new InvalidOperationException(""x""); } catch (Exception ex) when (ex.Message == ""x"") { } finally { }
+  Log.Info(""ok"" + s + big + imm.Count + q.Count() + e + t + ts + dt);
+  } } }");
+                var errs = new List<string>();
+                var asm = ModManager.Compile(new List<string> { file }, dir, errs);
+                Check(asm != null, "ordinary mod code (collections, LINQ, Math, StringBuilder, BigInteger, Span, tuples, formatting) still compiles" + (errs.Count > 0 ? ": " + errs[0].Split('\n')[0] : ""));
             }
 
             // a malicious image must be refused even when it bypasses the compiler: verify raw metadata of the engine itself (uses forbidden APIs)
@@ -198,6 +271,37 @@ namespace Gift { public class GiftMod : GameScript {
             host.SetPaused(true); Until(() => client.Tick == host.Tick && client.Paused, 600);
             Check(client.Tick == host.Tick && StateChecksum.Compute(hostGame) == StateChecksum.Compute(client.Game!), "checksums equal after the mod message");
             host.Leave(); client.Leave();
+
+            // a mod rule that never returns must not freeze the host
+            Console.WriteLine("Mod validate deadline");
+            string loopDir = CopyProject(project, Path.Combine(tmp, "loopmod"));
+            Directory.CreateDirectory(Path.Combine(loopDir, "scripts"));
+            File.WriteAllText(Path.Combine(loopDir, "scripts", "Loop.cs"), @"using Burger.Core; using Burger.Core.Modding;
+namespace Loop { public class LoopMod : GameScript {
+  public override void OnLoad() {
+    Network.Register(""spin"", ModMessageSchema.Create().Int(""n"", 1, 10), m => { while (true) { } }, m => { });
+    Network.Register(""fine"", ModMessageSchema.Create().Int(""n"", 1, 10), m => null, m => { m.Sender.Gold = 777777; });
+  } } }");
+            File.WriteAllText(Path.Combine(loopDir, "scripts", "mod.json"), "{\"permissions\":[\"network\"]}");
+            var lg = Load(loopDir, 6);
+            var lhost = LockstepSession.Host(lg, "sec-test", 6, "Host");
+            var lkey = lg.ModMessageKeys.First(k => k.EndsWith("/spin")); var fkey = lg.ModMessageKeys.First(k => k.EndsWith("/fine"));
+            var lc = lg.World.Countries.First(c => c.Exists && lg.World.Divisions.Any(d => d.Owner == c));
+            lhost.Pick(lc.Tag);
+            ModLimits.ValidateDeadlineMs = 100;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            lhost.Submit(GameCommand.ModMessage, lkey, "1");
+            long first = sw.ElapsedMilliseconds; sw.Restart();
+            lhost.Submit(GameCommand.ModMessage, lkey, "1");
+            long second = sw.ElapsedMilliseconds;
+            Check(first < 1500, $"a validate that loops forever is cut off after the deadline ({first} ms)");
+            Check(second < 50, $"the rule is then switched off and later messages are refused at once ({second} ms)");
+            double g0 = lc.Gold;
+            lhost.Submit(GameCommand.ModMessage, fkey, "1");
+            lhost.SetSpeed(5); lhost.SetPaused(false);
+            for (int i = 0; i < 800 && lc.Gold < 700000; i++) lhost.Update(0.05);
+            Check(lc.Gold > 700000, "another mod message of the same mod still works");
+            lhost.Leave();
                     }
         finally { try { Directory.Delete(tmp, true); } catch { } }
         Console.WriteLine(failures == 0 ? "All security checks passed" : $"{failures} security check(s) FAILED");
