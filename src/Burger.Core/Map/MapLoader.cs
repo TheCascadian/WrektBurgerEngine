@@ -58,9 +58,20 @@ public static class MapLoader
 
         // ---------------------------------------------------------------- provinces
         string provPath = Path.Combine(mapDir, settings.Provinces);
-        var prov = ImageIO.Load(provPath, false, "map/" + settings.Provinces)
-            ?? throw new GameLoadException($"Province map not found or unreadable: map/{settings.Provinces}");
-        int w = prov.Width, h = prov.Height;
+        // The decoded per-pixel arrays are cached on disk (see MapCache); each entry's key covers every file and setting it was made from.
+        string cacheDir = MapCache.Dir(data);
+        string provKey = MapCache.Key("file:" + provPath, "file:" + Path.Combine(mapDir, settings.Locations));
+        var cachedProv = MapCache.Load<ushort>(cacheDir, "provinces", provKey, out var provMeta); // meta: width, height, then the colors of locations made for unnamed provinces
+        RawImage? prov = null;
+        int w, h;
+        if (cachedProv != null && provMeta.Length >= 2) { w = provMeta[0]; h = provMeta[1]; }
+        else
+        {
+            cachedProv = null;
+            prov = ImageIO.Load(provPath, false, "map/" + settings.Provinces)
+                ?? throw new GameLoadException($"Province map not found or unreadable: map/{settings.Provinces}");
+            w = prov.Width; h = prov.Height;
+        }
         map.Width = w;
         map.Height = h;
         Log.Info($"Province map {w}x{h}");
@@ -100,30 +111,45 @@ public static class MapLoader
         // ---------------------------------------------------------------- pixel → location
         map.PixelLocation = new int[w * h];
         var unknownColors = new Dictionary<int, int>();
-        int lastColor = -1, lastIdx = -1;
-        for (int i = 0, p = 0; i < w * h; i++, p += 4)
+        Location NewUnnamed(int col)
         {
-            int a = prov.Data[p + 3];
-            if (a == 0) { map.PixelLocation[i] = -1; continue; }
-            int col = (prov.Data[p] << 16) | (prov.Data[p + 1] << 8) | prov.Data[p + 2];
-            if (col != lastColor)
+            // auto-create so the map is still usable; tell the modder to name it
+            var c = Rgb.FromPacked(col);
+            string key = "loc_" + c.ToHex().ToLowerInvariant();
+            var loc = new Location { Index = world.Locations.Count, Key = key, MapColor = c };
+            world.Locations.Add(loc);
+            world.LocationByKey[key] = loc;
+            world.LocationByColor[col] = loc;
+            unknownColors[col] = 0;
+            return loc;
+        }
+        if (cachedProv != null)
+        {
+            for (int i = 2; i < provMeta.Length; i++) NewUnnamed(provMeta[i]);
+            var pl = map.PixelLocation;
+            for (int i = 0; i < pl.Length; i++) pl[i] = cachedProv[i] == ushort.MaxValue ? -1 : cachedProv[i];
+        }
+        else
+        {
+            int lastColor = -1, lastIdx = -1;
+            for (int i = 0, p = 0; i < w * h; i++, p += 4)
             {
-                lastColor = col;
-                if (world.LocationByColor.TryGetValue(col, out var l)) lastIdx = l.Index;
-                else
+                int a = prov!.Data[p + 3];
+                if (a == 0) { map.PixelLocation[i] = -1; continue; }
+                int col = (prov.Data[p] << 16) | (prov.Data[p + 1] << 8) | prov.Data[p + 2];
+                if (col != lastColor)
                 {
-                    // auto-create so the map is still usable; tell the modder to name it
-                    var c = Rgb.FromPacked(col);
-                    string key = "loc_" + c.ToHex().ToLowerInvariant();
-                    var loc = new Location { Index = world.Locations.Count, Key = key, MapColor = c };
-                    world.Locations.Add(loc);
-                    world.LocationByKey[key] = loc;
-                    world.LocationByColor[col] = loc;
-                    unknownColors[col] = 0;
-                    lastIdx = loc.Index;
+                    lastColor = col;
+                    lastIdx = world.LocationByColor.TryGetValue(col, out var l) ? l.Index : NewUnnamed(col).Index;
                 }
+                map.PixelLocation[i] = lastIdx;
             }
-            map.PixelLocation[i] = lastIdx;
+            if (world.Locations.Count <= 65000)
+            {
+                var packed = new ushort[w * h];
+                for (int i = 0; i < packed.Length; i++) packed[i] = map.PixelLocation[i] < 0 ? ushort.MaxValue : (ushort)map.PixelLocation[i];
+                MapCache.Save(cacheDir, "provinces", provKey, new[] { w, h }.Concat(unknownColors.Keys).ToArray(), packed);
+            }
         }
         if (unknownColors.Count > 0)
             Log.Warn($"{unknownColors.Count} province colors have no entry in {settings.Locations}. They were named loc_<hex>. " +
@@ -133,18 +159,35 @@ public static class MapLoader
 
         // ---------------------------------------------------------------- terrain
         map.PixelTerrain = new byte[w * h];
-        var terrainImg = ImageIO.Load(Path.Combine(mapDir, settings.Terrain), false, "map/" + settings.Terrain);
+        string terrainPath = Path.Combine(mapDir, settings.Terrain);
+        RawImage? terrainImg = null;
+        byte[]? cachedTerrain = null;
+        int[] terrMeta = Array.Empty<int>();
+        string terrKey = "";
+        if (File.Exists(terrainPath))
+        {
+            terrKey = MapCache.Key("file:" + terrainPath, $"{w}x{h}", string.Join(",", data.Terrains.Select(t => t.MapColor.Packed + ":" + t.Index)));
+            cachedTerrain = MapCache.Load<byte>(cacheDir, "terrain", terrKey, out terrMeta);
+            if (cachedTerrain != null && cachedTerrain.Length != w * h) cachedTerrain = null;
+            if (cachedTerrain == null) terrainImg = ImageIO.Load(terrainPath, false, "map/" + settings.Terrain);
+        }
         if (data.Terrains.Count == 0) throw new GameLoadException("common/terrain.txt defines no terrain types.");
-        if (terrainImg == null)
+        if (cachedTerrain == null && terrainImg == null)
         {
             Log.Warn($"map/{settings.Terrain} not found - every location uses '{data.DefaultTerrain.Key}' terrain");
             Array.Fill(map.PixelTerrain, (byte)data.DefaultTerrain.Index);
+        }
+        else if (cachedTerrain != null)
+        {
+            map.PixelTerrain = cachedTerrain;
+            if (terrMeta.Length >= 2 && terrMeta[0] > 0)
+                Log.Warn($"terrain.png contains {terrMeta[0]} colors not defined in common/terrain.txt (nearest terrain used), e.g. {Rgb.FromPacked(terrMeta[1]).ToHex()}", "map/" + settings.Terrain);
         }
         else
         {
             var cache = new Dictionary<int, byte>();
             foreach (var t in data.Terrains) cache[t.MapColor.Packed] = (byte)t.Index;
-            int tw = terrainImg.Width, th = terrainImg.Height;
+            int tw = terrainImg!.Width, th = terrainImg.Height;
             var unknownTerrain = new HashSet<int>();
             for (int y = 0; y < h; y++)
             {
@@ -165,11 +208,27 @@ public static class MapLoader
             if (unknownTerrain.Count > 0)
                 Log.Warn($"terrain.png contains {unknownTerrain.Count} colors not defined in common/terrain.txt (nearest terrain used), e.g. {Rgb.FromPacked(unknownTerrain.First()).ToHex()}",
                     "map/" + settings.Terrain);
+            MapCache.Save(cacheDir, "terrain", terrKey, new[] { unknownTerrain.Count, unknownTerrain.Count > 0 ? unknownTerrain.First() : 0 }, map.PixelTerrain);
         }
 
+        map.ContentKey = MapCache.Enabled ? MapCache.Key(provKey, terrKey) : "";
+
         // ---------------------------------------------------------------- height, trees, rivers
-        var heightImg = ImageIO.Load(Path.Combine(mapDir, settings.Heightmap), true, "map/" + settings.Heightmap);
-        if (heightImg != null) map.HeightMap = ImageIO.ResampleGrey(heightImg, w, h);
+        byte[]? CachedGrey(string name, string file)
+        {
+            string path = Path.Combine(mapDir, file);
+            if (!File.Exists(path)) return null;
+            string key = MapCache.Key("file:" + path, $"{w}x{h}");
+            var hit = MapCache.Load<byte>(cacheDir, name, key, out _);
+            if (hit != null && hit.Length == w * h) return hit;
+            var img = ImageIO.Load(path, true, "map/" + file);
+            if (img == null) return null;
+            var grey = ImageIO.ResampleGrey(img, w, h);
+            MapCache.Save(cacheDir, name, key, Array.Empty<int>(), grey);
+            return grey;
+        }
+        var heightGrey = CachedGrey("heightmap", settings.Heightmap);
+        if (heightGrey != null) map.HeightMap = heightGrey;
         else
         {
             Log.Warn($"map/{settings.Heightmap} not found - the map will be flat");
@@ -177,11 +236,15 @@ public static class MapLoader
             Array.Fill(map.HeightMap, (byte)Math.Min(255, settings.SeaLevel + 20));
         }
 
-        var treeImg = ImageIO.Load(Path.Combine(mapDir, settings.Trees), true, "map/" + settings.Trees);
-        map.TreeMap = treeImg != null ? ImageIO.ResampleGrey(treeImg, w, h) : new byte[w * h];
+        map.TreeMap = CachedGrey("trees", settings.Trees) ?? new byte[w * h];
 
         map.RiverMap = new byte[w * h];
-        var riverImg = ImageIO.Load(Path.Combine(mapDir, settings.Rivers), false, "map/" + settings.Rivers);
+        string riverPath = Path.Combine(mapDir, settings.Rivers);
+        string riverKey = File.Exists(riverPath) ? MapCache.Key("file:" + riverPath, $"{w}x{h}", settings.RiverBackground.Packed.ToString()) : "";
+        var cachedRivers = riverKey.Length > 0 ? MapCache.Load<byte>(cacheDir, "rivers", riverKey, out _) : null;
+        RawImage? riverImg = null;
+        if (cachedRivers != null && cachedRivers.Length == w * h) map.RiverMap = cachedRivers;
+        else if (riverKey.Length > 0) riverImg = ImageIO.Load(riverPath, false, "map/" + settings.Rivers);
         if (riverImg != null)
         {
             int bg = settings.RiverBackground.Packed;
@@ -198,8 +261,10 @@ public static class MapLoader
                     if (col != bg && col != paradoxPink) map.RiverMap[y * w + x] = 255;
                 }
             }
+            MapCache.Save(cacheDir, "rivers", riverKey, Array.Empty<int>(), map.RiverMap);
         }
 
+        if (map.ContentKey.Length > 0) map.ContentKey = MapCache.Key(map.ContentKey, riverKey);
         ComputeLocationGeometry(data, world, defs);
         ComputeAdjacency(data, world);
         LoadAdjacencyFile(data, world, Path.Combine(mapDir, settings.Adjacencies), "map/" + settings.Adjacencies);
@@ -287,24 +352,61 @@ public static class MapLoader
         int w = map.Width, h = map.Height, n = world.Locations.Count;
         var sumX = new double[n];
         var sumY = new double[n];
-        var terrainHist = new int[n * 256];
-        for (int y = 0; y < h; y++)
+        var bestTerr = new int[n];
+        string cacheDir = MapCache.Dir(data);
+        string geomKey = map.ContentKey.Length > 0 ? MapCache.Key(map.ContentKey, "geom", data.Terrains.Count.ToString()) : "";
+        const int Fields = 10;
+        var g = geomKey.Length > 0 ? MapCache.Load<int>(cacheDir, "geom", geomKey, out _) : null;
+        if (g != null && g.Length == n * Fields)
         {
-            for (int x = 0; x < w; x++)
+            for (int li = 0; li < n; li++)
             {
-                int i = y * w + x;
-                int li = map.PixelLocation[i];
-                if (li < 0) continue;
                 var loc = world.Locations[li];
-                loc.PixelCount++;
-                sumX[li] += x + 0.5;
-                sumY[li] += y + 0.5;
-                if (x < loc.MinX) loc.MinX = x;
-                if (x > loc.MaxX) loc.MaxX = x;
-                if (y < loc.MinY) loc.MinY = y;
-                if (y > loc.MaxY) loc.MaxY = y;
-                terrainHist[li * 256 + map.PixelTerrain[i]]++;
+                int o = li * Fields;
+                loc.PixelCount = g[o]; loc.MinX = g[o + 1]; loc.MaxX = g[o + 2]; loc.MinY = g[o + 3]; loc.MaxY = g[o + 4];
+                sumX[li] = BitConverter.Int64BitsToDouble(((long)(uint)g[o + 6] << 32) | (uint)g[o + 5]);
+                sumY[li] = BitConverter.Int64BitsToDouble(((long)(uint)g[o + 8] << 32) | (uint)g[o + 7]);
+                bestTerr[li] = g[o + 9];
             }
+        }
+        else
+        {
+            var terrainHist = new int[n * 256];
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    int i = y * w + x;
+                    int li = map.PixelLocation[i];
+                    if (li < 0) continue;
+                    var loc = world.Locations[li];
+                    loc.PixelCount++;
+                    sumX[li] += x + 0.5;
+                    sumY[li] += y + 0.5;
+                    if (x < loc.MinX) loc.MinX = x;
+                    if (x > loc.MaxX) loc.MaxX = x;
+                    if (y < loc.MinY) loc.MinY = y;
+                    if (y > loc.MaxY) loc.MaxY = y;
+                    terrainHist[li * 256 + map.PixelTerrain[i]]++;
+                }
+            }
+            var packed = new int[n * Fields];
+            for (int li = 0; li < n; li++)
+            {
+                var loc = world.Locations[li];
+                int bestT = 0, bestC = -1;
+                for (int t = 0; t < data.Terrains.Count && t < 256; t++)
+                {
+                    int c = terrainHist[li * 256 + t];
+                    if (c > bestC) { bestC = c; bestT = t; }
+                }
+                bestTerr[li] = bestT;
+                long bx = BitConverter.DoubleToInt64Bits(sumX[li]), by = BitConverter.DoubleToInt64Bits(sumY[li]);
+                int o = li * Fields;
+                packed[o] = loc.PixelCount; packed[o + 1] = loc.MinX; packed[o + 2] = loc.MaxX; packed[o + 3] = loc.MinY; packed[o + 4] = loc.MaxY;
+                packed[o + 5] = (int)bx; packed[o + 6] = (int)(bx >> 32); packed[o + 7] = (int)by; packed[o + 8] = (int)(by >> 32); packed[o + 9] = bestT;
+            }
+            if (geomKey.Length > 0) MapCache.Save(cacheDir, "geom", geomKey, Array.Empty<int>(), packed);
         }
 
         var defByKey = defs.GroupBy(d => d.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
@@ -347,13 +449,7 @@ public static class MapLoader
             }
             if (terrain == null)
             {
-                int bestT = 0, bestC = -1;
-                for (int t = 0; t < data.Terrains.Count && t < 256; t++)
-                {
-                    int c = terrainHist[li * 256 + t];
-                    if (c > bestC) { bestC = c; bestT = t; }
-                }
-                terrain = data.Terrains[bestT];
+                terrain = data.Terrains[bestTerr[li]];
                 // a location that is marked as land but whose pixels are water-terrain should still be land
                 if (terrain.IsWater && !loc.ForcedWater && def != null && string.Equals(def.Type, "land", StringComparison.OrdinalIgnoreCase))
                     terrain = data.DefaultTerrain;
@@ -361,6 +457,42 @@ public static class MapLoader
             if (loc.ForcedWater && !terrain.IsWater && data.WaterTerrain != null) terrain = data.WaterTerrain;
             loc.Terrain = terrain;
         }
+    }
+
+    /// <summary>The border scan of the whole map flattened to ints: per border A, B, pixel count, river flag, the two sums (double bits), and the packed points.</summary>
+    private static int[] WriteBorders(Dictionary<long, BorderAccum> acc)
+    {
+        var o = new List<int>(acc.Count * 16) { acc.Count };
+        foreach (var ba in acc.Values)
+        {
+            long sx = BitConverter.DoubleToInt64Bits(ba.SumX), sy = BitConverter.DoubleToInt64Bits(ba.SumY);
+            o.Add(ba.A); o.Add(ba.B); o.Add(ba.Count); o.Add(ba.River ? 1 : 0);
+            o.Add((int)sx); o.Add((int)(sx >> 32)); o.Add((int)sy); o.Add((int)(sy >> 32));
+            o.Add(ba.Points.Count); o.AddRange(ba.Points);
+        }
+        return o.ToArray();
+    }
+
+    private static bool TryReadBorders(int[] d, Dictionary<long, BorderAccum> acc)
+    {
+        try
+        {
+            int n = d[0], p = 1;
+            for (int k = 0; k < n; k++)
+            {
+                var ba = new BorderAccum { A = d[p], B = d[p + 1], Count = d[p + 2], River = d[p + 3] != 0 };
+                ba.SumX = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 5] << 32) | (uint)d[p + 4]);
+                ba.SumY = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 7] << 32) | (uint)d[p + 6]);
+                int np = d[p + 8];
+                p += 9;
+                ba.Points = new List<int>(new ArraySegment<int>(d, p, np));
+                p += np;
+                acc[((long)ba.A << 32) | (uint)ba.B] = ba;
+            }
+            return p == d.Length;
+        }
+        catch (IndexOutOfRangeException) { return false; }
+        catch (ArgumentException) { return false; }
     }
 
     private static void ComputeAdjacency(GameData data, World world)
@@ -386,23 +518,32 @@ public static class MapLoader
             ba.Points.Add((int)(((uint)x2 << 16) | ((uint)y2 & 0xFFFF)));
         }
 
-        for (int y = 0; y < h; y++)
+        string cacheDir = MapCache.Dir(data);
+        string adjKey = map.ContentKey.Length > 0 ? MapCache.Key(map.ContentKey, "borders") : "";
+        var cached = adjKey.Length > 0 ? MapCache.Load<int>(cacheDir, "borders", adjKey, out _) : null;
+        if (cached != null && TryReadBorders(cached, acc)) { }
+        else
         {
-            for (int x = 0; x < w; x++)
+            acc.Clear();
+            for (int y = 0; y < h; y++)
             {
-                int i = y * w + x;
-                int a = map.PixelLocation[i];
-                if (x + 1 < w)
+                for (int x = 0; x < w; x++)
                 {
-                    int b = map.PixelLocation[i + 1];
-                    if (a != b) Add(a, b, (x + 1) * 2, y * 2 + 1, map.RiverMap[i] != 0 || map.RiverMap[i + 1] != 0);
-                }
-                if (y + 1 < h)
-                {
-                    int b = map.PixelLocation[i + w];
-                    if (a != b) Add(a, b, x * 2 + 1, (y + 1) * 2, map.RiverMap[i] != 0 || map.RiverMap[i + w] != 0);
+                    int i = y * w + x;
+                    int a = map.PixelLocation[i];
+                    if (x + 1 < w)
+                    {
+                        int b = map.PixelLocation[i + 1];
+                        if (a != b) Add(a, b, (x + 1) * 2, y * 2 + 1, map.RiverMap[i] != 0 || map.RiverMap[i + 1] != 0);
+                    }
+                    if (y + 1 < h)
+                    {
+                        int b = map.PixelLocation[i + w];
+                        if (a != b) Add(a, b, x * 2 + 1, (y + 1) * 2, map.RiverMap[i] != 0 || map.RiverMap[i + w] != 0);
+                    }
                 }
             }
+            if (adjKey.Length > 0) MapCache.Save(cacheDir, "borders", adjKey, Array.Empty<int>(), WriteBorders(acc));
         }
 
         double kmPerPixel = data.Defines.KmPerPixel;

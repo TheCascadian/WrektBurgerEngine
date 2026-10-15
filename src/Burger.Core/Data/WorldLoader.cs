@@ -15,6 +15,7 @@ public static class WorldLoader
 
         LoadCountries(game);
         MapLoader.Load(data, world);
+        game.RaiseMapLoaded();
         LoadStates(game);
         Burger.Core.Geography.GeoLoader.Load(game);
         ResolveCapitals(game);

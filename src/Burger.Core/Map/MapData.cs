@@ -66,6 +66,8 @@ public sealed class MapData
     public int Width;
     public int Height;
     public MapSettings Settings = new();
+    /// <summary>Hash of everything the pixel arrays were built from (empty when the map cache is off). Renderer caches key on it.</summary>
+    public string ContentKey = "";
     /// <summary>Location index for every pixel (-1 = no location).</summary>
     public int[] PixelLocation = Array.Empty<int>();
     /// <summary>Terrain index for every pixel (from terrain.png).</summary>

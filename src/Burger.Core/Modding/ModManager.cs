@@ -212,6 +212,36 @@ global using Burger.Core.Technology;
             try { trees.Add(CSharpSyntaxTree.ParseText(File.ReadAllText(f), parse, path: f, encoding: System.Text.Encoding.UTF8)); }
             catch (Exception ex) { Log.Error($"Cannot read script: {ex.Message}", f); }
         }
+        // compiled scripts are kept on disk, keyed by a hash of every source text, the referenced backend image and the engine build
+        string cacheFile = "", cacheKey = "";
+        if (Burger.Core.Map.MapCache.Enabled)
+        {
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            void Add(string t) { sha.TransformBlock(System.Text.Encoding.UTF8.GetBytes(t + "\0"), 0, System.Text.Encoding.UTF8.GetByteCount(t) + 1, null, 0); }
+            Add(prefix); Add(Environment.Version.ToString()); Add(typeof(Game).Assembly.ManifestModule.ModuleVersionId.ToString());
+            foreach (var t in trees) { Add(t.FilePath); Add(t.ToString()); }
+            if (extraRefs != null) foreach (var r in extraRefs) Add(r.Display ?? "");
+            if (extraRefs != null) foreach (var r in extraRefs) if (r is PortableExecutableReference pe && pe.GetMetadata() is AssemblyMetadata am) Add(am.GetModules()[0].GetModuleVersionId().ToString());
+            sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+            cacheKey = Convert.ToHexString(sha.Hash!);
+            cacheFile = Path.Combine(gameRoot, "cache", "scripts", prefix.TrimEnd('_') + ".dll");
+            try
+            {
+                if (File.Exists(cacheFile))
+                {
+                    var bytes = File.ReadAllBytes(cacheFile);
+                    int kl = cacheKey.Length;
+                    if (bytes.Length > kl && System.Text.Encoding.ASCII.GetString(bytes, 0, kl) == cacheKey)
+                    {
+                        image = bytes[kl..];
+                        var hit = Assembly.Load(image);
+                        RegisterInMemory(hit);
+                        return hit;
+                    }
+                }
+            }
+            catch (Exception ex) { Log.Warn($"Script cache unreadable, compiling again: {ex.Message}"); }
+        }
         var refs = GetReferences(out string? refError);
         if (refError != null)
         {
@@ -239,6 +269,17 @@ global using Burger.Core.Technology;
         }
         if (!result.Success) return null;
         image = ms.ToArray();
+        if (cacheFile.Length > 0)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+                string tmp = cacheFile + ".tmp";
+                File.WriteAllBytes(tmp, System.Text.Encoding.ASCII.GetBytes(cacheKey).Concat(image).ToArray());
+                File.Move(tmp, cacheFile, true);
+            }
+            catch (Exception ex) { Log.Warn($"Could not write the script cache: {ex.Message}"); }
+        }
         var asm = Assembly.Load(image);
         RegisterInMemory(asm);
         return asm;
