@@ -25,6 +25,8 @@ public sealed class PlayerInfo
     internal double PingSentAt;
     internal int Strikes;
     internal double LastResyncAt = -1e9;
+    /// <summary>Host tick of the full save last sent to this peer: its checksums for ticks up to here were counted before it loaded the save and say nothing about the new state.</summary>
+    internal long SyncTick = -1;
     private double _tokens = 400, _tokenAt = -1;
 
     /// <summary>Message budget: a burst of 400, refilled at 200 per second. A peer that floods runs dry and collects strikes.</summary>
@@ -433,7 +435,7 @@ public sealed class LockstepSession
             case "PONG": p.PingMs = (int)Math.Clamp(Now() - p.PingSentAt, 0, 60000); break;
             case "SUM":
                 if (!Wire.Int(f[1], 0, Tick, out long tick) || f[2].Length != 16) { Strike(p, "bad SUM"); break; }
-                if (_sums.TryGetValue(tick, out var mine) && f[2] != mine.ToString("x16"))
+                if (tick > p.SyncTick && _sums.TryGetValue(tick, out var mine) && f[2] != mine.ToString("x16"))
                 {
                     // a full save is expensive: a peer that reports a mismatch again within 30 s is lying or broken, not unlucky
                     if (Now() - p.LastResyncAt < 30000) { Strike(p, "repeated checksum mismatch"); break; }
@@ -490,6 +492,7 @@ public sealed class LockstepSession
         byte[] zip = ms.ToArray();
         string tags = string.Join(',', Game.World.Countries.Where(c => c.IsPlayer).Select(c => c.Tag).OrderBy(t => t, StringComparer.Ordinal));
         var link = p.Link!;
+        p.SyncTick = Tick;
         link.Send($"SYNC|{Tick}|{tags}|{zip.Length}");
         int seq = 0;
         for (int at = 0; at < zip.Length; at += Wire.SyncChunk)

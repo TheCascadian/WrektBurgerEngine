@@ -16,6 +16,7 @@ public static partial class Program
         int days = int.Parse(Opt(args, "--days") ?? "120");
         int seed = int.Parse(Opt(args, "--seed") ?? "7");
         int failures = 0;
+        if (args.Contains("--watch")) Burger.Core.Log.EchoToConsole = true;
         void Check(bool ok, string what) { Console.WriteLine($"  [{(ok ? " ok " : "FAIL")}] {what}"); if (!ok) failures++; }
 
         Game LoadStarted(string _, int s) { var g = Game.Load(GameDir(project), true, s); g.StartNewGame(null); return g; }
@@ -39,11 +40,13 @@ public static partial class Program
             clients.Add(LockstepSession.Join(a, i == 0 ? "Bob" : "Cy", LoadStarted));
             { var cl = clients[^1]; cl.Toast += t => Console.WriteLine($"    [{cl.Me?.Name}] {t}"); }
         }
+        var watched = new HashSet<LockstepSession>();
         void Frame(double dt = 0.05)
         {
             while (listener.TryAccept(out var t)) host.AddPeer(t);
             host.Update(dt);
             foreach (var c in clients) c.Update(dt);
+            if (args.Contains("--watch")) foreach (var c in clients) if (c.Disconnected && !watched.Contains(c)) { watched.Add(c); Console.WriteLine($"    WATCH {c.Me?.Name} disconnected at host tick {host.Tick}, its tick {c.Tick}, host sees {string.Join(",", host.Players.Select(p => p.Name + (p.Active ? "+" : "-")))}"); }
         }
         void Frames(int n) { for (int i = 0; i < n; i++) Frame(); }
         bool Until(Func<bool> cond, int max = 4000) { for (int i = 0; i < max && !cond(); i++) { Frame(); if (i % 50 == 0) Thread.Sleep(1); } return cond(); }
@@ -87,6 +90,16 @@ public static partial class Program
         clients[1].SendChat("hello");
         Until(() => Days() >= start + days / 3);
 
+        // --battle: wait for a battle in progress, so the resync's save is taken in the middle of one
+        bool battleMode = args.Contains("--battle");
+        int battlesAtDrift = 0;
+        if (battleMode)
+        {
+            bool found = Until(() => hostGame.World.Battles.Count > 0, 400000);
+            Check(found, "a battle is in progress on the host");
+            battlesAtDrift = hostGame.World.Battles.Count;
+            Console.WriteLine($"    {battlesAtDrift} battle(s) at the injected drift, {hostGame.World.Wars.Count} war(s), {hostGame.World.Date.ToDisplay()}");
+        }
         // a desync: one client's gold drifts
         Check(host.Resyncs == 0 && clients.All(c => c.Resyncs == 0), "no resync before the injected drift (a natural desync would show here)");
         int resyncsBefore = host.Resyncs;
@@ -95,6 +108,15 @@ public static partial class Program
         Check(host.Resyncs > resyncsBefore && clients[1].Resyncs > 0, "checksum caught the drift and the client was resynced");
         Check(host.Resyncs == 1 && clients[0].Resyncs == 0, "exactly one resync: the injected one, only for the drifted client");
 
+        if (args.Contains("--after-resync"))
+        {
+            host.SetPaused(true);
+            Until(() => clients.All(c => c.Tick == host.Tick), 200000);
+            string hdg = StateDigest(hostGame);
+            Console.WriteLine($"    after resync, tick {host.Tick} ({hostGame.World.Date.ToDisplay()}): host {hdg}, " + string.Join(", ", clients.Select(c => c.Me!.Name + " " + StateDigest(c.Game) + (c.Tick == host.Tick ? "" : " (tick " + c.Tick + ")"))));
+            foreach (var c in clients) Console.WriteLine($"    diff {c.Me!.Name}: " + string.Join(" | ", StateChecksum.Diff(hostGame, c.Game).Take(8)));
+            host.SetPaused(false);
+        }
         if (args.Contains("--diag"))
         {
             host.SetPaused(true);
@@ -114,12 +136,16 @@ public static partial class Program
 
         Until(() => Days() >= start + days);
         host.SetPaused(true);
-        Until(() => clients.All(c => c.Tick == host.Tick), 8000);
+        Until(() => clients.All(c => c.Tick == host.Tick), 200000);
+        foreach (var c in clients) Console.WriteLine($"    tick {c.Me!.Name} {c.Tick} host {host.Tick} resyncs {c.Resyncs}");
         Check(clients.All(c => c.Tick == host.Tick), "clients caught up with the host at tick " + host.Tick);
         ulong hs = StateChecksum.Compute(hostGame);
         foreach (var c in clients) Check(StateChecksum.Compute(c.Game) == hs, $"{c.Me!.Name} checksum equals the host's ({hs:x16})");
         Check(host.Players.Any(p => p.Id > 0 && p.Active && p.PingMs >= 0), "ping tracked");
         Check(host.Resyncs == 1, "no resync other than the injected one by the end");
+        string hd = StateDigest(hostGame);
+        foreach (var c in clients) Check(StateDigest(c.Game) == hd, $"{c.Me!.Name} full state digest equals the host's ({hd}; covers states, characters, wars, politics)");
+        if (battleMode) Console.WriteLine($"    battles at the end on host {hostGame.World.Battles.Count}, battle score total {hostGame.World.Wars.Sum(w => w.BattleScore):0.##}");
         Console.WriteLine($"Ran {host.Tick} ticks ({hostGame.World.Date.ToDisplay()}), resyncs {host.Resyncs} (1 injected on purpose)");
         Console.WriteLine($"    pending proposals host {hostGame.PendingProposals.Count}: " + string.Join(", ", hostGame.PendingProposals.Select(p => p.Kind + ":" + p.From.Tag + ">" + p.To.Tag)));
         foreach (var t in toasts.Where(t => t.Contains("Desync"))) Console.WriteLine("    " + t);
