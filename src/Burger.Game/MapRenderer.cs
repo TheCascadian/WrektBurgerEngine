@@ -7,7 +7,7 @@ using Raylib_cs;
 
 namespace Burger.Runtime;
 
-public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces }
+public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents }
 
 /// <summary>
 /// Builds and draws the 3D map from the province map, heightmap, terrain, tree and river inputs.
@@ -1063,6 +1063,9 @@ public sealed unsafe class MapRenderer : IDisposable
                     break;
                 case MapMode.Culture:
                     if (l.IsLand && l.State != null && _game.Population.Culture(_game.Population.MajorityCulture(l.State)) is { } cul) col = C(cul.Color, 225);
+                    break;
+                case MapMode.Continents:
+                    if (l.Continent != null) col = C(l.Continent.Color, l.Continent.IsOcean ? 200 : 235);
                     break;
                 case MapMode.Religion:
                     if (l.IsLand && l.State != null && _game.Population.Religion(_game.Population.MajorityReligion(l.State)) is { } rel) col = C(rel.Color, 225);

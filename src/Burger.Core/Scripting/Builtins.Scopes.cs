@@ -17,6 +17,16 @@ public static partial class Builtins
 
     private static Country? C(IScope? s) => ScopeHelpers.CountryOf(s);
 
+    /// <summary>Where a scope lies: a location's or state's continent (an ocean for sea), a country's primary continent, a continent itself.</summary>
+    private static Continent? ContinentOf(IScope? x) => x switch
+    {
+        Location l => l.Continent,
+        State st => st.Continent,
+        Country c => c.PrimaryContinent,
+        Continent k => k,
+        _ => null,
+    };
+
     private static void RegisterLinks(Game game)
     {
         var s = game.Script;
@@ -35,6 +45,8 @@ public static partial class Builtins
         s.RegisterLink("country", (ctx, x) => C(x));
         s.RegisterLink("employer", (ctx, x) => (x as Character)?.Country);
         s.RegisterLink("state", (ctx, x) => (x as Location)?.State);
+        s.RegisterLink("continent", (ctx, x) => ContinentOf(x));
+        s.RegisterLink("primary_continent", (ctx, x) => (x as Country)?.PrimaryContinent);
         s.RegisterLink("father", (ctx, x) => (x as Character)?.Father);
         s.RegisterLink("mother", (ctx, x) => (x as Character)?.Mother);
         s.RegisterLink("spouse", (ctx, x) => (x as Character)?.Spouse);
@@ -74,6 +86,11 @@ public static partial class Builtins
         s.RegisterIterator("core_state", (ctx, x) => C(x) is { } c ? game.World.States.Where(st => st.Cores.Contains(c)).ToList() : Enumerable.Empty<IScope>());
         s.RegisterIterator("claimed_state", (ctx, x) => C(x) is { } c ? game.World.States.Where(st => st.Claims.Contains(c)).ToList() : Enumerable.Empty<IScope>());
         s.RegisterIterator("state", (ctx, x) => game.World.States);
+        s.RegisterIterator("continent", (ctx, x) => game.World.Continents.Where(k => !k.IsOcean).ToList());
+        s.RegisterIterator("ocean", (ctx, x) => game.World.Continents.Where(k => k.IsOcean).ToList());
+        s.RegisterIterator("continent_location", (ctx, x) => (x as Continent)?.Locations ?? Enumerable.Empty<Location>());
+        s.RegisterIterator("continent_state", (ctx, x) => x is Continent k ? game.World.States.Where(st => st.Continent == k).ToList() : Enumerable.Empty<IScope>());
+        s.RegisterIterator("continent_country", (ctx, x) => x is Continent k ? game.World.Countries.Where(c => c.Exists && c.PrimaryContinent == k).ToList() : Enumerable.Empty<IScope>());
         s.RegisterIterator("war_participant", (ctx, x) => x is War war ? war.Attackers.Concat(war.Defenders).ToList() : Enumerable.Empty<IScope>());
         _ = w;
     }

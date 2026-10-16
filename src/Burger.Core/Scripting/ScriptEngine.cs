@@ -184,6 +184,7 @@ public sealed class ScriptEngine
                 case "c": case "country": case "tag": scope = w.GetCountry(id); return true;
                 case "s": case "state": scope = w.GetState(id); return true;
                 case "l": case "location": case "loc": case "p": case "province": scope = w.GetLocation(id); return true;
+                case "continent": scope = w.ContinentByKey.GetValueOrDefault(id); return true;
                 case "char": case "character": scope = w.GetCharacter(id); return true;
                 case "generic": case "generic_scope": case "scope_id": scope = w.GetGenericScope(id); return true;
                 case "war": scope = w.Wars.FirstOrDefault(x => string.Equals(x.Id.ToString(), id, StringComparison.OrdinalIgnoreCase)

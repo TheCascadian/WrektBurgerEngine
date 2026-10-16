@@ -61,6 +61,8 @@ public sealed class Location : IScope
     public bool IsLake;
     public bool Impassable;
     public State? State;
+    /// <summary>The continent (or ocean) this location lies on; null when the game defines no continents (<c>common/continents.txt</c>).</summary>
+    public Continent? Continent;
 
     // geometry (map pixels)
     public int PixelCount;
@@ -120,6 +122,8 @@ public sealed class State : IScope
     /// <summary>Gold added to the owner's treasury each month.</summary>
     public double Tax;
     public string Category = "";
+    /// <summary>The continent this state is on (the <c>continent</c> key of the state, else where most of its locations lie); null when no continents are defined.</summary>
+    public Continent? Continent;
     /// <summary>No armed forces may enter or be raised here (demilitarization feature): the Rhineland, straits, islands. Ends when the owner goes to war.</summary>
     public bool Demilitarized;
     public Dictionary<string, int> Buildings = new(StringComparer.OrdinalIgnoreCase);
@@ -144,5 +148,35 @@ public sealed class State : IScope
         return n / (double)Locations.Count;
     }
 
+    public override string ToString() => Key;
+}
+
+/// <summary>
+/// A continent, or an ocean for sea provinces, from <c>common/continents.txt</c>. Land states name theirs (<c>continent = europe</c>);
+/// ocean provinces and land without a state are placed by the rectangles (<c>box</c>) of the continents, first match wins.
+/// </summary>
+public sealed class Continent : IScope
+{
+    public string Key = "";
+    public int Index;
+    public string Name = "";
+    public Rgb Color;
+    /// <summary>An ocean or sea basin: holds water provinces only.</summary>
+    public bool IsOcean;
+    /// <summary>West, south, east, north in degrees; west greater than east means the box crosses the 180 meridian.</summary>
+    public List<(double West, double South, double East, double North)> Boxes = new();
+    public readonly List<Location> Locations = new();
+    public VarStore Vars { get; } = new();
+
+    public bool Contains(double lon, double lat)
+    {
+        foreach (var b in Boxes)
+            if (lat >= b.South && lat <= b.North && (b.West <= b.East ? lon >= b.West && lon <= b.East : lon >= b.West || lon <= b.East)) return true;
+        return false;
+    }
+
+    public ScopeType ScopeType => ScopeType.Continent;
+    public string ScopeKey => Key;
+    public string DisplayName => Name.Length > 0 ? Localisation.Get(Name) : Localisation.GetOrPretty(Key);
     public override string ToString() => Key;
 }

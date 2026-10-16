@@ -1036,6 +1036,7 @@ guianas_and_orinoco_m13_4 = {
 }
 guianas_and_orinoco_m191_1 = {
 	name = "Guianas and Orinoco"
+	continent = south_america
 	manpower = 1
 	tax = 0.5
 	locations = { land_16083 land_13596 land_11054 land_12794 }
@@ -3405,6 +3406,7 @@ maghreb_5 = {
 }
 maghreb_6 = {
 	name = "Maghreb 6"
+	continent = africa
 	manpower = 8
 	tax = 1.2
 	locations = { land_02100 land_02640 land_07329 land_04205 land_02373 land_05894 land_08220 land_05802 land_01432 land_07985 land_06693 land_06001 land_02337 land_07801 land_08101 land_04151 land_07289 land_09601 land_08775 land_07243 land_03676 land_09440 land_07788 land_06699 land_03229 land_06907 land_04466 land_04563 land_07475 land_03322 land_04065 land_01647 land_00558 }

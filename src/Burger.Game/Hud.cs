@@ -122,7 +122,8 @@ public sealed partial class Hud
         if (Map.Mode == MapMode.Ideology && !G.Politics.Enabled) Map.Mode = (MapMode)(((int)Map.Mode + 1) % Enum.GetValues<MapMode>().Length);
         if (Map.Mode is MapMode.Population or MapMode.Culture && !G.Population.Enabled) Map.Mode = MapMode.Political;
         if (Map.Mode == MapMode.Religion && !G.Population.ReligionEnabled) Map.Mode = MapMode.Political;
-        if (Map.Mode == MapMode.Provinces && !G.Geo.Enabled) Map.Mode = MapMode.Political;
+        if (Map.Mode == MapMode.Provinces && !G.Geo.Enabled) Map.Mode = MapMode.Continents;
+        if (Map.Mode == MapMode.Continents && G.World.Continents.Count == 0) Map.Mode = MapMode.Political;
         Map.Dirty = true;
     }
 
@@ -503,6 +504,7 @@ public sealed partial class Hud
         if (G.Politics.Enabled) modes.Add(("Ideology", MapMode.Ideology));
         if (G.Population.Enabled) { modes.Add(("People", MapMode.Population)); modes.Add(("Culture", MapMode.Culture)); }
         if (G.Population.ReligionEnabled) modes.Add(("Religion", MapMode.Religion));
+        if (G.World.Continents.Count > 0) modes.Add(("Continents", MapMode.Continents));
         modes.Add(("Locations", MapMode.Locations));
         if (G.Geo.Enabled) modes.Add(("Provinces", MapMode.Provinces));
         var custom = G.Interface.MapModes;
@@ -568,6 +570,7 @@ public sealed partial class Hud
         MapMode.States => "States: each state gets a distinct color; dark lines show province boundaries. Tab cycles modes.",
         MapMode.Diplomacy => "Diplomacy: shows relations to the focused country; hover a province for details. Tab cycles modes.",
         MapMode.Locations => "Locations: each province uses its configured map color. Tab cycles modes.",
+        MapMode.Continents => "Continents: each continent has its own color and each ocean its own blue; hover a province for its continent. Tab cycles modes.",
         MapMode.Supply => "Supply: low/unsupplied areas trend red or dark; stronger supply trends green. Tab cycles modes.",
         MapMode.Provinces => "Provinces: historical provinces on the shown date (console: geodate 1CE.1.1), colored by owner, dark lines at province borders. Tab cycles modes.",
         MapMode.Air => "Air: color distinguishes air regions; red-to-green indicates contested air superiority. Tab cycles modes.",

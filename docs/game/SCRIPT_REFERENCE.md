@@ -9,6 +9,7 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `borders`
 - `can_declare_war_on`
 - `category`
+- `continent`
 - `check_variable`
 - `controls_location`
 - `controls_state`
@@ -39,6 +40,7 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `has_modifier`
 - `has_movement`
 - `has_non_aggression_pact`
+- `has_territory_on_continent`
 - `has_trait`
 - `has_truce_with`
 - `has_variable`
@@ -68,6 +70,7 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `is_married`
 - `is_neighbor_of`
 - `is_occupied`
+- `is_ocean`
 - `is_overlord_of`
 - `is_owned_by`
 - `is_parent_of`
@@ -86,6 +89,7 @@ Used in `trigger`, `potential`, `allow`, `limit` blocks. Logic: `AND`, `OR`, `NO
 - `opinion`
 - `owns_location`
 - `owns_state`
+- `primary_continent`
 - `party_banned`
 - `random_chance`
 - `religion`
@@ -273,6 +277,10 @@ Prefix with `any_` / `all_` (triggers) or `every_` / `random_` (effects), e.g. `
 - `character`
 - `child`
 - `claimed_state`
+- `continent`
+- `continent_country`
+- `continent_location`
+- `continent_state`
 - `controlled_location`
 - `core_state`
 - `country`
@@ -280,6 +288,7 @@ Prefix with `any_` / `all_` (triggers) or `every_` / `random_` (effects), e.g. `
 - `location`
 - `neighbor_country`
 - `neighbor_location`
+- `ocean`
 - `owned_location`
 - `owned_state`
 - `scope_child`
@@ -291,11 +300,12 @@ Prefix with `any_` / `all_` (triggers) or `every_` / `random_` (effects), e.g. `
 
 ## Scope links
 
-Switch scope: `ruler = { add_trait = brave }`, compare: `owner = ROOT`, chain: `ROOT.capital.state`. Also: `ROOT`, `THIS`, `PREV`, `TAG`, `c:TAG`, `state:key`, `location:key`, `character:id`, `scope:name`.
+Switch scope: `ruler = { add_trait = brave }`, compare: `owner = ROOT`, chain: `ROOT.capital.state`. Also: `ROOT`, `THIS`, `PREV`, `TAG`, `c:TAG`, `state:key`, `location:key`, `continent:key`, `character:id`, `scope:name`.
 
 - `attacker_leader`
 - `capital`
 - `capital_scope`
+- `continent`
 - `controller`
 - `country`
 - `defender_leader`
@@ -306,6 +316,7 @@ Switch scope: `ruler = { add_trait = brave }`, compare: `owner = ROOT`, chain: `
 - `overlord`
 - `owner`
 - `parent`
+- `primary_continent`
 - `ruler`
 - `scope_parent`
 - `spouse`

@@ -189,6 +189,13 @@ public static partial class Builtins
         s.RegisterTrigger("terrain", (ctx, n) => string.Equals((ctx.This as Location)?.Terrain.Key, n.Value, StringComparison.OrdinalIgnoreCase),
             (ctx, n) => $"Terrain is {Localisation.GetOrPretty(n.Value ?? "")}");
         s.RegisterTrigger("is_coastal", (ctx, n) => YesNo(n, ctx.This is Location l && l.IsCoastal || ctx.This is State st && st.Locations.Any(x => x.IsCoastal)));
+        s.RegisterTrigger("continent", (ctx, n) => ContinentOf(ctx.This) is { } k && string.Equals(k.Key, n.Value, StringComparison.OrdinalIgnoreCase),
+            (ctx, n) => $"Is on {game.World.ContinentByKey.GetValueOrDefault(n.Value ?? "")?.DisplayName ?? Localisation.GetOrPretty(n.Value ?? "")}");
+        s.RegisterTrigger("primary_continent", (ctx, n) => (ctx.This as Country)?.PrimaryContinent is { } k && string.Equals(k.Key, n.Value, StringComparison.OrdinalIgnoreCase),
+            (ctx, n) => $"Is based on {game.World.ContinentByKey.GetValueOrDefault(n.Value ?? "")?.DisplayName ?? Localisation.GetOrPretty(n.Value ?? "")}");
+        s.RegisterTrigger("has_territory_on_continent", (ctx, n) => ctx.This is Country c && c.OwnedStates.Any(st => st.Continent != null && string.Equals(st.Continent.Key, n.Value, StringComparison.OrdinalIgnoreCase)),
+            (ctx, n) => $"Owns land on {game.World.ContinentByKey.GetValueOrDefault(n.Value ?? "")?.DisplayName ?? Localisation.GetOrPretty(n.Value ?? "")}");
+        s.RegisterTrigger("is_ocean", (ctx, n) => YesNo(n, ctx.This is Location l && l.Continent?.IsOcean == true || ctx.This is Continent { IsOcean: true }));
         s.RegisterTrigger("is_water", (ctx, n) => YesNo(n, ctx.This is Location l && l.IsWater));
         s.RegisterTrigger("is_sea", (ctx, n) => YesNo(n, ctx.This is Location l && l.IsWater && !l.IsLake));
         s.RegisterTrigger("has_building", (ctx, n) =>

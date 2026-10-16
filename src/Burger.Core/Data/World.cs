@@ -16,6 +16,10 @@ public sealed class World
     public readonly List<State> States = new();
     public readonly Dictionary<string, State> StateByKey = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Continents and oceans (common/continents.txt); empty when the game defines none.</summary>
+    public readonly List<Continent> Continents = new();
+    public readonly Dictionary<string, Continent> ContinentByKey = new(StringComparer.OrdinalIgnoreCase);
+
     public readonly List<Country> Countries = new();
     public readonly Dictionary<string, Country> CountryByTag = new(StringComparer.OrdinalIgnoreCase);
 

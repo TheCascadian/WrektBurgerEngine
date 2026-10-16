@@ -1,6 +1,6 @@
 namespace Burger.Core;
 
-public enum ScopeType { None, Country, Character, State, Location, War, Generic }
+public enum ScopeType { None, Country, Character, State, Location, War, Generic, Continent }
 
 /// <summary>Flags and numeric variables that scripts can attach to any scope, including data-defined generic scopes.</summary>
 public sealed class VarStore

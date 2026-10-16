@@ -16,7 +16,9 @@ public static class WorldLoader
         LoadCountries(game);
         MapLoader.Load(data, world);
         game.RaiseMapLoaded();
+        LoadContinentDefinitions(game);
         LoadStates(game);
+        AssignContinents(game);
         Burger.Core.Geography.GeoLoader.Load(game);
         ResolveCapitals(game);
         LoadCharacters(game);
@@ -182,6 +184,11 @@ public static class WorldLoader
                     Category = n.GetString("category", "")!,
                     SourceFile = display,
                 };
+                if (n.GetString("continent") is { } contKey)
+                {
+                    if (world.ContinentByKey.TryGetValue(contKey, out var cont) && !cont.IsOcean) st.Continent = cont;
+                    else Log.Error($"State '{key}': unknown continent '{contKey}' (see common/continents.txt)", n.Location);
+                }
                 foreach (var lk in n.GetList("locations").Concat(n.GetList("provinces")))
                 {
                     var loc = world.GetLocation(lk);
@@ -230,6 +237,108 @@ public static class WorldLoader
         if (unassigned > 0)
             Log.Info($"{unassigned} land locations are not part of any state (they are unowned). Use the map editor (F10) to assign them.");
         world.RefreshOwnership();
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    /// <summary>Reads common/continents.txt. A game without the file has no continents and nothing that uses them shows up.</summary>
+    private static void LoadContinentDefinitions(Game game)
+    {
+        var world = game.World;
+        foreach (var root in DataLoader.ParseFileOrFolder(game.Data, "common/continents"))
+        {
+            foreach (var n in root.All)
+            {
+                if (n.Children == null) { Log.Error($"Expected a continent block, found '{n.Key}'", n.Location); continue; }
+                if (world.ContinentByKey.ContainsKey(n.Key)) { Log.Error($"Continent '{n.Key}' is defined twice", n.Location); continue; }
+                var c = new Continent { Key = n.Key, Index = world.Continents.Count, Name = n.GetString("name", "")!, IsOcean = n.GetBool("ocean") };
+                var col = n.GetList("color");
+                c.Color = col.Count >= 3 && int.TryParse(col[0], out var r) && int.TryParse(col[1], out var g) && int.TryParse(col[2], out var b) ? new Rgb((byte)r, (byte)g, (byte)b) : Rgb.Gray;
+                foreach (var bx in n.GetAll("box"))
+                {
+                    var v = bx.Children?.Where(x => x.IsListItem).Select(x => x.Key).ToList() ?? new List<string>();
+                    if (v.Count == 4 && v.All(t => Node.TryParseDouble(t, out _)))
+                    {
+                        double D(int i) => double.Parse(v[i], System.Globalization.CultureInfo.InvariantCulture);
+                        c.Boxes.Add((D(0), D(1), D(2), D(3)));
+                    }
+                    else Log.Error($"Continent '{n.Key}': a box needs west south east north (box = {{ -10 35 40 70 }})", bx.Location);
+                }
+                world.Continents.Add(c);
+                world.ContinentByKey[c.Key] = c;
+            }
+        }
+        foreach (var c in world.Countries)
+            if (c.Definition.GetString("primary_continent") is { } pk)
+            {
+                if (world.ContinentByKey.TryGetValue(pk, out var pc) && !pc.IsOcean) c.PrimaryContinentOverride = pc;
+                else Log.Error($"Country {c.Tag}: unknown primary_continent '{pk}'", c.Definition.Location);
+            }
+    }
+
+    /// <summary>
+    /// Gives every location its continent. Land takes its state's; a state that names none takes the continent holding most of its locations by position;
+    /// land without a state takes the continent of the land beside it. Lakes take the continent of the land around them; seas the ocean whose box holds them.
+    /// </summary>
+    private static void AssignContinents(Game game)
+    {
+        var world = game.World;
+        if (world.Continents.Count == 0) return;
+        var s = world.Map.Settings;
+        double Lon(Location l) => -180.0 + 360.0 * l.CenterX / world.Map.Width;
+        double Lat(Location l) => s.NorthLat - (s.NorthLat - s.SouthLat) * l.CenterY / world.Map.Height;
+        Continent? ByBox(Location l, bool ocean)
+        {
+            double lon = Lon(l), lat = Lat(l);
+            foreach (var c in world.Continents) if (c.IsOcean == ocean && c.Contains(lon, lat)) return c;
+            return null;
+        }
+        foreach (var st in world.States)
+        {
+            if (st.Continent == null)
+                st.Continent = st.Locations.Select(l => ByBox(l, false)).Where(c => c != null).GroupBy(c => c!).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
+            foreach (var l in st.Locations) l.Continent = st.Continent;
+        }
+        // land with no state: the box it is in, else the land next to it (repeat so a stretch of several locations fills in from its edge)
+        foreach (var l in world.Locations) if (l.IsLand && l.Continent == null) l.Continent = ByBox(l, false);
+        for (int pass = 0; pass < 64; pass++)
+        {
+            bool changed = false;
+            foreach (var l in world.Locations)
+            {
+                if (!l.IsLand || l.Continent != null) continue;
+                var near = l.Neighbors.Select(a => a.To).Where(o => o.IsLand && o.Continent != null).GroupBy(o => o.Continent!).OrderByDescending(g => g.Count()).FirstOrDefault();
+                if (near != null) { l.Continent = near.Key; changed = true; }
+            }
+            if (!changed) break;
+        }
+        // an island that no box holds takes the continent of the nearest land that has one
+        var placed = world.Locations.Where(l => l.IsLand && l.Continent != null && l.PixelCount > 0).ToList();
+        if (placed.Count > 0)
+            foreach (var l in world.Locations.Where(l => l.IsLand && l.Continent == null && l.PixelCount > 0))
+            {
+                Location? best = null; double bd = double.MaxValue;
+                foreach (var o in placed)
+                {
+                    double dx = o.CenterX - l.CenterX, dy = o.CenterY - l.CenterY, d = dx * dx + dy * dy;
+                    if (d < bd) { bd = d; best = o; }
+                }
+                l.Continent = best?.Continent;
+            }
+        // lakes sit on the continent around them; seas in the ocean whose box holds them, else the last ocean listed
+        var oceans = world.Continents.Where(c => c.IsOcean).ToList();
+        foreach (var l in world.Locations)
+        {
+            if (!l.IsWater) continue;
+            if (l.IsLake)
+            {
+                var around = l.Neighbors.Select(a => a.To).Where(o => o.IsLand && o.Continent != null).GroupBy(o => o.Continent!).OrderByDescending(g => g.Count()).FirstOrDefault();
+                l.Continent = around?.Key ?? ByBox(l, true);
+            }
+            else l.Continent = ByBox(l, true) ?? oceans.LastOrDefault();
+        }
+        foreach (var l in world.Locations) l.Continent?.Locations.Add(l);
+        int missing = world.Locations.Count(l => l.Continent == null && l.PixelCount > 0);
+        Log.Info($"{world.Continents.Count} continents and oceans" + (missing > 0 ? $"; {missing} locations have none (add a box or a continent to their state)" : ""));
     }
 
     private static void ResolveCapitals(Game game)

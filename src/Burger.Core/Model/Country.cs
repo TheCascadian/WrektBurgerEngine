@@ -70,6 +70,19 @@ public sealed class Country : IScope
     public string DefaultFlagPath = "";
 
     public Location? Capital;
+    /// <summary>Set by <c>primary_continent = key</c> in the country definition; otherwise the primary continent is worked out from the land.</summary>
+    public Continent? PrimaryContinentOverride;
+    /// <summary>Where the country is based: its set continent, else its capital's, else the continent holding most of its land.</summary>
+    public Continent? PrimaryContinent
+    {
+        get
+        {
+            if (PrimaryContinentOverride != null) return PrimaryContinentOverride;
+            if (Capital?.Continent is { } cc && Exists) return cc;
+            return OwnedStates.Where(s => s.Continent != null).GroupBy(s => s.Continent!).OrderByDescending(g => g.Sum(s => s.Locations.Count)).Select(g => g.Key).FirstOrDefault()
+                ?? Capital?.Continent;
+        }
+    }
     public double Gold;
     public double Manpower;
     public bool Playable = true;

@@ -1,0 +1,116 @@
+# Continents and oceans. Every province has one: land takes its state's `continent = key` (states without it take the continent whose boxes hold
+# most of their provinces); sea provinces take the ocean whose boxes hold their center; a lake takes the continent around it.
+# box = { west south east north } in degrees. When west is greater than east the box crosses the 180 meridian. The first continent
+# (file order) with a box holding a point wins, so smaller or special cases go before the big ones. The boxes are approximate:
+# set `continent = key` on a state to settle a border case. A country may name its own with `primary_continent = key`; otherwise it is
+# the continent of its capital.
+
+# ---- land, in priority order ----
+antarctica = {
+	name = "Antarctica"
+	color = { 214 226 232 }
+	box = { -180 -90 180 -60.4 }
+}
+oceania = {
+	name = "Oceania"
+	color = { 120 188 150 }
+	box = { 112 -45 156 -10.5 }
+	box = { 131 -11 160 1 }
+	box = { 155 -24 172 -4 }
+	box = { 165 -48 180 -33 }
+	box = { 172 -24 180 -10 }
+	box = { -180 -30 -105 -8 }
+	box = { -162 18 -154 23 }
+}
+north_america = {
+	name = "North America"
+	color = { 214 150 98 }
+	box = { 172 50 180 57 }
+	box = { -180 50 -168.9 57 }
+	box = { -168.9 18.5 -50 84 }
+	box = { -120 7.3 -77.2 18.5 }
+	box = { -77.2 17 -65 18.5 }
+	box = { -65 10 -57 18.5 }
+	box = { -74 59 -30 67 }
+	box = { -74 67 -10 84 }
+}
+south_america = {
+	name = "South America"
+	color = { 196 108 120 }
+	box = { -92 -56 -34 12.5 }
+}
+africa = {
+	name = "Africa"
+	color = { 224 190 90 }
+	box = { -26 -36 -5.4 36.05 }
+	box = { -5.4 -36 -1 35.9 }
+	box = { -1 -36 8.5 37 }
+	box = { 8.5 -36 12 37.6 }
+	box = { 12 -36 26 33.3 }
+	box = { 26 -36 32.6 32.5 }
+	box = { 32.6 -36 37.6 28 }
+	box = { 37.6 -36 40.2 18.5 }
+	box = { 40.2 -36 42.2 14.5 }
+	box = { 42.2 -36 58 12.7 }
+}
+europe = {
+	name = "Europe"
+	color = { 98 150 200 }
+	box = { -32 34.8 26 82 }
+	box = { 26 40.9 28.9 82 }
+	box = { 28.9 43.6 46.5 82 }
+	box = { 46.5 47 60 82 }
+}
+
+asia = {
+	name = "Asia"
+	color = { 150 128 196 }
+	box = { 26 -11 131 82 }
+	box = { 131 1 180 82 }
+	box = { -180 64.5 -168.9 72 }
+}
+
+# ---- oceans and seas, in priority order ----
+arctic_ocean = {
+	name = "Arctic Ocean"
+	ocean = yes
+	color = { 168 200 224 }
+	box = { -180 66.5 180 90 }
+}
+mediterranean = {
+	name = "Mediterranean Sea"
+	ocean = yes
+	color = { 70 140 176 }
+	box = { -5.6 30 36.5 46.2 }
+	box = { 27 40 42 47.5 }
+}
+red_sea_and_gulf = {
+	name = "Red Sea and Persian Gulf"
+	ocean = yes
+	color = { 54 128 150 }
+	box = { 32 12.5 43.5 31 }
+	box = { 47 24 57.5 31 }
+}
+atlantic_ocean = {
+	name = "Atlantic Ocean"
+	ocean = yes
+	color = { 46 92 160 }
+	box = { -98 8 -60 31 }
+	box = { -82 8 32 66.5 }
+	box = { -67 -60 20 8 }
+	box = { -70 -60 -60 -50 }
+}
+indian_ocean = {
+	name = "Indian Ocean"
+	ocean = yes
+	color = { 40 128 168 }
+	box = { 20 -60 100 31 }
+	box = { 100 -60 125 -9 }
+	box = { 125 -60 147 -39 }
+}
+pacific_ocean = {
+	name = "Pacific Ocean"
+	ocean = yes
+	color = { 30 76 140 }
+	box = { -180 -90 180 90 }
+}

@@ -81,6 +81,7 @@ public sealed partial class Hud
             y += lh;
         }
         Row("Terrain", l.Terrain.Name + (l.IsCoastal ? " (coastal)" : ""));
+        if (l.Continent != null) Row(l.Continent.IsOcean ? "Ocean" : "Continent", l.Continent.DisplayName);
         if (l.IsWater) { Row("Type", l.IsLake ? "Lake" : "Sea"); FitEnd("loc", r, y); return; }
         var st = l.State;
         if (st != null) Row("State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
@@ -218,7 +219,8 @@ public sealed partial class Hud
         Gui.Flag(c, new Rectangle(x, y, 84 * S, 56 * S));
         float tx = x + 94 * S;
         Gui.Label(c.Tag, tx, y, 15, Gui.TextDim, FontKind.Bold);
-        if (c.Government.Length > 0) Gui.Label(Localisation.GetOrPretty(c.Government), tx, y + 18 * S, 15);
+        string govLine = (c.Government.Length > 0 ? Localisation.GetOrPretty(c.Government) : "") + (c.PrimaryContinent is { } pcont ? (c.Government.Length > 0 ? "  ·  " : "") + pcont.DisplayName : "");
+        if (govLine.Length > 0) Gui.Label(Gui.Fit(govLine, r.X + r.Width - tx - 12 * S, 15), tx, y + 18 * S, 15);
         float hx = tx;
         hx += IconStat("province", c.OwnedStates.Count.ToString(), $"{c.OwnedStates.Count} states", hx, y + 36 * S);
         hx += IconStat("army", G.World.Divisions.Count(d => d.Owner == c).ToString(), "Divisions", hx, y + 36 * S);
