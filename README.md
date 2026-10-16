@@ -3,7 +3,7 @@
 # WrektBurgerEngine
 
 **Build a grand strategy game from images and plain-text files.**
-Branch: `map-500bce` · C# · .NET 8 / 9 · raylib
+C# · .NET 8 / 9 · raylib
 
 *Inspired by Paradox Interactive's grand strategy games.*
 
