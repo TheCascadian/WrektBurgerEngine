@@ -30,6 +30,17 @@ public static class SteamService
     }
     public static string AppIdUsed { get; private set; } = "";
 
+    [DllImport("libc.so.6", EntryPoint = "setenv")] private static extern int setenv_linux(string name, string value, int overwrite);
+    [DllImport("libSystem.dylib", EntryPoint = "setenv")] private static extern int setenv_mac(string name, string value, int overwrite);
+
+    /// <summary>.NET keeps its own copy of the environment on Linux and macOS; native libraries only see the real one.</summary>
+    private static void SetNativeEnv(string name, string value)
+    {
+        Environment.SetEnvironmentVariable(name, value);
+        if (OperatingSystem.IsWindows()) return;
+        try { if (OperatingSystem.IsMacOS()) setenv_mac(name, value, 1); else setenv_linux(name, value, 1); } catch (Exception e) { Note($"Could not set {name} natively ({e.GetType().Name})"); }
+    }
+
     public static bool Init()
     {
         if (_tried) return Available;
@@ -40,7 +51,9 @@ public static class SteamService
             string env = Environment.GetEnvironmentVariable("SteamAppId") ?? "";
             if (File.Exists(idFile)) { AppIdUsed = File.ReadAllText(idFile).Trim(); Note($"App ID {AppIdUsed} (from steam_appid.txt)"); }
             else if (env.Length > 0) { AppIdUsed = env; Note($"App ID {env} (from SteamAppId)"); }
-            else { AppIdUsed = TestAppId.ToString(); Environment.SetEnvironmentVariable("SteamAppId", AppIdUsed); Note($"App ID {AppIdUsed} (built-in test app; no steam_appid.txt next to the game)"); }
+            else { AppIdUsed = TestAppId.ToString(); Note($"App ID {AppIdUsed} (built-in test app; no steam_appid.txt next to the game)"); }
+            // Steam reads steam_appid.txt from the working directory, which is not always the game folder: hand it the id as a real (native) environment variable
+            SetNativeEnv("SteamAppId", AppIdUsed); SetNativeEnv("SteamGameId", AppIdUsed);
             Note("Starting Steam API");
             var r = SteamAPI.InitEx(out string msg);
             if (r != ESteamAPIInitResult.k_ESteamAPIInitResult_OK)

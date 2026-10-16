@@ -69,7 +69,7 @@ public sealed partial class App
 
         LoadGame();
         if (Game != null && _opt.LoadSave != null) DoLoadSave(_opt.LoadSave);
-        else if (Game != null && _opt.HostTag != null) { HostMultiplayer(_opt.HostTag); Console.WriteLine("host: lan " + _mpc.LanCode); if (!SteamService.Available) Console.WriteLine("host: steam off: " + SteamService.Problem); }
+        else if (Game != null && _opt.HostTag != null) { HostMultiplayer(_opt.HostTag); Console.WriteLine("host: lan " + _mpc.LanCode); if (!SteamService.Available) { Console.WriteLine("host: steam off: " + SteamService.Problem); foreach (var l in SteamService.LogLines) Console.WriteLine("steam log: " + l); } }
         else if (Game != null && _opt.JoinCode != null) { _menuPage = MenuPage.Join; _joinCode = _opt.JoinCode; JoinMultiplayer(_joinCode, UserSettings.EffectiveName); }
         else if (Game != null && (_opt.Tag != null || _opt.Observe)) StartGame(_opt.Observe ? null : _opt.Tag);
         _perfDay = Game?.World.Date.TotalDays ?? 0;
