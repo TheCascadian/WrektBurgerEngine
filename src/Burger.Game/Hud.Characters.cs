@@ -91,6 +91,14 @@ public sealed partial class Hud
             foreach (var pos in G.Politics.Positions)
                 if (G.Politics.MinisterOf(country, pos) == ch)
                     roles.Add(new(Localisation.Get(pos.Name), MinisterTint, $"Cabinet minister: {Localisation.Get(pos.Name)}\n{Localisation.Get(pos.Desc)}"));
+        if (G.Succession.Enabled && country.Regent == ch) roles.Add(new("Regent", RulerTint, $"Rules {country.Name} for {country.Ruler?.DisplayName}, who is too young"));
+        if (G.Dynasties.Enabled)
+        {
+            var dyn = G.Dynasties;
+            if (dyn.IsConcubine(ch)) roles.Add(new("Concubine", HeirTint, "Kept at court; no claim to the throne"));
+            else if (dyn.Claim(ch) < 1) roles.Add(new(dyn.IsBastard(ch) ? "Bastard" : "Concubine's child", HeirTint, "Half the claim to the throne of a lawful child"));
+            if (dyn.IsSick(ch) && dyn.DiseaseOf(ch) is { } ill) roles.Add(new("Ill · " + ill.Name, new Color(205, 70, 70, 255), $"{ill.Name} until {new GameDate(dyn.SickUntil(ch)).ToDisplay()}; it may kill"));
+        }
         return roles;
     }
 
@@ -230,11 +238,12 @@ public sealed partial class Hud
         var roles = RolesOf(c, country);
         string tip = c.DisplayName + $"\nAge {c.Age(now)} · Loyalty {c.Loyalty:0} · Health {c.Health:0}" +
             (roles.Count > 0 ? "\n" + string.Join(", ", roles.Select(q => q.Text)) : "");
-        if (Gui.Button(row, "", true, tip, selected, 14)) Ui.SelectedCharacter = c;
+        if (Gui.Button(row, "", true, tip, selected, 14)) { Ui.SelectedCharacter = c; OpenSheet(c); }
 
         var thumb = new Rectangle(row.X + 4 * S, row.Y + 3 * S, 34 * S, row.Height - 6 * S);
         DrawPortrait(c, thumb, false, false);
         PortraitFrame(thumb, roles.Count > 0 ? new Color(roles[0].Tint.R, roles[0].Tint.G, roles[0].Tint.B, (byte)220) : new Color(0, 0, 0, 200));
+        SickMark(c, thumb);
 
         float tx = thumb.X + thumb.Width + 8 * S;
         float meterW = 54 * S;
@@ -269,6 +278,7 @@ public sealed partial class Hud
         var frameTint = roles.Count > 0 ? roles[0].Tint : Gui.PanelBorder;
         PortraitFrame(new Rectangle(pr.X - 1, pr.Y - 1, pr.Width + 2, pr.Height + 2), new Color(0, 0, 0, 220), 2);
         PortraitFrame(pr, frameTint, 2 * Math.Max(1, S * 0.5f));
+        SickMark(ch, pr);
         if (clip is { HasAudio: true })
         {
             var sb = new Rectangle(pr.X + pr.Width - 26 * S, pr.Y + pr.Height - 26 * S, 22 * S, 22 * S);
@@ -363,7 +373,7 @@ public sealed partial class Hud
                 if (tx + bw > x + w && tx > x) { tx = x; y += 28 * S; }
                 bool inReach = who.Alive && who.Country == country;
                 string tip = who.DisplayName + (who.Alive ? $", age {who.Age(now)}" : " (dead)") + (who.Alive && !inReach ? $"\nLives in {who.Country?.Name ?? "exile"}" : "");
-                if (Gui.Button(new Rectangle(tx, y, bw, 24 * S), label, inReach, tip, false, 13)) Ui.SelectedCharacter = who;
+                if (Gui.Button(new Rectangle(tx, y, bw, 24 * S), label, who.Alive, tip, false, 13)) { Ui.SelectedCharacter = who; OpenSheet(who); }
                 tx += bw + 4 * S;
             }
             y += 32 * S;

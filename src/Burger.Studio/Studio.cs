@@ -69,6 +69,13 @@ public sealed partial class Studio
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint | ConfigFlags.VSyncHint);
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
         Raylib.InitWindow(_opt.Width, _opt.Height, "Burger Studio");
+        if (!Raylib.IsWindowReady())
+        {
+            // the graphics driver refused the window (busy, or no 4x multisampling): try the plainest one before giving up
+            Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
+            Raylib.InitWindow(_opt.Width, _opt.Height, "Burger Studio");
+            if (!Raylib.IsWindowReady()) throw new InvalidOperationException("The graphics driver could not open a window (OpenGL 3.3 is needed). Update the graphics driver and try again.");
+        }
         Raylib.SetWindowMinSize(1024, 640);
         Raylib.SetExitKey(KeyboardKey.Null);
         Raylib.SetTargetFPS(60);

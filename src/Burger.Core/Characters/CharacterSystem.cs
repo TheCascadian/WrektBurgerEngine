@@ -12,6 +12,7 @@ public class CharacterRules
     /// <summary>Chooses the next ruler when the current one dies. Return null to generate a new character.</summary>
     public virtual Character? ChooseSuccessor(Game game, Country country, Character? oldRuler)
     {
+        if (game.Succession.Enabled && game.Succession.Choose(country, oldRuler) is { } byLaw) return byLaw;
         var now = game.World.Date;
         int adult = game.Data.Defines.AdultAge;
         if (country.Heir != null && country.Heir.Alive && country.Heir.Country == country) return country.Heir;
@@ -30,6 +31,7 @@ public class CharacterRules
     /// <summary>Picks a new heir (called when there is none).</summary>
     public virtual Character? ChooseHeir(Game game, Country country)
     {
+        if (game.Succession.Enabled && game.Succession.HeirOf(country) is { } byLaw) return byLaw;
         var ruler = country.Ruler;
         if (ruler == null) return null;
         var now = game.World.Date;
@@ -340,6 +342,80 @@ public sealed class CharacterSystem
         c.Heir ??= _game.Rules.Characters.ChooseHeir(_game, c);
     }
 
+    /// <summary>
+    /// Gives every ruler without a family one at the start of the game: a spouse, two to four children spread over the years since the
+    /// ruler turned eighteen, living parents and a sibling or two. Families written in history/characters are left alone.
+    /// </summary>
+    public void GenerateFamilies()
+    {
+        var rng = _game.Rngs.Characters;
+        var now = _game.World.Date;
+        int adult = _game.Data.Defines.AdultAge;
+        foreach (var c in _game.World.Countries.Where(c => c.Exists && c.Ruler is { Alive: true }).ToList())
+        {
+            var ruler = c.Ruler!;
+            if (ruler.Spouse != null || ruler.Children.Count > 0 || ruler.Father != null || ruler.Mother != null) continue;
+            int age = ruler.Age(now);
+            var names = c.Names;
+            // spouse
+            var spouse = Generate(c, !ruler.Female, Math.Max(adult, age + rng.Next(-6, 3)), RandomFamily(names));
+            Marry(ruler, spouse);
+            var father = ruler.Female ? spouse : ruler;
+            var mother = ruler.Female ? ruler : spouse;
+            // children: born after the parents were eighteen, none to a mother past her fertile years
+            int youngest = Math.Max(0, Math.Min(age, spouse.Age(now)) - adult);
+            int fertileSpan = Math.Max(0, Math.Min(youngest, mother.Age(now) - adult));
+            if (fertileSpan >= 1)
+            {
+                int n = Math.Min(2 + rng.Next(3), fertileSpan + 1);
+                var ages = Enumerable.Range(0, fertileSpan + 1).OrderBy(_ => rng.Next()).Take(n).OrderByDescending(x => x).ToList();
+                foreach (int childAge in ages) NewChild(c, father, mother, childAge);
+            }
+            // parents and siblings
+            int parentAge = age + 20 + rng.Next(8);
+            if (parentAge <= 75 && rng.NextDouble() < 0.6)
+            {
+                var dad = Generate(c, false, parentAge, ruler.Family);
+                var mum = Generate(c, true, parentAge - 2 - rng.Next(4), RandomFamily(names));
+                Marry(dad, mum);
+                ruler.Father = dad; ruler.Mother = mum;
+                dad.Children.Add(ruler); mum.Children.Add(ruler);
+                int sibs = rng.Next(3);
+                for (int i = 0; i < sibs; i++)
+                {
+                    int sibAge = Math.Max(0, age + rng.Next(-8, 9));
+                    if (sibAge == age) sibAge++;
+                    if (parentAge - sibAge < adult || mum.Age(now) - sibAge < adult) continue;
+                    NewChild(c, dad, mum, sibAge);
+                }
+            }
+            c.Heir = null;
+            c.Heir = _game.Rules.Characters.ChooseHeir(_game, c);
+        }
+    }
+
+    private Character NewChild(Country c, Character father, Character mother, int age)
+    {
+        var rng = _game.Rngs.Characters;
+        var child = new Character
+        {
+            Country = c, Female = rng.NextDouble() < 0.5, Mother = mother, Father = father, Family = father.Family,
+            BirthDate = _game.World.Date.AddYears(-age).AddDays(-rng.Next(365)),
+        };
+        child.FirstName = RandomName(c.Names, child.Female);
+        foreach (var stat in _game.Data.Defines.CharacterStats)
+        {
+            double avg = (father.Stats.GetValueOrDefault(stat) + mother.Stats.GetValueOrDefault(stat)) / 2;
+            child.Stats[stat] = Math.Clamp(Math.Round(avg + rng.Next(-2, 3)), 0, 20);
+        }
+        foreach (var t in mother.Traits.Concat(father.Traits))
+            if (t.InheritChance > 0 && rng.NextDouble() < t.InheritChance) AddTrait(child, t);
+        Register(child);
+        mother.Children.Add(child);
+        father.Children.Add(child);
+        return child;
+    }
+
     public void MonthlyTick()
     {
         foreach (var c in _game.World.Countries.Where(c => c.Exists)) EnsureRuler(c);
@@ -381,6 +457,7 @@ public sealed class CharacterSystem
         Register(child);
         mother.Children.Add(child);
         father?.Children.Add(child);
+        _game.Dynasties.OnBirth(child);
         if (country != null && country.Ruler != null && (mother == country.Ruler || father == country.Ruler) && country.Heir == null)
             country.Heir = _game.Rules.Characters.ChooseHeir(_game, country);
         _game.Events.FireOnAction("on_character_born", child, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["mother"] = mother, ["father"] = father });

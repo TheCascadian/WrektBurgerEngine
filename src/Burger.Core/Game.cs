@@ -73,6 +73,8 @@ public sealed class GameRules
     public Burger.Core.Mechanics.FocusRules Focus = new();
     /// <summary>Which archetype a country has, what it wants of others, and how strongly history counts (ai_profiles feature).</summary>
     public Burger.Core.AI.AiProfileRules AiProfile = new();
+    /// <summary>Culture, government, succession and dynasty numbers (culture_traditions, government_reforms, succession and dynasties features).</summary>
+    public Burger.Core.Society.SocietyRules Society = new();
 }
 
 /// <summary>
@@ -119,6 +121,14 @@ public sealed class Game
     /// <summary>Technologies and research (technology feature).</summary>
     public Burger.Core.Technology.TechSystem Tech { get; }
     public Burger.Core.Development.DevelopmentSystem Development { get; }
+    /// <summary>Cultural traditions and innovations, and cultures that grow out of others (culture_traditions feature).</summary>
+    public Burger.Core.Society.CultureSystem CultureLife { get; }
+    /// <summary>Government reforms, national ideas and corruption (government_reforms feature).</summary>
+    public Burger.Core.Society.GovernmentSystem Reforms { get; }
+    /// <summary>Succession laws, heirs, regents and the division of realms (succession feature).</summary>
+    public Burger.Core.Society.SuccessionSystem Succession { get; }
+    /// <summary>Dynasty prestige, bastards, concubines and illness (dynasties feature).</summary>
+    public Burger.Core.Society.DynastySystem Dynasties { get; }
     /// <summary>The 3D models of the largest places (common/sites).</summary>
     public Burger.Core.Sites.SiteSystem Sites { get; }
     /// <summary>Strategic commodities: deposits, shortages and trade (commodities feature).</summary>
@@ -204,6 +214,10 @@ public sealed class Game
         GeoDynamics = new Burger.Core.Geography.GeoDynamics(this);
         Tech = new Burger.Core.Technology.TechSystem(this);
         Development = new Burger.Core.Development.DevelopmentSystem(this);
+        CultureLife = new Burger.Core.Society.CultureSystem(this);
+        Reforms = new Burger.Core.Society.GovernmentSystem(this);
+        Succession = new Burger.Core.Society.SuccessionSystem(this);
+        Dynasties = new Burger.Core.Society.DynastySystem(this);
         Sites = new Burger.Core.Sites.SiteSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
@@ -221,6 +235,8 @@ public sealed class Game
         Ai = new AiSystem(this);
         // cross-system reactions: each system owns what it does when another one changes
         Memory.Subscribe(Hub);
+        Dynasties.Subscribe(Hub);
+        Succession.Subscribe(Hub);
         Hub.SubjectMade += Politics.FollowOverlord;
         Hub.SubjectMonthly += (s, o) => Politics.FollowOverlord(s, o, 0.05);
         Hub.SubjectMade += (s, _, _) => RefreshName(s);
@@ -236,8 +252,13 @@ public sealed class Game
         Modifiers.Providers.Add((scope, key) => Diplomacy.ExhaustionModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Tech.ModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Development.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => CultureLife.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => Reforms.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => Succession.ModifierValue(scope, key));
         Diplomacy.RegisterScript();
         Memory.RegisterScript();
+        Reforms.RegisterScript();
+        Succession.RegisterScript();
         Politics.RegisterCommands(Commands);
     }
 
@@ -263,6 +284,10 @@ public sealed class Game
         DataLoader.LoadDefinitions(game);
         game.Tech.LoadDefinitions(game.Data);
         game.Development.LoadDefinitions(game.Data);
+        game.CultureLife.LoadDefinitions(game.Data);
+        game.Reforms.LoadDefinitions(game.Data);
+        game.Succession.LoadDefinitions(game.Data);
+        game.Dynasties.LoadDefinitions(game.Data);
         game.Focus.Load(game.Data);
         game.Commodities.LoadDefinitions(game.Data);
         game.AiProfiles.LoadDefinitions(game.Data);
@@ -291,6 +316,7 @@ public sealed class Game
             if (Features.Has(F.Characters)) Characters.EnsureRuler(c);
             Economy.UpdateEstimates(c);
         }
+        if (Features.Has(F.Characters)) Characters.GenerateFamilies();
         if (Features.Has(F.Military)) Warfare.DailyTick();
         if (Features.Has(F.Navy)) Navy.OnGameStart();
         if (Features.Has(F.Air)) Air.OnGameStart();
@@ -531,11 +557,15 @@ public sealed class Game
         P("Resources.MonthlyTick", () => Resources.MonthlyTick());
         P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick());
         if (Features.Has(F.Development)) P("Development.MonthlyTick", () => Development.MonthlyTick());
+        if (Features.Has(F.CultureTraditions)) P("CultureLife.MonthlyTick", () => CultureLife.MonthlyTick());
+        if (Features.Has(F.GovernmentReforms)) P("Reforms.MonthlyTick", () => Reforms.MonthlyTick());
         if (Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());
         if (Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
         if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick());
         if (Features.Has(F.Diplomacy)) P("Diplomacy.MonthlyTick", () => Diplomacy.MonthlyTick());
         if (Features.Has(F.Characters)) P("Characters.MonthlyTick", () => Characters.MonthlyTick());
+        if (Features.Has(F.Succession)) P("Succession.MonthlyTick", () => Succession.MonthlyTick());
+        if (Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());
         if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTick());
         P("Events.MonthlyTick", () => Events.MonthlyTick());
         if (Features.Has(F.Ai)) P("Ai.MonthlyTick", () => Ai.MonthlyTick());
@@ -544,6 +574,7 @@ public sealed class Game
         if (World.Date.Month == 1)
         {
             if (Features.Has(F.Characters)) Characters.YearlyTick();
+            if (Features.Has(F.Dynasties)) Dynasties.YearlyTick();
             foreach (var c in World.Countries.Where(c => c.Exists))
                 Events.FireOnAction("on_yearly_pulse", c);
             Mods.Invoke(m => m.OnYearlyTick());

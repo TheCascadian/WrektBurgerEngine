@@ -36,7 +36,7 @@ public class DiplomacyRules
     {
         if (game.ScriptValues.TryEval("max_diplomatic_relations", c, out var scripted)) return (int)Math.Floor(scripted);
         var d = game.Data.Defines;
-        double stat = c.Ruler?.GetStat(d.RelationsStat) ?? 0;
+        double stat = c.Governing?.GetStat(d.RelationsStat) ?? 0;
         return d.BaseDiplomaticRelations + (int)Math.Floor(stat * d.RelationsPerStatPoint + game.Modifiers.Sum(c, "relations"));
     }
 

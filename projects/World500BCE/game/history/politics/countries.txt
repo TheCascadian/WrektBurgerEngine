@@ -1,5 +1,5 @@
 # Starting politics of 500 BCE for the parallelism test copy. Deliberately restless: every country has a shut-out ideology with real support,
-# so movements, coups and civil wars happen within ten years. democratic = citizen assemblies and republics; neutrality = kings and priests;
+# so movements, coups and civil wars happen within ten years. democratic = citizen assemblies; oligarchic = councils of elders; theocratic = priest-kings; neutrality = kings;
 # fascist = warrior-nationalist factions; communist = commoner and slave levelers.
 
 ACH = {
@@ -13,8 +13,8 @@ ATH = {
 	laws = { political_parties = multi_party }
 }
 SPA = {
-	ruling_party = neutrality
-	popularity = { neutrality = 44 fascist = 40 democratic = 6 communist = 10 }
+	ruling_party = oligarchic
+	popularity = { oligarchic = 46 fascist = 30 neutrality = 12 communist = 12 }
 	laws = { political_parties = restricted_parties }
 }
 COR = {
@@ -68,8 +68,8 @@ MAC = {
 	laws = { political_parties = restricted_parties }
 }
 CAR = {
-	ruling_party = democratic
-	popularity = { democratic = 36 neutrality = 30 fascist = 14 communist = 20 }
+	ruling_party = oligarchic
+	popularity = { oligarchic = 38 democratic = 24 neutrality = 20 communist = 18 }
 	laws = { political_parties = multi_party }
 }
 NUB = {
@@ -193,8 +193,8 @@ PAR = {
 	laws = { political_parties = restricted_parties }
 }
 ROM = {
-	ruling_party = democratic
-	popularity = { democratic = 38 neutrality = 30 fascist = 22 communist = 10 }
+	ruling_party = oligarchic
+	popularity = { oligarchic = 40 democratic = 26 neutrality = 14 fascist = 12 communist = 8 }
 	laws = { political_parties = multi_party }
 }
 SCY = {
@@ -228,13 +228,13 @@ VAN = {
 	laws = { political_parties = restricted_parties }
 }
 EGY = {
-	ruling_party = neutrality
-	popularity = { neutrality = 41 fascist = 18 communist = 29 democratic = 12 }
+	ruling_party = theocratic
+	popularity = { theocratic = 40 neutrality = 28 communist = 22 fascist = 10 }
 	laws = { political_parties = restricted_parties }
 }
 BAB = {
-	ruling_party = neutrality
-	popularity = { neutrality = 37 fascist = 26 communist = 29 democratic = 8 }
+	ruling_party = theocratic
+	popularity = { theocratic = 38 neutrality = 28 communist = 20 fascist = 14 }
 	laws = { political_parties = restricted_parties }
 }
 IBE = {
@@ -263,8 +263,8 @@ DEC = {
 	laws = { political_parties = restricted_parties }
 }
 JDH = {
-	ruling_party = neutrality
-	popularity = { neutrality = 47 fascist = 21 communist = 22 democratic = 10 }
+	ruling_party = theocratic
+	popularity = { theocratic = 40 neutrality = 30 communist = 16 fascist = 14 }
 	laws = { political_parties = restricted_parties }
 }
 ZAP = {

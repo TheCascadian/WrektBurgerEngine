@@ -1,0 +1,6 @@
+# Hooks of the government_reforms feature.
+#   on_high_corruption   ROOT = a country whose corruption is at 50 or more (corruption_event_at); at most once in three years
+#   on_reform_changed    ROOT = a country that adopted or dropped a reform
+on_high_corruption = {
+	random_events = { 50 = corruption.1 50 = corruption.2 }
+}

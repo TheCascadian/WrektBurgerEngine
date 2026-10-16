@@ -1,0 +1,38 @@
+# Succession law group (succession + laws features). The effects are in common/succession_laws; changing the law costs 50 political power and needs
+# two years without a succession (years_since_succession). Changing it again also waits law_change_cooldown_days.
+succession = {
+	name = "Succession"
+	default = primogeniture
+	primogeniture = {
+		name = "Primogeniture"
+		desc = "The eldest son inherits; then the eldest daughter, then the ruler's brother."
+		cost = 50
+		allow = { years_since_succession >= 2 }
+		modifier = { }
+		ai_will_do = { base = 1 }
+	}
+	ultimogeniture = {
+		name = "Ultimogeniture"
+		desc = "The youngest child inherits the house."
+		cost = 50
+		allow = { years_since_succession >= 2 }
+		modifier = { }
+		ai_will_do = { base = 0.1 }
+	}
+	elective = {
+		name = "Elective Monarchy"
+		desc = "A council of the five most prestigious characters chooses the ruler."
+		cost = 50
+		allow = { years_since_succession >= 2 }
+		modifier = { political_power_gain = 0.05 stability_target = -1 }
+		ai_will_do = { base = 0.1 modifier = { add = 1.5 ruling_ideology = democratic } }
+	}
+	gavelkind = {
+		name = "Gavelkind"
+		desc = "The land is shared between the sons, who rule their shares as subjects."
+		cost = 50
+		allow = { years_since_succession >= 2 num_of_states >= 2 }
+		modifier = { manpower = 0.04 stability_target = -2 }
+		ai_will_do = { base = 0 }
+	}
+}

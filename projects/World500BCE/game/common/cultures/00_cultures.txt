@@ -1,282 +1,283 @@
 # Cultures of the 500 BCE world: design groupings from the reference maps (facts only).
+# traditions = { a b c }: the three traditions of a culture (common/traditions, culture_traditions feature).
 hellenic = {
 	name = "Hellenic"
 	color = { 93 97 179 }
-	greek = { name = "Greek" color = { 172 214 87 } religion = hellenic_religion }
-	pontic_greek = { name = "Pontic Greek" color = { 100 75 122 } religion = hellenic_religion }
-	western_greek = { name = "Western Greek" color = { 106 102 172 } religion = hellenic_religion }
+	greek = { name = "Greek" color = { 172 214 87 } religion = hellenic_religion traditions = { phalanx_discipline seafaring_merchants citizen_soldiers } }
+	pontic_greek = { name = "Pontic Greek" color = { 100 75 122 } religion = hellenic_religion traditions = { rhetoric_and_debate city_state_pride trading_posts } }
+	western_greek = { name = "Western Greek" color = { 106 102 172 } religion = hellenic_religion traditions = { seafaring_merchants citizen_soldiers phalanx_discipline } }
 }
 italic = {
 	name = "Italic"
 	color = { 63 72 151 }
-	etruscan = { name = "Etruscan" color = { 96 87 103 } religion = etruscan_religion }
-	italic = { name = "Italic" color = { 63 72 151 } religion = italic_religion }
-	ligurian = { name = "Ligurian" color = { 112 144 119 } religion = italic_religion }
+	etruscan = { name = "Etruscan" color = { 96 87 103 } religion = etruscan_religion traditions = { farmer_militia hill_forts citizen_soldiers } }
+	italic = { name = "Italic" color = { 63 72 151 } religion = italic_religion traditions = { city_state_pride lawgivers sacred_groves } }
+	ligurian = { name = "Ligurian" color = { 112 144 119 } religion = italic_religion traditions = { hill_forts citizen_soldiers farmer_militia } }
 }
 celtic = {
 	name = "Celtic"
 	color = { 89 61 116 }
-	hallstatt_celt = { name = "Hallstatt Celtic" color = { 135 112 186 } religion = celtic_polytheism }
-	atlantic_celt = { name = "Atlantic Celtic" color = { 145 181 127 } religion = celtic_polytheism }
-	celtiberian = { name = "Celtiberian" color = { 102 140 110 } religion = celtic_polytheism }
-	gaulish_veneti = { name = "Gaulish Veneti" color = { 138 103 142 } religion = celtic_polytheism }
+	hallstatt_celt = { name = "Hallstatt Celtic" color = { 135 112 186 } religion = celtic_polytheism traditions = { forest_ambush metalworking_craft hill_forts } }
+	atlantic_celt = { name = "Atlantic Celtic" color = { 145 181 127 } religion = celtic_polytheism traditions = { warrior_aristocracy sacred_groves clan_loyalty } }
+	celtiberian = { name = "Celtiberian" color = { 102 140 110 } religion = celtic_polytheism traditions = { metalworking_craft hill_forts forest_ambush } }
+	gaulish_veneti = { name = "Gaulish Veneti" color = { 138 103 142 } religion = celtic_polytheism traditions = { sacred_groves clan_loyalty warrior_aristocracy } }
 }
 germanic = {
 	name = "Germanic"
 	color = { 205 82 83 }
-	proto_germanic = { name = "Proto-Germanic" color = { 97 139 77 } religion = germanic_paganism }
-	north_european_ironage = { name = "North European Iron Age" color = { 213 116 62 } religion = germanic_paganism }
+	proto_germanic = { name = "Proto-Germanic" color = { 97 139 77 } religion = germanic_paganism traditions = { forest_ambush tribal_assemblies expansionist_drive } }
+	north_european_ironage = { name = "North European Iron Age" color = { 213 116 62 } religion = germanic_paganism traditions = { warrior_aristocracy clan_loyalty metalworking_craft } }
 }
 baltoslavic = {
 	name = "Baltic and Slavic"
 	color = { 112 146 134 }
-	proto_baltic = { name = "Proto-Baltic" color = { 107 209 130 } religion = baltic_paganism }
-	proto_slavic = { name = "Proto-Slavic" color = { 96 78 121 } religion = slavic_paganism }
+	proto_baltic = { name = "Proto-Baltic" color = { 107 209 130 } religion = baltic_paganism traditions = { forest_foragers farmer_militia tribal_assemblies } }
+	proto_slavic = { name = "Proto-Slavic" color = { 96 78 121 } religion = slavic_paganism traditions = { sacred_groves clan_loyalty hill_forts } }
 }
 finnic = {
 	name = "Finnic and Saami"
 	color = { 202 130 190 }
-	finnic = { name = "Finnic" color = { 202 130 190 } religion = finnic_animism }
-	saami = { name = "Saami" color = { 69 155 137 } religion = saami_noaidi }
-	finno_ugrian = { name = "Finno-Ugrian" color = { 103 73 71 } religion = finnic_animism }
+	finnic = { name = "Finnic" color = { 202 130 190 } religion = finnic_animism traditions = { forest_foragers oral_law isolationist } }
+	saami = { name = "Saami" color = { 69 155 137 } religion = saami_noaidi traditions = { sacred_groves clan_loyalty forest_foragers } }
+	finno_ugrian = { name = "Finno-Ugrian" color = { 103 73 71 } religion = finnic_animism traditions = { oral_law isolationist sacred_groves } }
 }
 balkan = {
 	name = "Balkan"
 	color = { 111 107 190 }
-	illyrian = { name = "Illyrian" color = { 71 117 60 } religion = illyrian_religion }
-	thracian = { name = "Thracian" color = { 68 135 82 } religion = thracian_religion }
+	illyrian = { name = "Illyrian" color = { 71 117 60 } religion = illyrian_religion traditions = { mountain_clans warrior_aristocracy metalworking_craft } }
+	thracian = { name = "Thracian" color = { 68 135 82 } religion = thracian_religion traditions = { hill_forts horse_lords mountain_clans } }
 }
 iberian = {
 	name = "Iberian"
 	color = { 75 75 96 }
-	iberian = { name = "Iberian" color = { 75 75 96 } religion = iberian_religion }
+	iberian = { name = "Iberian" color = { 75 75 96 } religion = iberian_religion traditions = { hill_forts clan_loyalty trading_posts } }
 }
 punic = {
 	name = "Punic and Canaanite"
 	color = { 189 135 121 }
-	punic = { name = "Punic" color = { 189 135 121 } religion = canaanite_religion }
-	phoenician = { name = "Phoenician" color = { 110 201 65 } religion = canaanite_religion }
+	punic = { name = "Punic" color = { 189 135 121 } religion = canaanite_religion traditions = { seafaring_merchants temple_economy scribal_tradition } }
+	phoenician = { name = "Phoenician" color = { 110 201 65 } religion = canaanite_religion traditions = { trading_posts city_state_pride seafaring_merchants } }
 }
 anatolian = {
 	name = "Anatolian"
 	color = { 174 104 77 }
-	anatolian = { name = "Anatolian" color = { 174 104 77 } religion = anatolian_polytheism }
-	armenian = { name = "Armenian" color = { 222 205 145 } religion = armenian_haldi }
-	colchian = { name = "Colchian" color = { 97 122 116 } religion = anatolian_polytheism }
-	iberian_caucasus = { name = "Caucasian Iberian" color = { 180 83 77 } religion = armenian_haldi }
+	anatolian = { name = "Anatolian" color = { 174 104 77 } religion = anatolian_polytheism traditions = { hill_forts metalworking_craft mountain_clans } }
+	armenian = { name = "Armenian" color = { 222 205 145 } religion = armenian_haldi traditions = { temple_economy warrior_aristocracy hill_forts } }
+	colchian = { name = "Colchian" color = { 97 122 116 } religion = anatolian_polytheism traditions = { metalworking_craft mountain_clans temple_economy } }
+	iberian_caucasus = { name = "Caucasian Iberian" color = { 180 83 77 } religion = armenian_haldi traditions = { warrior_aristocracy hill_forts metalworking_craft } }
 }
 iranian = {
 	name = "Iranian"
 	color = { 120 141 192 }
-	persian = { name = "Persian" color = { 124 86 182 } religion = mazdayasna }
-	median = { name = "Median" color = { 123 70 152 } religion = mazdayasna }
-	bactrian_sogdian = { name = "Bactrian and Sogdian" color = { 87 96 165 } religion = mazdayasna }
+	persian = { name = "Persian" color = { 124 86 182 } religion = mazdayasna traditions = { horse_lords lawgivers hospitable_customs } }
+	median = { name = "Median" color = { 123 70 152 } religion = mazdayasna traditions = { sacred_kingship mounted_archery scribal_tradition } }
+	bactrian_sogdian = { name = "Bactrian and Sogdian" color = { 87 96 165 } religion = mazdayasna traditions = { lawgivers hospitable_customs horse_lords } }
 }
 steppe = {
 	name = "Steppe"
 	color = { 165 137 146 }
-	scythian = { name = "Scythian" color = { 72 77 79 } religion = scythian_faith }
-	sarmatian = { name = "Sarmatian" color = { 126 196 65 } religion = scythian_faith }
-	sakae = { name = "Saka" color = { 143 62 181 } religion = scythian_faith }
-	yuezhe = { name = "Yuezhe" color = { 62 145 77 } religion = steppe_shamanism }
-	turko_mongolic = { name = "Turko-Mongolic" color = { 107 104 123 } religion = steppe_shamanism }
-	massagetae = { name = "Massagetae" color = { 167 186 145 } religion = scythian_faith }
-	wusun = { name = "Wusun" color = { 134 108 111 } religion = steppe_shamanism }
+	scythian = { name = "Scythian" color = { 72 77 79 } religion = scythian_faith traditions = { horse_lords pastoral_herds expansionist_drive } }
+	sarmatian = { name = "Sarmatian" color = { 126 196 65 } religion = scythian_faith traditions = { mounted_archery clan_loyalty tribal_assemblies } }
+	sakae = { name = "Saka" color = { 143 62 181 } religion = scythian_faith traditions = { pastoral_herds expansionist_drive horse_lords } }
+	yuezhe = { name = "Yuezhe" color = { 62 145 77 } religion = steppe_shamanism traditions = { clan_loyalty tribal_assemblies mounted_archery } }
+	turko_mongolic = { name = "Turko-Mongolic" color = { 107 104 123 } religion = steppe_shamanism traditions = { expansionist_drive horse_lords pastoral_herds } }
+	massagetae = { name = "Massagetae" color = { 167 186 145 } religion = scythian_faith traditions = { tribal_assemblies mounted_archery clan_loyalty } }
+	wusun = { name = "Wusun" color = { 134 108 111 } religion = steppe_shamanism traditions = { horse_lords pastoral_herds expansionist_drive } }
 }
 mesopotamian = {
 	name = "Mesopotamian"
 	color = { 118 60 210 }
-	babylonian = { name = "Babylonian" color = { 88 97 177 } religion = mesopotamian_polytheism }
+	babylonian = { name = "Babylonian" color = { 88 97 177 } religion = mesopotamian_polytheism traditions = { scribal_tradition river_irrigation priestly_scholars } }
 }
 nilotic_egypt = {
 	name = "Nile Valley"
 	color = { 163 135 194 }
-	egyptian = { name = "Egyptian" color = { 218 85 152 } religion = egyptian_religion }
-	kushite = { name = "Kushite" color = { 181 88 127 } religion = kushite_religion }
+	egyptian = { name = "Egyptian" color = { 218 85 152 } religion = egyptian_religion traditions = { river_kingship scribal_tradition temple_economy } }
+	kushite = { name = "Kushite" color = { 181 88 127 } religion = kushite_religion traditions = { sacred_kingship priestly_scholars caste_order } }
 }
 semitic = {
 	name = "Semitic"
 	color = { 149 201 68 }
-	judean = { name = "Judean" color = { 91 154 74 } religion = yahwism }
-	aramaean = { name = "Aramaean" color = { 152 191 143 } religion = aramaean_religion }
+	judean = { name = "Judean" color = { 91 154 74 } religion = yahwism traditions = { caravan_trade priestly_scholars hill_forts } }
+	aramaean = { name = "Aramaean" color = { 152 191 143 } religion = aramaean_religion traditions = { oral_law trading_posts caravan_trade } }
 }
 arabian = {
 	name = "Arabian"
 	color = { 152 84 133 }
-	north_arabian = { name = "North Arabian" color = { 130 125 132 } religion = arab_polytheism }
-	south_arabian = { name = "South Arabian" color = { 97 80 129 } religion = south_arabian_polytheism }
+	north_arabian = { name = "North Arabian" color = { 130 125 132 } religion = arab_polytheism traditions = { caravan_trade clan_loyalty hospitable_customs } }
+	south_arabian = { name = "South Arabian" color = { 97 80 129 } religion = south_arabian_polytheism traditions = { desert_endurance oral_law caravan_trade } }
 }
 berber = {
 	name = "Berber"
 	color = { 72 209 155 }
-	berber = { name = "Berber" color = { 72 209 155 } religion = berber_religion }
-	saharan_pastoral = { name = "Saharan Pastoralist" color = { 105 121 101 } religion = saharan_pastoral_faith }
-	garamantes = { name = "Garamantes" color = { 104 169 179 } religion = saharan_pastoral_faith }
-	libyan = { name = "Libyan" color = { 117 126 98 } religion = berber_religion }
+	berber = { name = "Berber" color = { 72 209 155 } religion = berber_religion traditions = { desert_endurance horse_lords clan_loyalty } }
+	saharan_pastoral = { name = "Saharan Pastoralist" color = { 105 121 101 } religion = saharan_pastoral_faith traditions = { mountain_clans caravan_trade desert_endurance } }
+	garamantes = { name = "Garamantes" color = { 104 169 179 } religion = saharan_pastoral_faith traditions = { horse_lords clan_loyalty mountain_clans } }
+	libyan = { name = "Libyan" color = { 117 126 98 } religion = berber_religion traditions = { caravan_trade desert_endurance horse_lords } }
 }
 west_african = {
 	name = "West African"
 	color = { 62 192 139 }
-	west_african = { name = "West African" color = { 62 192 139 } religion = west_african_traditional }
-	mande = { name = "Mande" color = { 225 125 183 } religion = west_african_traditional }
-	chadian = { name = "Chadian" color = { 187 100 138 } religion = west_african_traditional }
-	kwa = { name = "Kwa" color = { 203 174 116 } religion = west_african_traditional }
-	west_atlantic = { name = "West Atlantic" color = { 128 187 227 } religion = west_african_traditional }
-	nok = { name = "Nok" color = { 122 227 119 } religion = west_african_traditional }
+	west_african = { name = "West African" color = { 62 192 139 } religion = west_african_traditional traditions = { river_irrigation caravan_trade clan_loyalty } }
+	mande = { name = "Mande" color = { 225 125 183 } religion = west_african_traditional traditions = { metalworking_craft ancestor_cult river_irrigation } }
+	chadian = { name = "Chadian" color = { 187 100 138 } religion = west_african_traditional traditions = { caravan_trade clan_loyalty metalworking_craft } }
+	kwa = { name = "Kwa" color = { 203 174 116 } religion = west_african_traditional traditions = { ancestor_cult river_irrigation caravan_trade } }
+	west_atlantic = { name = "West Atlantic" color = { 128 187 227 } religion = west_african_traditional traditions = { clan_loyalty metalworking_craft ancestor_cult } }
+	nok = { name = "Nok" color = { 122 227 119 } religion = west_african_traditional traditions = { river_irrigation caravan_trade clan_loyalty } }
 }
 bantu = {
 	name = "Bantu and Central African"
 	color = { 201 66 71 }
-	bantu = { name = "Bantu" color = { 201 66 71 } religion = bantu_traditional }
-	forest_forager = { name = "Central African Forest Forager" color = { 170 119 92 } religion = forest_forager_faith }
+	bantu = { name = "Bantu" color = { 201 66 71 } religion = bantu_traditional traditions = { metalworking_craft farmer_militia clan_loyalty } }
+	forest_forager = { name = "Central African Forest Forager" color = { 170 119 92 } religion = forest_forager_faith traditions = { ancestor_cult pastoral_herds metalworking_craft } }
 }
 east_african = {
 	name = "East African"
 	color = { 149 212 122 }
-	ethiopian_highland = { name = "Highland Ethiopian" color = { 65 98 127 } religion = ethiopian_highland_cult }
-	cushitic = { name = "Cushitic" color = { 119 73 119 } religion = cushitic_traditional }
-	east_african_pastoral = { name = "East African Pastoralist" color = { 70 116 97 } religion = nilotic_traditional }
-	fur = { name = "Fur" color = { 124 78 104 } religion = nilotic_traditional }
+	ethiopian_highland = { name = "Highland Ethiopian" color = { 65 98 127 } religion = ethiopian_highland_cult traditions = { pastoral_herds clan_loyalty temple_economy } }
+	cushitic = { name = "Cushitic" color = { 119 73 119 } religion = cushitic_traditional traditions = { mountain_clans caravan_trade pastoral_herds } }
+	east_african_pastoral = { name = "East African Pastoralist" color = { 70 116 97 } religion = nilotic_traditional traditions = { clan_loyalty temple_economy mountain_clans } }
+	fur = { name = "Fur" color = { 124 78 104 } religion = nilotic_traditional traditions = { caravan_trade pastoral_herds clan_loyalty } }
 }
 khoisan = {
 	name = "Khoisan"
 	color = { 64 131 220 }
-	khoisan = { name = "Khoisan" color = { 64 131 220 } religion = khoisan_religion }
+	khoisan = { name = "Khoisan" color = { 64 131 220 } religion = khoisan_religion traditions = { forest_foragers desert_endurance oral_law } }
 }
 indo_aryan = {
 	name = "Indo-Aryan"
 	color = { 96 173 190 }
-	indo_aryan = { name = "Indo-Aryan" color = { 96 173 190 } religion = vedic_brahmanism }
-	magadhan = { name = "Magadhan" color = { 195 93 100 } religion = sramana_movements }
+	indo_aryan = { name = "Indo-Aryan" color = { 96 173 190 } religion = vedic_brahmanism traditions = { caste_order oral_law sacred_kingship } }
+	magadhan = { name = "Magadhan" color = { 195 93 100 } religion = sramana_movements traditions = { priestly_scholars river_irrigation warrior_aristocracy } }
 }
 dravidian = {
 	name = "Dravidian"
 	color = { 95 74 148 }
-	dravidian = { name = "Dravidian" color = { 95 74 148 } religion = dravidian_folk }
-	lankan = { name = "Early Lankan" color = { 109 110 113 } religion = sinhala_yaksha }
+	dravidian = { name = "Dravidian" color = { 95 74 148 } religion = dravidian_folk traditions = { river_irrigation temple_economy rice_farming } }
+	lankan = { name = "Early Lankan" color = { 109 110 113 } religion = sinhala_yaksha traditions = { seafaring_merchants ancestor_cult river_irrigation } }
 }
 tibeto_burman = {
 	name = "Tibeto-Burman"
 	color = { 220 114 72 }
-	tibetan = { name = "Tibetan" color = { 188 66 222 } religion = tibeto_burman_animism }
-	burmese = { name = "Tibeto-Burman of the Irrawaddy" color = { 70 213 145 } religion = tibeto_burman_animism }
-	chiang = { name = "Chiang" color = { 97 213 101 } religion = tibeto_burman_animism }
+	tibetan = { name = "Tibetan" color = { 188 66 222 } religion = tibeto_burman_animism traditions = { mountain_clans priestly_scholars hill_forts } }
+	burmese = { name = "Tibeto-Burman of the Irrawaddy" color = { 70 213 145 } religion = tibeto_burman_animism traditions = { isolationist pastoral_herds mountain_clans } }
+	chiang = { name = "Chiang" color = { 97 213 101 } religion = tibeto_burman_animism traditions = { priestly_scholars hill_forts isolationist } }
 }
 tai_kadai = {
 	name = "Tai-Kadai"
 	color = { 109 75 130 }
-	tai = { name = "Tai" color = { 224 78 76 } religion = austroasiatic_animism }
+	tai = { name = "Tai" color = { 224 78 76 } religion = austroasiatic_animism traditions = { rice_farming forest_foragers ancestor_cult } }
 }
 austroasiatic = {
 	name = "Austroasiatic"
 	color = { 203 86 143 }
-	austroasiatic = { name = "Austroasiatic" color = { 203 86 143 } religion = austroasiatic_animism }
-	van_lang = { name = "Van Lang" color = { 104 134 83 } religion = austroasiatic_animism }
+	austroasiatic = { name = "Austroasiatic" color = { 203 86 143 } religion = austroasiatic_animism traditions = { rice_farming forest_foragers metalworking_craft } }
+	van_lang = { name = "Van Lang" color = { 104 134 83 } religion = austroasiatic_animism traditions = { river_irrigation ancestor_cult rice_farming } }
 }
 sinitic = {
 	name = "Sinitic"
 	color = { 114 128 107 }
-	huaxia = { name = "Huaxia (Zhou)" color = { 139 219 83 } religion = zhou_ancestor_cult }
-	chu = { name = "Chu" color = { 93 96 140 } religion = chu_shamanism }
-	shu_ba = { name = "Shu and Ba" color = { 82 97 100 } religion = chu_shamanism }
-	man_tribes = { name = "Man" color = { 99 79 67 } religion = chu_shamanism }
+	huaxia = { name = "Huaxia (Zhou)" color = { 139 219 83 } religion = zhou_ancestor_cult traditions = { imperial_mandate scribal_tradition lawgivers } }
+	chu = { name = "Chu" color = { 93 96 140 } religion = chu_shamanism traditions = { ancestor_cult rice_farming metalworking_craft } }
+	shu_ba = { name = "Shu and Ba" color = { 82 97 100 } religion = chu_shamanism traditions = { scribal_tradition lawgivers imperial_mandate } }
+	man_tribes = { name = "Man" color = { 99 79 67 } religion = chu_shamanism traditions = { rice_farming metalworking_craft ancestor_cult } }
 }
 baiyue = {
 	name = "Baiyue"
 	color = { 212 200 195 }
-	wu_yue = { name = "Wu and Yue" color = { 189 112 118 } religion = baiyue_animism }
-	baiyue = { name = "Baiyue" color = { 212 200 195 } religion = baiyue_animism }
-	min_yue = { name = "Min-Yue" color = { 113 90 62 } religion = baiyue_animism }
+	wu_yue = { name = "Wu and Yue" color = { 189 112 118 } religion = baiyue_animism traditions = { rice_farming forest_foragers ancestor_cult } }
+	baiyue = { name = "Baiyue" color = { 212 200 195 } religion = baiyue_animism traditions = { seafaring_merchants metalworking_craft rice_farming } }
+	min_yue = { name = "Min-Yue" color = { 113 90 62 } religion = baiyue_animism traditions = { forest_foragers ancestor_cult seafaring_merchants } }
 }
 korean_japonic = {
 	name = "Korean and Japonic"
 	color = { 120 128 202 }
-	korean = { name = "Korean" color = { 217 126 78 } religion = korean_shamanism }
-	jomon = { name = "Late Jomon" color = { 87 67 100 } religion = jomon_animism }
+	korean = { name = "Korean" color = { 217 126 78 } religion = korean_shamanism traditions = { rice_farming isolationist clan_loyalty } }
+	jomon = { name = "Late Jomon" color = { 87 67 100 } religion = jomon_animism traditions = { ancestor_cult sacred_groves rice_farming } }
 }
 ainu = {
 	name = "Ainu"
 	color = { 135 168 68 }
-	ainu = { name = "Ainu" color = { 135 168 68 } religion = ainu_kamuy }
+	ainu = { name = "Ainu" color = { 135 168 68 } religion = ainu_kamuy traditions = { forest_foragers sacred_groves oral_law } }
 }
 tungusic = {
 	name = "Tungusic"
 	color = { 137 123 131 }
-	tungusic = { name = "Tungusic" color = { 137 123 131 } religion = tungusic_shamanism }
+	tungusic = { name = "Tungusic" color = { 137 123 131 } religion = tungusic_shamanism traditions = { forest_foragers mounted_archery clan_loyalty } }
 }
 siberian = {
 	name = "Siberian"
 	color = { 161 116 85 }
-	paleo_siberian = { name = "Paleo-Siberian" color = { 124 216 148 } religion = siberian_shamanism }
-	samoyed = { name = "Samoyed" color = { 224 137 93 } religion = siberian_shamanism }
+	paleo_siberian = { name = "Paleo-Siberian" color = { 124 216 148 } religion = siberian_shamanism traditions = { forest_foragers sacred_groves isolationist } }
+	samoyed = { name = "Samoyed" color = { 224 137 93 } religion = siberian_shamanism traditions = { sacred_groves isolationist desert_endurance } }
 }
 austronesian = {
 	name = "Austronesian"
 	color = { 200 219 176 }
-	austronesian = { name = "Austronesian" color = { 200 219 176 } religion = austronesian_animism }
-	formosan = { name = "Formosan" color = { 186 124 190 } religion = austronesian_animism }
-	lapita = { name = "Lapita" color = { 198 127 117 } religion = lapita_ancestor_cult }
+	austronesian = { name = "Austronesian" color = { 200 219 176 } religion = austronesian_animism traditions = { seafaring_merchants ancestor_cult clan_loyalty } }
+	formosan = { name = "Formosan" color = { 186 124 190 } religion = austronesian_animism traditions = { rice_farming hospitable_customs seafaring_merchants } }
+	lapita = { name = "Lapita" color = { 198 127 117 } religion = lapita_ancestor_cult traditions = { ancestor_cult clan_loyalty rice_farming } }
 }
 papuan = {
 	name = "Papuan"
 	color = { 64 136 106 }
-	papuan = { name = "Papuan" color = { 64 136 106 } religion = papuan_animism }
+	papuan = { name = "Papuan" color = { 64 136 106 } religion = papuan_animism traditions = { forest_foragers clan_loyalty ancestor_cult } }
 }
 aboriginal = {
 	name = "Aboriginal Australian"
 	color = { 136 173 117 }
-	aboriginal = { name = "Aboriginal Australian" color = { 136 173 117 } religion = aboriginal_dreaming }
-	tasmanian = { name = "Tasmanian" color = { 125 199 65 } religion = aboriginal_dreaming }
+	aboriginal = { name = "Aboriginal Australian" color = { 136 173 117 } religion = aboriginal_dreaming traditions = { desert_endurance oral_law forest_foragers } }
+	tasmanian = { name = "Tasmanian" color = { 125 199 65 } religion = aboriginal_dreaming traditions = { oral_law forest_foragers sacred_groves } }
 }
 mesoamerican = {
 	name = "Mesoamerican"
 	color = { 86 177 84 }
-	olmec = { name = "Olmec" color = { 141 105 117 } religion = mesoamerican_religion }
-	zapotec = { name = "Zapotec" color = { 214 133 83 } religion = mesoamerican_religion }
-	maya = { name = "Maya" color = { 68 165 121 } religion = mesoamerican_religion }
-	maize_farmer = { name = "Maize Farming Peoples" color = { 119 190 188 } religion = mesoamerican_religion }
+	olmec = { name = "Olmec" color = { 141 105 117 } religion = mesoamerican_religion traditions = { temple_economy sacred_kingship warrior_aristocracy } }
+	zapotec = { name = "Zapotec" color = { 214 133 83 } religion = mesoamerican_religion traditions = { priestly_scholars river_irrigation temple_economy } }
+	maya = { name = "Maya" color = { 68 165 121 } religion = mesoamerican_religion traditions = { sacred_kingship warrior_aristocracy priestly_scholars } }
+	maize_farmer = { name = "Maize Farming Peoples" color = { 119 190 188 } religion = mesoamerican_religion traditions = { river_irrigation temple_economy sacred_kingship } }
 }
 andean = {
 	name = "Andean"
 	color = { 94 133 97 }
-	chavin = { name = "Chavin" color = { 100 84 132 } religion = andean_religion }
-	chorrera = { name = "Chorrera" color = { 114 106 153 } religion = andean_religion }
-	paracas = { name = "Paracas" color = { 138 161 113 } religion = andean_religion }
-	yaya_mama = { name = "Yaya-Mama" color = { 113 226 81 } religion = andean_religion }
-	chinchorro = { name = "Chinchorro" color = { 92 111 153 } religion = andean_religion }
-	andean_farmer = { name = "Andean Farming Peoples" color = { 68 139 130 } religion = andean_religion }
+	chavin = { name = "Chavin" color = { 100 84 132 } religion = andean_religion traditions = { mountain_clans temple_economy caste_order } }
+	chorrera = { name = "Chorrera" color = { 114 106 153 } religion = andean_religion traditions = { river_irrigation ancestor_cult mountain_clans } }
+	paracas = { name = "Paracas" color = { 138 161 113 } religion = andean_religion traditions = { temple_economy caste_order river_irrigation } }
+	yaya_mama = { name = "Yaya-Mama" color = { 113 226 81 } religion = andean_religion traditions = { ancestor_cult mountain_clans temple_economy } }
+	chinchorro = { name = "Chinchorro" color = { 92 111 153 } religion = andean_religion traditions = { caste_order river_irrigation ancestor_cult } }
+	andean_farmer = { name = "Andean Farming Peoples" color = { 68 139 130 } religion = andean_religion traditions = { mountain_clans temple_economy caste_order } }
 }
 north_american = {
 	name = "North American"
 	color = { 178 122 151 }
-	subarctic_hunter = { name = "Subarctic Forest Hunters" color = { 117 145 75 } religion = north_american_animism }
-	pacific_coast_forager = { name = "Pacific Coast Foragers" color = { 110 92 157 } religion = north_american_animism }
-	plains_hunter = { name = "Plains Bison Hunters" color = { 110 78 120 } religion = north_american_animism }
-	desert_forager = { name = "Desert Foragers" color = { 215 76 124 } religion = north_american_animism }
-	eastern_woodlander = { name = "Eastern Woodlands Peoples" color = { 96 174 99 } religion = north_american_animism }
-	adena = { name = "Adena" color = { 170 226 104 } religion = north_american_animism }
+	subarctic_hunter = { name = "Subarctic Forest Hunters" color = { 117 145 75 } religion = north_american_animism traditions = { forest_foragers tribal_assemblies clan_loyalty } }
+	pacific_coast_forager = { name = "Pacific Coast Foragers" color = { 110 92 157 } religion = north_american_animism traditions = { oral_law sacred_groves forest_foragers } }
+	plains_hunter = { name = "Plains Bison Hunters" color = { 110 78 120 } religion = north_american_animism traditions = { tribal_assemblies clan_loyalty oral_law } }
+	desert_forager = { name = "Desert Foragers" color = { 215 76 124 } religion = north_american_animism traditions = { sacred_groves forest_foragers tribal_assemblies } }
+	eastern_woodlander = { name = "Eastern Woodlands Peoples" color = { 96 174 99 } religion = north_american_animism traditions = { clan_loyalty oral_law sacred_groves } }
+	adena = { name = "Adena" color = { 170 226 104 } religion = north_american_animism traditions = { forest_foragers tribal_assemblies clan_loyalty } }
 }
 arctic = {
 	name = "Arctic"
 	color = { 110 112 122 }
-	arctic_hunter = { name = "Arctic Marine Mammal Hunters" color = { 157 131 114 } religion = arctic_shamanism }
-	aleut = { name = "Aleut" color = { 132 185 69 } religion = arctic_shamanism }
+	arctic_hunter = { name = "Arctic Marine Mammal Hunters" color = { 157 131 114 } religion = arctic_shamanism traditions = { forest_foragers desert_endurance oral_law } }
+	aleut = { name = "Aleut" color = { 132 185 69 } religion = arctic_shamanism traditions = { desert_endurance oral_law isolationist } }
 }
 amazonian = {
 	name = "Amazonian"
 	color = { 203 95 207 }
-	manioc_farmer = { name = "Manioc Farming Peoples" color = { 130 219 172 } religion = amazonian_animism }
-	savanna_forager = { name = "Savanna Foragers" color = { 119 89 165 } religion = amazonian_animism }
+	manioc_farmer = { name = "Manioc Farming Peoples" color = { 130 219 172 } religion = amazonian_animism traditions = { forest_foragers river_irrigation ancestor_cult } }
+	savanna_forager = { name = "Savanna Foragers" color = { 119 89 165 } religion = amazonian_animism traditions = { river_irrigation ancestor_cult clan_loyalty } }
 }
 southern_cone = {
 	name = "Southern Cone"
 	color = { 136 145 71 }
-	shellfish_gatherer = { name = "Shellfish Gatherers" color = { 119 77 189 } religion = southern_cone_faith }
-	pampas_forager = { name = "Pampas Foragers" color = { 187 219 201 } religion = southern_cone_faith }
-	patagonian = { name = "Patagonian Hunters" color = { 207 107 131 } religion = southern_cone_faith }
+	shellfish_gatherer = { name = "Shellfish Gatherers" color = { 119 77 189 } religion = southern_cone_faith traditions = { forest_foragers desert_endurance clan_loyalty } }
+	pampas_forager = { name = "Pampas Foragers" color = { 187 219 201 } religion = southern_cone_faith traditions = { desert_endurance clan_loyalty oral_law } }
+	patagonian = { name = "Patagonian Hunters" color = { 207 107 131 } religion = southern_cone_faith traditions = { clan_loyalty oral_law forest_foragers } }
 }
 caribbean = {
 	name = "Caribbean"
 	color = { 227 65 71 }
-	caribbean_forager = { name = "Caribbean Foragers" color = { 118 95 163 } religion = caribbean_archaic_faith }
+	caribbean_forager = { name = "Caribbean Foragers" color = { 118 95 163 } religion = caribbean_archaic_faith traditions = { seafaring_merchants forest_foragers ancestor_cult } }
 }

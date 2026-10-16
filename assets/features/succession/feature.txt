@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Succession & regents"
+category = "Characters"
+order = 41
+description = "A succession law picks the heir and the next ruler: primogeniture, ultimogeniture, election by a council of the five most prestigious characters, or gavelkind (the realm is divided among the sons as subjects). A ruler under 16 gets a regent (the best of the family, else the best adult), who rules with their stats and costs the country stability. Laws are in common/succession_laws; the player changes the law in the Laws menu (50 political power, two years without a succession)."
+requires = { characters }

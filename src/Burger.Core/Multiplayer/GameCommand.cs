@@ -22,6 +22,8 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     public const string QueueProduction = "queue_production";
     /// <summary>Spends points on a state's development (args: state key).</summary>
     public const string Develop = "develop";
+    /// <summary>Adopts (1) or drops (0) a government reform (args: reform key, 1 or 0).</summary>
+    public const string Reform = "reform";
     /// <summary>Answers an event (args: event id, option index).</summary>
     public const string EventOption = "event_option";
     /// <summary>System command: a human takes this country (args: player id). The AI stops playing it.</summary>
@@ -29,7 +31,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or Develop or EventOption or Respond or ModMessage;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or Develop or Reform or EventOption or Respond or ModMessage;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -104,6 +106,8 @@ public static class CommandExecutor
             case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
             case GameCommand.Develop:
                 return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } ds && g.Development.Develop(country, ds) == null;
+            case GameCommand.Reform:
+                return g.Reforms.Reforms.TryGetValue(A(0), out var rf) && (A(1) == "0" ? g.Reforms.Drop(country, rf) : g.Reforms.Adopt(country, rf)) == null;
             case GameCommand.QueueProduction:
             {
                 if (!g.Data.Equipment.TryGetValue(A(0), out var eq)) return false;
@@ -159,6 +163,9 @@ public static class CommandValidator
             }
             case GameCommand.Develop:
                 return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
+            case GameCommand.Reform:
+                if (args.Length != 2 || (A(1) != "0" && A(1) != "1") || !g.Reforms.Reforms.TryGetValue(A(0), out var vr)) return "no such reform";
+                return A(1) == "0" ? g.Reforms.CannotDrop(country, vr) : g.Reforms.CannotAdopt(country, vr);
             case GameCommand.QueueProduction:
                 if (args.Length != 2 || !g.Data.Equipment.ContainsKey(A(0)) || !Sanitize.Int(A(1), 0, 50, out _)) return "bad production order";
                 return null;

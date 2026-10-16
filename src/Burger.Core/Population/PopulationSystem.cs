@@ -62,7 +62,7 @@ public sealed partial class PopulationSystem
                 var grp = new CultureGroup { Key = g.Key, Name = g.GetString("name") ?? Localisation.GetOrPretty(g.Key), Color = Color(g, g.Key) };
                 foreach (var n in g.All)
                 {
-                    if (n.Children == null || n.Key is "color") continue;
+                    if (n.Children == null || n.Key is "color" or "traditions") continue;
                     var c = new CultureDef { Key = n.Key, Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key), Group = grp, Religion = n.GetString("religion"), CountryName = n.GetString("country_name") };
                     c.Color = Rgb.TryParse(n.Get("color"), out var col) ? col : grp.Color.Lerp(HashColor(n.Key), 0.35);
                     if (CultureByKey.ContainsKey(c.Key)) { Log.Error($"Culture '{c.Key}' is defined twice", n.Location); continue; }

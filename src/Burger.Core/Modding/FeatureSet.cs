@@ -51,6 +51,10 @@ public sealed class FeatureSet
     public const string Demilitarization = "demilitarization";
     public const string AiProfiles = "ai_profiles";
     public const string Focus = "focus";
+    public const string CultureTraditions = "culture_traditions";
+    public const string GovernmentReforms = "government_reforms";
+    public const string Succession = "succession";
+    public const string Dynasties = "dynasties";
 
     /// <summary>The features games had before features existed (all on for a game without features.txt).</summary>
     public static readonly string[] BuiltIn = { Military, Diplomacy, Characters, CharacterInteractions, Economy, FogOfWar, Ai };

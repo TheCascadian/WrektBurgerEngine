@@ -23,6 +23,18 @@ public sealed class IdeologyDef
     public double ColorBlendAmount;
     /// <summary>Popularity it gains each month (points) in a weak democracy: elections, but low stability or a government with little support (weak_democracy_drift; fascists).</summary>
     public double WeakDemocracyDrift;
+    /// <summary>The country has a council or assembly while this ideology rules, even without elections (parliament and parties are shown).</summary>
+    public bool Assembly;
+    /// <summary>When set, only the currents named here (and the ruling one) sit in the chamber while this ideology rules; the others are shut out and become movements. Empty = every current may sit.</summary>
+    public HashSet<string> Chamber = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Seats of the chamber while this ideology rules (0 = the country's own number, define parliament_seats).</summary>
+    public int ChamberSeats;
+    /// <summary>The ideology exists only once it is unlocked (an unlock block): from a year, when any country knows a technology, or by script (unlock_ideology). No block = there from the start.</summary>
+    public bool HasUnlock;
+    public int? UnlockYear;
+    public string? UnlockTech;
+    /// <summary>Share of every country that follows it the day it appears.</summary>
+    public double StartPopularity = 0.03;
     /// <summary>Winning wars, countries ruled by this ideology set up subjects (puppets) of the peoples they defeat instead of
     /// taking foreign land (peace_puppets; default: ideologies that hold elections, i.e. democracies).</summary>
     public bool PeacePuppets;
@@ -61,6 +73,10 @@ public sealed class LawGroup
     public int Order;
     /// <summary>The group is shown (and used) only while true (country scope), e.g. has_feature = population.</summary>
     public Node? Potential;
+    /// <summary>The group does not exist before it is unlocked (an unlock block: year, technology, or script). Its default law stays in force and should do nothing.</summary>
+    public bool HasUnlock;
+    public int? UnlockYear;
+    public string? UnlockTech;
 }
 
 public sealed class LawDef
@@ -75,6 +91,10 @@ public sealed class LawDef
     public double Cost;
     /// <summary>Shown only while true (country scope).</summary>
     public Node? Potential;
+    /// <summary>The law cannot be chosen before it is unlocked (an unlock block: year, technology, or script).</summary>
+    public bool HasUnlock;
+    public int? UnlockYear;
+    public string? UnlockTech;
     /// <summary>Can be enacted only while true (country scope).</summary>
     public Node? Allow;
     public Node? AiWillDo;

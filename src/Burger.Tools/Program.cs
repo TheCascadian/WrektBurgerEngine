@@ -53,6 +53,7 @@ public static partial class Program
                 "mp-test" => MultiplayerTest(rest),
                 "sec-test" => SecurityTest(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
+                "society-test" => SocietyTest(rest),
                 "run" => Run(rest),
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
@@ -294,6 +295,18 @@ public static partial class Program
             var top = liveC.OrderByDescending(c => game.Tech.Count(c)).Take(6).Select(c => $"{c.Tag} {game.Tech.Count(c)}");
             Console.WriteLine($"  technology: average {liveC.Average(c => game.Tech.Count(c)):0} of {game.Tech.Defs.Count} known; most: {string.Join(", ", top)}; {string.Join(", ", new[] { "GER", "USA", "SOV", "JAP", "ITA", "FRA", "ENG" }.Select(t => game.World.GetCountry(t)).Where(c => c != null).Select(c => $"{c!.Tag} {game.Tech.Count(c)}"))}");
         }
+        if (game.CultureLife.Enabled)
+            Console.WriteLine($"  culture: {game.CultureLife.Evolved.Count} new cultures");
+        if (game.Reforms.Enabled)
+        {
+            var govLive = game.World.Countries.Where(c => c.Exists).ToList();
+            Console.WriteLine($"  government: {govLive.Average(c => game.Reforms.Of(c).Reforms.Count):0.0} reforms and {govLive.Average(c => game.Reforms.Of(c).IdeasUnlocked):0.0} ideas per country, corruption average {govLive.Average(game.Reforms.Corruption):0.0} " +
+                              $"(max {govLive.Max(game.Reforms.Corruption):0}, {govLive.Count(c => game.Reforms.Corruption(c) >= 50)} at 50 or more); largest: " +
+                              string.Join(", ", govLive.OrderByDescending(c => game.Population.TotalOf(c)).Take(5).Select(c => $"{c.Tag} {game.Population.TotalOf(c) / 1e6:0.0}M ({game.Reforms.MillionsBeyondRange(c):0.0}M far, {game.Reforms.CentralisationSteps(c):0.#} steps) corruption {game.Reforms.Corruption(c):0}")));
+        }
+        if (game.Succession.Enabled || game.Dynasties.Enabled)
+            Console.WriteLine($"  succession: {game.Succession.Successions} rulers followed ({string.Join(", ", game.Succession.SuccessionsByLaw.Select(kv => $"{kv.Value} {kv.Key}"))}), {game.Succession.Regencies} regencies ({game.World.Countries.Count(c => c.Regent != null)} now), {game.Succession.Partitions} realms divided; " +
+                              $"dynasties: {game.Dynasties.BastardsBorn} bastards, {game.Dynasties.ConcubinesTaken} concubines, {game.Dynasties.Illnesses} illnesses ({game.Dynasties.IllnessDeaths} deadly)");
         if (game.Commodities.Enabled)
         {
             foreach (var k in game.Commodities.Defs.Values)
@@ -764,6 +777,7 @@ public static partial class Program
             if (game.Features.Has(FeatureSet.Military) && game.Features.Has(FeatureSet.Diplomacy)) MilitaryFeatureTests(project);
             if (game.Features.Has(FeatureSet.Military) && game.Features.Has(FeatureSet.Diplomacy)) WarGoalTests(project);
             if (game.Features.Has(FeatureSet.Diplomacy) && game.Features.Has(FeatureSet.Population)) ReleaseTests(project);
+            if (game.CultureLife.Enabled || game.Reforms.Enabled || game.Succession.Enabled || game.Dynasties.Enabled) SocietyFeatureTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticsFeatureTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticalDepthTests(project);
             if (game.Features.Has(FeatureSet.Population)) PopulationFeatureTests(project);
@@ -779,6 +793,19 @@ public static partial class Program
         if (unexpectedErrors == 0) Ok($"OK - no errors ({Log.WarningCount} warnings)");
         else Console.WriteLine($"{unexpectedErrors} errors ({loadErrors} while loading), {Log.WarningCount} warnings");
         return unexpectedErrors == 0 && _failedChecks == 0 ? 0 : 1;
+    }
+
+    private static Burger.Core.Population.PopulationSystem Pop(Game g) => g.Population;
+
+    /// <summary>Runs only the culture, government, succession and dynasty checks of the self-test.</summary>
+    private static int SocietyTest(List<string> args)
+    {
+        string project = ResolveProject(RequireProjectArg(args, "burger society-test <project>"));
+        Log.EchoToConsole = false;
+        try { SocietyFeatureTests(project); }
+        finally { foreach (var e in Log.Entries.TakeLast(15)) Console.WriteLine("  log: " + e); }
+        Console.WriteLine(_failedChecks == 0 ? "society checks passed" : $"{_failedChecks} society checks FAILED");
+        return _failedChecks == 0 ? 0 : 1;
     }
 
     private static int _failedChecks;

@@ -94,6 +94,10 @@ public sealed class Country : IScope
     public NameList Names = new();
     public Character? Ruler;
     public Character? Heir;
+    /// <summary>Rules for a ruler who is still a child (succession feature); null when the ruler rules alone.</summary>
+    public Character? Regent;
+    /// <summary>Who governs now: the regent, else the ruler. Their stats count for the country.</summary>
+    public Character? Governing => Regent ?? Ruler;
     public List<RecruitOrder> Recruitment = new();
     /// <summary>Equipment in storage (production feature): equipment key -> amount.</summary>
     public Dictionary<string, double> Stockpile = new(StringComparer.OrdinalIgnoreCase);

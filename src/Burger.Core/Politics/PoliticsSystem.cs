@@ -14,7 +14,12 @@ namespace Burger.Core.Politics;
 public sealed partial class PoliticsSystem
 {
     private readonly Game _game;
+    /// <summary>The ideologies in play now: the ones without an unlock and the ones unlocked so far (the list changes when one is unlocked).</summary>
     public readonly List<IdeologyDef> Ideologies = new();
+    /// <summary>Every ideology defined, unlocked or not.</summary>
+    public readonly List<IdeologyDef> AllIdeologies = new();
+    private readonly HashSet<string> _unlocked = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _pendingUnlocks = new();
     public readonly Dictionary<string, IdeologyDef> IdeologyByKey = new(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<string, GovernmentDef> Governments = new(StringComparer.OrdinalIgnoreCase);
     public readonly List<LawGroup> LawGroups = new();
@@ -34,7 +39,21 @@ public sealed partial class PoliticsSystem
         game.SaveSections.Add(new SaveSection { Name = "politics", Write = Save, Read = LoadSave, Reset = ResetRuntime });
         game.SaveSections.Add(new SaveSection { Name = "pop_politics", Write = SavePopMoods, Read = LoadPopMoods, Reset = () => { _moods.Clear(); _popSummary.Clear(); } });
         game.SaveSections.Add(new SaveSection { Name = "parliament", Write = SaveParliaments, Read = LoadParliaments, Reset = () => { _parliaments.Clear(); _former.Clear(); _retired.Clear(); _pinned = null; } });
+        game.SaveSections.Add(new SaveSection { Name = "ideology_unlocks", Early = true, Write = WriteUnlocks, Read = ReadUnlocks, Reset = () => { _unlocked.Clear(); RebuildActive(); } });
         RegisterScript();
+    }
+
+    private void WriteUnlocks(Node n)
+    {
+        foreach (var k in _unlocked.OrderBy(x => x, StringComparer.Ordinal)) n.AddBlock("unlocked").Add("key", k);
+    }
+
+    private void ReadUnlocks(Node n)
+    {
+        _unlocked.Clear();
+        foreach (var b in n.GetAll("unlocked"))
+            if (b.GetString("key") is { } k && (IdeologyByKey.ContainsKey(k) || k.StartsWith("law:"))) _unlocked.Add(k);
+        RebuildActive();
     }
 
     private PoliticsRules Rules => _game.Rules.Politics;
@@ -53,7 +72,7 @@ public sealed partial class PoliticsSystem
 
     public void Load(GameData data)
     {
-        Ideologies.Clear(); IdeologyByKey.Clear(); Governments.Clear(); LawGroups.Clear(); Laws.Clear(); Positions.Clear();
+        Ideologies.Clear(); AllIdeologies.Clear(); IdeologyByKey.Clear(); _unlocked.Clear(); _pendingUnlocks.Clear(); Governments.Clear(); LawGroups.Clear(); Laws.Clear(); Positions.Clear();
         _modifierKeys.Clear();
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/ideologies"))
             foreach (var n in root.All)
@@ -67,6 +86,8 @@ public sealed partial class PoliticsSystem
                     Elections = n.GetBool("elections"),
                     Extremist = n.GetBool("extremist"),
                     WeakDemocracyDrift = n.GetDouble("weak_democracy_drift"),
+                    Assembly = n.GetBool("assembly"),
+                    ChamberSeats = n.GetInt("chamber_seats", 0),
                     ColorBlendAmount = n.Get("country_color_blend")?.GetDouble("amount", 0.5) ?? 0,
                     Government = n.GetString("government"),
                     Order = Ideologies.Count,
@@ -81,10 +102,19 @@ public sealed partial class PoliticsSystem
                 ReadNumbers(n.Get("opinion"), i.Opinion);
                 ReadNumbers(n.Get("modifier"), i.Modifier);
                 if (IdeologyByKey.ContainsKey(i.Key)) { Log.Error($"Ideology '{i.Key}' is defined twice", n.Location); continue; }
-                Ideologies.Add(i);
+                if (n.Get("unlock") is { } unlock)
+                {
+                    i.HasUnlock = true;
+                    if (unlock.Has("year")) i.UnlockYear = unlock.GetInt("year");
+                    i.UnlockTech = unlock.GetString("technology");
+                    i.StartPopularity = unlock.GetDouble("popularity", i.StartPopularity);
+                }
+                foreach (var k in n.GetList("chamber")) i.Chamber.Add(k);
+                AllIdeologies.Add(i);
                 IdeologyByKey[i.Key] = i;
             }
-        foreach (var i in Ideologies)
+        RebuildActive();
+        foreach (var i in AllIdeologies)
         {
             var key = i.Key;
             _game.Script.RegisterValue("popularity_" + key, (ctx, scope) => scope is Country c && Enabled ? PopularityOf(c, key) : null);
@@ -97,6 +127,8 @@ public sealed partial class PoliticsSystem
             foreach (var n in root.All)
             {
                 if (n.Children == null) continue;
+                // a block with only reforms (government_reforms feature) adds to a government without replacing its starting politics
+                if (n.Get("ruling_party") == null && n.Get("popularity") == null && n.Get("laws") == null && !n.Has("seats") && (n.Get("reforms") != null || n.Get("start_reforms") != null)) continue;
                 var g = new GovernmentDef { Key = n.Key, Ruling = n.GetString("ruling_party") };
                 ReadNumbers(n.Get("popularity"), g.Popularity);
                 foreach (var l in n.Get("laws")?.All ?? Enumerable.Empty<Node>()) if (l.Value != null) g.Laws[l.Key] = l.Value;
@@ -110,6 +142,7 @@ public sealed partial class PoliticsSystem
             {
                 if (n.Children == null) continue;
                 var grp = new LawGroup { Key = n.Key, Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key), Desc = n.GetString("desc", "")!, Order = LawGroups.Count, Potential = n.Get("potential") };
+                if (n.Get("unlock") is { } gu) { grp.HasUnlock = true; if (gu.Has("year")) grp.UnlockYear = gu.GetInt("year"); grp.UnlockTech = gu.GetString("technology"); }
                 foreach (var ln in n.All)
                 {
                     if (ln.Children == null || ln.Key is "name" or "desc" or "potential") continue;
@@ -129,6 +162,7 @@ public sealed partial class PoliticsSystem
                         SingleParty = ln.GetBool("single_party"),
                         Definition = ln,
                     };
+                    if (ln.Get("unlock") is { } lu) { law.HasUnlock = true; if (lu.Has("year")) law.UnlockYear = lu.GetInt("year"); law.UnlockTech = lu.GetString("technology"); }
                     ReadNumbers(ln.Get("modifier"), law.Modifier);
                     foreach (var b in ln.GetList("bans")) law.Bans.Add(b);
                     if (Laws.ContainsKey(law.Key)) { Log.Error($"Law '{law.Key}' is defined twice (law keys must be unique across groups)", ln.Location); continue; }
@@ -160,7 +194,7 @@ public sealed partial class PoliticsSystem
             }
 
         // modifier keys this system can provide (so Sum() skips the lookup for every other key)
-        foreach (var i in Ideologies) foreach (var k in i.Modifier.Keys) _modifierKeys.Add(k);
+        foreach (var i in AllIdeologies) foreach (var k in i.Modifier.Keys) _modifierKeys.Add(k);
         _modifierKeys.Add("stability_target"); // rule StabilitySources
         _modifierKeys.Add("parliament_term"); // rule ParliamentTermModifiers
         foreach (var l in Laws.Values) foreach (var k in l.Modifier.Keys) _modifierKeys.Add(k);
@@ -215,7 +249,8 @@ public sealed partial class PoliticsSystem
             foreach (var pn in history.Get("parties")?.All ?? Enumerable.Empty<Node>()) if (pn.Value != null) p.PartyNames[pn.Key] = pn.Value;
             if (GameDate.TryParse(history.GetString("last_election"), out var le)) p.LastElection = le;
         }
-        if (!IdeologyByKey.ContainsKey(p.Ruling)) p.Ruling = p.Popularity.Count > 0 ? p.Popularity.MaxBy(kv => kv.Value).Key : Ideologies[0].Key;
+        foreach (var k in p.Popularity.Keys.Where(k => !Ideologies.Any(i => i.Key.Equals(k, StringComparison.OrdinalIgnoreCase))).ToList()) p.Popularity.Remove(k);
+        if (!Ideologies.Any(i => i.Key.Equals(p.Ruling, StringComparison.OrdinalIgnoreCase))) p.Ruling = p.Popularity.Count > 0 ? p.Popularity.MaxBy(kv => kv.Value).Key : Ideologies[0].Key;
         foreach (var i in Ideologies) if (!p.Popularity.ContainsKey(i.Key)) p.Popularity[i.Key] = 0;
         if (p.Popularity.Values.Sum() <= 0) p.Popularity[p.Ruling] = 1;
         if (p.Popularity[p.Ruling] <= 0) p.Popularity[p.Ruling] = 0.3;
@@ -226,6 +261,7 @@ public sealed partial class PoliticsSystem
         p.RulingOrganization = PartiesOfIdeology(c, p.Ruling)
             .OrderByDescending(party => p.PartyPopularity.GetValueOrDefault(party.Key)).Select(party => party.Key).FirstOrDefault() ?? p.Ruling;
         p.GovernmentOrganizations = new List<string> { p.RulingOrganization };
+        if (Ideology(p.Ruling) is { ChamberSeats: > 0 } closed && history?.Has("seats") != true) p.TotalSeats = closed.ChamberSeats;
         p.PartySeats = PartySeatsFrom(c, p, new Dictionary<string, double>(p.PartyPopularity, StringComparer.OrdinalIgnoreCase));
         p.Seats = AggregatePartySeats(c, p.PartySeats);
         AssignGovernmentOrganizations(c, p);
@@ -251,6 +287,7 @@ public sealed partial class PoliticsSystem
     public void LoadHistory()
     {
         _state.Clear();
+        CheckUnlocks(silent: true);
         if (Ideologies.Count == 0) return;
         foreach (var root in DataLoader.ParseFileOrFolder(_game.Data, "history/politics"))
             foreach (var n in root.All)
@@ -266,6 +303,7 @@ public sealed partial class PoliticsSystem
 
     private void ResetRuntime()
     {
+        _unlocked.Clear(); _pendingUnlocks.Clear(); RebuildActive();
         lock (_wealth) { _wealth.Clear(); _wealthDay = int.MinValue; }
         _state.Clear();
         Movements.Clear();
@@ -371,8 +409,13 @@ public sealed partial class PoliticsSystem
 
     public bool IsBanned(Country c, string ideology) => IsBanned(c, Of(c), ideology);
 
+    /// <summary>True if the ruling ideology keeps a closed chamber that this current may not enter (a council of nobles, an assembly of estates).</summary>
+    private bool ShutOutOfChamber(CountryPolitics p, string ideology)
+        => Ideology(p.Ruling) is { Chamber.Count: > 0 } rule && !ideology.Equals(p.Ruling, StringComparison.OrdinalIgnoreCase) && !rule.Chamber.Contains(ideology);
+
     private bool IsBanned(Country c, CountryPolitics p, string ideology)
     {
+        if (ShutOutOfChamber(p, ideology)) return true;
         if (!LawsEnabled) return false;
         foreach (var kv in p.Laws)
             if (Laws.TryGetValue(kv.Value, out var l) && (l.Bans.Contains(ideology) || l.SingleParty && !ideology.Equals(p.Ruling, StringComparison.OrdinalIgnoreCase))) return true;
@@ -525,6 +568,15 @@ public sealed partial class PoliticsSystem
         if (HoldsElections(c, p) && p.NextElection == null) p.NextElection = _game.World.Date.AddMonths(ElectionMonths());
     }
 
+    /// <summary>A new ruling ideology with (or after) a closed chamber seats the chamber again: its size, and only the currents it lets in.</summary>
+    private void RebuildChamber(Country c, CountryPolitics p)
+    {
+        p.TotalSeats = Ideology(p.Ruling) is { ChamberSeats: > 0 } rule ? rule.ChamberSeats : (int)_game.Data.Defines.Get("parliament_seats", 100);
+        p.PartySeats = PartySeatsFrom(c, p, new Dictionary<string, double>(p.PartyPopularity, StringComparer.OrdinalIgnoreCase));
+        p.Seats = AggregatePartySeats(c, p.PartySeats);
+        AssignGovernmentOrganizations(c, p);
+    }
+
     private void SetGovernment(Country c, List<string> gov, string reason, List<string>? governmentOrganizations = null)
     {
         var p = Of(c);
@@ -555,6 +607,7 @@ public sealed partial class PoliticsSystem
             || !oldOrganizations.SequenceEqual(p.GovernmentOrganizations, StringComparer.OrdinalIgnoreCase);
         if (!ideologyChanged && !organizationChanged) return;
         if (Environment.GetEnvironmentVariable("BURGER_GOV_LOG") is { } gl && gl.Equals(c.Tag, StringComparison.OrdinalIgnoreCase)) Console.WriteLine($"GOV {_game.World.Date.ToDisplay()} {c.Tag}: {old} -> {p.Ruling} ({reason}) stab {Rules.StabilityOf(_game, c):0} pop {string.Join("/", p.Popularity.Select(kv => $"{kv.Value:P0}"))}");
+        if (ideologyChanged && (Ideology(old)?.Chamber.Count > 0 || Ideology(p.Ruling)?.Chamber.Count > 0)) RebuildChamber(c, p);
         if (ideologyChanged) { GovernmentChanges++; p.RegimeChangedDay = _game.World.Date.TotalDays; }
         if (organizationChanged) _game.Hub.RaiseRulingPartyChanged(c, oldOrganization, p.RulingOrganization, reason);
         // the new ruling party's leader takes over as the country's ruler
@@ -697,9 +750,90 @@ public sealed partial class PoliticsSystem
         if (CivilWarsEnabled) CheckCivilWars();
     }
 
+    // =============================================================================================
+    // Unlocking ideologies
+    // =============================================================================================
+
+    /// <summary>True if the ideology is in play: it has no unlock, or it was unlocked.</summary>
+    public bool IsUnlocked(string key) => !IdeologyByKey.TryGetValue(key, out var d) || !d.HasUnlock || _unlocked.Contains(key);
+
+    private void RebuildActive()
+    {
+        Ideologies.Clear();
+        Ideologies.AddRange(AllIdeologies.Where(i => !i.HasUnlock || _unlocked.Contains(i.Key)));
+    }
+
+    /// <summary>Unlocks an ideology at the next month (scripts call this). Returns false for an unknown key or one already unlocked.</summary>
+    public bool Unlock(string key)
+    {
+        if (IdeologyByKey.TryGetValue(key, out var d))
+        {
+            if (IsUnlocked(key) || _pendingUnlocks.Contains(d.Key)) return false;
+            _pendingUnlocks.Add(d.Key);
+            return true;
+        }
+        string lk = "law:" + key;
+        bool known = Laws.TryGetValue(key, out var law) ? !IsLawUnlocked(law) : LawGroups.FirstOrDefault(g => g.Key == key) is { } grp && !IsGroupUnlocked(grp);
+        if (!known || _pendingUnlocks.Contains(lk)) return false;
+        _pendingUnlocks.Add(lk);
+        return true;
+    }
+
+    /// <summary>Unlocks what its year or technology allows; silent at the start of a game.</summary>
+    private void CheckUnlocks(bool silent = false)
+    {
+        var date = _game.World.Date;
+        bool Reached(int? year, string? tech) => year is { } y && date.Year >= y
+            || tech != null && _game.Tech.Defs.ContainsKey(tech) && _game.World.Countries.Any(c => c.Exists && _game.Tech.Has(c, tech));
+        foreach (var g in LawGroups)
+            if (g.HasUnlock && !_unlocked.Contains("law:" + g.Key) && Reached(g.UnlockYear, g.UnlockTech)) ApplyLawUnlock("law:" + g.Key, g.Name, silent);
+        foreach (var l in Laws.Values)
+            if (l.HasUnlock && !_unlocked.Contains("law:" + l.Key) && Reached(l.UnlockYear, l.UnlockTech)) ApplyLawUnlock("law:" + l.Key, l.Name, silent);
+        foreach (var d in AllIdeologies)
+        {
+            if (!d.HasUnlock || _unlocked.Contains(d.Key)) continue;
+            bool yes = d.UnlockYear is { } y && date.Year >= y
+                       || d.UnlockTech != null && _game.Tech.Defs.ContainsKey(d.UnlockTech) && _game.World.Countries.Any(c => c.Exists && _game.Tech.Has(c, d.UnlockTech));
+            if (yes) ApplyUnlock(d, silent);
+        }
+        foreach (var key in _pendingUnlocks.ToList())
+        {
+            if (IdeologyByKey.TryGetValue(key, out var d) && !_unlocked.Contains(key)) ApplyUnlock(d, silent);
+            else if (key.StartsWith("law:") && !_unlocked.Contains(key)) ApplyLawUnlock(key, Laws.TryGetValue(key[4..], out var lw) ? lw.Name : LawGroups.FirstOrDefault(x => x.Key == key[4..])?.Name ?? key[4..], silent);
+        }
+        _pendingUnlocks.Clear();
+    }
+
+    private void ApplyLawUnlock(string key, string name, bool silent)
+    {
+        _unlocked.Add(key);
+        foreach (var c in _state.Keys) _modsDirty.Add(c);
+        if (!silent) _game.Notify($"A new law becomes possible: {name}.", NotificationKind.Info);
+    }
+
+    public bool IsGroupUnlocked(LawGroup g) => !g.HasUnlock || _unlocked.Contains("law:" + g.Key);
+    public bool IsLawUnlocked(LawDef l) => IsGroupUnlocked(l.Group) && (!l.HasUnlock || _unlocked.Contains("law:" + l.Key));
+
+    private void ApplyUnlock(IdeologyDef d, bool silent)
+    {
+        _unlocked.Add(d.Key);
+        RebuildActive();
+        foreach (var (c, p) in _state)
+        {
+            p.Popularity[d.Key] = silent ? 0 : d.StartPopularity;
+            Normalize(p);
+            _modsDirty.Add(c);
+        }
+        if (!silent) _game.Notify($"A new political current appears in the world: {d.Name}.", NotificationKind.Info);
+    }
+
+    /// <summary>Does the country have an assembly or council now (parliament, parties): it holds elections, or its ruling ideology keeps an assembly.</summary>
+    public bool HasAssembly(Country c) => Enabled && (HoldsElections(c) || Ideology(Of(c).Ruling)?.Assembly == true);
+
     public void MonthlyTick()
     {
         if (!Enabled) return;
+        CheckUnlocks();
         if (!_aiCalled && _monthsTicked > 0 && _game.Features.Has(FeatureSet.Ai) && _game.Ai.Enabled)
             foreach (var ac in _game.World.Countries.Where(x => x.Exists && !x.IsPlayer).ToList()) AiMonthly(ac);
         _aiCalled = false;
@@ -833,7 +967,7 @@ public sealed partial class PoliticsSystem
             if (p.Government.Count == 0 || p.Government[0] != p.Ruling) { p.Government.Remove(p.Ruling); p.Government.Insert(0, p.Ruling); }
             ReadNumbers(n.Get("popularity"), p.Popularity);
             foreach (var i in Ideologies) if (!p.Popularity.ContainsKey(i.Key)) p.Popularity[i.Key] = 0;
-            foreach (var k in p.Popularity.Keys.Where(k => !IdeologyByKey.ContainsKey(k)).ToList()) p.Popularity.Remove(k);
+            foreach (var k in p.Popularity.Keys.Where(k => !Ideologies.Any(i => i.Key.Equals(k, StringComparison.OrdinalIgnoreCase))).ToList()) p.Popularity.Remove(k);
             // a save already holds normalized numbers: dividing again would change the last bits and a loaded game would drift from the one that was saved
             if (Math.Abs(p.Popularity.Values.Sum() - 1) > 1e-6) Normalize(p);
             foreach (var s in n.Get("seats")?.All ?? Enumerable.Empty<Node>()) if (IdeologyByKey.ContainsKey(s.Key) || IsMinorityParty(s.Key)) p.Seats[s.Key] = (int)s.AsDouble();

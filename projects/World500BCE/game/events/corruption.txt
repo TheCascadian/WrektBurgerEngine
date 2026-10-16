@@ -1,0 +1,49 @@
+# Corruption events (government_reforms feature). The engine fires on_high_corruption (common/on_actions/30_government.txt)
+# for a country whose corruption is at 50 or more (define corruption_event_at), at most once in three years.
+namespace = corruption
+
+country_event = {
+	id = corruption.1
+	title = "Officials Grow Rich"
+	desc = "Governors far from the court keep a larger share of the taxes every year. Merchants tell of fees that no law allows."
+	is_triggered_only = yes
+	option = {
+		name = "Send inspectors to the provinces"
+		trigger = { political_power >= 50 }
+		add_political_power = -50
+		add_corruption = -12
+		ai_chance = { factor = 2 }
+	}
+	option = {
+		name = "Make an example of one governor"
+		add_corruption = -5
+		add_stability = -2
+		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = "Look the other way"
+		add_stability = 2
+		add_corruption = 3
+		ai_chance = { factor = 0.5 }
+	}
+}
+
+country_event = {
+	id = corruption.2
+	title = "A Rotten Court"
+	desc = "Offices are sold openly and the poor can win no hearing. The people mutter that the ruler's friends are the real government."
+	is_triggered_only = yes
+	option = {
+		name = "Dismiss the guilty and publish the law"
+		trigger = { political_power >= 30 }
+		add_political_power = -30
+		add_corruption = -8
+		add_stability = 2
+		ai_chance = { factor = 1 }
+	}
+	option = {
+		name = "Protect the court"
+		add_stability = -4
+		ai_chance = { factor = 1 }
+	}
+}

@@ -1,3 +1,10 @@
+# Ideologies of the 500 BCE world (politics feature). Keys keep their old names (democratic, neutrality, fascist, communist) so laws, AI profiles and history keep working;
+# here they stand for: democratic = citizen assemblies, neutrality = crown and temple (royalists), fascist = warrior bands, communist = levelers (commoners against the rich).
+# Ideologies with an unlock block do not exist until it is met, and then appear in every country:
+#   unlock = { year = -221 }  from that year    unlock = { technology = key }  once any country knows it    unlock = { }  only by script (unlock_ideology = key)
+#   unlock = { popularity = 0.05 }  share of each country that follows it the day it appears (default 0.03)
+#   chamber = { a b }  chamber_seats = 30  while it rules only these currents sit (a council of nobles, estates); the rest are shut out and become movements
+#   assembly = yes  the country has a council or assembly (parliament and parties are shown) even without elections
 # Ideologies (politics feature). Every country has a popularity for each of them; the ruling party has one ideology.
 #   color          map color (Ideology map mode) and party color
 #   adjective      used for rebel countries ("Nationalist Spain") and texts
@@ -14,44 +21,155 @@
 #          add_popularity = { ideology = fascist value = 0.05 }, set_ruling_party = communist
 
 democratic = {
-	name = "Democratic"
-	adjective = "Democratic"
-	party_name = "Democratic Party"
+	name = "Civic"
+	adjective = "Civic"
+	party_name = "Citizen Assembly"
 	color = { 70 115 205 }
 	elections = yes
-	coalition = { neutrality }
-	opinion = { democratic = 15 communist = -20 fascist = -20 }
+	assembly = yes
+	coalition = { neutrality oligarchic }
+	opinion = { democratic = 15 oligarchic = 5 communist = -10 fascist = -15 }
 	modifier = { stability_target = 5 opinion = 5 }
 }
-communist = {
-	name = "Communist"
-	adjective = "Communist"
-	party_name = "Communist Party"
-	color = { 190 30 35 }
-	extremist = yes
-	# countries without a color of their own for this ideology are tinted red under it
-	country_color_blend = { color = { 190 30 35 } amount = 0.45 }
-	opinion = { communist = 20 democratic = -15 fascist = -40 neutrality = -10 }
-	modifier = { political_power_gain = 3 manpower = 0.1 }
-	government = socialist_republic
+oligarchic = {
+	name = "Aristocratic"
+	adjective = "Aristocratic"
+	party_name = "Council of Elders"
+	color = { 140 90 170 }
+	assembly = yes
+	chamber = { oligarchic neutrality theocratic }
+	chamber_seats = 30
+	coalition = { neutrality democratic theocratic }
+	opinion = { oligarchic = 10 democratic = 5 communist = -25 }
+	modifier = { stability_target = 4 political_power_gain = 1 }
+}
+neutrality = {
+	name = "Royalist"
+	adjective = "Royal"
+	party_name = "Royal Court"
+	color = { 150 150 125 }
+	coalition = { democratic fascist oligarchic theocratic }
+	opinion = { neutrality = 5 communist = -15 }
+	modifier = { stability_target = 5 }
+}
+theocratic = {
+	name = "Priestly"
+	adjective = "Sacred"
+	party_name = "The Temple"
+	color = { 225 200 110 }
+	coalition = { neutrality oligarchic }
+	opinion = { theocratic = 15 communist = -20 fascist = -5 }
+	modifier = { stability_target = 6 conversion = 0.1 }
 }
 fascist = {
-	name = "Fascist"
-	adjective = "Nationalist"
-	party_name = "National Party"
+	name = "Warrior"
+	adjective = "Warrior"
+	party_name = "War Band"
 	color = { 120 80 45 }
 	extremist = yes
 	weak_democracy_drift = 0.6
 	coalition = { neutrality }
-	opinion = { fascist = 20 democratic = -20 communist = -40 neutrality = -5 }
+	opinion = { fascist = 20 democratic = -15 communist = -30 neutrality = -5 }
 	modifier = { political_power_gain = 3 manpower = 0.15 }
 }
-neutrality = {
-	name = "Non-aligned"
-	adjective = "Loyalist"
-	party_name = "Independents"
-	color = { 150 150 125 }
-	coalition = { democratic fascist }
-	opinion = { neutrality = 5 communist = -10 }
-	modifier = { stability_target = 5 }
+communist = {
+	name = "Leveler"
+	adjective = "Commoner"
+	party_name = "The Commons"
+	color = { 190 30 35 }
+	extremist = yes
+	country_color_blend = { color = { 190 30 35 } amount = 0.45 }
+	opinion = { communist = 20 democratic = -5 fascist = -30 neutrality = -15 oligarchic = -25 theocratic = -20 }
+	modifier = { political_power_gain = 3 manpower = 0.1 }
+}
+
+# ---- unlocked later
+legalist = {
+	name = "Legalist"
+	adjective = "Legalist"
+	party_name = "The Statutes"
+	color = { 90 90 100 }
+	unlock = { year = -359 }
+	coalition = { neutrality }
+	opinion = { legalist = 15 democratic = -10 communist = -20 }
+	modifier = { manpower = 0.08 political_power_gain = 2 stability_target = 2 }
+}
+imperial = {
+	name = "Imperial"
+	adjective = "Imperial"
+	party_name = "The Throne"
+	color = { 200 160 40 }
+	unlock = { year = -221 }
+	coalition = { neutrality legalist }
+	opinion = { imperial = 15 democratic = -10 communist = -25 }
+	modifier = { stability_target = 4 income = 0.03 }
+}
+feudal = {
+	name = "Feudal"
+	adjective = "Feudal"
+	party_name = "The Estates"
+	color = { 110 130 75 }
+	assembly = yes
+	chamber = { feudal neutrality theocratic oligarchic }
+	chamber_seats = 40
+	unlock = { year = 800 }
+	coalition = { neutrality oligarchic theocratic }
+	opinion = { feudal = 10 communist = -25 }
+	modifier = { manpower = 0.1 stability_target = 2 }
+}
+merchant_republic = {
+	name = "Mercantile"
+	adjective = "Mercantile"
+	party_name = "The Guilds"
+	color = { 60 160 150 }
+	elections = yes
+	assembly = yes
+	unlock = { year = 1000 }
+	coalition = { democratic oligarchic }
+	opinion = { merchant_republic = 10 democratic = 5 feudal = -5 }
+	modifier = { income = 0.06 stability_target = 2 }
+}
+absolutist = {
+	name = "Absolutist"
+	adjective = "Absolute"
+	party_name = "The Crown"
+	color = { 170 70 90 }
+	unlock = { year = 1600 }
+	coalition = { neutrality theocratic }
+	opinion = { absolutist = 10 democratic = -15 communist = -30 }
+	modifier = { stability_target = 4 political_power_gain = 2 }
+}
+liberal = {
+	name = "Liberal"
+	adjective = "Liberal"
+	party_name = "Liberal Party"
+	color = { 100 170 230 }
+	elections = yes
+	assembly = yes
+	unlock = { year = 1750 }
+	coalition = { democratic merchant_republic }
+	opinion = { liberal = 15 democratic = 10 absolutist = -20 }
+	modifier = { stability_target = 3 income = 0.04 }
+}
+nationalist = {
+	name = "Nationalist"
+	adjective = "Nationalist"
+	party_name = "National Party"
+	color = { 210 110 60 }
+	extremist = yes
+	unlock = { year = 1800 }
+	coalition = { neutrality }
+	opinion = { nationalist = 15 liberal = -10 }
+	modifier = { manpower = 0.1 political_power_gain = 2 }
+}
+socialist = {
+	name = "Socialist"
+	adjective = "Socialist"
+	party_name = "Workers' Party"
+	color = { 225 70 70 }
+	extremist = yes
+	unlock = { year = 1850 }
+	coalition = { democratic liberal }
+	opinion = { socialist = 15 absolutist = -25 }
+	modifier = { political_power_gain = 2 production = 0.05 }
 }

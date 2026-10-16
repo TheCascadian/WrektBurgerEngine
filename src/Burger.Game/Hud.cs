@@ -84,6 +84,7 @@ public sealed partial class Hud
             else if (Ui.SelectedFleet != null) Ui.SelectedFleet = null;
             else if (Ui.OrderingWing != null) Ui.OrderingWing = null;
             else if (Ui.Tool != PlanTool.None) { Ui.Tool = PlanTool.None; Ui.PlanArmy = null; }
+            else if (_sheet != null) CloseSheet();
             else if (Ui.Right != RightPanel.None) Ui.Right = RightPanel.None;
             else if (Ui.Left != LeftPanel.None) CloseLeft();
             else if (Ui.ErrorsOpen) Ui.ErrorsOpen = false;
@@ -323,6 +324,8 @@ public sealed partial class Hud
         DrawStatus();
         if (Ui.ErrorsOpen) DrawErrorLog();
         DrawProposals();
+        DrawCharacterSheet();
+        DrawConfirmDialog();
         DrawEvents();
         if (Ui.ConsoleOpen) DrawConsole();
         if (Ui.SaveMenuOpen) DrawSaveMenu(); else _saveCacheValid = false;
