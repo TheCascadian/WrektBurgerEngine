@@ -46,6 +46,7 @@ public sealed class FeatureSet
     public const string BuildingsModern = "buildings_modern";
 
     public const string Technology = "technology";
+    public const string Development = "development";
     public const string Commodities = "commodities";
     public const string Demilitarization = "demilitarization";
     public const string AiProfiles = "ai_profiles";

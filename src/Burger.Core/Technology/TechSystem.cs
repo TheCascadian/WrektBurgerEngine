@@ -23,6 +23,8 @@ public sealed class TechDef
     public Dictionary<string, double> Modifier = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>What it makes possible (unit types, ships, planes, equipment, buildings): shown in the interface; the things themselves say <c>requires_tech</c>.</summary>
     public List<string> Unlocks = new();
+    /// <summary>Institution (development feature) this technology builds on: 20% cheaper where the country has adopted it, 50% dearer where it has not.</summary>
+    public string Institution = "";
     public int Order;
     public Node Definition = Node.Root("");
 }
@@ -73,7 +75,7 @@ public class TechRules
     public virtual double Cost(Game game, Country c, TechDef t)
     {
         double ahead = Math.Max(0, t.Year - (game.World.Date.Year + game.World.Date.Month / 12.0));
-        return t.Cost * (1 + ahead * game.Data.Defines.Get("research_ahead_penalty", 0.25));
+        return t.Cost * (1 + ahead * game.Data.Defines.Get("research_ahead_penalty", 0.25)) * game.Development.TechCostFactor(c, t);
     }
 
     /// <summary>How many years ahead of its date a technology may be researched (research_ahead_years, 3).</summary>
@@ -131,6 +133,7 @@ public sealed class TechSystem
                     Category = n.GetString("category", "")!,
                     Year = n.GetDouble("year", 1930),
                     Cost = n.GetDouble("cost", 40),
+                    Institution = n.GetString("institution", "")!,
                     Order = Defs.Count,
                     Definition = n,
                 };

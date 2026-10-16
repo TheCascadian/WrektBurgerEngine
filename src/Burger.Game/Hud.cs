@@ -122,6 +122,8 @@ public sealed partial class Hud
         if (Map.Mode == MapMode.Ideology && !G.Politics.Enabled) Map.Mode = (MapMode)(((int)Map.Mode + 1) % Enum.GetValues<MapMode>().Length);
         if (Map.Mode is MapMode.Population or MapMode.Culture && !G.Population.Enabled) Map.Mode = MapMode.Political;
         if (Map.Mode == MapMode.Religion && !G.Population.ReligionEnabled) Map.Mode = MapMode.Political;
+        if (Map.Mode is MapMode.Development or MapMode.Institution && !G.Development.Enabled) Map.Mode = MapMode.Political;
+        if (Map.Mode == MapMode.Institution && Map.InstitutionKey.Length == 0) NextInstitution();
         if (Map.Mode == MapMode.Provinces && !G.Geo.Enabled) Map.Mode = MapMode.Continents;
         if (Map.Mode == MapMode.Continents && G.World.Continents.Count == 0) Map.Mode = MapMode.Political;
         Map.Dirty = true;
@@ -280,7 +282,7 @@ public sealed partial class Hud
             Map.Dirty = true;
         }
         // map modes that change every day (supply) refresh daily
-        if (G.World.Date.TotalDays != _lastDay) { _lastDay = G.World.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (G.World.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion)) Map.Dirty = true; }
+        if (G.World.Date.TotalDays != _lastDay) { _lastDay = G.World.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (G.World.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Institution)) Map.Dirty = true; }
         DrawTopBar();
         if (Ui.EditorActive) DrawEditor();
         else
@@ -504,6 +506,7 @@ public sealed partial class Hud
         if (G.Politics.Enabled) modes.Add(("Ideology", MapMode.Ideology));
         if (G.Population.Enabled) { modes.Add(("People", MapMode.Population)); modes.Add(("Culture", MapMode.Culture)); }
         if (G.Population.ReligionEnabled) modes.Add(("Religion", MapMode.Religion));
+        if (G.Development.Enabled) modes.Add(("Development", MapMode.Development));
         if (G.World.Continents.Count > 0) modes.Add(("Continents", MapMode.Continents));
         modes.Add(("Locations", MapMode.Locations));
         if (G.Geo.Enabled) modes.Add(("Provinces", MapMode.Provinces));
@@ -511,7 +514,7 @@ public sealed partial class Hud
         bool fogToggle = Has(FeatureSet.FogOfWar);
         bool unitsToggle = Has(FeatureSet.Military) || Has(FeatureSet.Navy);
         int sw = Raylib.GetScreenWidth(), sh = Raylib.GetScreenHeight();
-        string current = Map.CustomMode != null ? Map.CustomMode.Name : modes.FirstOrDefault(m => m.Mode == Map.Mode).Name ?? Map.Mode.ToString();
+        string current = Map.CustomMode == null && Map.Mode == MapMode.Institution ? G.Development.Institutions.FirstOrDefault(i => i.Key == Map.InstitutionKey)?.Name ?? "Institution" : Map.CustomMode != null ? Map.CustomMode.Name : modes.FirstOrDefault(m => m.Mode == Map.Mode).Name ?? Map.Mode.ToString();
         float bw = 74 * S, gap = 3 * S, pad = 6 * S, modeW = 150 * S;
         int toggles = (fogToggle ? 1 : 0) + (unitsToggle ? 1 : 0);
         float w = toggles * (bw + gap) + modeW + 2 * pad;
@@ -543,6 +546,13 @@ public sealed partial class Hud
 
         // the open menu: map modes in a grid above the bar
         var all = modes.Select(m => (m.Name, (Action)(() => { Map.Mode = m.Mode; Map.CustomMode = null; Map.Dirty = true; }), Map.CustomMode == null && Map.Mode == m.Mode, MapModeHelp(m.Mode))).ToList();
+        if (G.Development.Enabled)
+            foreach (var inst in G.Development.Institutions.Where(i => G.Development.HasAppeared(i)))
+            {
+                var ii = inst;
+                all.Add((Gui.Fit(ii.Name, 84 * S, 14), () => { Map.Mode = MapMode.Institution; Map.InstitutionKey = ii.Key; Map.CustomMode = null; Map.Dirty = true; },
+                    Map.CustomMode == null && Map.Mode == MapMode.Institution && Map.InstitutionKey == ii.Key, $"{ii.Name}: how far it has spread. {ii.Desc}"));
+            }
         foreach (var m in custom)
         {
             var cm = m;

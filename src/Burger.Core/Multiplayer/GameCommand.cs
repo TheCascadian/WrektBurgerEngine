@@ -20,6 +20,8 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>A custom message of a mod (args: message key, then the typed fields of its schema).</summary>
     public const string ModMessage = "mod_message";
     public const string QueueProduction = "queue_production";
+    /// <summary>Spends points on a state's development (args: state key).</summary>
+    public const string Develop = "develop";
     /// <summary>Answers an event (args: event id, option index).</summary>
     public const string EventOption = "event_option";
     /// <summary>System command: a human takes this country (args: player id). The AI stops playing it.</summary>
@@ -27,7 +29,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or EventOption or Respond or ModMessage;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or Develop or EventOption or Respond or ModMessage;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -100,6 +102,8 @@ public static class CommandExecutor
                 return true;
             }
             case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
+            case GameCommand.Develop:
+                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } ds && g.Development.Develop(country, ds) == null;
             case GameCommand.QueueProduction:
             {
                 if (!g.Data.Equipment.TryGetValue(A(0), out var eq)) return false;
@@ -153,6 +157,8 @@ public static class CommandValidator
                 var enemy = w.GetCountry(A(0));
                 return enemy != null && w.WarBetween(country, enemy) != null ? null : "not at war with that country";
             }
+            case GameCommand.Develop:
+                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
             case GameCommand.QueueProduction:
                 if (args.Length != 2 || !g.Data.Equipment.ContainsKey(A(0)) || !Sanitize.Int(A(1), 0, 50, out _)) return "bad production order";
                 return null;

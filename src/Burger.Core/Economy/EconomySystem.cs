@@ -33,7 +33,7 @@ public class EconomyRules
     {
         if (game.ScriptValues.TryEval("country_monthly_manpower", c, out var scripted)) return scripted;
         double mp = 0;
-        foreach (var s in c.OwnedStates) mp += s.Manpower * s.ControlledShare(c);
+        foreach (var s in c.OwnedStates) mp += s.Manpower * game.Modifiers.Factor(s, "manpower") * s.ControlledShare(c);
         return mp * game.Data.Defines.ManpowerMultiplier * (1 + c.Vars.Get("manpower_modifier") + game.Modifiers.Sum(c, "manpower"));
     }
 

@@ -7,7 +7,7 @@ using Raylib_cs;
 
 namespace Burger.Runtime;
 
-public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents }
+public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents, Development, Institution }
 
 /// <summary>
 /// Builds and draws the 3D map from the province map, heightmap, terrain, tree and river inputs.
@@ -78,6 +78,9 @@ public sealed unsafe class MapRenderer : IDisposable
     private int _geoVersion = -1;
     /// <summary>A data/C# defined map mode (overrides <see cref="Mode"/> when set).</summary>
     public Burger.Core.Mechanics.MapModeDef? CustomMode { get; set; }
+    /// <summary>The institution the Institution map mode shows.</summary>
+    public string InstitutionKey { get; set; } = "";
+    Burger.Core.Development.InstitutionDef? ShownInstitution() => _game.Development.Institutions.FirstOrDefault(i => i.Key == InstitutionKey) ?? _game.Development.Institutions.FirstOrDefault();
     public Location? Selected { get; set; }
     public Location? Hovered { get; set; }
     public State? HighlightState { get; set; }
@@ -1063,6 +1066,22 @@ public sealed unsafe class MapRenderer : IDisposable
                     break;
                 case MapMode.Culture:
                     if (l.IsLand && l.State != null && _game.Population.Culture(_game.Population.MajorityCulture(l.State)) is { } cul) col = C(cul.Color, 225);
+                    break;
+                case MapMode.Development:
+                    if (l.IsLand && l.State != null && _game.Development.Enabled)
+                    {
+                        // development level, from slate (1) to gold (20 and up)
+                        float t = Math.Clamp((_game.Development.Level(l.State) - 1) / 19f, 0, 1);
+                        col = new Color((int)(60 + 190 * t), (int)(72 + 130 * t), (int)(100 - 40 * t), 225);
+                    }
+                    break;
+                case MapMode.Institution:
+                    if (l.IsLand && l.State != null && _game.Development.Enabled && ShownInstitution() is { } inst)
+                    {
+                        // presence of the institution: dark where it has not come, its own color where it has been adopted
+                        float t = (float)_game.Development.Presence(inst, l.State);
+                        col = new Color((int)(48 + (inst.Color.R - 48) * t), (int)(54 + (inst.Color.G - 54) * t), (int)(66 + (inst.Color.B - 66) * t), 225);
+                    }
                     break;
                 case MapMode.Continents:
                     if (l.Continent != null) col = C(l.Continent.Color, l.Continent.IsOcean ? 200 : 235);

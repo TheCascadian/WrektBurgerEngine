@@ -7,3 +7,10 @@ pause_on_event = yes            # events can override this with pause = yes/no/{
 game_speeds = { 0.5 1.5 4 10 0 }
 
 combat_model = imperator
+
+# development feature (points spent on states, literacy, urbanization, institutions)
+development_cost_base = 50
+development_cost_per_level = 10
+development_tax_per_level = 0.05
+development_manpower_per_level = 0.03
+development_room_per_level = 2

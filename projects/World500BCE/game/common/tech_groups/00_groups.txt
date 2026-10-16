@@ -1,0 +1,41 @@
+# Technology groups: countries in a group research at -10% cost a technology three of their neighbors in the group know (development feature).
+near_east = {
+	name = "Near East"
+	countries = { ACH EGY BAB JDH SAB NUB }
+}
+mediterranean = {
+	name = "Mediterranean"
+	countries = { ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT ION MAC CAR ETR ROM THR }
+}
+european_tribes = {
+	name = "European tribes"
+	countries = { CEL IBE CIB }
+}
+africa = {
+	name = "Africa"
+	countries = { LIB GAR NOK BAN SAH DMT }
+}
+china = {
+	name = "Chinese states"
+	countries = { ZHO QIQ JIN QIN CHU WUU YUE SHU }
+}
+india = {
+	name = "South Asia"
+	countries = { IND GAN KOS DEC TML IRR }
+}
+steppe = {
+	name = "Steppe"
+	countries = { SCY SAK SAR }
+}
+east_asia = {
+	name = "East Asia"
+	countries = { KOR YAO VAN }
+}
+mesoamerica = {
+	name = "Mesoamerica"
+	countries = { OLM CHV MAY ZAP }
+}
+andes = {
+	name = "Andes"
+	countries = { YAY PAR }
+}

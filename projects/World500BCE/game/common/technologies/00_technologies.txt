@@ -1,0 +1,212 @@
+# Technologies of 500 BCE. Year is the date it was historically known (-499 = 500 BCE); researching it earlier costs more. Dates and effects are design estimates (OPEN).
+# institution = the institution it builds on (development feature): 20% cheaper where the country has adopted it, 50% dearer where it has not.
+agriculture_irrigation = {
+	name = "Irrigation Works"
+	desc = "Canals and ditches that put dry land under crops."
+	category = agriculture
+	year = -2000
+	cost = 120
+	modifier = { income = 0.03 }
+}
+bronze_working = {
+	name = "Bronze Working"
+	desc = "Alloyed weapons and tools."
+	category = metallurgy
+	year = -1900
+	cost = 120
+	modifier = { soft_attack_factor = 0.05 }
+}
+writing_systems = {
+	name = "Writing Systems"
+	desc = "Records, tallies and scribal schools."
+	category = administration
+	year = -1800
+	cost = 150
+	modifier = { research_speed = 0.05 }
+}
+chariot_warfare = {
+	name = "Chariot Warfare"
+	desc = "Light two-horse chariots for the nobility."
+	category = military
+	year = -1500
+	cost = 180
+	requires = { bronze_working }
+	modifier = { breakthrough_factor = 0.08 }
+}
+iron_working = {
+	name = "Iron Working"
+	desc = "Smelting and forging iron, cheaper than bronze."
+	category = metallurgy
+	year = -1200
+	cost = 240
+	requires = { bronze_working }
+	institution = iron_working
+	modifier = { soft_attack_factor = 0.08 manpower = 0.03 }
+}
+fortification = {
+	name = "Fortification"
+	desc = "Walls, towers and citadels."
+	category = military
+	year = -1100
+	cost = 200
+	requires = { bronze_working }
+	modifier = { defense_factor = 0.08 }
+}
+alphabetic_script = {
+	name = "Alphabetic Script"
+	desc = "A few dozen signs instead of hundreds."
+	category = learning
+	year = -1000
+	cost = 220
+	requires = { writing_systems }
+	institution = alphabetic_writing
+	modifier = { research_speed = 0.08 political_power_gain = 0.5 }
+}
+oared_warships = {
+	name = "Oared Warships"
+	desc = "Penteconters and biremes for trade and war."
+	category = naval
+	year = -900
+	cost = 200
+	requires = { bronze_working }
+	modifier = { income = 0.02 }
+}
+horse_cavalry = {
+	name = "Horse Cavalry"
+	desc = "Mounted riders replace the chariot."
+	category = military
+	year = -900
+	cost = 260
+	requires = { chariot_warfare }
+	modifier = { breakthrough_factor = 0.1 }
+}
+iron_plough = {
+	name = "Iron Plough"
+	desc = "Heavier soils come under the plough."
+	category = agriculture
+	year = -800
+	cost = 300
+	requires = { iron_working agriculture_irrigation }
+	institution = iron_working
+	modifier = { income = 0.05 manpower = 0.05 }
+}
+mounted_archery = {
+	name = "Mounted Archery"
+	desc = "Horse archers of the steppe."
+	category = military
+	year = -700
+	cost = 280
+	requires = { horse_cavalry }
+	modifier = { soft_attack_factor = 0.06 breakthrough_factor = 0.06 }
+}
+hoplite_phalanx = {
+	name = "Hoplite Phalanx"
+	desc = "Citizen spearmen in a close shield wall."
+	category = military
+	year = -700
+	cost = 300
+	requires = { iron_working }
+	modifier = { defense_factor = 0.1 soft_attack_factor = 0.05 }
+}
+standing_bureaucracy = {
+	name = "Standing Bureaucracy"
+	desc = "Officials who serve beyond one ruler."
+	category = administration
+	year = -700
+	cost = 320
+	requires = { writing_systems }
+	modifier = { political_power_gain = 0.5 stability_target = 2 }
+}
+trireme = {
+	name = "Trireme"
+	desc = "Three banks of oars, built for ramming."
+	category = naval
+	year = -650
+	cost = 280
+	requires = { oared_warships }
+	modifier = { income = 0.03 }
+}
+coined_money = {
+	name = "Coined Money"
+	desc = "Stamped metal of a fixed weight."
+	category = trade
+	year = -620
+	cost = 340
+	requires = { iron_working }
+	institution = coinage
+	modifier = { income = 0.08 }
+}
+siegecraft = {
+	name = "Siegecraft"
+	desc = "Ramps, rams and sapping."
+	category = military
+	year = -600
+	cost = 320
+	requires = { fortification iron_working }
+	modifier = { soft_attack_factor = 0.05 }
+}
+natural_philosophy = {
+	name = "Natural Philosophy"
+	desc = "Explaining the world without the gods."
+	category = learning
+	year = -600
+	cost = 400
+	requires = { alphabetic_script }
+	institution = philosophy
+	modifier = { research_speed = 0.12 }
+}
+written_law = {
+	name = "Written Law"
+	desc = "Laws posted for all to read."
+	category = administration
+	year = -600
+	cost = 340
+	requires = { writing_systems }
+	modifier = { stability_target = 3 }
+}
+royal_roads = {
+	name = "Royal Roads"
+	desc = "Roads with relay stations and couriers."
+	category = administration
+	year = -540
+	cost = 380
+	requires = { standing_bureaucracy }
+	institution = imperial_roads
+	modifier = { income = 0.05 stability_target = 2 }
+}
+steel_working = {
+	name = "Steel Working"
+	desc = "Carbon-hardened iron."
+	category = metallurgy
+	year = -450
+	cost = 480
+	requires = { iron_working }
+	modifier = { soft_attack_factor = 0.08 defense_factor = 0.05 }
+}
+professional_armies = {
+	name = "Professional Armies"
+	desc = "Paid soldiers, drilled year-round."
+	category = military
+	year = -450
+	cost = 520
+	requires = { hoplite_phalanx standing_bureaucracy }
+	modifier = { army_quality = 0.05 manpower = 0.05 }
+}
+mathematics = {
+	name = "Mathematics"
+	desc = "Proof, number and measurement."
+	category = learning
+	year = -450
+	cost = 500
+	requires = { natural_philosophy }
+	modifier = { research_speed = 0.08 }
+}
+engineering = {
+	name = "Engineering"
+	desc = "Aqueducts, bridges and siege engines."
+	category = administration
+	year = -400
+	cost = 560
+	requires = { siegecraft mathematics }
+	modifier = { income = 0.05 }
+}

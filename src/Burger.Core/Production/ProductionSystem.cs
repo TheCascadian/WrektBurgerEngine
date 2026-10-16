@@ -102,6 +102,7 @@ public class ProductionRules
     {
         // a state's own number, else its size and wealth; infrastructure (+1 per 3 levels) and the building_slots modifiers of its owner (technology) add to it
         double baseSlots = s.Vars.Get("building_slots") > 0 ? s.Vars.Get("building_slots") : 2 + s.Locations.Count + s.Tax / 2;
+        if (s.Owner != null) baseSlots += game.Development.Enabled ? game.Development.Room(s) : 0;
         if (s.Owner != null) baseSlots += s.Buildings.GetValueOrDefault("infrastructure") / 3.0 + game.Modifiers.Sum(s.Owner, "building_slots");
         return (int)Math.Clamp(baseSlots, 1, 30);
     }

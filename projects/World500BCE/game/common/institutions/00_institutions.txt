@@ -1,0 +1,50 @@
+# Institutions of 500 BCE (development feature). Origins and dates are design estimates (OPEN).
+# origin_state  appears  spread_per_month (share of the neighbor's presence a state gains each month)  requires  modifier (applies in states that have adopted it)
+alphabetic_writing = {
+	name = "Alphabetic Writing"
+	desc = "A short script that ordinary merchants and scribes can learn."
+	origin_state = phoenician_coast_1
+	appears = -1000.1.1
+	spread_per_month = 0.02
+	modifier = { literacy_growth = 1 tax = 0.03 }
+	color = { 120 190 230 }
+}
+iron_working = {
+	name = "Iron Working"
+	desc = "Smiths who forge iron tools and weapons."
+	origin_state = anatolia_m9_10
+	appears = -1200.1.1
+	spread_per_month = 0.015
+	modifier = { manpower = 0.03 tax = 0.02 }
+	color = { 170 170 180 }
+}
+coinage = {
+	name = "Coinage"
+	desc = "Stamped coins of fixed weight carry trade."
+	origin_state = anatolia_m115_1
+	appears = -620.1.1
+	spread_per_month = 0.02
+	requires = { urbanization = 0.02 }
+	modifier = { tax = 0.05 urban_growth = 1 }
+	color = { 235 200 90 }
+}
+philosophy = {
+	name = "Natural Philosophy"
+	desc = "Schools that seek causes in nature."
+	origin_state = anatolia_m121_1
+	appears = -600.1.1
+	spread_per_month = 0.015
+	requires = { literacy = 0.03 }
+	modifier = { literacy_growth = 0.5 tax = 0.02 }
+	color = { 190 140 220 }
+}
+imperial_roads = {
+	name = "Imperial Roads"
+	desc = "Relay roads and couriers that bind a large realm."
+	origin_state = iranian_plateau_persians_and_medes_7
+	appears = -540.1.1
+	spread_per_month = 0.02
+	requires = { development = 3 }
+	modifier = { tax = 0.04 manpower = 0.02 }
+	color = { 210 120 90 }
+}

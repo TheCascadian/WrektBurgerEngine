@@ -105,6 +105,7 @@ public sealed partial class Hud
             Stat2("Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
             Stat2("Manpower", st.Manpower, avgMan, Num(st.Manpower));
             y += 4 * S;
+            if (G.Development.Enabled) y = DrawStateDevelopment(st, x, y, w);
             if (G.Population.Enabled)
             {
                 var P = G.Population;

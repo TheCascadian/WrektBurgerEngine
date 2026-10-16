@@ -65,6 +65,8 @@ public sealed class GameRules
     public Burger.Core.Population.PopulationRules Population = new();
     /// <summary>Research points, slots, costs and what the AI researches (technology feature).</summary>
     public Burger.Core.Technology.TechRules Tech = new();
+    /// <summary>Development cost, start values and the AI's choice (development feature).</summary>
+    public Burger.Core.Development.DevelopmentRules Development = new();
     /// <summary>Commodity output, demand and trade (commodities feature).</summary>
     public Burger.Core.Production.CommodityRules Commodities = new();
     /// <summary>How long a focus takes and how often the AI starts one (focus feature).</summary>
@@ -116,6 +118,7 @@ public sealed class Game
     public Burger.Core.Population.PopulationSystem Population { get; }
     /// <summary>Technologies and research (technology feature).</summary>
     public Burger.Core.Technology.TechSystem Tech { get; }
+    public Burger.Core.Development.DevelopmentSystem Development { get; }
     /// <summary>Strategic commodities: deposits, shortages and trade (commodities feature).</summary>
     public Burger.Core.Production.CommoditySystem Commodities { get; }
     /// <summary>National focus trees (focus feature).</summary>
@@ -196,6 +199,7 @@ public sealed class Game
         Population = new Burger.Core.Population.PopulationSystem(this);
         GeoDynamics = new Burger.Core.Geography.GeoDynamics(this);
         Tech = new Burger.Core.Technology.TechSystem(this);
+        Development = new Burger.Core.Development.DevelopmentSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
         AiProfiles = new Burger.Core.AI.AiProfileSystem(this);
@@ -225,6 +229,7 @@ public sealed class Game
         Modifiers.Providers.Add((scope, key) => Population.ModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Diplomacy.ExhaustionModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Tech.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => Development.ModifierValue(scope, key));
         Diplomacy.RegisterScript();
         Memory.RegisterScript();
         Politics.RegisterCommands(Commands);
@@ -251,6 +256,7 @@ public sealed class Game
         game.Features = Burger.Core.Modding.FeatureSet.Load(game.Data.Root);
         DataLoader.LoadDefinitions(game);
         game.Tech.LoadDefinitions(game.Data);
+        game.Development.LoadDefinitions(game.Data);
         game.Focus.Load(game.Data);
         game.Commodities.LoadDefinitions(game.Data);
         game.AiProfiles.LoadDefinitions(game.Data);
@@ -281,6 +287,7 @@ public sealed class Game
         if (Features.Has(F.Military)) Warfare.DailyTick();
         if (Features.Has(F.Navy)) Navy.OnGameStart();
         if (Features.Has(F.Air)) Air.OnGameStart();
+        Development.OnGameStart();
         Tech.OnGameStart(); // before production sets up its lines: what a country can build depends on what it knows
         if (Features.Has(F.Production)) Production.OnGameStart();
         if (Features.Has(F.Diplomacy)) Diplomacy.UpdateWarScores();
@@ -506,6 +513,7 @@ public sealed class Game
         P("Memory.MonthlyTick", () => Memory.MonthlyTick());
         P("Resources.MonthlyTick", () => Resources.MonthlyTick());
         P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick());
+        if (Features.Has(F.Development)) P("Development.MonthlyTick", () => Development.MonthlyTick());
         if (Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());
         if (Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
         if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick());

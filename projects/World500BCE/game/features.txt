@@ -17,4 +17,6 @@ features = {
 	independence
 	ai_profiles
 	navy
+	technology
+	development
 }
