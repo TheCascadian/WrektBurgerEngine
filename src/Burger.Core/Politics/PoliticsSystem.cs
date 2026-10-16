@@ -96,6 +96,7 @@ public sealed partial class PoliticsSystem
                 if (n.Get("country_color_blend")?.Get("color") is { } blend && Rgb.TryParse(blend, out var blendColor)) i.ColorBlend = blendColor;
                 i.PeacePuppets = n.Get("peace_puppets") != null ? n.GetBool("peace_puppets") : i.Elections;
                 i.Adjective = n.GetString("adjective") ?? i.Name;
+                foreach (var f in n.Get("country_names")?.All ?? Enumerable.Empty<Node>()) i.CountryNames.Add(f.Value ?? f.Key);
                 i.PartyName = n.GetString("party_name") ?? i.Name;
                 if (Rgb.TryParse(n.Get("color"), out var col)) i.Color = col;
                 foreach (var k in n.GetList("coalition")) i.Coalition.Add(k);
@@ -255,6 +256,7 @@ public sealed partial class PoliticsSystem
         if (p.Popularity.Values.Sum() <= 0) p.Popularity[p.Ruling] = 1;
         if (p.Popularity[p.Ruling] <= 0) p.Popularity[p.Ruling] = 0.3;
         Normalize(p);
+        if (c.Government.Length == 0 && Ideology(p.Ruling)?.Government is { } word0) c.Government = word0; // a country with no government word gets its ruler's
         p.Government = new List<string> { p.Ruling };
         // Split the existing ideology support into independent named parties, then elect each organization separately.
         InitializePartyPopularity(c, p);

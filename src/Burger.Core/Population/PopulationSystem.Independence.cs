@@ -251,6 +251,41 @@ public sealed partial class PopulationSystem
         return rebel;
     }
 
+    /// <summary>The land a group of states lies in: its colonial region, else the biggest state's name without trailing numbers.</summary>
+    public string RegionName(List<State> states)
+    {
+        var big = states.MaxBy(TotalOf);
+        if (big == null) return "";
+        // (colonial region names describe whole culture areas: long ones make clumsy country names, so the state's own name is used instead)
+        if (RegionOf(big) is { } r && r.Name.Split(' ').Length <= 3) return r.Name;
+        var words = big.DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+        while (words.Count > 1 && words[^1].All(ch => char.IsDigit(ch))) words.RemoveAt(words.Count - 1);
+        return string.Join(' ', words);
+    }
+
+    /// <summary>
+    /// A fitting name for a new country: the formats of its ruling ideology (country_names) filled with the people ({culture}) and the land ({region});
+    /// the first one no living country has. If all are taken, the land of the second-biggest state, then a numeral.
+    /// </summary>
+    public string NationName(string? culture, string? ideology, List<State> states, Func<string, bool>? taken = null)
+    {
+        var w = _game.World;
+        string cult = Culture(culture ?? "")?.Name ?? (culture != null ? Localisation.GetOrPretty(culture) : "Free");
+        string region = RegionName(states);
+        var formats = (ideology != null ? _game.Politics.Ideology(ideology)?.CountryNames : null) is { Count: > 0 } f ? f : new List<string> { "{region} State", "{culture} Realm" };
+        bool Free(string n) => !w.Countries.Any(x => x.Exists && x.Name == n) && (taken == null || !taken(n));
+        string Fill(string fmt, string reg) => fmt.Replace("{culture}", cult).Replace("{region}", reg).Replace("  ", " ").Trim();
+        bool longRegion = region.Split(' ').Length > 3;
+        foreach (var fmt in formats) { if (longRegion && fmt.Contains("{region}")) continue; var n = Fill(fmt, region); if (Free(n)) return n; }
+        var second = states.Where(s => RegionName(new List<State> { s }) != region).MaxBy(TotalOf);
+        if (second != null)
+            foreach (var fmt in formats) { var n = Fill(fmt, RegionName(new List<State> { second })); if (Free(n) && n.Split(' ').Length <= 5) return n; }
+        string baseName = Fill(formats[0], region);
+        string[] roman = { "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" };
+        foreach (var r in roman) if (Free($"{baseName} {r}")) return $"{baseName} {r}";
+        return baseName;
+    }
+
     private Country CreateIndependentCountry(Country origin, string culture, List<State> states)
     {
         var w = _game.World;
@@ -260,9 +295,10 @@ public sealed partial class PopulationSystem
         if (country == null)
         {
             string tag = FreeIndependenceTag();
+            string? lead = null;
+            if (_game.Politics.Enabled && _game.Politics.Of(origin).Popularity is { Count: > 0 } pop) lead = pop.MaxBy(kv => kv.Value).Key;
             string name = Rules.IndependentCountryName(_game, origin, culture, states);
-            // a second country of the same people is named after its land
-            if (w.Countries.Any(x => x.Exists && x.Name == name)) name = $"{name} of {states.MaxBy(TotalOf)!.DisplayName}";
+            if (Culture(culture)?.CountryName == null) name = NationName(culture, lead, states);
             country = w.CreateCountry(tag, name, def?.Color ?? Rgb.Gray, $"gfx/flags/{tag}.png", origin.Government);
             country.Playable = false;
             var cp = new CountryPopulation { Culture = culture, Religion = MajorityReligionOf(states) ?? def?.Religion };

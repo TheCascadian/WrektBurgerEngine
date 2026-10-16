@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-10-16
+- New countries get names that fit what they are. Each ideology lists `country_names` formats in `common/ideologies` ("Kingdom of {region}", "{culture} Warbands", "{region} Commons"; `{region}` is the land, `{culture}` the people); the first one no living country has is used, long area names are skipped, and a numeral is added only as a last resort. Breakaway and rebel countries both use them (no more "Commoner Proto-Germanic Republic" or "... of Siberia South of the Taiga 4"). Ideologies carry a `government` word that a country takes at the start if it had none, and when the ideology takes power.
+- Overextension: a realm above `overextension_states` (15) states loses its peoples faster (independence movements gain `overextension_independence` more speed per extra block of that size, up to `overextension_cap` times). World500BCE also raises `independence_speed` to 0.9. In a 50-year run this gives about 50 breakaways and 200 wars instead of 6 breakaways, with the world ending at 80 countries instead of 45.
+- `burger validate` also prints the new countries, the ruling ideologies and the most held reforms.
 - Fixed: divisions never marched to their front posts in BCE games. The retry timer compared the (negative) BCE day count with a default of 0, so every order was skipped as "try again later". Armies now move to the front at war.
 - AI armies at peace garrison the border with a neighbour that is not an ally or family (one neighbour per army) instead of sitting in the capital. `burger validate` prints how many divisions move, idle, and why.
 - An observer (no player country) now sees "X is now a colony of Y" in the notifications.

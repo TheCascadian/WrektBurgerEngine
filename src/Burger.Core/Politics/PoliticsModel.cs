@@ -10,6 +10,8 @@ public sealed class IdeologyDef
     public string Name = "";
     /// <summary>Used for country names of rebels ("Nationalist Spain") and in texts.</summary>
     public string Adjective = "";
+    /// <summary>Formats for the name of a new country ruled by this ideology (country_names = { "Kingdom of {region}" "{culture} Kingdom" }); {region} and {culture} are filled in. The first free one is used.</summary>
+    public List<string> CountryNames = new();
     /// <summary>Default party name (countries can name their own party: set_party_name, history).</summary>
     public string PartyName = "";
     public string Desc = "";

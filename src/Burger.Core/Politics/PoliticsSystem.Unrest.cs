@@ -454,7 +454,7 @@ public sealed partial class PoliticsSystem
         // the new country
         string tag = FreeTag();
         var col = Mix(c.Color, ide.Color, 0.45);
-        var rebel = w.CreateCountry(tag, $"{ide.Adjective} {c.Name}", col, $"gfx/flags/{tag}.png", ide.Government ?? c.Government);
+        var rebel = w.CreateCountry(tag, _game.Population.Enabled ? _game.Population.NationName(_game.Population.MajorityCulture(rebelStates.MaxBy(_game.Population.TotalOf)!), ideology, rebelStates) : $"{ide.Adjective} {c.Name}", col, $"gfx/flags/{tag}.png", ide.Government ?? c.Government);
         rebel.Origin = c.Tag;
         rebel.Names.Male.AddRange(c.Names.Male);
         rebel.Names.Female.AddRange(c.Names.Female);

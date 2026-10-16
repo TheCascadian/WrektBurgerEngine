@@ -8,6 +8,7 @@
 # Ideologies (politics feature). Every country has a popularity for each of them; the ruling party has one ideology.
 #   color          map color (Ideology map mode) and party color
 #   adjective      used for rebel countries ("Nationalist Spain") and texts
+#   country_names  formats for the name of a country this ideology founds (rebels, breakaways): {region} = its land, {culture} = its people; first free one wins
 #   party_name     default party name (countries can rename it: history/politics or set_party_name)
 #   elections      countries ruled by this ideology hold elections
 #   extremist      gains popularity when stability is low or a war goes badly
@@ -16,13 +17,15 @@
 #   coalition      parties it will govern with (both sides must list each other)
 #   opinion        opinion its rulers have of countries ruled by each ideology
 #   modifier       modifiers for countries ruled by it (any modifier key: manpower, production, political_power_gain...)
-#   government     optional: the country's government word when this ideology takes power
+#   government     the country's government word when this ideology takes power (and at the start, if it has none)
 # Scripts: ruling_ideology = fascist, in_government = democratic, popularity_communist >= 0.3, seats_democratic > 50,
 #          add_popularity = { ideology = fascist value = 0.05 }, set_ruling_party = communist
 
 democratic = {
 	name = "Civic"
 	adjective = "Civic"
+	country_names = { "{region} League" "Free {region}" "{culture} Commonwealth" }
+	government = "republic"
 	party_name = "Citizen Assembly"
 	color = { 70 115 205 }
 	elections = yes
@@ -34,6 +37,8 @@ democratic = {
 oligarchic = {
 	name = "Aristocratic"
 	adjective = "Aristocratic"
+	country_names = { "Council of {region}" "{region} Confederacy" "{culture} Confederacy" }
+	government = "oligarchy"
 	party_name = "Council of Elders"
 	color = { 140 90 170 }
 	assembly = yes
@@ -46,6 +51,8 @@ oligarchic = {
 neutrality = {
 	name = "Royalist"
 	adjective = "Royal"
+	country_names = { "Kingdom of {region}" "{region} Kingdom" "{culture} Kingdom" }
+	government = "kingdom"
 	party_name = "Royal Court"
 	color = { 150 150 125 }
 	coalition = { democratic fascist oligarchic theocratic }
@@ -55,6 +62,8 @@ neutrality = {
 theocratic = {
 	name = "Priestly"
 	adjective = "Sacred"
+	country_names = { "Temple State of {region}" "{region} Priest-Kingdom" "Sacred {culture} Realm" }
+	government = "theocracy"
 	party_name = "The Temple"
 	color = { 225 200 110 }
 	coalition = { neutrality oligarchic }
@@ -64,6 +73,8 @@ theocratic = {
 fascist = {
 	name = "Warrior"
 	adjective = "Warrior"
+	country_names = { "{culture} Warbands" "{region} War Host" "{culture} Horde" }
+	government = "warlord_state"
 	party_name = "War Band"
 	color = { 120 80 45 }
 	extremist = yes
@@ -75,6 +86,8 @@ fascist = {
 communist = {
 	name = "Leveler"
 	adjective = "Commoner"
+	country_names = { "{region} Commons" "{culture} Commons" "Free Folk of {region}" }
+	government = "commons_rule"
 	party_name = "The Commons"
 	color = { 190 30 35 }
 	extremist = yes
@@ -87,6 +100,8 @@ communist = {
 legalist = {
 	name = "Legalist"
 	adjective = "Legalist"
+	country_names = { "{region} State" "{culture} State" }
+	government = "kingdom"
 	party_name = "The Statutes"
 	color = { 90 90 100 }
 	unlock = { year = -359 }
@@ -97,6 +112,8 @@ legalist = {
 imperial = {
 	name = "Imperial"
 	adjective = "Imperial"
+	country_names = { "{region} Empire" "{culture} Empire" }
+	government = "empire"
 	party_name = "The Throne"
 	color = { 200 160 40 }
 	unlock = { year = -221 }
@@ -107,6 +124,8 @@ imperial = {
 feudal = {
 	name = "Feudal"
 	adjective = "Feudal"
+	country_names = { "Duchy of {region}" "{region} Marches" }
+	government = "kingdom"
 	party_name = "The Estates"
 	color = { 110 130 75 }
 	assembly = yes
@@ -132,6 +151,8 @@ merchant_republic = {
 absolutist = {
 	name = "Absolutist"
 	adjective = "Absolute"
+	country_names = { "Kingdom of {region}" "{culture} Kingdom" }
+	government = "kingdom"
 	party_name = "The Crown"
 	color = { 170 70 90 }
 	unlock = { year = 1600 }
@@ -142,6 +163,8 @@ absolutist = {
 liberal = {
 	name = "Liberal"
 	adjective = "Liberal"
+	country_names = { "{region} League" "{culture} Commonwealth" }
+	government = "republic"
 	party_name = "Liberal Party"
 	color = { 100 170 230 }
 	elections = yes
@@ -154,6 +177,8 @@ liberal = {
 nationalist = {
 	name = "Nationalist"
 	adjective = "Nationalist"
+	country_names = { "{culture} Realm" "{region} Realm" }
+	government = "kingdom"
 	party_name = "National Party"
 	color = { 210 110 60 }
 	extremist = yes
@@ -165,6 +190,8 @@ nationalist = {
 socialist = {
 	name = "Socialist"
 	adjective = "Socialist"
+	country_names = { "{region} Commons" "{culture} Commons" }
+	government = "commons_rule"
 	party_name = "Workers' Party"
 	color = { 225 70 70 }
 	extremist = yes

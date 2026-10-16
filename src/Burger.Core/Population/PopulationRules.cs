@@ -149,7 +149,20 @@ public class PopulationRules
         double party = game.Politics.Enabled ? 1 + 2 * game.Politics.SeatShare(c, "culture:" + culture) : 1;
         return d.Get("independence_speed", 0.4) * (0.6 + Math.Min(1, share * 5)) * (colonial ? d.Get("colonial_independence_factor", 0.6) : 1)
                * (1.6 - stability / 100.0) * atWar * party * game.Population.DecolonisationPressure * Math.Max(0, 1 + game.Modifiers.Sum(c, "independence_speed"))
-               * (game.World.Relations.IsSubject(c) ? d.Get("subject_independence_factor", 0.8) : 1); // a subject's own people ask its overlord, not it
+               * (game.World.Relations.IsSubject(c) ? d.Get("subject_independence_factor", 0.8) : 1) // a subject's own people ask its overlord, not it
+               * Overextension(game, c);
+    }
+
+    /// <summary>
+    /// Strain of a big realm (1 = none): every overextension_states (15) states above the first 15 add overextension_independence (1) to the speed of its
+    /// independence movements, up to overextension_cap (4). Great empires pull apart; small countries are not affected.
+    /// </summary>
+    public virtual double Overextension(Game game, Country c)
+    {
+        var d = game.Data.Defines;
+        double limit = d.Get("overextension_states", 15);
+        if (limit <= 0) return 1;
+        return Math.Min(d.Get("overextension_cap", 4), 1 + Math.Max(0, c.OwnedStates.Count - limit) / limit * d.Get("overextension_independence", 1));
     }
 
     /// <summary>Opinion between countries because of their state religions (religion feature).</summary>

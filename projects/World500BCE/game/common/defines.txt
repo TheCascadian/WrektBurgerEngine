@@ -40,3 +40,9 @@ colony_land_link = 1            # a colony target must border a state connected 
 # colonial regions and nations
 colonial_nation_states = 5      # colonized states of one overlord in a region that form a colonial nation
 colonial_nation_gold = 50
+
+# overextension: a realm above overextension_states states loses its peoples faster (independence movements gain overextension_independence more per extra block of that size, up to overextension_cap times)
+overextension_states = 15
+overextension_independence = 1
+overextension_cap = 4
+independence_speed = 0.9          # ancient realms hold their conquered peoples loosely

@@ -288,6 +288,11 @@ public static partial class Program
             int idleOwners = idle.Select(d => d.Owner).Distinct().Count();
             Console.WriteLine($"  divisions: {divs.Count} total, {moving} moving, {fighting} fighting, {idle.Count} idle ({idleWar} of countries at war, {idleAbroad} abroad, {idleHome} at the capital, {noFront} without a front post, {atPost} at their post) across {idleOwners} countries");
         }
+        Console.WriteLine($"  new countries: {string.Join("; ", game.World.Countries.Where(c => c.Exists && !c.Playable).Select(c => $"{c.Tag} {c.Name}").Take(40))}");
+        if (game.Politics.Enabled)
+            Console.WriteLine($"  ruling ideologies: {string.Join(", ", game.World.Countries.Where(c => c.Exists).GroupBy(c => game.Politics.Of(c).Ruling).OrderByDescending(g => g.Count()).Select(g => $"{g.Key} {g.Count()}"))}; {game.Politics.GovernmentChanges} government changes");
+        if (game.Reforms.Enabled)
+            Console.WriteLine($"  reforms held: {string.Join(", ", game.World.Countries.Where(c => c.Exists).SelectMany(c => game.Reforms.Of(c).Reforms).GroupBy(r => r).OrderByDescending(g => g.Count()).Take(8).Select(g => $"{g.Key} {g.Count()}"))}");
         if (game.Population.Enabled)
         {
             var Pop = game.Population;
