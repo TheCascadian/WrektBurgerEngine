@@ -134,6 +134,9 @@ uniform float tintStrength;
 uniform float stripePeriod;  // occupation stripes: width in world units, steps by powers of two with the zoom (never a per pixel value)
 uniform float fogStrength;   // 0 when zoomed far out (strategic view)   // how strongly map mode colors cover the terrain (stronger when zoomed out)
 uniform vec3 viewPos;
+uniform float lodWater;   // detail distance scale per feature (1 = default; larger keeps the detail visible at greater zoom)
+uniform float lodRiver;
+uniform float lodTerrain;
 
 out vec4 finalColor;
 
@@ -367,7 +370,9 @@ void main()
     // how far the sun is above this spot's horizon: the unlit half of the world stays dark whatever the camera does
     float sunUp = smoothstep(-0.12, 0.3, globe > 0.5 ? dot(fragU, sunDir) : sunDir.y);
     vec4 data = texelFetch(texture0, clampPix(ivec2(floor(pix))), 0);
-    float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat); // fades small details when zoomed out
+    float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat / lodWater); // fades small water details when zoomed out
+    float detailR = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat / lodRiver); // the same for rivers
+    float tppR = tpp / lodRiver;
 
     vec3 col;
     if (water)
@@ -376,7 +381,7 @@ void main()
         bool lake = (flags & 16) != 0;
         // closeness to the coast, 1 at the shore and 0 in the open sea, blended between the four map pixels so it has no steps
         float cl = 0.0;
-        if (!outside && !lake && tpp > 2.5) cl = clamp(data.a * 255.0 / 240.0, 0.0, 1.0); // far out: one fetch instead of four
+        if (!outside && !lake && tpp / lodWater > 2.5) cl = clamp(data.a * 255.0 / 240.0, 0.0, 1.0); // far out: one fetch instead of four
         else if (!outside && !lake)
             for (int k = 0; k < 4; k++)
                 cl += wt[k] * (WA[k] == 0 ? 1.0 : clamp(texelFetch(texture0, clampPix(b + o4[k]), 0).a * 255.0 / 240.0, 0.0, 1.0));
@@ -443,7 +448,7 @@ void main()
         // gather the terrain of a wide neighborhood (6x6 map pixels) with a smooth kernel, around a position that noise has bent, so the
         // edge is neither a map pixel staircase nor a straight fade; weights are summed per terrain, then each terrain is sampled once
         // zoomed far out (many map pixels per screen pixel) the blend cannot be seen: take the one terrain under the pixel (mip-mapped)
-        float farMix = smoothstep(1.5, 3.0, tpp);
+        float farMix = smoothstep(1.5, 3.0, tpp / lodTerrain);
         col = vec3(0.0);
         if (farMix < 1.0)
         {
@@ -534,7 +539,7 @@ void main()
             // one filtered lookup in the downsampled river texture (coverage of a 2x2 block); the mip chain widens it as you zoom out
             vec2 ruv = pix / mapSize;
             float rv = texture(texture4, ruv).r;
-            if (tpp < 1.0)
+            if (tppR < 1.0)
             {
                 rcov = smoothstep(0.10, 0.38, rv);
                 bank = clamp(textureLod(texture4, ruv, 2.0).r * 5.0, 0.0, 1.0);
@@ -542,7 +547,7 @@ void main()
             else
             {
                 // zoomed out: widen the line with the zoom so a river stays a thin, visible thread instead of vanishing
-                rcov = clamp(rv * tpp * 1.6, 0.0, 1.0) * (1.0 - smoothstep(6.0, 14.0, tpp));
+                rcov = clamp(rv * tppR * 1.6, 0.0, 1.0) * (1.0 - smoothstep(6.0, 14.0, tppR));
                 bank = rcov * 0.5;
             }
         }
@@ -558,7 +563,7 @@ void main()
             float speed = 0.5 + 3.5 * smoothstep(0.0, 0.4, slope);
             float e = 0.03;
             float k0 = streak(q, time, speed), ks = streak(q + vec2(e, 0.0), time, speed), ka = streak(q + vec2(0.0, e), time, speed);
-            float ra = (0.15 + 0.85 * detail) * 0.7;
+            float ra = (0.15 + 0.85 * detailR) * 0.7;
             vec2 sv = fd * ((k0 - ks) / e) + pd * ((k0 - ka) / e);
             vec3 rn = normalize(vec3(sv.x * ra * 0.4, 1.0, sv.y * ra * 0.4));
             rn = normalize(fragE * rn.x + fragU * rn.y + fragS * rn.z);
@@ -571,9 +576,9 @@ void main()
             vec3 rcol = mix(riverColor * 1.25 + vec3(0.03, 0.09, 0.07), riverColor * 0.75, mid) * (0.85 + 0.3 * k0);
             rcol = mix(rcol, rsky, clamp(rfres * 0.85, 0.0, 0.7));
             // zoomed out the sky reflection and glints have no detail to hang on and read as glowing lines: settle on the plain river color
-            rcol = mix(riverColor * 0.9, rcol, 0.25 + 0.75 * detail);
+            rcol = mix(riverColor * 0.9, rcol, 0.25 + 0.75 * detailR);
             vec3 rh = normalize(sunDir + viewDir);
-            rcol += vec3(1.0, 0.94, 0.82) * pow(max(dot(rn, rh), 0.0), 140.0) * 0.9 * (0.4 + 0.6 * detail);
+            rcol += vec3(1.0, 0.94, 0.82) * pow(max(dot(rn, rh), 0.0), 140.0) * 0.9 * (0.4 + 0.6 * detailR);
             // white water where the river drops fast
             rcol = mix(rcol, vec3(0.92, 0.96, 0.97), smoothstep(0.22, 0.5, slope) * smoothstep(0.55, 0.8, k0) * 0.7);
             // wet banks: the ground darkens and turns greener around the water

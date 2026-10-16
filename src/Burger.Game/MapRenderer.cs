@@ -57,7 +57,7 @@ public sealed unsafe class MapRenderer : IDisposable
     private int _mw, _mh;
 
     private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
-        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun;
+        _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun, _locLodWater, _locLodRiver, _locLodTerrain;
     private int _visibilityVersion = -1;
 
     /// <summary>Draw the map on a globe instead of the flat, east-west wrapping map. Set through <see cref="CameraController.SetGlobe"/>.</summary>
@@ -582,6 +582,9 @@ public sealed unsafe class MapRenderer : IDisposable
         _locViewPos = Raylib.GetShaderLocation(_shader, "viewPos");
         _locFog = Raylib.GetShaderLocation(_shader, "fogStrength");
         _locGlobe = Raylib.GetShaderLocation(_shader, "globe");
+        _locLodWater = Raylib.GetShaderLocation(_shader, "lodWater");
+        _locLodRiver = Raylib.GetShaderLocation(_shader, "lodRiver");
+        _locLodTerrain = Raylib.GetShaderLocation(_shader, "lodTerrain");
         _locGlobeRadius = Raylib.GetShaderLocation(_shader, "globeRadius");
         _locMapData = _locLut = 0;
 
@@ -1228,6 +1231,9 @@ public sealed unsafe class MapRenderer : IDisposable
         float camH = Viewport.HeightOf(cam);
         Raylib.SetShaderValue(_shader, _locGlobe, Globe ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locGlobeRadius, GlobeRadius, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locLodWater, UserSettings.LodScale(UserSettings.LodWater), ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locLodRiver, UserSettings.LodScale(UserSettings.LodRiver), ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locLodTerrain, UserSettings.LodScale(UserSettings.LodTerrain), ShaderUniformDataType.Float);
         // terrain shows through the map colors up close; far out the map reads like a political map
         float tint = Math.Clamp(0.55f + (camH - 25f) / 160f, 0.55f, 0.95f);
         Raylib.SetShaderValue(_shader, _locTint, tint, ShaderUniformDataType.Float);

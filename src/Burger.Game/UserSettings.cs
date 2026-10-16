@@ -32,6 +32,15 @@ public static class UserSettings
     /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>
     public static double Speed1DaysPerSecond;
 
+    /// <summary>Level of detail: on, small map details fade out when zoomed out (faster); off, they stay at every zoom (slower on weak graphics cards).</summary>
+    public static bool LodEnabled = true;
+    /// <summary>Per feature, how far you can zoom out before its detail fades: 0 low, 1 default, 2 high, 3 max. Only used while LOD is on.</summary>
+    public static int LodWater = 1, LodRiver = 1, LodTerrain = 1;
+    public static readonly string[] LodNames = { "Low", "Default", "High", "Max" };
+    private static readonly float[] LodScales = { 0.5f, 1f, 2.5f, 8f };
+    /// <summary>The shader's distance scale for a level; with LOD off, every feature keeps its full detail.</summary>
+    public static float LodScale(int level) => LodEnabled ? LodScales[Math.Clamp(level, 0, 3)] : LodScales[3];
+
     /// <summary>The name other players see in multiplayer.</summary>
     public static string PlayerName = "";
     /// <summary>Hosting opens the router's port by itself (UPnP). Off: only players on the same network can join.</summary>
@@ -59,6 +68,10 @@ public static class UserSettings
                 else if (parts[0] == "globe_mode") GlobeMode = v != 0;
                 else if (parts[0] == "sun_cycle") SunCycle = v != 0;
                 else if (parts[0] == "open_router") OpenRouter = v != 0;
+                else if (parts[0] == "lod_enabled") LodEnabled = v != 0;
+                else if (parts[0] == "lod_water") LodWater = Math.Clamp((int)v, 0, 3);
+                else if (parts[0] == "lod_river") LodRiver = Math.Clamp((int)v, 0, 3);
+                else if (parts[0] == "lod_terrain") LodTerrain = Math.Clamp((int)v, 0, 3);
                 else if (parts[0] == "speed1_days_per_second") Speed1DaysPerSecond = Math.Max(0, v);
             }
         }
@@ -80,6 +93,10 @@ public static class UserSettings
                 $"sun_cycle = {(SunCycle ? 1 : 0)}",
                 $"player_name = {PlayerName.Replace('\n', ' ').Replace('\r', ' ')}",
                 $"open_router = {(OpenRouter ? 1 : 0)}",
+                $"lod_enabled = {(LodEnabled ? 1 : 0)}",
+                $"lod_water = {LodWater}",
+                $"lod_river = {LodRiver}",
+                $"lod_terrain = {LodTerrain}",
                 $"speed1_days_per_second = {Speed1DaysPerSecond.ToString("0.####", CultureInfo.InvariantCulture)}",
             });
         }

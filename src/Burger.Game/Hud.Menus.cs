@@ -38,6 +38,7 @@ public sealed partial class Hud
         if (Gui.CloseButton(r)) { Ui.SettingsOpen = false; UserSettings.Save(); return; }
         float x = r.X + 20 * S, y = r.Y + 46 * S, bw = 380 * S;
         DrawMultiplayerSettings(r.X + 440 * S, r.Y + 46 * S, 380 * S);
+        DrawGraphicsSettings(r.X + 440 * S, r.Y + 230 * S, 380 * S);
         if (_speed5Text.Length == 0) _speed5Text = UserSettings.Speed5DaysPerSecond.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         Gui.Label("Speed 5: most days per second", x, y, 16);
         y += 26 * S;
@@ -108,6 +109,35 @@ public sealed partial class Hud
 
     /// <summary>Settings page for the main menu (the same panel as in the pause menu).</summary>
     public void DrawSettings() => DrawSettingsPanel();
+
+    private void DrawGraphicsSettings(float x, float y, float w)
+    {
+        Gui.Label("Map detail", x, y, 16, Gui.Gold);
+        y += 28 * S;
+        if (Gui.Button(new Rectangle(x, y, w, 32 * S), UserSettings.LodEnabled ? "Level of detail: on (faster)" : "Level of detail: off (full detail)", true,
+                "On: small details (water waves, river shine, terrain blending) fade out as you zoom out, which keeps weak graphics cards fast. The levels below choose how far each one lasts.\nOff: every detail stays at every zoom. Slower.",
+                UserSettings.LodEnabled, 15))
+        {
+            UserSettings.LodEnabled = !UserSettings.LodEnabled;
+            UserSettings.Save();
+        }
+        y += 38 * S;
+        LodRow(x, ref y, w, "Water", ref UserSettings.LodWater, "Waves, glints and coast foam on the sea.");
+        LodRow(x, ref y, w, "Rivers", ref UserSettings.LodRiver, "River shine, flow and white water.");
+        LodRow(x, ref y, w, "Terrain", ref UserSettings.LodTerrain, "Blending between terrain types. Low is the cheapest.");
+    }
+
+    /// <summary>One feature's level: click to step Low, Default, High, Max. Greyed out (but still readable) while LOD is off.</summary>
+    private void LodRow(float x, ref float y, float w, string name, ref int level, string tip)
+    {
+        string text = $"{name}: {UserSettings.LodNames[level]}";
+        if (Gui.Button(new Rectangle(x, y, w, 30 * S), text, UserSettings.LodEnabled, tip + "\nLow, Default, High, Max: how far you can zoom out before it fades. Higher costs more.", false, 15))
+        {
+            level = (level + 1) % UserSettings.LodNames.Length;
+            UserSettings.Save();
+        }
+        y += 34 * S;
+    }
 
     private void DrawMultiplayerSettings(float x, float y, float w)
     {
