@@ -53,6 +53,7 @@ public sealed partial class App
         bool steam = kind == TransportKind.SteamSdr;
         // with Steam the internet path is Steam's relay network: no router change, no address in the code; otherwise fall back to router and relay
         _mpc.Host(Game, Project, seed, UserSettings.EffectiveName, openRouter: !steam && UserSettings.OpenRouter, relay: kind == TransportKind.Relay ? relayCfg : null);
+        if (!steam) _mpc.PlatformNote = SteamService.Problem.Length > 0 ? "No internet code: " + SteamService.Problem : "";
         if (steam)
         {
             try { var sh = new SteamHost(); _mpc.UsePlatform(sh, sh.Code, "Online through Steam"); }

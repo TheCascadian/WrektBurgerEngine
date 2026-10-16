@@ -20,7 +20,9 @@ public sealed class MpController
     /// <summary>The code for players over the internet: empty until the router has opened the port, and empty when it cannot.</summary>
     public string InternetCode { get; private set; } = "";
     /// <summary>One plain sentence on how reachable the host is.</summary>
-    public string NetworkStatus => (_extraStatus.Length > 0 ? _extraStatus : null) ?? RelayLink?.Status ?? Mapper?.Status ?? (LanCode.Length > 0 ? "Players on your own network can join" : "");
+    /// <summary>Why the platform (Steam) path is off, shown with the network status.</summary>
+    public string PlatformNote { get; set; } = "";
+    public string NetworkStatus => (PlatformNote.Length > 0 ? PlatformNote + " " : "") + ((_extraStatus.Length > 0 ? _extraStatus : null) ?? RelayLink?.Status ?? Mapper?.Status ?? (LanCode.Length > 0 ? "Players on your own network can join" : ""));
     public PortMapper? Mapper { get; private set; }
     /// <summary>Peers that arrive over a platform link (Steam).</summary>
     public IAcceptSource? Extra { get; private set; }
@@ -86,7 +88,12 @@ public sealed class MpController
                 if (relay == null) { Message = "This code needs the relay, and this copy of the game has none set (relay.txt)"; return false; }
                 link = TcpTransport.ConnectRelay(relay.Value.Host, relay.Value.Port, room, secret);
             }
-            else link = TcpTransport.Connect(host, port, secret);
+            else
+            {
+                if (IPAddress.TryParse(host, out var ha) && !IPAddress.IsLoopback(ha) && !TransportSelector.SameSubnet(ha) && !PortMapper.IsPublic(ha))
+                { Message = "That code only works on the host's own network. Ask the host for the Internet code (the host needs Steam running)."; return false; }
+                link = TcpTransport.Connect(host, port, secret);
+            }
             Wire(LockstepSession.Join(link, string.IsNullOrWhiteSpace(playerName) ? "Player" : playerName.Trim(), load));
             Message = "Connecting...";
             return true;

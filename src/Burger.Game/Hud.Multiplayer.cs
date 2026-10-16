@@ -68,7 +68,7 @@ public sealed partial class Hud
             Gui.Wrapped(mpc.NetworkStatus, x, y, w - 20 * s, 12, mpc.InternetCode.Length > 0 ? Gui.Good : Gui.TextDim);
             y += 40 * s;
             if (mpc.InternetCode.Length > 0) { InviteRow(x, ref y, w, "Internet", mpc.InternetCode); }
-            InviteRow(x, ref y, w, "Network", mpc.LanCode);
+            InviteRow(x, ref y, w, "Local", mpc.LanCode);
             y += 6 * s;
         }
         foreach (var p in mp.Players)
