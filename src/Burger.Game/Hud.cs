@@ -148,6 +148,13 @@ public sealed partial class Hud
     public void OnMapLeftClick(Location? loc)
     {
         if (Ui.EditorActive) { EditorClick(loc); return; }
+        // multiplayer: a player without a country takes the one they click on the map
+        if (Mp?.Me is { Tag.Length: 0 } && loc?.Owner is { Playable: true } owner)
+        {
+            var err = Mp.Pick(owner.Tag);
+            if (err != null) Ui.SetStatus(err);
+            return;
+        }
         // construction mode: clicking one of your states queues the chosen building there
         if (Ui.Left == LeftPanel.Production && Ui.BuildType != null && G.World.Player != null)
         {

@@ -570,6 +570,8 @@ void main()
             float mid = smoothstep(0.55, 1.0, rcov);
             vec3 rcol = mix(riverColor * 1.25 + vec3(0.03, 0.09, 0.07), riverColor * 0.75, mid) * (0.85 + 0.3 * k0);
             rcol = mix(rcol, rsky, clamp(rfres * 0.85, 0.0, 0.7));
+            // zoomed out the sky reflection and glints have no detail to hang on and read as glowing lines: settle on the plain river color
+            rcol = mix(riverColor * 0.9, rcol, 0.25 + 0.75 * detail);
             vec3 rh = normalize(sunDir + viewDir);
             rcol += vec3(1.0, 0.94, 0.82) * pow(max(dot(rn, rh), 0.0), 140.0) * 0.9 * (0.4 + 0.6 * detail);
             // white water where the river drops fast

@@ -213,7 +213,8 @@ public sealed class LockstepSession
         {
             bool want = !Paused;
             int yes = humans.Count(p => !p.IsHost && p.VotePause == want);
-            if (voter != null && yes * 2 <= total) ToastAll($"{voter.Name} votes to {(want ? "pause" : "resume")} ({yes}/{total})");
+            // announce what this voter actually asked for, not what the session would flip to
+            if (voter?.VotePause is bool asked && asked == want && yes * 2 <= total) ToastAll($"{voter.Name} votes to {(want ? "pause" : "resume")} ({yes}/{total} needed {total / 2 + 1})");
             if (yes * 2 > total) { foreach (var p in Players) p.VotePause = null; ApplyPace(want, Speed, $"Majority voted to {(want ? "pause" : "resume")}"); }
         }
         else
@@ -223,7 +224,7 @@ public sealed class LockstepSession
                 int yes = humans.Count(p => !p.IsHost && p.VoteSpeed == s);
                 if (yes * 2 > total) { foreach (var p in Players) p.VoteSpeed = null; ApplyPace(Paused, s, $"Majority voted for speed {s}"); return; }
             }
-            if (voter?.VoteSpeed is int v && v != Speed) ToastAll($"{voter.Name} votes for speed {v}");
+            if (voter?.VoteSpeed is int v && v != Speed) ToastAll($"{voter.Name} votes for speed {v} ({humans.Count(p => !p.IsHost && p.VoteSpeed == v)}/{total} needed {total / 2 + 1})");
         }
     }
 

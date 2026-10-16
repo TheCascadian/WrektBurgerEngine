@@ -23,8 +23,9 @@ public sealed partial class Hud
     {
         if (Mp != null)
         {
-            if (speed is int s) Mp.SetSpeed(s);
-            if (paused is bool p) Mp.SetPaused(p);
+            // only vote for what differs from the current state, so pressing 5 while running is one speed vote, not a speed vote plus a pause vote
+            if (speed is int s && s != Mp.Speed) Mp.SetSpeed(s);
+            if (paused is bool p && p != Mp.Paused) Mp.SetPaused(p);
             return;
         }
         if (speed is int sp) G.Clock.Speed = sp;
@@ -53,13 +54,22 @@ public sealed partial class Hud
         if (_mpCollapsed) return;
 
         var chat = _app.MpChat;
-        int lines = Math.Min(6, chat.Count);
+        // chat is wrapped at a readable size; show the newest lines that fit in a fixed height
+        const float ChatSize = 15;
+        float chatW = w - 20 * s, chatMax = 150 * s, chatH = 0;
+        int lines = 0;
+        for (int i = chat.Count - 1; i >= 0; i--)
+        {
+            float lh = Gui.WrappedHeight(chat[i], chatW, ChatSize) + 3 * s;
+            if (chatH + lh > chatMax) break;
+            chatH += lh; lines++;
+        }
         bool picking = mp.Me != null && mp.Me.Tag.Length == 0;
         float rows = mp.Players.Count * 24 * s;
         var mpc = _app.Mpc;
         bool invite = mp.IsHost && mpc.LanCode.Length > 0;
         float inviteH = invite ? (40 + (mpc.InternetCode.Length > 0 ? 28 : 0) + 28 + 6) * s : 0;
-        float h = 30 * s + inviteH + rows + 8 * s + lines * 18 * s + 34 * s + (picking ? 190 * s : 0);
+        float h = 30 * s + inviteH + rows + 8 * s + chatH + 34 * s + (picking ? 190 * s : 0);
         var r = new Rectangle(sw - w - 6 * s, toggle.Y - h - 4 * s, w, h);
         Gui.Panel(r, mp.IsHost ? "Players (host)" : "Players");
         float x = r.X + 10 * s, y = r.Y + 30 * s;
@@ -106,8 +116,7 @@ public sealed partial class Hud
         }
         foreach (var line in chat.Skip(Math.Max(0, chat.Count - lines)))
         {
-            Gui.Label(Gui.Fit(line, w - 20 * s, 12), x, y, 12, line.StartsWith("* ") ? Gui.Gold : Gui.Text);
-            y += 18 * s;
+            y += Gui.Wrapped(line, x, y, chatW, ChatSize, line.StartsWith("* ") ? Gui.Gold : Gui.Text) + 3 * s;
         }
         bool was = Gui.TextFocused;
         Gui.TextField("mp-chat", new Rectangle(x, y + 4 * s, w - 20 * s, 24 * s), ref _chatText, 120, "Chat (Enter sends)");
