@@ -150,7 +150,8 @@ public sealed partial class PopulationSystem
         if (!s.Locations.Any(l => l.IsLand && l.IsPassable)) return "No land to settle";
         var sp = Of(s);
         if (sp.Colonizer != null && sp.Colonizer.Exists) return sp.Colonizer == c ? "Our colonists are already there" : $"{sp.Colonizer.Name} is settling it";
-        if (ColoniesOf(c).Count() >= MaxColonies(c)) return $"All our colonists are busy ({MaxColonies(c)})";
+        var region = RegionOf(s);
+        if (ColoniesInRegion(c, region) >= MaxColoniesIn(c, region)) return $"All our colonists in {region?.Name ?? "this land"} are busy ({MaxColoniesIn(c, region)})";
         if (ColonizeCost > 0 && c.Gold < ColonizeCost) return $"Needs {ColonizeCost:0} gold";
         // colonies must reach the homeland by land: next to a state connected to the capital (a finished colony joins that chain)
         if (_game.Data.Defines.Get("colony_land_link", 0) > 0)
@@ -228,6 +229,7 @@ public sealed partial class PopulationSystem
             sp.Colonizer = null;
             sp.ColonyProgress = 0;
             _game.Diplomacy.TransferState(s, c);
+            s.Category = "colony";
             _home.Remove(c); // the new colony extends the land connected to the capital
             var cp = Of(c);
             double settlers = Rules.ColonySettlers(_game, s, c);
@@ -243,12 +245,13 @@ public sealed partial class PopulationSystem
             ApplyOutput(s, sp);
             _game.NotifyPlayer($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Good, c);
             _game.Events.FireOnAction("on_colony_founded", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
+            CheckColonialNation(c, s);
         }
     }
 
     private void AiColonize(Country c)
     {
-        if (!ColonizationEnabled || ColoniesOf(c).Count() >= MaxColonies(c)) return;
+        if (!ColonizationEnabled) return;
         if (ColonizeCost > 0 && c.Gold < ColonizeCost * 3) return;
         State? best = null;
         double bestScore = double.NegativeInfinity;

@@ -284,7 +284,7 @@ public static partial class Program
             Console.WriteLine($"  population: {Burger.Core.Population.PopulationSystem.Format(now)} people ({(start > 0 ? (now / start - 1) : 0):+0.0%;-0.0%} since the start), {Pop.CultureByKey.Count} cultures, " +
                               $"{foreignMajority} states with a foreign majority" + (Pop.ReligionEnabled ? $", {Pop.ReligionByKey.Count} religions" : "") +
                               (Pop.CoresEnabled ? $", cores +{Pop.CoresGained}/-{Pop.CoresLost}, {Pop.ClaimsMade} claims" : "") +
-                              (Pop.ColonizationEnabled ? $", {Pop.ColoniesFounded} colonies ({game.World.States.Count(s => s.Owner == null)} unowned states left)" : "") +
+                              (Pop.ColonizationEnabled ? $", {Pop.ColoniesFounded} colonies, {Pop.ColonialNationsFormed} colonial nations ({game.World.States.Count(s => s.Owner == null)} unowned states left)" : "") +
                               $", {Pop.BuildingsBuilt} gold buildings" +
                               (Pop.IndependenceEnabled ? $", {Pop.Independence.Count} independence movements (strongest {(Pop.Independence.Count > 0 ? Pop.Independence.Max(m => m.Progress) : 0):0}%), {Pop.IndependenceDeclared} declared independence ({Pop.IndependenceWon} won, {Pop.IndependenceCrushed} crushed, {Pop.IndependenceWars.Count} wars active)" : ""));
         }

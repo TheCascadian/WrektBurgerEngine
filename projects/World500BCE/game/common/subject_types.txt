@@ -6,3 +6,5 @@
 #                        overlord losing a war and the tribute; at 50 the subject may fight a War of Independence.
 client_state = { name = "Client State" income_share = 0.10 joins_overlord_wars = yes liberty_desire = 0 }
 tributary = { name = "Tributary" income_share = 0.25 joins_overlord_wars = no liberty_desire = 10 }
+# Formed when a country's colonies in one region reach colonial_nation_states (5). Pays the region's tax_share (common/colonial_regions), not income_share.
+colonial_nation = { name = "Colonial Nation" income_share = 0.15 joins_overlord_wars = yes counts_as_relation = no liberty_desire = -20 government = imposed }

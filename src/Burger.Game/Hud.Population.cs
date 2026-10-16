@@ -179,13 +179,13 @@ public sealed partial class Hud
         if (P.ColonizationEnabled)
         {
             var colonies = P.ColoniesOf(player).ToList();
-            Gui.Section($"Colonies ({colonies.Count}/{P.MaxColonies(player)} colonists)", x, y, w, "ui_colonies");
+            Gui.Section($"Colonies ({colonies.Count} settling, {P.MaxColonies(player)} per region)", x, y, w, "ui_colonies");
             y += 26 * S;
             if (colonies.Count == 0) { Gui.Label("Click an unowned state on the map to send colonists.", x, y, 13, Gui.TextDim); y += 22 * S; }
             foreach (var s in colonies)
             {
                 var sp = P.Of(s);
-                Gui.Label(Gui.Fit(s.DisplayName, w * 0.45f, 14), x, y, 14);
+                Gui.Label(Gui.Fit(s.DisplayName + (P.RegionOf(s) is { } rg ? " · " + rg.Name : ""), w * 0.45f, 14), x, y, 14);
                 Gui.Bar(new Rectangle(x + w * 0.47f, y + 4 * S, w * 0.3f, 10 * S), (float)(sp.ColonyProgress / 100), new Color(110, 190, 90, 255));
                 if (ActionButton(new Rectangle(x + w - 70 * S, y - 2 * S, 70 * S, 20 * S), "Abandon", true, "Call the colonists back", false, 12)) P.AbandonColony(s);
                 y += 22 * S;
@@ -334,6 +334,12 @@ public sealed partial class Hud
         // colonization of unowned land
         if (P.ColonizationEnabled && st.Owner == null && player != null)
         {
+            if (P.RegionOf(st) is { } region)
+            {
+                Gui.Label($"Colonial region: {region.Name}", x, y, 13, Gui.TextDim);
+                if (Gui.Hover(new Rectangle(x, y, w, 18 * S))) Gui.Tooltip($"Colonists settle a region under a limit per region. With {(int)G.Data.Defines.Get("colonial_nation_states", 5)} colonized states here, a colonial nation forms as your subject and pays you {region.TaxShare:P0} of its income.");
+                y += 20 * S;
+            }
             if (sp.Colonizer != null)
             {
                 Gui.Label($"Being settled by {sp.Colonizer.Name}", x, y, 14);

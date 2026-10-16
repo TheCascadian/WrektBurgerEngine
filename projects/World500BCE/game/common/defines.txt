@@ -35,3 +35,7 @@ colony_caution = 1              # scales both (divided by the profile's risk tra
 colony_ai_min_score = -1100     # below this (x the profile's colonial trait) the AI settles nothing
 
 colony_land_link = 1            # a colony target must border a state connected by land to the capital (no overseas colonies)
+
+# colonial regions and nations
+colonial_nation_states = 5      # colonized states of one overlord in a region that form a colonial nation
+colonial_nation_gold = 50

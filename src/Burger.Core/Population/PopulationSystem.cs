@@ -54,6 +54,7 @@ public sealed partial class PopulationSystem
     {
         CultureGroups.Clear(); CultureByKey.Clear(); ReligionGroups.Clear(); ReligionByKey.Clear(); PopTypes.Clear(); PopTypeByKey.Clear();
         _buildingMods.Clear(); _buildingCountryMods.Clear();
+        LoadColonialRegions(data);
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/cultures"))
             foreach (var g in root.All)
             {
