@@ -620,6 +620,10 @@ public static class SoldierGear
         var model = new FigureModel(key, body.Rig, FigureMesh.Merge(meshes));
         model.Parts.AddRange(parts);
         foreach (var clip in body.Clips.Values) model.Clips[clip.Name] = clip;
+        // a soldier with a shield or spear walks and stands with them held properly
+        if (parts.Any(p => p.Contains("spear", StringComparison.OrdinalIgnoreCase) || p.Contains("shield", StringComparison.OrdinalIgnoreCase)))
+            foreach (string c in new[] { HumanMale.Idle, HumanMale.Walk, HumanMale.Run })
+                if (body.Clips.TryGetValue(c + HumanMale.CarrySuffix, out var carry)) model.Clips[c] = carry;
         return model;
     }
 

@@ -56,7 +56,7 @@ public static partial class HumanMale
         var model = new FigureModel(Key, rig, BuildMesh(rig, Ancestry.Default));
         var solver = new Solver(rig);
         foreach (var clip in new[] { solver.Idle(), solver.Locomotion(Walk, WalkGait), solver.Locomotion(Run, RunGait),
-            solver.Gag(Scratch, 8f, 0.15f, 0.33f, 0, 0), solver.Gag(PickNose, 8f, 0, 0, 0.12f, 0.64f), solver.Gag(ScratchThenPick, 16f, 0.06f, 0.20f, 0.20f, 0.80f) }.Concat(FireStyles.Select(solver.FireClip)).Concat(solver.Combat()).Append(solver.SpearAttackClip()))
+            solver.Gag(Scratch, 8f, 0.15f, 0.33f, 0, 0), solver.Gag(PickNose, 8f, 0, 0, 0.12f, 0.64f), solver.Gag(ScratchThenPick, 16f, 0.06f, 0.20f, 0.20f, 0.80f) }.Concat(FireStyles.Select(solver.FireClip)).Concat(solver.Combat()).Append(solver.SpearAttackClip()).Concat(solver.CarryClips()))
             model.Clips[clip.Name] = clip;
         return model;
     }
@@ -510,6 +510,10 @@ public static partial class HumanMale
         public readonly Quaternion?[] HandRot = new Quaternion?[2];
         /// <summary>How much of the reach (HandTarget and HandRot) applies, 0-1: the arm and hand blend from their own angles to the reach.</summary>
         public readonly float[] HandBlend = { 1f, 1f };
+        /// <summary>How much of HandRot applies when that differs from HandBlend (a spear held upright while the arm is not reaching); negative uses HandBlend.</summary>
+        public readonly float[] HandRotBlend = { -1f, -1f };
+        /// <summary>Degrees the forearm is turned about its own axis (what a shield on it faces).</summary>
+        public readonly float[] ForearmRoll = new float[2];
         public readonly float[] HandRoll = new float[2], ArmSwing = new float[2], ArmOut = new float[2], Elbow = new float[2], ForearmIn = new float[2], Shrug = new float[2], Fingers = new float[2];
     }
 
@@ -609,9 +613,10 @@ public static partial class HumanMale
                 var wFore = FromTo(Rot(_armDir[s], wUpper), Rot(foreDir, wChest)) * wUpper;
                 rot[_shoulder[s]] = shoulderLocal;
                 rot[_upper[s]] = Quaternion.Conjugate(wShoulder) * wUpper;
+                if (f.ForearmRoll[s] != 0) wFore = Quaternion.CreateFromAxisAngle(Rot(_armDir[s], wFore), f.ForearmRoll[s] * MathF.PI / 180f) * wFore;
                 rot[_fore[s]] = Quaternion.Conjugate(wUpper) * wFore;
                 var handFree = Quaternion.CreateFromAxisAngle(_handAxis[s], f.HandRoll[s] * MathF.PI / 180f);
-                rot[_hand[s]] = f.HandRot[s] is { } hr ? Quaternion.Slerp(handFree, Quaternion.Conjugate(wFore) * wChest * hr, f.HandBlend[s]) : handFree;
+                rot[_hand[s]] = f.HandRot[s] is { } hr ? Quaternion.Slerp(handFree, Quaternion.Conjugate(wFore) * wChest * hr, f.HandRotBlend[s] >= 0 ? f.HandRotBlend[s] : f.HandBlend[s]) : handFree;
                 rot[_fingers[s]] = Rz(-f.Fingers[s] * sign);
                 rot[_thumb[s]] = Rz(-f.Fingers[s] * 0.35f * sign);
             }
@@ -637,7 +642,9 @@ public static partial class HumanMale
             for (int k = 0; k <= samples; k++)
             {
                 times[k] = duration * k / samples;
-                var pose = Solve(at(k == samples && !once ? 0 : (float)k / samples)); // in a loop the last key is the first again, so it closes exactly
+                var frame = at(k == samples && !once ? 0 : (float)k / samples);
+                if (Carry != null) frame = Carry(frame);
+                var pose = Solve(frame); // in a loop the last key is the first again, so it closes exactly
                 for (int j = 1; j < n; j++)
                 {
                     var q = pose.Rotation[j];
@@ -653,7 +660,22 @@ public static partial class HumanMale
 
         // ------------------------------------------------------------------------------------------- idle
         /// <summary>Standing at ease: two slow breaths while the weight drifts onto one leg and back and the head looks about.</summary>
-        public Clip Idle() => Bake(HumanMale.Idle, 8f, 72, IdleFrame, 0);
+        public Clip Idle(string name = HumanMale.Idle) => Bake(name, 8f, 72, IdleFrame, 0);
+
+        /// <summary>When set, every frame baked passes through it (the carry pose of a soldier with a shield and spear).</summary>
+        public Func<Frame, Frame>? Carry;
+
+        /// <summary>
+        /// A soldier under arms: the left forearm stands upright in front of the body with the shield on it, facing forward and out, and the
+        /// right hand keeps the spear upright whatever the arm does. The right arm swings less so the spear does not wave.
+        /// </summary>
+        public static Frame ApplyCarry(Frame f)
+        {
+            f.ArmSwing[0] = 10f; f.ArmOut[0] = 24f; f.Elbow[0] = 160f; f.ForearmIn[0] = 0.30f; f.ForearmRoll[0] = 90f; f.Fingers[0] = 25f; f.HandTarget[0] = null; f.HandRot[0] = null;
+            f.ArmSwing[1] *= 0.35f;
+            f.HandRot[1] = Quaternion.Identity; f.HandRotBlend[1] = 1f; f.Fingers[1] = 30f;
+            return f;
+        }
 
         private static float Env(float p, float a, float b, float ramp)
         {

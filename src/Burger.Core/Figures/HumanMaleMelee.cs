@@ -9,8 +9,19 @@ public static partial class HumanMale
     /// <summary>The family name of an attack; <see cref="Uniforms.ClipFor"/> picks the clip of the weapon the soldier carries (<c>attack_ach</c> for a country's own, else <see cref="AttackSpear"/>).</summary>
     public const string Attack = "attack";
 
+    /// <summary>The idle, walk and run of a soldier carrying a shield and spear; <see cref="SoldierGear.Compose"/> swaps them in for models with such gear.</summary>
+    public const string CarrySuffix = "_carry";
+
     private sealed partial class Solver
     {
+        public IEnumerable<Clip> CarryClips()
+        {
+            Carry = ApplyCarry;
+            var clips = new[] { Idle(HumanMale.Idle + CarrySuffix), Locomotion(Walk + CarrySuffix, WalkGait), Locomotion(Run + CarrySuffix, RunGait) };
+            Carry = null;
+            return clips;
+        }
+
         /// <summary>A spear thrust with the right hand: wind-up with the weight back, a fast lunge on the left foot, a short hold, and back to rest.</summary>
         public Clip SpearAttackClip()
         {
@@ -24,7 +35,7 @@ public static partial class HumanMale
                 float a = Ease(t / 0.45f), th = Ease((t - 0.45f) / 0.12f), rc = Ease((t - 0.70f) / 0.60f);
                 float stance = a * (1 - rc);               // 0 at rest, 1 in the fighting stance
                 float wind = a * (1 - th), thr = th * (1 - rc); // how far back, how far forward
-                var f = IdleFrame(0.1f + u * 0.02f);
+                var f = ApplyCarry(IdleFrame(0.1f + u * 0.02f));
                 f.Hips += new Vector3(0, -0.07f * stance, 0.05f * thr - 0.02f * wind);
                 f.Spine *= Ry(-14f * wind + 12f * thr) * Rx(5f * thr);
                 f.Chest *= Ry(-10f * wind + 10f * thr);
@@ -33,7 +44,7 @@ public static partial class HumanMale
                 f.Ankle[1] += new Vector3(-0.03f * stance, 0, -0.14f * stance);
                 f.FootYaw[1] += 25f * stance;
                 // the shield arm comes up a little to cover
-                f.ArmSwing[0] += 18f * stance; f.Elbow[0] += 35f * stance;
+                f.ArmSwing[0] += 6f * stance;
                 // the spear hand follows the path, and the shaft turns with it
                 var dir = Vector3.Normalize(Vector3.Lerp(windDir, thrustDir, th));
                 var from = Vector3.Lerp(new Vector3(-0.34f, -0.30f, 0.02f), windHand, a);
@@ -41,8 +52,7 @@ public static partial class HumanMale
                 hand = Vector3.Lerp(hand, new Vector3(-0.34f, -0.30f, 0.02f), rc);
                 f.HandTarget[1] = hand;
                 f.HandRot[1] = FromTo(Vector3.UnitY, Vector3.Normalize(Vector3.Lerp(Vector3.UnitY, dir, Math.Min(1f, stance * 1.6f))));
-                f.HandBlend[1] = Math.Min(1f, stance * 2.5f);
-                f.Fingers[1] = 30f * f.HandBlend[1];
+                f.HandRotBlend[1] = 1f; f.HandBlend[1] = Math.Min(1f, stance * 2.5f);
                 return f;
             }, 0, once: true);
         }
