@@ -1,3 +1,4 @@
+using Burger.Core.Development;
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
@@ -546,13 +547,11 @@ public sealed partial class Hud
 
         // the open menu: map modes in a grid above the bar
         var all = modes.Select(m => (m.Name, (Action)(() => { Map.Mode = m.Mode; Map.CustomMode = null; Map.Dirty = true; }), Map.CustomMode == null && Map.Mode == m.Mode, MapModeHelp(m.Mode))).ToList();
-        if (G.Development.Enabled)
-            foreach (var inst in G.Development.Institutions.Where(i => G.Development.HasAppeared(i)))
-            {
-                var ii = inst;
-                all.Add((Gui.Fit(ii.Name, 84 * S, 14), () => { Map.Mode = MapMode.Institution; Map.InstitutionKey = ii.Key; Map.CustomMode = null; Map.Dirty = true; },
-                    Map.CustomMode == null && Map.Mode == MapMode.Institution && Map.InstitutionKey == ii.Key, $"{ii.Name}: how far it has spread. {ii.Desc}"));
-            }
+        var instList = G.Development.Enabled ? G.Development.Institutions.Where(i => G.Development.HasAppeared(i)).ToList() : new List<InstitutionDef>();
+        bool instActive = Map.CustomMode == null && Map.Mode == MapMode.Institution;
+        if (instList.Count > 0)
+            all.Add(("Institutions ▸", () => _mapSubOpen = !_mapSubOpen, instActive || _mapSubOpen, "Institutions: pick one to see how far it has spread."));
+        else _mapSubOpen = false;
         foreach (var m in custom)
         {
             var cm = m;
@@ -567,10 +566,32 @@ public sealed partial class Hud
         for (int i = 0; i < all.Count; i++)
         {
             var br = new Rectangle(pr.X + pad + (i % cols) * (cw + gap), pr.Y + pad + (i / cols) * (ch + gap), cw, ch);
-            if (Gui.Button(br, all[i].Name, true, all[i].Item4, all[i].Item3, 14)) { all[i].Item2(); _mapModesOpen = false; }
+            if (Gui.Button(br, all[i].Name, true, all[i].Item4, all[i].Item3, 14))
+            {
+                bool sub = all[i].Name.EndsWith("▸");
+                all[i].Item2();
+                if (sub) continue;
+                _mapModesOpen = false; _mapSubOpen = false;
+            }
+        }
+        // submenu: the institutions, in their own panel to the left of the main one
+        if (_mapSubOpen && instList.Count > 0)
+        {
+            float sh2 = instList.Count * (ch + gap) - gap + 2 * pad, sw2 = cw + 2 * pad;
+            var sr = new Rectangle(pr.X - sw2 - 4 * S, pr.Y + pr.Height - sh2, sw2, sh2);
+            Gui.Block(sr);
+            Gui.Frame(sr, Gui.MenuBar, false, "menu_bar");
+            for (int i = 0; i < instList.Count; i++)
+            {
+                var ii = instList[i];
+                var br = new Rectangle(sr.X + pad, sr.Y + pad + i * (ch + gap), cw, ch);
+                if (Gui.Button(br, Gui.Fit(ii.Name, cw - 8 * S, 14), true, $"{ii.Name}: how far it has spread. {ii.Desc}", instActive && Map.InstitutionKey == ii.Key, 14))
+                { Map.Mode = MapMode.Institution; Map.InstitutionKey = ii.Key; Map.CustomMode = null; Map.Dirty = true; _mapModesOpen = false; _mapSubOpen = false; }
+            }
         }
     }
 
+    private bool _mapSubOpen;
     private bool _mapModesOpen;
 
     private string MapModeHelp(MapMode mode) => mode switch

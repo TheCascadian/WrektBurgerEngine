@@ -11,6 +11,8 @@ public sealed partial class Hud
 {
     private int _peopleSort;       // 0 size, 1 opinion, 2 radicalism
     private int _peoplePage;
+    /// <summary>Seats sub-tabs (location panel and Politics overview) are switched off for now; set true to bring them back.</summary>
+    internal const bool SeatsTabs = false;
     private int _stateMoodSub;     // 0 groups, 1 seats
     private const int PeoplePageSize = 7;
 
@@ -154,12 +156,13 @@ public sealed partial class Hud
         var moods = P.MoodsOf(st);
         if (moods == null || moods.Count == 0) { Gui.Label("Moods appear after the first month.", x, y, 13, Gui.TextDim); return y + 20 * S; }
 
+        if (!SeatsTabs) _stateMoodSub = 0;
         float sw = (w - 4 * S) / 2;
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 2 && SeatsTabs; i++)
             if (Gui.Button(new Rectangle(x + i * (sw + 4 * S), y, sw, 24 * S), i == 0 ? "Groups" : "Seats", true,
                     i == 0 ? $"How the people of {st.DisplayName} (with {l.DisplayName}) see the government." : $"The seats {st.DisplayName} sends to parliament.", _stateMoodSub == i, 13))
                 _stateMoodSub = i;
-        y += 30 * S;
+        if (SeatsTabs) y += 30 * S;
 
         if (_stateMoodSub == 1)
         {

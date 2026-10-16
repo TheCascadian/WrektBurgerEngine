@@ -49,7 +49,7 @@ public sealed partial class Hud
         float s = S;
         int sw = Raylib.GetScreenWidth(), sh = Raylib.GetScreenHeight();
         float w = 300 * s;
-        var toggle = new Rectangle(sw - w - 6 * s, sh - 28 * s, w, 22 * s);
+        var toggle = new Rectangle(sw - w - 6 * s, 48 * s, w, 22 * s);   // top right, under the menu bar, clear of the map-mode bar
         if (Gui.Button(toggle, _mpCollapsed ? $"Multiplayer ({mp.Players.Count(p => p.Active)})  [show]" : "Multiplayer  [hide]", true, null, false, 13)) _mpCollapsed = !_mpCollapsed;
         if (_mpCollapsed) return;
 
@@ -70,7 +70,7 @@ public sealed partial class Hud
         bool invite = mp.IsHost && mpc.LanCode.Length > 0;
         float inviteH = invite ? (40 + (mpc.InternetCode.Length > 0 ? 28 : 0) + 28 + 6) * s : 0;
         float h = 30 * s + inviteH + rows + 8 * s + chatH + 34 * s + (picking ? 190 * s : 0);
-        var r = new Rectangle(sw - w - 6 * s, toggle.Y - h - 4 * s, w, h);
+        var r = new Rectangle(sw - w - 6 * s, toggle.Y + toggle.Height + 4 * s, w, h);
         Gui.Panel(r, mp.IsHost ? "Players (host)" : "Players");
         float x = r.X + 10 * s, y = r.Y + 30 * s;
         if (invite)

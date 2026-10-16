@@ -97,16 +97,22 @@ public sealed partial class Hud
         if (PoliticsTab == 0)
         {
             // Overview sub-tabs: the chamber summary, or the individual seats
-            int subs = P.PopsEnabled ? 3 : 2;
+            var subIds = new List<int> { 0 };
+            if (SeatsTabs) subIds.Add(1);
+            if (P.PopsEnabled) subIds.Add(2);
+            int subs = subIds.Count;
             float sw = (w - (subs - 1) * 4 * S) / subs;
             string[] subNames = { "Chamber", "Seats", "People" };
             string[] subTips = { "Parties, the seat chart and what needs attention.", "Every seat: who holds it, for which party and province, and until when.",
                 "What the people think: opinion, unrest, objectives and how they shift the vote." };
-            if (_overviewSub >= subs) _overviewSub = 0;
-            for (int i = 0; i < subs; i++)
-                if (Gui.Button(new Rectangle(x + i * (sw + 4 * S), y, sw, 26 * S), subNames[i], true, subTips[i], _overviewSub == i, 14))
-                    _overviewSub = i;
-            y += 31 * S;
+            if (!subIds.Contains(_overviewSub)) _overviewSub = 0;
+            if (subs > 1)
+            {
+                for (int i = 0; i < subs; i++)
+                    if (Gui.Button(new Rectangle(x + i * (sw + 4 * S), y, sw, 26 * S), subNames[subIds[i]], true, subTips[subIds[i]], _overviewSub == subIds[i], 14))
+                        _overviewSub = subIds[i];
+                y += 31 * S;
+            }
             if (_overviewSub == 1) { DrawParliamentTab(player, r, x, y, w); return; }
             if (_overviewSub == 2) { DrawPeopleTab(player, r, x, y, w); return; }
         }
