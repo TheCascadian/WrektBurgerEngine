@@ -48,6 +48,8 @@ public static partial class Program
                 "parliament-test" => ParliamentTest(rest),
                 "validate" => Validate(rest),
                 "validate-par" => ValidatePar(rest),
+                "relay-test" => RelayTest(),
+                "link-test" => LinkTest(),
                 "mp-test" => MultiplayerTest(rest),
                 "sec-test" => SecurityTest(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
