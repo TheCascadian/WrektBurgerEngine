@@ -138,7 +138,12 @@ public sealed class FigureSystem
         foreach (var (key, (body, pieces)) in _outfits)
         {
             if (!_models.TryGetValue(body, out var b)) continue;
-            _models[key] = SoldierGear.Compose(key, b, pieces.Select(p => _models.GetValueOrDefault(p) ?? (SoldierGear.Fallback(p) is { } fb ? _models.GetValueOrDefault(fb) : null)).OfType<FigureModel>());
+            var parts = pieces.Select(p => _models.GetValueOrDefault(p) ?? (SoldierGear.Fallback(p) is { } fb ? _models.GetValueOrDefault(fb) : null)).OfType<FigureModel>().ToList();
+            // a country's own weapon or shield (gear_spear_<tag>.glb, gear_shield_<tag>.glb) is carried on top of the kit when the file exists
+            if (key.StartsWith(SoldierGear.Soldier + "_", StringComparison.OrdinalIgnoreCase))
+                foreach (string extra in new[] { "gear_spear", "gear_shield" })
+                    if (_models.GetValueOrDefault(extra + key[SoldierGear.Soldier.Length..]) is { } e) parts.Add(e);
+            _models[key] = SoldierGear.Compose(key, b, parts);
         }
     }
 

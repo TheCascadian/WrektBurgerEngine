@@ -23,12 +23,17 @@ public static class SoldierGear
     {
         var keys = new List<string> { Boots };
         if (u.Puttees != null) keys.Add(Puttees);
-        keys.AddRange(new[] { Trousers, Tunic, Belt, Pack, u.Rifle == SemiAuto ? RifleSemi : Rifle, Helmet });
+        keys.AddRange(new[] { Trousers, Tunic, Belt });
+        if (u.Rifle != None) keys.AddRange(new[] { Pack, u.Rifle == SemiAuto ? RifleSemi : Rifle }); // no firearm or pack for ancient armies
+        keys.Add(Helmet);
         return keys.Select(k => k + suffix).ToArray();
     }
 
     /// <summary>Value of <see cref="Uniform.Rifle"/> for the second rifle type, a self-loading rifle. Anything else (or null) is the basic bolt-action rifle.</summary>
     public const string SemiAuto = "semi";
+
+    /// <summary>Value of <see cref="Uniform.Rifle"/> for armies without firearms: the kit has neither rifle nor pack.</summary>
+    public const string None = "none";
 
     /// <summary>The piece an outfit falls back on when the one it asks for does not exist: the second rifle type to the basic rifle of the same country.</summary>
     public static string? Fallback(string key) => key.StartsWith(RifleSemi, StringComparison.OrdinalIgnoreCase) ? Rifle + key[RifleSemi.Length..] : null;

@@ -84,6 +84,9 @@ public static class Uniforms
         // sand khaki, crested helmet
         ["MEX"] = new(new(0.52f, 0.45f, 0.30f), new(0.49f, 0.43f, 0.29f), new(0.28f, 0.18f, 0.10f), new(0.40f, 0.34f, 0.22f),
             new(0.40f, 0.38f, 0.25f), HeadgearStyle.Adrian, new(0.42f, 0.38f, 0.26f), new(0.48f, 0.42f, 0.30f)),
+        // saffron tunic, brown leather, soft cloth cap (Achaemenid; gfx/models can replace each piece with gear_*_ach.glb)
+        ["ACH"] = new(new(0.85f, 0.60f, 0.13f), new(0.45f, 0.30f, 0.20f), new(0.28f, 0.17f, 0.10f), new(0.44f, 0.23f, 0.17f),
+            new(0.45f, 0.30f, 0.20f), HeadgearStyle.SoftCap, new(0.36f, 0.35f, 0.24f), new(0.40f, 0.36f, 0.25f), Rifle: SoldierGear.None, BootKind: BootKind.Soft),
         // green-olive, crested helmet
         ["BRA"] = new(new(0.40f, 0.43f, 0.25f), new(0.36f, 0.40f, 0.24f), new(0.24f, 0.15f, 0.09f), new(0.32f, 0.31f, 0.20f),
             new(0.32f, 0.38f, 0.24f), HeadgearStyle.Adrian, new(0.34f, 0.37f, 0.22f), new(0.40f, 0.38f, 0.26f)),
