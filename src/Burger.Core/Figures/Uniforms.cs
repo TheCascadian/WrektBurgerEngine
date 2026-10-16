@@ -119,6 +119,16 @@ public static class Uniforms
         return candidates.FirstOrDefault(c => c != null && model.Clips.ContainsKey(c)) ?? clip;
     }
 
+    /// <summary>
+    /// The melee attacks a soldier may use in battle: every <c>attack_*</c> clip of a model whose gear has no firearm (empty for a soldier with a firearm or a bare body).
+    /// Soldiers pick one of them at random each time they start an attack, until troop doctrines let the player choose.
+    /// </summary>
+    public static List<string> MeleeClips(FigureModel model)
+    {
+        if (model.Parts.Count == 0 || model.Parts.Any(IsFirearm)) return new List<string>();
+        return model.Clips.Keys.Where(k => k.StartsWith(HumanMale.Attack + "_", StringComparison.OrdinalIgnoreCase)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+    }
+
     /// <summary>Words in a gear piece's name that mark a firearm.</summary>
     private static readonly string[] FirearmWords = { "rifle", "musket", "carbine", "pistol", "revolver", "handgun", "shotgun", "smg", "machinegun", "machine_gun", "arquebus", "blunderbuss", "flintlock", "matchlock", "firearm", "cannon", "mortar", "bazooka", "launcher", "sniper", "mauser", "garand", "kalashnikov", "ak47", "gun", "guns", "lmg", "mg" };
 

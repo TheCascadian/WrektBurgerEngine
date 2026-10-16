@@ -46,6 +46,8 @@ public sealed class MapFigures : IDisposable
         public bool Walking;
         public int Seen;
         public readonly List<ClipEvent> Events = new();
+        public readonly Random Rng = new();
+        public string? Attack;   // the melee attack being played in this fight
     }
     private readonly Dictionary<Division, Stand> _stands = new();
 
@@ -169,7 +171,21 @@ public sealed class MapFigures : IDisposable
             }
             else
             {
-                stand.Animator.Play(tank ? LightTank.Aim : first.Battle != null && model.Clips.ContainsKey(HumanMale.Fire) ? Uniforms.ClipFor(first.Owner.Tag, HumanMale.Fire, model) : StandingGag == HumanMale.Fire ? Uniforms.ClipFor(first.Owner.Tag, HumanMale.Fire, model) : StandingGag != null && model.Clips.ContainsKey(StandingGag) ? StandingGag : HumanMale.Idle, 0.4f); // standing: soldiers shift and look about, tanks sweep the turret
+                // soldiers without a firearm pick one of their melee attacks at random, and another each time one has finished
+                string? melee = null;
+                if (!tank && first.Battle != null && Uniforms.MeleeClips(model) is { Count: > 0 } attacks)
+                {
+                    var cur = stand.Animator.Current;
+                    bool done = cur != null && attacks.Contains(cur.Name) && stand.Animator.Time >= cur.Duration;
+                    if (stand.Attack == null || !attacks.Contains(stand.Attack) || done)
+                    {
+                        stand.Attack = attacks[stand.Rng.Next(attacks.Count)];
+                        if (done && cur!.Name == stand.Attack) stand.Animator.Time = 0;
+                    }
+                    melee = stand.Attack;
+                }
+                else stand.Attack = null;
+                stand.Animator.Play(melee ?? (tank ? LightTank.Aim : first.Battle != null && model.Clips.ContainsKey(HumanMale.Fire) ? Uniforms.ClipFor(first.Owner.Tag, HumanMale.Fire, model) : StandingGag == HumanMale.Fire ? Uniforms.ClipFor(first.Owner.Tag, HumanMale.Fire, model) : StandingGag != null && model.Clips.ContainsKey(StandingGag) ? StandingGag : HumanMale.Idle), 0.4f); // standing: soldiers shift and look about, tanks sweep the turret
                 // a battle does not last long: the drill plays faster than the idle's pace so a soldier gets through it before the fight is decided
                 stand.Animator.Rate = !tank && first.Battle != null ? CombatRate : 1f;
             }
