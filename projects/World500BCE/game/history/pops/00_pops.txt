@@ -1075,26 +1075,54 @@ danube_and_carpathians_1 = {
 	pop = { culture = thracian religion = thracian_religion type = clergy size = 3807 }
 	pop = { culture = thracian religion = thracian_religion type = artisans size = 7615 }
 }
-greek_mainland_and_aegean_m9_1 = {
-	pop = { culture = greek religion = hellenic_religion type = farmers size = 122634 }
-	pop = { culture = greek religion = hellenic_religion type = artisans size = 67448 }
-	pop = { culture = greek religion = hellenic_religion type = nobles size = 15329 }
-	pop = { culture = greek religion = hellenic_religion type = clergy size = 9197 }
-	pop = { culture = greek religion = hellenic_religion type = slaves size = 91975 }
+attica_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 39242 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 21583 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 4905 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 2943 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 29432 }
 }
-greek_mainland_and_aegean_m9_2 = {
+laconia_and_messenia_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 41940 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 13980 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 5825 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 2330 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 52425 }
+}
+corinthia_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 18395 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 10117 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 2299 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 1379 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 13796 }
+}
+argolis_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 18395 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 10117 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 2299 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 1379 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 13796 }
+}
+aetolia_and_acarnania_1 = {
 	pop = { culture = greek religion = hellenic_religion type = farmers size = 57536 }
 	pop = { culture = greek religion = hellenic_religion type = artisans size = 31644 }
 	pop = { culture = greek religion = hellenic_religion type = nobles size = 7192 }
 	pop = { culture = greek religion = hellenic_religion type = clergy size = 4315 }
 	pop = { culture = greek religion = hellenic_religion type = slaves size = 43152 }
 }
-greek_mainland_and_aegean_m9_3 = {
-	pop = { culture = greek religion = hellenic_religion type = farmers size = 81942 }
-	pop = { culture = greek religion = hellenic_religion type = artisans size = 45068 }
-	pop = { culture = greek religion = hellenic_religion type = nobles size = 10242 }
-	pop = { culture = greek religion = hellenic_religion type = clergy size = 6145 }
-	pop = { culture = greek religion = hellenic_religion type = slaves size = 61456 }
+thessaly_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 40971 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 22534 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 5121 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 3072 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 30728 }
+}
+boeotia_and_phocis_1 = {
+	pop = { culture = greek religion = hellenic_religion type = farmers size = 40971 }
+	pop = { culture = greek religion = hellenic_religion type = artisans size = 22534 }
+	pop = { culture = greek religion = hellenic_religion type = nobles size = 5121 }
+	pop = { culture = greek religion = hellenic_religion type = clergy size = 3072 }
+	pop = { culture = greek religion = hellenic_religion type = slaves size = 30728 }
 }
 greek_mainland_and_aegean_m111_1 = {
 	pop = { culture = greek religion = hellenic_religion type = farmers size = 2709 }

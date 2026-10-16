@@ -1860,8 +1860,8 @@ southern_italy_interior_1 = {
 }
 magna_graecia_1 = {
 	name = "Magna Graecia"
-	owner = GRK
-	cores = { GRK }
+	owner = CRO
+	cores = { CRO }
 	manpower = 10
 	tax = 1.3
 	locations = { land_08888 land_02026 land_02751 land_08058 land_03204 land_00784 }
@@ -1871,8 +1871,8 @@ magna_graecia_1 = {
 }
 eastern_sicily_1 = {
 	name = "Eastern Sicily"
-	owner = GRK
-	cores = { GRK }
+	owner = SYR
+	cores = { SYR }
 	manpower = 4
 	tax = 0.8
 	locations = { land_09005 land_00303 land_01952 }
@@ -1946,21 +1946,52 @@ danube_and_carpathians_1 = {
 	tax = 1.3
 	locations = { land_05930 land_03655 land_01703 land_05441 land_06544 land_02137 land_01468 land_07255 land_04011 land_07749 land_04925 land_07297 land_00975 land_00066 land_08654 land_01834 land_03316 land_06971 land_00626 land_02818 land_04900 land_04231 land_08357 }
 }
-greek_mainland_and_aegean_m9_1 = {
-	name = "Greek mainland and Aegean 1"
-	owner = GRK
-	cores = { GRK }
-	manpower = 15
-	tax = 1.7
-	locations = { land_01113 land_08799 land_05412 land_15915 land_05800 land_03562 }
+attica_1 = {
+	name = "Attica"
+	owner = ATH
+	cores = { ATH }
+	manpower = 4
+	tax = 0.6
+	locations = { land_01113 land_15915 }
 	buildings = {
 		naval_base = 1
 	}
 }
-greek_mainland_and_aegean_m9_2 = {
-	name = "Greek mainland and Aegean 2"
-	owner = GRK
-	cores = { GRK }
+laconia_and_messenia_1 = {
+	name = "Laconia and Messenia"
+	owner = SPA
+	cores = { SPA }
+	manpower = 5
+	tax = 0.5
+	locations = { land_05800 land_03562 }
+	buildings = {
+		naval_base = 1
+	}
+}
+corinthia_1 = {
+	name = "Corinthia"
+	owner = COR
+	cores = { COR }
+	manpower = 3
+	tax = 0.3
+	locations = { land_05412 }
+	buildings = {
+		naval_base = 1
+	}
+}
+argolis_1 = {
+	name = "Argolis"
+	owner = ARG
+	cores = { ARG }
+	manpower = 3
+	tax = 0.3
+	locations = { land_08799 }
+	buildings = {
+		naval_base = 1
+	}
+}
+aetolia_and_acarnania_1 = {
+	name = "Aetolia and Acarnania"
 	manpower = 7
 	tax = 1.1
 	locations = { land_02732 land_00504 land_08389 }
@@ -1968,21 +1999,32 @@ greek_mainland_and_aegean_m9_2 = {
 		naval_base = 1
 	}
 }
-greek_mainland_and_aegean_m9_3 = {
-	name = "Greek mainland and Aegean 3"
-	owner = GRK
-	cores = { GRK }
-	manpower = 10
-	tax = 1.3
-	locations = { land_08335 land_09076 land_07184 land_04217 }
+thessaly_1 = {
+	name = "Thessaly"
+	owner = THS
+	cores = { THS }
+	manpower = 5
+	tax = 0.65
+	locations = { land_08335 land_09076 }
+	buildings = {
+		naval_base = 1
+	}
+}
+boeotia_and_phocis_1 = {
+	name = "Boeotia and Phocis"
+	owner = THB
+	cores = { THB }
+	manpower = 5
+	tax = 0.65
+	locations = { land_07184 land_04217 }
 	buildings = {
 		naval_base = 1
 	}
 }
 greek_mainland_and_aegean_m111_1 = {
-	name = "Greek mainland and Aegean"
-	owner = GRK
-	cores = { GRK }
+	name = "Lemnos and the North Aegean"
+	owner = NAX
+	cores = { NAX }
 	manpower = 1
 	tax = 0.5
 	locations = { land_15908 }
@@ -1991,9 +2033,9 @@ greek_mainland_and_aegean_m111_1 = {
 	}
 }
 greek_mainland_and_aegean_m117_1 = {
-	name = "Greek mainland and Aegean"
-	owner = GRK
-	cores = { GRK }
+	name = "Ionian Islands"
+	owner = COR
+	cores = { COR }
 	manpower = 1
 	tax = 0.5
 	locations = { land_06880 }
@@ -2002,9 +2044,9 @@ greek_mainland_and_aegean_m117_1 = {
 	}
 }
 greek_mainland_and_aegean_m122_1 = {
-	name = "Greek mainland and Aegean"
-	owner = GRK
-	cores = { GRK }
+	name = "Cyclades"
+	owner = NAX
+	cores = { NAX }
 	manpower = 1
 	tax = 0.6
 	locations = { land_15916 land_15917 }
@@ -2013,9 +2055,9 @@ greek_mainland_and_aegean_m122_1 = {
 	}
 }
 greek_mainland_and_aegean_m125_1 = {
-	name = "Greek mainland and Aegean"
-	owner = GRK
-	cores = { GRK }
+	name = "Crete"
+	owner = CRT
+	cores = { CRT }
 	manpower = 4
 	tax = 0.8
 	locations = { land_15921 land_15919 land_15920 }
@@ -2036,8 +2078,8 @@ macedon_and_epirus_1 = {
 }
 black_sea_greek_coast_1 = {
 	name = "Black Sea Greek coast"
-	owner = GRK
-	cores = { GRK }
+	owner = PNT
+	cores = { PNT }
 	manpower = 1
 	tax = 0.6
 	locations = { land_07952 land_08396 land_07007 }

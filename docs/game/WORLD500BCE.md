@@ -3,7 +3,7 @@
 `projects/WrektMap` is the REAL 500 BCE scenario, copied from `World500Test` (which stays unchanged).
 
 - 965 states: clusters of land locations per people and landmass. Names are placeholders. Some land is left without a state; an owner is not required.
-- 10 countries (ACH, GRK, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO). Other states are unowned (tribal peoples). `default_country = ACH`.
+- 20 countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the Greek city-states ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT). Other states are unowned (tribal peoples). `default_country = ACH`.
 - 113 cultures, 59 religions, 7 social classes. Starting people: 149.2M.
 - Features: `population`, `religion`, `social_classes`, `cores_claims`.
 
@@ -11,7 +11,7 @@
 - Totals and densities are my own design estimates in people per km2, not sourced census data.
 - Region shapes are my own lon/lat geometry. Reference maps (see `docs/SOURCES/maps-500bce/`) supplied facts only; no geometry was copied.
 - Land outside a painted region takes the nearest region's people at 60% density, within 25 degrees.
-- One country stands for each large power; the Greek poleis are a single placeholder country.
+- One country stands for each large power; the Greek poleis are one country each (see docs/countries-500bce.md).
 - The political map and Reddit screenshots are not stored; the licenses of several references are unverified.
 
 ## The `World500BCE` project: no south pole

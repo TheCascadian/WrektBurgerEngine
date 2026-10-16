@@ -7,10 +7,60 @@ ACH = {
 	popularity = { neutrality = 45 fascist = 30 democratic = 15 communist = 10 }
 	laws = { political_parties = restricted_parties }
 }
-GRK = {
+ATH = {
 	ruling_party = democratic
-	popularity = { democratic = 38 neutrality = 22 fascist = 22 communist = 18 }
+	popularity = { democratic = 40 neutrality = 22 fascist = 20 communist = 18 }
 	laws = { political_parties = multi_party }
+}
+SPA = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 fascist = 40 democratic = 6 communist = 10 }
+	laws = { political_parties = restricted_parties }
+}
+COR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 democratic = 26 fascist = 14 communist = 16 }
+	laws = { political_parties = restricted_parties }
+}
+ARG = {
+	ruling_party = democratic
+	popularity = { democratic = 36 neutrality = 28 fascist = 22 communist = 14 }
+	laws = { political_parties = multi_party }
+}
+THB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 46 fascist = 28 democratic = 14 communist = 12 }
+	laws = { political_parties = restricted_parties }
+}
+THS = {
+	ruling_party = neutrality
+	popularity = { neutrality = 50 fascist = 28 democratic = 8 communist = 14 }
+	laws = { political_parties = restricted_parties }
+}
+CRT = {
+	ruling_party = neutrality
+	popularity = { neutrality = 42 fascist = 32 democratic = 14 communist = 12 }
+	laws = { political_parties = restricted_parties }
+}
+NAX = {
+	ruling_party = democratic
+	popularity = { democratic = 38 neutrality = 32 fascist = 12 communist = 18 }
+	laws = { political_parties = multi_party }
+}
+CRO = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 democratic = 24 fascist = 18 communist = 14 }
+	laws = { political_parties = restricted_parties }
+}
+SYR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 46 fascist = 24 democratic = 12 communist = 18 }
+	laws = { political_parties = restricted_parties }
+}
+PNT = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 democratic = 26 fascist = 14 communist = 16 }
+	laws = { political_parties = restricted_parties }
 }
 MAC = {
 	ruling_party = neutrality

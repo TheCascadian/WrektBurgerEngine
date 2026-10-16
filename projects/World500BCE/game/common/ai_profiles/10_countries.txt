@@ -3,35 +3,52 @@ persia = {
 	countries = { ACH }
 	parent = expansionist
 	desc = "A vast empire that wants Greece, Egypt and the steppe."
-	rivals = { GRK = 2 MAC = 1 }
-	want = { GRK = 2.5 MAC = 2 IND = 1.5 NUB = 1.5 }
-	timing = { GRK = -499 MAC = -498 }
+	rivals = { ATH = 2 SPA = 1 MAC = 1 }
+	want = { ATH = 2.5 SPA = 1.5 THB = 1 NAX = 2 MAC = 2 IND = 1.5 NUB = 1.5 }
+	timing = { NAX = -500 ATH = -499 SPA = -497 MAC = -498 }
 }
-greece = {
-	countries = { GRK }
+athens = {
+	countries = { ATH }
 	parent = defensive
-	desc = "Citizen states that fear the Great King."
-	rivals = { ACH = 2.5 CAR = 1 }
-	friends = { MAC = 2 }
+	desc = "A young democracy that fears the Great King and its neighbors."
+	rivals = { ACH = 2.5 THB = 1 CAR = 0.5 }
+	friends = { NAX = 1 }
+}
+sparta = {
+	countries = { SPA }
+	parent = status_quo
+	desc = "A land power that watches its helots and leads the Peloponnesian League."
+	rivals = { ARG = 2 ATH = 0.5 ACH = 1 }
+	friends = { COR = 2 }
+}
+greek_cities = {
+	countries = { COR ARG THB THS CRT NAX CRO PNT }
+	parent = defensive
+	desc = "Independent cities and leagues that mostly want to be left alone."
+	rivals = { ACH = 1 }
+}
+syracuse = {
+	countries = { SYR }
+	parent = status_quo
+	desc = "Sicilian Greeks facing Carthage across the sea."
+	rivals = { CAR = 2 }
 }
 macedon = {
 	countries = { MAC }
 	parent = aggressive
 	desc = "A rising kingdom with a warrior nobility."
 	rivals = { ACH = 1 }
-	want = { GRK = 2 }
-	timing = { GRK = -490 }
+	want = { THS = 2 }
+	timing = { THS = -490 }
 }
 carthage = {
 	countries = { CAR }
 	parent = imperial
 	desc = "A trading power of ships."
-	rivals = { GRK = 1.5 }
+	rivals = { SYR = 1.5 CRO = 0.5 }
 }
 china = {
-	countries = { ZHO CHV }
+	countries = { ZHO }
 	parent = aggressive
 	desc = "Warring states of the east."
-	rivals = { CHV = 2 ZHO = 2 }
-	want = { CHV = 2 ZHO = 2 }
 }

@@ -7,10 +7,71 @@ ACH = {
 		division = { template = infantry_division location = land_07110 count = 24 }
 	}
 }
-GRK = {
+ATH = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_01113 count = 3 }
+		division = { template = infantry_division location = land_01113 count = 1 }
+	}
+}
+SPA = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_05800 count = 2 }
+	}
+}
+COR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_05412 count = 1 }
+	}
+}
+ARG = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08799 count = 1 }
+	}
+}
+THB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07184 count = 1 }
+	}
+}
+THS = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_09076 count = 1 }
+		division = { template = cavalry_division location = land_09076 count = 1 }
+	}
+}
+CRT = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_15921 count = 1 }
+	}
+}
+NAX = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_15916 count = 1 }
+	}
+}
+CRO = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08888 count = 1 }
+	}
+}
+SYR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01952 count = 1 }
+	}
+}
+PNT = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07007 count = 1 }
 	}
 }
 MAC = {

@@ -8,11 +8,101 @@ ACH = {
 	gold = 100
 	manpower = 10000
 }
-GRK = {
-	name = "Greek Poleis"
+ATH = {
+	name = "Athens"
 	color = { 70 120 200 }
 	capital = land_01113
 	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+SPA = {
+	name = "Sparta"
+	color = { 170 40 50 }
+	capital = land_05800
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+COR = {
+	name = "Corinth"
+	color = { 90 170 225 }
+	capital = land_05412
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+ARG = {
+	name = "Argos"
+	color = { 55 85 160 }
+	capital = land_08799
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+THB = {
+	name = "Thebes"
+	color = { 150 110 200 }
+	capital = land_07184
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+THS = {
+	name = "Thessaly"
+	color = { 100 190 170 }
+	capital = land_09076
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+CRT = {
+	name = "Crete"
+	color = { 80 150 120 }
+	capital = land_15921
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+NAX = {
+	name = "Naxos and the Cyclades"
+	color = { 130 200 235 }
+	capital = land_15916
+	culture = greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+CRO = {
+	name = "Croton and Italiote Greeks"
+	color = { 110 130 190 }
+	capital = land_08888
+	culture = western_greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+SYR = {
+	name = "Syracuse and Eastern Sicily"
+	color = { 190 160 225 }
+	capital = land_01952
+	culture = western_greek
+	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
+}
+PNT = {
+	name = "Pontic Greek Cities"
+	color = { 120 145 95 }
+	capital = land_07007
+	culture = pontic_greek
 	religion = hellenic_religion
 	gold = 100
 	manpower = 10000

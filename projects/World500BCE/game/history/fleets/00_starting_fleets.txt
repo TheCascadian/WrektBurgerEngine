@@ -9,11 +9,32 @@ ACH = {
 		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
 	}
 }
-GRK = {
+ATH = {
 	fleet = {
 		name = "Home Fleet"
 		location = land_01113
-		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+		ships = { transport = 2 }
+	}
+}
+COR = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_05412
+		ships = { transport = 2 }
+	}
+}
+NAX = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_15916
+		ships = { transport = 2 }
+	}
+}
+SYR = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_01952
+		ships = { transport = 2 }
 	}
 }
 MAC = {
