@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Cultural traditions"
+category = "Population"
+order = 36
+description = "Every culture has three traditions (common/traditions) named in common/cultures with traditions = { a b c }; their modifiers reach a country in proportion to the people of each culture. Two cultures that share a state for 50 years (each with at least 30% of it) merge into a new culture with half of each parent's traditions."
+requires = { population }

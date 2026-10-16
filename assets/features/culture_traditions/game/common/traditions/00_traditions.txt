@@ -1,0 +1,39 @@
+# Traditions (culture_traditions feature). A culture names three of them in common/cultures: traditions = { a b c }
+# (a culture group may name defaults for its cultures). Modifiers reach a country in proportion to its people of that culture.
+#   name / desc / modifier = { income = 0.05 attack = 0.04 ... }   any modifier key; a hybrid culture gets half of each parent's
+horse_lords = { name = "Horse Lords" desc = "Boys ride before they walk." modifier = { speed = 0.10 attack = 0.04 } }
+mounted_archery = { name = "Mounted Archery" desc = "The bow is shot from the saddle." modifier = { attack = 0.05 speed = 0.06 } }
+phalanx_discipline = { name = "Phalanx Discipline" desc = "Citizens drill shoulder to shoulder." modifier = { defense = 0.08 org_recovery = 0.05 } }
+citizen_soldiers = { name = "Citizen Soldiers" desc = "Every free man owns a spear and a share in the city." modifier = { manpower = 0.08 upkeep = -0.03 } }
+warrior_aristocracy = { name = "Warrior Aristocracy" desc = "The noble is first of all a fighter." modifier = { attack = 0.06 stability_target = -1 } }
+mountain_clans = { name = "Mountain Clans" desc = "Every valley is a fortress." modifier = { defense = 0.06 manpower = 0.04 } }
+hill_forts = { name = "Hill Forts" desc = "Ringed ramparts crown the hills." modifier = { defense = 0.07 } }
+forest_ambush = { name = "Forest Ambush" desc = "War bands strike from the trees." modifier = { attack = 0.03 defense = 0.03 speed = 0.05 } }
+farmer_militia = { name = "Farmer Militia" desc = "The plough and the spear hang by the same door." modifier = { manpower = 0.07 production = 0.02 } }
+clan_loyalty = { name = "Clan Loyalty" desc = "Kin stand together." modifier = { manpower = 0.05 stability_target = 1 } }
+expansionist_drive = { name = "Expansionist Drive" desc = "A people that always wants more land." modifier = { attack = 0.04 war_exhaustion_gain = -0.10 } }
+metalworking_craft = { name = "Metalworking Craft" desc = "Smiths are honoured above kings." modifier = { production = 0.05 army_quality = 0.04 } }
+seafaring_merchants = { name = "Seafaring Merchants" desc = "Ships and cargo make the wealth." modifier = { income = 0.06 relations = 1 } }
+trading_posts = { name = "Trading Posts" desc = "Factories on foreign shores." modifier = { income = 0.05 opinion = 3 } }
+caravan_trade = { name = "Caravan Trade" desc = "Camels carry goods from sea to sea." modifier = { income = 0.05 speed = 0.03 } }
+river_irrigation = { name = "River Irrigation" desc = "Canals turn silt into harvests." modifier = { pop_growth = 0.002 pop_capacity = 0.08 } }
+river_kingship = { name = "River Kingship" desc = "The flood obeys the king." modifier = { income = 0.04 pop_capacity = 0.05 } }
+rice_farming = { name = "Rice Farming" desc = "Paddies feed dense villages." modifier = { pop_capacity = 0.12 pop_growth = 0.002 } }
+pastoral_herds = { name = "Pastoral Herds" desc = "Wealth is counted in cattle." modifier = { manpower = 0.06 pop_growth = 0.001 } }
+temple_economy = { name = "Temple Economy" desc = "The god's granary pays the people." modifier = { income = 0.04 stability_target = 1 conversion = 0.10 } }
+scribal_tradition = { name = "Scribal Tradition" desc = "Records are kept and schools are open." modifier = { research_speed = 0.08 development_cost = -0.05 } }
+priestly_scholars = { name = "Priestly Scholars" desc = "Learning lives in the sanctuary." modifier = { research_speed = 0.06 conversion = 0.10 } }
+sacred_kingship = { name = "Sacred Kingship" desc = "The ruler is the link to the gods." modifier = { stability_target = 3 political_power_gain = 0.03 } }
+imperial_mandate = { name = "Imperial Mandate" desc = "Heaven grants the right to rule." modifier = { stability_target = 3 corruption_gain = -0.03 } }
+tribal_assemblies = { name = "Tribal Assemblies" desc = "The free men decide in the open." modifier = { political_power_gain = 0.05 } }
+rhetoric_and_debate = { name = "Rhetoric and Debate" desc = "Argument is the art of the citizen." modifier = { political_power_gain = 0.06 research_speed = 0.02 } }
+lawgivers = { name = "Lawgivers" desc = "Sages write down the customs." modifier = { stability_target = 2 corruption_gain = -0.04 } }
+oral_law = { name = "Oral Law" desc = "Elders recite the law by heart." modifier = { stability_target = 2 assimilation = 0.10 } }
+ancestor_cult = { name = "Ancestor Cult" desc = "The dead watch over the living." modifier = { stability_target = 2 pop_growth = 0.001 } }
+caste_order = { name = "Caste Order" desc = "Every birth has its place." modifier = { stability_target = 3 assimilation = -0.05 } }
+hospitable_customs = { name = "Hospitable Customs" desc = "The stranger is a guest." modifier = { assimilation = 0.15 opinion = 4 } }
+isolationist = { name = "Isolationist" desc = "Foreigners are kept at the border." modifier = { defense = 0.04 stability_target = 2 assimilation = -0.10 } }
+city_state_pride = { name = "City-State Pride" desc = "Each town is a country of its own." modifier = { defense = 0.05 stability_target = 2 manpower = 0.04 } }
+desert_endurance = { name = "Desert Endurance" desc = "Few things frighten people who live on sand." modifier = { defense = 0.05 upkeep = -0.04 speed = 0.02 } }
+forest_foragers = { name = "Forest Foragers" desc = "They know every trail and berry." modifier = { defense = 0.05 upkeep = -0.05 } }
+sacred_groves = { name = "Sacred Groves" desc = "Priests keep the old woods." modifier = { conversion = 0.15 stability_target = 1 } }

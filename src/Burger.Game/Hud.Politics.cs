@@ -11,6 +11,7 @@ namespace Burger.Runtime;
 public sealed partial class Hud
 {
     public int PoliticsTab;
+    private int _politicsTabRows = 1;
 
     /// <summary>The country the Politics panel shows: the player, or in observe_ui mode the selected country.</summary>
     private Country? PoliticsSubject => G.World.Player ?? (Ui.ObserveUi && Ui.SelectedCountry is { Exists: true } sc ? sc : null);
@@ -71,29 +72,51 @@ public sealed partial class Hud
         Gui.Panel(r, G.World.Player == null ? $"Politics · {player.Name} (observing)" : SubNavH > 0 ? "" : "Politics");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 6 * S, w = r.Width - 24 * S;
-        var tabs = new List<(string Name, string Label, int Id, string Icon)>
-        {
-            ("Overview", "Overview", 0, "ui_overview"), ("Parties", "Parties", 4, "politics_organization"),
-        };
-        if (P.LawsEnabled) tabs.Add(("Laws", "Laws", 1, "ui_laws"));
+        bool assembly = P.HasAssembly(player);
+        bool own = G.World.Player == player;
+        if (!assembly && PoliticsTab == 4) PoliticsTab = 0;
+        if (PoliticsTab == 7 || !own && PoliticsTab == 8) PoliticsTab = PoliticsTab == 7 ? 1 : 0;
+        var tabs = new List<(string Name, string Label, int Id, string Icon)> { ("Overview", "Overview", 0, "ui_overview") };
+        if (assembly) tabs.Add(("Parties", "Parties", 4, "politics_organization"));
+        if (P.LawsEnabled || own && G.Reforms.Enabled) tabs.Add((own && G.Reforms.Enabled ? "Laws, reforms, national ideas and corruption" : "Laws", "Laws", 1, "ui_laws"));
         if (P.CabinetEnabled) tabs.Add(("Cabinet", "Cabinet", 2, "ui_cabinet"));
         if (P.CivilWarsEnabled && (PoliticsTab == 3 || P.MovementsOf(player).Any())) tabs.Add(("Movements", "Movements", 3, "ui_movements"));
+        if (own && (G.Succession.Enabled || G.Dynasties.Enabled)) tabs.Add(("Succession law, heirs and the dynasty", "Heirs", 8, "ui_cabinet"));
         tabs.Add(("Effects", "Effects", 6, "ui_effects"));
-        float tabGap = 4 * S, tabW = (w - (tabs.Count - 1) * tabGap) / tabs.Count, tabH = 32 * S;
+        // tabs keep their icon and full label: when they do not fit one row they wrap onto another
+        float tabGap = 4 * S, tabH = 32 * S;
+        var natural = tabs.Select(t => (Gui.HasIcon(t.Icon) ? 22 * S : 0) + Gui.Measure(t.Label, 13, FontKind.Bold).X + 16 * S).ToList();
+        var rowsOfTabs = new List<List<int>> { new() };
+        float rowW = 0;
         for (int i = 0; i < tabs.Count; i++)
         {
+            if (rowsOfTabs[^1].Count > 0 && rowW + natural[i] + tabGap > w) { rowsOfTabs.Add(new()); rowW = 0; }
+            rowsOfTabs[^1].Add(i);
+            rowW += natural[i] + tabGap;
+        }
+        _politicsTabRows = rowsOfTabs.Count;
+        for (int row = 0; row < rowsOfTabs.Count; row++)
+        {
+            var ids = rowsOfTabs[row];
+            float spare = (w - ids.Sum(i => natural[i]) - (ids.Count - 1) * tabGap) / ids.Count; // the room left is shared out
+            float tx = x;
+            foreach (int i in ids)
+            {
             var tab = tabs[i];
-            var tr = new Rectangle(x + i * (tabW + tabGap), y, tabW, tabH);
+            var tr = new Rectangle(tx, y + row * (tabH + 5 * S), natural[i] + spare, tabH);
+            tx += tr.Width + tabGap;
             if (Gui.Button(tr, "", true, null, PoliticsTab == tab.Id, 10)) PoliticsTab = tab.Id;
-            float iconW = Gui.HasIcon(tab.Icon) && tr.Width > 70 * S ? 18 * S : 0;
+            float iconW = Gui.HasIcon(tab.Icon) ? 18 * S : 0;
             float textX = tr.X + 3 * S + iconW;
             float textW = tr.Width - 6 * S - iconW;
             if (iconW > 0) Gui.Icon(tab.Icon, new Rectangle(tr.X + 4 * S, tr.Y + (tr.Height - 18 * S) / 2, 18 * S, 18 * S));
             Gui.LabelCentered(Gui.Fit(tab.Label, textW, 13, FontKind.Bold), new Rectangle(textX, tr.Y, textW, tr.Height), 13,
                 PoliticsTab == tab.Id ? Color.White : Gui.Text, FontKind.Bold);
             if (Gui.Hover(tr)) Gui.Tooltip(tab.Name);
+            }
         }
-        y += 37 * S;
+        y += 37 * S + (rowsOfTabs.Count - 1) * (tabH + 5 * S);
+        if (PoliticsTab == 0 && !assembly) { DrawRulerOverview(player, r, x, y, w); return; }
         if (PoliticsTab == 0)
         {
             // Overview sub-tabs: the chamber summary, or the individual seats
@@ -123,6 +146,7 @@ public sealed partial class Hud
             case 3: DrawMovementsTab(player, r, x, y, w); break;
             case 4: DrawPartiesTab(player, r, x, y, w); break;
             case 6: DrawEffectsTab(player, r, x, y, w); break;
+            case 8: DrawSuccessionPage(player, r, x, y, w); break;
             default: DrawGovernmentTab(player, r, x, y, w); break;
         }
     }
@@ -133,15 +157,17 @@ public sealed partial class Hud
         float w = (470 - 24) * S;
         float body = PoliticsTab switch
         {
+            0 when !G.Politics.HasAssembly(c) => 420 * S,
+            8 => 3000 * S,
             0 => 31 * S + (_overviewSub == 2 ? PeopleBodyHeight() : _overviewSub == 1 ? 29 * S + ParliamentPageSize * 30 * S + 40 * S : PoliticsOverviewContentHeight(c, w)),
-            1 => 29 * S + Math.Max(24 * S, G.Politics.LawGroups.Where(g => G.Politics.IsGroupVisible(c, g)).Sum(g => LawGroupHeight(c, g, w))) + 12 * S,
+            1 => 29 * S + Math.Max(24 * S, G.Politics.LawGroups.Where(g => G.Politics.IsGroupVisible(c, g)).Sum(g => LawGroupHeight(c, g, w))) + 12 * S + ReformsHeightIn(c),
             2 => CabinetPanelBodyHeight(c),
             3 => MovementsPanelBodyHeight(c, w),
             4 => PartiesPanelBodyHeight(c),
             6 => EffectsPanelBodyHeight(c),
             _ => 220 * S,
         };
-        return Gui.HeaderHeight + 43 * S + body;
+        return Gui.HeaderHeight + 43 * S + (_politicsTabRows - 1) * 37 * S + body;
     }
     private float PartiesPanelBodyHeight(Country c)
     {
@@ -627,7 +653,7 @@ public sealed partial class Hud
         // the dot directly under the pointer gets its own ring and tooltip
         var hitSeat = pointerOverParliament && hoveredSeat.Seat != null ? hoveredSeat.Seat : null;
         if (pointerOverParliament && hoveredSeat.PartyKey != null && hoveredSeat.Pos != default)
-            Raylib.DrawRing(hoveredSeat.Pos, dot + 0.8f * S, dot + 2f * S, 0, 360, 36, new Color(255, 255, 255, 220));
+            Raylib.DrawRing(hoveredSeat.Pos, dot + 0.8f * S, dot + 0.8f * S + Math.Max(1.8f, 1.2f * S), 0, 360, 48, new Color(255, 255, 255, 220));
         string? emphasis = activeParty ?? listHoverKey;
 
         // Seats: a faint shadow under the party colour; the selected party gets a thin light ring.
@@ -639,7 +665,7 @@ public sealed partial class Hud
             if (!dimmed) Raylib.DrawCircleV(pos + new Vector2(0, dot * 0.12f), dot, new Color(0, 0, 0, 90));
             Raylib.DrawCircleV(pos, dot, col);
             if (selectedKey != null && !dimmed && string.Equals(selectedKey, key, StringComparison.OrdinalIgnoreCase))
-                Raylib.DrawRing(pos, dot + 0.5f * S, dot + 1.3f * S, 0, 360, 36, new Color(255, 244, 205, 150));
+                Raylib.DrawRing(pos, dot + 0.5f * S, dot + 0.5f * S + Math.Max(1.6f, 1.3f * S), 0, 360, 48, new Color(255, 244, 205, 190)); // never thinner than a pixel and a half, or it breaks into dashes when the UI is small
         }
 
         // The hollow of the arch carries one figure: government seats, tinted by whether that is a majority. The wording is in the tooltip.
@@ -1157,7 +1183,7 @@ public sealed partial class Hud
         if (Gui.Hover(help)) Gui.Tooltip("Hover a law to see its effects, cost and requirements. Select an available law to enact it.");
         y += 29 * S;
         var groups = P.LawGroups.Where(g => P.IsGroupVisible(c, g)).ToList();
-        float rowsH = groups.Sum(g => LawGroupHeight(c, g, w));
+        float rowsH = groups.Sum(g => LawGroupHeight(c, g, w)) + ReformsHeightIn(c);
         float top = Gui.BeginScroll($"politics-laws-{c.Tag}", new Rectangle(x, y, w, r.Bottom() - y - 9 * S), rowsH);
         float ly = top;
         foreach (var g in groups)
@@ -1197,8 +1223,8 @@ public sealed partial class Hud
                 var button = new Rectangle(bx, ly, bw, bh);
                 if (ActionButton(button, hasIcon ? "" : law.Name, isCurrent || reason == null, tip, isCurrent, 15) && !isCurrent)
                 {
-                    var err = P.Enact(c, law);
-                    if (err != null) Ui.SetStatus(err);
+                    var lawToEnact = law;
+                    Confirm($"Enact {lawToEnact.Name} ({lawToEnact.Group.Name}) for {P.EnactCost(c, lawToEnact):0} {P.PowerName}?", () => { var err = P.Enact(c, lawToEnact); if (err != null) Ui.SetStatus(err); });
                 }
                 if (hasIcon)
                 {
@@ -1208,6 +1234,11 @@ public sealed partial class Hud
                 bx += bw + 6 * S;
             }
             ly += bh + 10 * S;
+        }
+        if (G.World.Player == c && G.Reforms.Enabled)
+        {
+            float end = DrawGovernmentContent(c, x, ly + 4 * S, w - 10 * S);
+            _tabH["laws_reforms"] = end - ly + 8 * S;
         }
         if (groups.Count == 0) Gui.Label("No law groups are available.", x + 2 * S, ly + 2 * S, 14, Gui.TextDim);
         Gui.EndScroll();
@@ -1296,8 +1327,8 @@ public sealed partial class Hud
                     var reason = P.CannotAppoint(c, pos, candidate);
                     if (ActionButton(row, Gui.Fit(text, row.Width - 12 * S, 14), reason == null, reason ?? $"Appoint for {pos.Cost:0} {P.PowerName}" + (P.ExplainAppointment(c, pos, candidate) is { } why ? "\n" + why : ""), false, 14))
                     {
-                        var err = P.Appoint(c, pos, candidate);
-                        if (err != null) Ui.SetStatus(err); else _cabinetPick = null;
+                        var pickedMinister = candidate; var post = pos;
+                        Confirm($"Appoint {pickedMinister.DisplayName} for {post.Cost:0} {P.PowerName}?", () => { var err = P.Appoint(c, post, pickedMinister); if (err != null) Ui.SetStatus(err); else _cabinetPick = null; });
                     }
                     cy += 36 * S;
                 }
@@ -1385,8 +1416,8 @@ public sealed partial class Hud
             if (ActionButton(new Rectangle(box.X + 8 * S + 2 * (bw + 6 * S), by, bw, 28 * S), $"Crack down ({P.SuppressCost:0})", reason == null,
                     reason ?? string.Join("\n", P.ExplainSuppress(movement)), false, 14))
             {
-                var err = P.Suppress(movement);
-                if (err != null) Ui.SetStatus(err);
+                var target = movement;
+                Confirm($"Crack down on this movement for {P.SuppressCost:0} {P.PowerName}?", () => { var err = P.Suppress(target); if (err != null) Ui.SetStatus(err); });
             }
             cy += 158 * S + gh;
         }

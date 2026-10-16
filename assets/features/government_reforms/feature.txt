@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Government reforms, ideas & corruption"
+category = "Politics"
+order = 63
+description = "A country holds up to 5 reforms from the tree of its government (each costs 100 political power, then a year's wait), unlocks 7 national ideas one by one (one per 50 idea points, earned from stability and research), and watches corruption (0-100): it grows with people far from the capital, shrinks with centralisation, costs income, and at 50 or more brings events. Reforms are in the 'reforms' block of common/governments, ideas in common/ideas; their effects are ordinary modifiers."
+requires = { politics }

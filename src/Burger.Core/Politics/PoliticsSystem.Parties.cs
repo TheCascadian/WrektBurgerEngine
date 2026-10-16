@@ -201,6 +201,8 @@ public sealed partial class PoliticsSystem
 
     private bool IsPartyBanned(Country country, CountryPolitics state, string partyKey)
     {
+        if (!PoliticsSystem.IsMinorityParty(partyKey) && IdeologyKeyOfParty(partyKey) is { } sitting && ShutOutOfChamber(state, sitting)) return true;
+        if (PoliticsSystem.IsMinorityParty(partyKey) && Ideology(state.Ruling) is { Chamber.Count: > 0 }) return true;
         if (!LawsEnabled) return false;
         if (PoliticsSystem.IsMinorityParty(partyKey))
             return state.Laws.Any(kv => Laws.TryGetValue(kv.Value, out var law) && law.SingleParty);

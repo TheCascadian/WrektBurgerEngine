@@ -19,4 +19,8 @@ features = {
 	navy
 	technology
 	development
+	culture_traditions
+	government_reforms
+	succession
+	dynasties
 }

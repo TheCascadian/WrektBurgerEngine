@@ -12,6 +12,7 @@ public class GameCharacterRules : CharacterRules
     /// <summary>Chooses the next ruler when the current one dies. Return null to generate a new character.</summary>
     public override Character? ChooseSuccessor(Game game, Country country, Character? oldRuler)
     {
+        if (game.Succession.Enabled && game.Succession.Choose(country, oldRuler) is { } byLaw) return byLaw; // succession feature: the law decides
         var now = game.World.Date;
         int adult = game.Data.Defines.AdultAge;
         if (country.Heir != null && country.Heir.Alive && country.Heir.Country == country) return country.Heir;
@@ -30,6 +31,7 @@ public class GameCharacterRules : CharacterRules
     /// <summary>Picks a new heir (called when there is none).</summary>
     public override Character? ChooseHeir(Game game, Country country)
     {
+        if (game.Succession.Enabled && game.Succession.HeirOf(country) is { } byLaw) return byLaw;
         var ruler = country.Ruler;
         if (ruler == null) return null;
         var now = game.World.Date;

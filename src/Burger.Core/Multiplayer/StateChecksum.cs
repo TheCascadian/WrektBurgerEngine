@@ -44,6 +44,7 @@ public static class StateChecksum
             U((ulong)d.Id); S(d.Owner.Tag); S(d.Location.Key); D(d.Strength);
         }
         U((ulong)game.Development.Checksum());
+        U((ulong)game.CultureLife.Checksum()); U((ulong)game.Reforms.Checksum()); U((ulong)game.Succession.Checksum()); U((ulong)game.Dynasties.Checksum());
         foreach (var (name, st) in game.Rngs.Snapshot()) { S(name); U(st); }
         return h;
     }

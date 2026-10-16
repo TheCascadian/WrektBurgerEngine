@@ -2,43 +2,64 @@
 #   default          the law countries start with (else the first) - governments can set others
 #   cost             political power to enact (default: define law_cost, 100)
 #   potential        shown only while true      allow   can be enacted only while true
+#   unlock           on a group or a single law: it does not exist until unlocked.
+#                    unlock = { year = 1450 }  from that year    unlock = { technology = key }  once any country knows it
+#                    unlock = { }  only by script (unlock_law = key), checked with law_unlocked = key.
+#                    A locked group keeps its default law, so give it a default that does nothing.
 #   modifier         modifiers while in force   on_enact effects when enacted
 #   bans             parties of these ideologies get no seats and cannot govern
 #   single_party     only the ruling party is allowed (and there are no elections)
 #   suspends_elections  no elections while in force
 #   ai_will_do       how much the AI wants it (it changes when another law is clearly better)
 # Scripts: has_law = war_economy, set_law = war_economy (free, ignores requirements)
+# The laws of the 500 BCE world: what a city, a king or a tribe could decide then. Later laws appear with their age.
 
 conscription = {
-	name = "Conscription"
+	name = "Military Service"
 	default = limited_conscription
 	volunteer_only = {
-		name = "Volunteer Only"
-		desc = "Only volunteers serve."
+		name = "Hired Retinues"
+		desc = "Only those who are paid or sworn to the lord fight."
 		cost = 50
 		modifier = { manpower = -0.5 stability_target = 3 }
 		ai_will_do = { base = 0.5 modifier = { add = 1 ruling_ideology = democratic NOT = { is_at_war = yes } } }
 	}
 	limited_conscription = {
-		name = "Limited Conscription"
-		desc = "A small share of the young men serve."
+		name = "Levy of Freemen"
+		desc = "Landholders raise a share of the men when the ruler calls."
 		modifier = { }
 		ai_will_do = { base = 1 }
 	}
 	extensive_conscription = {
-		name = "Extensive Conscription"
-		desc = "Most young men serve for two years."
+		name = "Levy of All Men"
+		desc = "Every man able to carry a spear serves for the campaign."
 		allow = { OR = { is_at_war = yes ruling_ideology = fascist ruling_ideology = communist } }
 		modifier = { manpower = 0.5 production = -0.03 stability_target = -3 }
 		ai_will_do = { base = 0 modifier = { add = 2 is_at_war = yes } modifier = { add = 1.5 OR = { ruling_ideology = fascist ruling_ideology = communist } } }
 	}
 	service_by_requirement = {
-		name = "Service by Requirement"
-		desc = "Everyone who can fight serves."
+		name = "The People in Arms"
+		desc = "Everyone who can fight, fights."
 		cost = 150
 		allow = { is_at_war = yes }
 		modifier = { manpower = 1.0 production = -0.1 stability_target = -8 }
 		ai_will_do = { base = 0 modifier = { add = 2.6 is_at_war = yes manpower < 2000 } }
+	}
+	standing_army = {
+		name = "Standing Army"
+		desc = "Paid soldiers are kept under arms all year."
+		cost = 100
+		unlock = { year = -221 }
+		modifier = { manpower = -0.2 org_recovery = 0.1 upkeep = 0.1 stability_target = 1 }
+		ai_will_do = { base = 0.2 modifier = { add = 0.8 OR = { ruling_ideology = neutrality ruling_ideology = imperial } } }
+	}
+	national_conscription = {
+		name = "National Conscription"
+		desc = "Every citizen owes years of service, by law."
+		cost = 150
+		unlock = { year = 1800 }
+		modifier = { manpower = 0.8 upkeep = 0.05 stability_target = -3 }
+		ai_will_do = { base = 0.2 modifier = { add = 1 is_at_war = yes } }
 	}
 }
 
@@ -46,53 +67,78 @@ economy = {
 	name = "Economy"
 	default = partial_mobilisation
 	civilian_economy = {
-		name = "Civilian Economy"
-		desc = "Factories make consumer goods."
+		name = "Peaceful Economy"
+		desc = "Workshops and fields serve the people."
 		modifier = { consumer_goods = 0.2 construction_speed = 0.1 stability_target = 5 }
 		ai_will_do = { base = 0.5 modifier = { add = 1 ruling_ideology = democratic NOT = { is_at_war = yes } } }
 	}
 	partial_mobilisation = {
-		name = "Partial Mobilisation"
-		desc = "Industry prepares for war."
+		name = "Customary Dues"
+		desc = "Tribute and labour as custom demands."
 		modifier = { }
 		ai_will_do = { base = 1 }
 	}
 	war_economy = {
-		name = "War Economy"
-		desc = "Industry serves the army first."
+		name = "War Footing"
+		desc = "Smiths and herds serve the army first."
 		allow = { OR = { is_at_war = yes ruling_ideology = fascist ruling_ideology = communist } }
 		modifier = { consumer_goods = -0.3 production = 0.1 stability_target = -5 }
 		ai_will_do = { base = 0 modifier = { add = 2 is_at_war = yes } modifier = { add = 1.4 ruling_ideology = fascist } }
 	}
 	total_mobilisation = {
-		name = "Total Mobilisation"
+		name = "Total War"
 		desc = "Everything for the war."
 		cost = 150
 		allow = { is_at_war = yes }
 		modifier = { consumer_goods = -0.5 production = 0.2 stability_target = -12 }
 		ai_will_do = { base = 0 modifier = { add = 2.7 is_at_war = yes stability > 40 } }
 	}
+	mercantile_policy = {
+		name = "Mercantile Policy"
+		desc = "The state favours trade, charters and monopolies."
+		cost = 100
+		unlock = { year = 1500 }
+		modifier = { income = 0.08 consumer_goods = 0.1 stability_target = 1 }
+		ai_will_do = { base = 0.3 modifier = { add = 1 OR = { ruling_ideology = merchant_republic ruling_ideology = absolutist } } }
+	}
+	industrial_policy = {
+		name = "Industrial Policy"
+		desc = "The state backs factories, canals and railways."
+		cost = 150
+		unlock = { year = 1800 }
+		modifier = { production = 0.15 construction_speed = 0.15 consumer_goods = -0.1 }
+		ai_will_do = { base = 0.3 modifier = { add = 1 OR = { ruling_ideology = liberal ruling_ideology = socialist } } }
+	}
 }
 
+# The press only exists once printing does; until then the default does nothing.
 press = {
 	name = "Press"
-	default = state_press
+	default = no_press
+	unlock = { year = 1450 }
+	no_press = {
+		name = "Not Yet Printed"
+		desc = "Words travel by mouth and manuscript."
+		cost = 0
+		modifier = { }
+		ai_will_do = { base = 0 }
+	}
 	free_press = {
 		name = "Free Press"
-		desc = "Newspapers print what they want."
+		desc = "Pamphlets and papers print what they want."
 		allow = { NOT = { ruling_ideology = fascist ruling_ideology = communist } }
 		modifier = { democratic_drift = 0.3 stability_target = 3 }
 		ai_will_do = { base = 0 modifier = { add = 2 ruling_ideology = democratic } }
 	}
 	state_press = {
-		name = "Guided Press"
-		desc = "The government keeps an eye on the newspapers."
+		name = "Licensed Press"
+		desc = "The government licenses the printers."
 		modifier = { ruling_party_drift = 0.15 }
 		ai_will_do = { base = 1 }
 	}
 	propaganda_ministry = {
-		name = "Propaganda Ministry"
-		desc = "The state tells the people what to think."
+		name = "Censorship Office"
+		desc = "The state tells the people what to read."
 		allow = { NOT = { ruling_ideology = democratic } }
 		modifier = { ruling_party_drift = 0.5 political_power_gain = -3 }
 		ai_will_do = { base = 0 modifier = { add = 2 OR = { ruling_ideology = fascist ruling_ideology = communist } } }
@@ -100,25 +146,25 @@ press = {
 }
 
 political_parties = {
-	name = "Political Parties"
+	name = "Factions"
 	default = multi_party
 	multi_party = {
-		name = "Free Parties"
-		desc = "Every party may stand in elections."
+		name = "Open Factions"
+		desc = "Every faction may stand in the assembly and the elections."
 		modifier = { }
 		ai_will_do = { base = 1 modifier = { add = 1 ruling_ideology = democratic } }
 	}
 	restricted_parties = {
-		name = "Extremists Banned"
-		desc = "Communist and fascist parties are banned."
+		name = "Radicals Banned"
+		desc = "Leveler and warrior factions are banned."
 		allow = { NOT = { ruling_ideology = fascist ruling_ideology = communist } }
 		bans = { communist fascist }
 		modifier = { stability_target = -2 }
 		ai_will_do = { base = 0 modifier = { add = 1.5 ruling_ideology = neutrality } modifier = { add = 1 ruling_ideology = democratic OR = { popularity_communist > 0.3 popularity_fascist > 0.3 } } }
 	}
 	single_party = {
-		name = "One-Party State"
-		desc = "Only the ruling party is allowed. There are no elections."
+		name = "Rule of One"
+		desc = "Only the ruling faction is allowed. There are no elections."
 		cost = 150
 		allow = { NOT = { ruling_ideology = democratic } }
 		single_party = yes

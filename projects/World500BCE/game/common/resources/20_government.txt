@@ -1,0 +1,21 @@
+# Resources of the government_reforms feature (a game's own file with the same keys replaces these).
+# corruption is moved by the feature itself (0.05 a month per million people beyond the corruption range, less 0.2 per centralisation step);
+# events and scripts change it with add_corruption / set_corruption, and scripts read it as the value 'corruption'.
+corruption = {
+	name = "Corruption"
+	desc = "How much of the state's income is lost on the way. Each point costs 0.5% of income. It grows with people far from the capital and falls with centralisation (reforms). At 50 or more, events appear."
+	start = 10
+	min = 0
+	max = 100
+	color = { 200 90 70 }
+	decimals = 1
+}
+idea_points = {
+	name = "Idea Points"
+	desc = "Earned each month from stability and research. Every 50 unlock the next national idea."
+	start = 0
+	min = 0
+	top_bar = no
+	color = { 150 190 230 }
+	decimals = 1
+}

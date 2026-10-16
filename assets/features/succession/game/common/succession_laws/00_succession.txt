@@ -1,0 +1,33 @@
+# Succession laws (succession feature). The law in force is the one in the 'succession' law group of common/laws (laws feature),
+# or succession_law = <key> in a country's definition, else primogeniture.
+#   order      who inherits, in turn (the first living, eligible person wins). Steps:
+#              eldest_son eldest_daughter youngest_son youngest_daughter eldest_child youngest_child grandchild
+#              brother youngest_brother sister nephew uncle dynasty
+#              Children without a lawful claim (bastards, children of concubines) come after all of these, then the rest of the family.
+#   elective   no order: a council of the electors (define electors, 5) - the most prestigious characters - votes for an adult of the ruling
+#              family (any council member if none); each votes for the best prestige + opinion
+#   split      when the ruler dies the sons share the realm: the heir keeps the capital and a share, each other son rules a share as a subject
+#   requires   the law works only while this is true (country scope)
+
+primogeniture = {
+	name = "Primogeniture"
+	desc = "The eldest son inherits; then the eldest daughter, then the ruler's brother."
+	order = { eldest_son eldest_daughter brother }
+}
+ultimogeniture = {
+	name = "Ultimogeniture"
+	desc = "The youngest child inherits the house; elder children make their own way."
+	order = { youngest_son youngest_daughter youngest_brother }
+}
+elective = {
+	name = "Elective Monarchy"
+	desc = "A council of the five most prestigious men and women chooses the ruler."
+	elective = yes
+}
+gavelkind = {
+	name = "Gavelkind"
+	desc = "The land is divided between the sons. The eldest keeps the title and the capital; the others rule their shares as subjects."
+	order = { eldest_son eldest_daughter brother }
+	split = yes
+	requires = { num_of_states >= 2 }
+}

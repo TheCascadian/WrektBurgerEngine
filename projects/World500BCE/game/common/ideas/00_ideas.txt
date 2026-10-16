@@ -1,0 +1,143 @@
+# National ideas (government_reforms feature). A country unlocks the ideas of its set one by one, in order, a new one for every 50 idea points
+# (points come monthly from stability and research: idea_points_per_stability 1.0, idea_points_per_research 0.1). Seven slots (idea_slots).
+# A country uses the first set that names its tag (country = { ... }), else its culture (culture = { ... }), else its culture group (group = { ... }),
+# else the generic set (no country, culture or group). Each idea gives one modifier.
+
+generic_ideas = {
+	name = "Common Ways"
+	ideas = {
+		granary_keepers = { name = "Granary Keepers" desc = "Reserves for a bad year." modifier = { pop_capacity = 0.05 } }
+		tax_collectors = { name = "Tax Collectors" desc = "Dues are written down and paid." modifier = { income = 0.05 } }
+		levy_captains = { name = "Levy Captains" desc = "Men are called by name." modifier = { manpower = 0.06 } }
+		road_builders = { name = "Road Builders" desc = "Armies and carts move faster." modifier = { speed = 0.05 } }
+		court_scribes = { name = "Court Scribes" desc = "Letters outlive rulers." modifier = { research_speed = 0.06 } }
+		old_customs = { name = "Old Customs" desc = "The people know their duties." modifier = { stability_target = 2 } }
+		veteran_cadres = { name = "Veteran Cadres" desc = "Old soldiers teach the young." modifier = { org_recovery = 0.08 } }
+	}
+}
+
+hellenic_ideas = {
+	name = "Hellenic Ideas"
+	group = { hellenic }
+	ideas = {
+		agora = { name = "The Agora" desc = "Markets and speeches share a square." modifier = { income = 0.05 } }
+		hoplite_ethos = { name = "Hoplite Ethos" desc = "Bronze, shield and the line." modifier = { defense = 0.06 } }
+		colonial_foundations = { name = "Colonial Foundations" desc = "Sons settle distant shores." modifier = { pop_growth = 0.002 } }
+		philosophers = { name = "Philosophers" desc = "Questions before answers." modifier = { research_speed = 0.08 } }
+		trireme_fleets = { name = "Trireme Fleets" desc = "Rowers and rams." modifier = { relations = 1 } }
+		panhellenic_games = { name = "Panhellenic Games" desc = "Rivals compete in peace." modifier = { opinion = 4 } }
+		civic_law = { name = "Civic Law" desc = "Laws bind the powerful too." modifier = { corruption_gain = -0.06 } }
+	}
+}
+
+iranian_ideas = {
+	name = "Iranian Ideas"
+	group = { iranian }
+	ideas = {
+		royal_road = { name = "The Royal Road" desc = "Couriers cross the empire in days." modifier = { speed = 0.08 } }
+		satrapies = { name = "Satrapies" desc = "Governors rule in the king's name." modifier = { income = 0.05 centralisation = 1 } }
+		immortal_guard = { name = "The Immortals" desc = "A guard that is never short of men." modifier = { org_recovery = 0.10 } }
+		tolerant_rule = { name = "Tolerant Rule" desc = "Gods and customs are respected." modifier = { assimilation = 0.10 stability_target = 1 } }
+		qanats = { name = "Qanats" desc = "Water under the desert." modifier = { pop_capacity = 0.08 } }
+		cavalry_nobles = { name = "Cavalry Nobles" desc = "Lords ride at the head of their men." modifier = { attack = 0.05 } }
+		king_of_kings = { name = "King of Kings" desc = "Rulers bow to the throne." modifier = { stability_target = 3 } }
+	}
+}
+
+steppe_ideas = {
+	name = "Steppe Ideas"
+	group = { steppe }
+	ideas = {
+		herd_wealth = { name = "Herd Wealth" desc = "Flocks follow the clans." modifier = { manpower = 0.08 } }
+		swift_columns = { name = "Swift Columns" desc = "Every man has a spare horse." modifier = { speed = 0.10 } }
+		composite_bow = { name = "Composite Bow" desc = "A weapon that outranges armour." modifier = { attack = 0.06 } }
+		kurgan_chiefs = { name = "Kurgan Chiefs" desc = "Great burials bind the clans." modifier = { stability_target = 2 } }
+		tribute_from_farmers = { name = "Tribute from Farmers" desc = "Settled neighbours pay." modifier = { income = 0.05 } }
+		scouting_riders = { name = "Scouting Riders" desc = "The enemy is always found first." modifier = { defense = 0.05 } }
+		clan_unions = { name = "Clan Unions" desc = "Quarrels are settled before war." modifier = { war_exhaustion_gain = -0.15 } }
+	}
+}
+
+italic_ideas = {
+	name = "Italic Ideas"
+	group = { italic }
+	ideas = {
+		hill_towns = { name = "Hill Towns" desc = "A fort on every ridge." modifier = { defense = 0.05 } }
+		farmer_soldiers = { name = "Farmer-Soldiers" desc = "Citizens serve their term." modifier = { manpower = 0.08 } }
+		allied_leagues = { name = "Allied Leagues" desc = "Towns send contingents." modifier = { relations = 1 opinion = 3 } }
+		augury = { name = "Augury" desc = "No decision without the signs." modifier = { stability_target = 2 } }
+		engineers = { name = "Engineers" desc = "Roads, walls and ditches." modifier = { construction_speed = 0.08 } }
+		senate_houses = { name = "Senate Houses" desc = "Elders deliberate." modifier = { political_power_gain = 0.05 } }
+		grain_markets = { name = "Grain Markets" desc = "Harvest surplus is traded." modifier = { income = 0.05 } }
+	}
+}
+
+sinitic_ideas = {
+	name = "Sinitic Ideas"
+	group = { sinitic }
+	ideas = {
+		ritual_order = { name = "Ritual Order" desc = "Rites keep rank and harmony." modifier = { stability_target = 3 } }
+		grain_tax = { name = "Grain Tax" desc = "Fields are measured and taxed." modifier = { income = 0.06 } }
+		chariot_nobility = { name = "Chariot Nobility" desc = "Lords fight beside their charioteers." modifier = { attack = 0.04 } }
+		walled_towns = { name = "Walled Towns" desc = "Rammed-earth walls." modifier = { defense = 0.06 } }
+		bamboo_records = { name = "Bamboo Records" desc = "Books are bound in strips." modifier = { research_speed = 0.07 } }
+		bronze_foundries = { name = "Bronze Foundries" desc = "State workshops cast tools and arms." modifier = { production = 0.06 } }
+		canal_works = { name = "Canal Works" desc = "Water carries grain and men." modifier = { pop_capacity = 0.08 } }
+	}
+}
+
+achaemenid_ideas = {
+	name = "Achaemenid Ideas"
+	country = { ACH }
+	ideas = {
+		royal_court = { name = "The Royal Court" desc = "Every satrap sends gifts and sons." modifier = { stability_target = 2 } }
+		daric_standard = { name = "The Daric Standard" desc = "Gold coin binds the empire." modifier = { income = 0.07 } }
+		imperial_army = { name = "The Imperial Army" desc = "Contingents from every nation." modifier = { manpower = 0.10 } }
+		royal_roads = { name = "Royal Roads" desc = "Stations a day's ride apart." modifier = { speed = 0.10 } }
+		eyes_and_ears = { name = "The King's Eyes and Ears" desc = "Inspectors visit every satrapy." modifier = { corruption_gain = -0.08 } }
+		religious_tolerance = { name = "Religious Tolerance" desc = "Temples are rebuilt and left to their priests." modifier = { assimilation = 0.10 conversion = 0.10 } }
+		wise_lord = { name = "Favoured by Ahura Mazda" desc = "Rule rests on the favour of the god." modifier = { stability_target = 3 } }
+	}
+}
+
+athenian_ideas = {
+	name = "Athenian Ideas"
+	country = { ATH }
+	ideas = {
+		silver_of_laurion = { name = "Silver of Laurion" desc = "Mines pay for a fleet." modifier = { income = 0.07 } }
+		long_walls = { name = "The Long Walls" desc = "City and harbour joined." modifier = { defense = 0.07 } }
+		assembly_on_the_pnyx = { name = "Assembly on the Pnyx" desc = "Every citizen may speak." modifier = { political_power_gain = 0.08 } }
+		school_of_hellas = { name = "School of Hellas" desc = "Teachers and poets gather." modifier = { research_speed = 0.10 } }
+		delian_league = { name = "Delian League" desc = "Allies pay tribute for protection." modifier = { income = 0.05 relations = 1 } }
+		theatre_and_festival = { name = "Theatre and Festival" desc = "The city shares its stories." modifier = { stability_target = 3 } }
+		rowers_of_the_fleet = { name = "Rowers of the Fleet" desc = "Poor citizens man the oars." modifier = { manpower = 0.08 } }
+	}
+}
+
+spartan_ideas = {
+	name = "Spartan Ideas"
+	country = { SPA }
+	ideas = {
+		agoge = { name = "The Agoge" desc = "Boys are made soldiers." modifier = { org_recovery = 0.10 } }
+		helot_labour = { name = "Helot Labour" desc = "Fields are worked so that Spartans can drill." modifier = { manpower = 0.10 } }
+		red_cloaks = { name = "Red Cloaks" desc = "Fear precedes the line." modifier = { attack = 0.06 } }
+		lykourgan_laws = { name = "Lykourgan Laws" desc = "Old rules, kept to the letter." modifier = { stability_target = 3 } }
+		peloponnesian_league = { name = "Peloponnesian League" desc = "Allies follow Sparta's lead." modifier = { opinion = 4 relations = 1 } }
+		three_hundred = { name = "The Three Hundred" desc = "A guard that does not break." modifier = { defense = 0.07 } }
+		austere_life = { name = "Austere Life" desc = "Little is needed." modifier = { upkeep = -0.08 } }
+	}
+}
+
+roman_ideas = {
+	name = "Roman Ideas"
+	country = { ROM }
+	ideas = {
+		patrician_senate = { name = "The Senate" desc = "Elders with long memories." modifier = { political_power_gain = 0.06 } }
+		legion_tradition = { name = "Legion Tradition" desc = "Discipline before courage." modifier = { org_recovery = 0.10 defense = 0.04 } }
+		engineers_of_the_state = { name = "Engineers of the State" desc = "Roads and camps." modifier = { construction_speed = 0.10 } }
+		allied_contingents = { name = "Allied Contingents" desc = "Latin and Italic allies serve." modifier = { manpower = 0.10 } }
+		fasces = { name = "The Fasces" desc = "Magistrates carry the law with them." modifier = { stability_target = 2 } }
+		colonies_of_veterans = { name = "Colonies of Veterans" desc = "Discharged soldiers settle new land." modifier = { pop_growth = 0.002 } }
+		civic_virtue = { name = "Civic Virtue" desc = "Duty before gain." modifier = { corruption_gain = -0.06 } }
+	}
+}

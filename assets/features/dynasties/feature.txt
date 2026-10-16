@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Dynasties, households & illness"
+category = "Characters"
+order = 42
+description = "The ruling family is a dynasty that earns prestige (5 for each new ruler, 5 a year for each throne, 1 for notable events); prestige decides elections under the elective law. A male ruler may father bastards (5% a year) who carry half the claim, and with the concubinage law may keep concubines. Characters fall ill (injury, plague, fever; yearly chance 1% + age/200) and an illness kills 30% of the time after six months. Illnesses are in common/diseases."
+requires = { characters }

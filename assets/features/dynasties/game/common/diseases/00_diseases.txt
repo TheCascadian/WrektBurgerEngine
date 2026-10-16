@@ -1,0 +1,6 @@
+# Illnesses (dynasties feature). Each year a character falls ill with chance disease_base (1%) + age / disease_age_divisor (200), lowered by
+# the 'health' trait modifier. weight: chance among the illnesses. months: how long it lasts (default disease_months, 6).
+# death_chance: chance it kills when it ends (default disease_death_chance, 0.30); the health trait lowers it too.
+injury = { name = "Injury" desc = "A fall, a wound, a bad break." weight = 40 months = 3 death_chance = 0.20 }
+fever = { name = "Fever" desc = "A wasting fever." weight = 40 months = 4 death_chance = 0.30 }
+plague = { name = "Plague" desc = "The sickness that empties towns." weight = 20 months = 6 death_chance = 0.40 }

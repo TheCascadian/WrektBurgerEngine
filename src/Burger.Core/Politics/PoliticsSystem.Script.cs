@@ -58,6 +58,10 @@ public sealed partial class PoliticsSystem
             if (ideology == null || !IdeologyByKey.ContainsKey(ideology)) { Log.ErrorOnce("addpop:" + ideology, $"add_popularity: unknown ideology '{ideology}'"); return; }
             AddPopularity(c, ideology, s.ResolveNumber(n.GetString("value") ?? n.GetString("popularity"), ctx));
         }, (ctx, n) => $"{Name(n.GetString("ideology"))} popularity: {ScriptEngine.FormatSigned(100 * s.ResolveNumber(n.GetString("value") ?? n.GetString("popularity"), ctx))}%");
+        s.RegisterEffect("unlock_law", (ctx, n) => { if (Enabled) Unlock(n.Value ?? ""); }, (ctx, n) => $"The law or law group {n.Value} becomes possible");
+        s.RegisterTrigger("law_unlocked", (ctx, n) => Enabled && (Laws.TryGetValue(n.Value ?? "", out var lw) ? IsLawUnlocked(lw) : LawGroups.FirstOrDefault(g => g.Key == n.Value) is { } gg && IsGroupUnlocked(gg)), (ctx, n) => $"The law {n.Value} exists");
+        s.RegisterEffect("unlock_ideology", (ctx, n) => { if (Enabled) Unlock(n.Value ?? ""); }, (ctx, n) => $"The {Name(n.Value)} current is unlocked");
+        s.RegisterTrigger("ideology_unlocked", (ctx, n) => Enabled && IsUnlocked(n.Value ?? ""), (ctx, n) => $"The {Name(n.Value)} current exists");
         s.RegisterEffect("set_ruling_party", (ctx, n) =>
         {
             if (ctx.This is Country c && Enabled && IdeologyByKey.ContainsKey(n.Value ?? "")) SetRulingParty(c, n.Value!, "");

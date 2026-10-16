@@ -423,7 +423,7 @@ public sealed class DevelopmentSystem
             n.Add("appeared", _appeared.Contains(key) ? "yes" : "no");
             var sb = new System.Text.StringBuilder();
             for (int k = 0; k < p.Length; k++) { if (k > 0) sb.Append(' '); sb.Append(F(p[k])); }
-            n.Add("presence", "\"" + sb + "\"");
+            n.Add("presence", sb.ToString(), quoted: true);
         }
     }
 

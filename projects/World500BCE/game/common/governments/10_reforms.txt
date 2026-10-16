@@ -1,0 +1,89 @@
+# Government reforms (government_reforms feature). Added to the governments of 00_governments.txt without replacing their starting politics.
+# A country gets the reforms of: its government word, ruling_<ruling ideology>, and default (open to everyone).
+#   reforms = { key = { name desc cost requires = { reform ... } removes = { reform ... } trigger = { ... } modifier = { ... } } }
+#     cost      political power to adopt or drop it (default: define reform_cost, 100); changing any reform starts a one year wait
+#     requires  reforms that must be held first      removes  reforms this one replaces
+#     modifier  any modifier key; centralisation = 1 is one step (corruption falls 0.2 a month per step)
+#   start_reforms = { ... }  held at the start of the game
+# A country holds up to 5 reforms (define max_reforms).
+
+default = {
+	reforms = {
+		scribal_registry = { name = "Scribal Registry" desc = "Officials list land, people and harvests." modifier = { income = 0.03 centralisation = 1 } }
+		provincial_governors = { name = "Provincial Governors" desc = "Royal deputies rule the districts." requires = { scribal_registry } modifier = { income = 0.03 centralisation = 1 stability_target = -1 } }
+		imperial_bureaucracy = { name = "Imperial Bureaucracy" desc = "A hierarchy of paid officials reaches every village." requires = { provincial_governors } modifier = { income = 0.05 centralisation = 2 manpower = -0.03 } }
+		local_autonomy = { name = "Local Autonomy" desc = "Towns and tribes keep their own customs." removes = { scribal_registry provincial_governors imperial_bureaucracy } modifier = { stability_target = 2 manpower = 0.05 corruption_gain = 0.05 } }
+		levy_system = { name = "Levy System" desc = "Landholders raise men when called." modifier = { manpower = 0.08 upkeep = -0.04 } }
+		standing_guard = { name = "Standing Guard" desc = "A paid core of soldiers always under arms." requires = { levy_system } modifier = { attack = 0.04 defense = 0.04 upkeep = 0.05 } }
+		professional_army = { name = "Professional Army" desc = "Career soldiers replace the levy." requires = { standing_guard } removes = { levy_system } modifier = { attack = 0.06 org_recovery = 0.10 upkeep = 0.10 manpower = -0.04 } }
+		market_charters = { name = "Market Charters" desc = "Towns may hold markets under the ruler's protection." modifier = { income = 0.05 } }
+		tax_farming = { name = "Tax Farming" desc = "Collectors buy the right to tax a district." requires = { market_charters } modifier = { income = 0.08 corruption_gain = 0.08 stability_target = -2 } }
+		royal_roads_office = { name = "Office of Roads" desc = "Stations, bridges and couriers." requires = { scribal_registry } modifier = { speed = 0.05 construction_speed = 0.06 } }
+	}
+}
+
+ruling_neutrality = {
+	start_reforms = { sacred_monarchy }
+	reforms = {
+		sacred_monarchy = { name = "Sacred Monarchy" desc = "The ruler is sanctified by the priests." modifier = { stability_target = 3 political_power_gain = 0.03 } }
+		royal_council = { name = "Royal Council" desc = "The ruler governs with picked advisers." requires = { sacred_monarchy } modifier = { political_power_gain = 0.05 centralisation = 1 } }
+		temple_estates = { name = "Temple Estates" desc = "The gods own land and grain." modifier = { income = 0.03 conversion = 0.10 stability_target = 1 } }
+		hereditary_nobility = { name = "Hereditary Nobility" desc = "Great houses hold offices for generations." modifier = { manpower = 0.04 stability_target = 1 centralisation = -1 } }
+		absolute_rule = { name = "Absolute Rule" desc = "No council may refuse the ruler." requires = { royal_council } removes = { hereditary_nobility } modifier = { centralisation = 1 stability_target = -1 political_power_gain = 0.08 } }
+	}
+}
+
+ruling_democratic = {
+	start_reforms = { citizen_assembly }
+	reforms = {
+		citizen_assembly = { name = "Citizen Assembly" desc = "Free men vote on war, peace and law." modifier = { stability_target = 3 political_power_gain = 0.02 } }
+		magistracies = { name = "Magistracies" desc = "Annual officers, drawn by vote or lot." requires = { citizen_assembly } modifier = { corruption_gain = -0.05 centralisation = 1 } }
+		civic_militia = { name = "Civic Militia" desc = "Every citizen drills with his neighbours." modifier = { manpower = 0.06 defense = 0.05 } }
+		public_courts = { name = "Public Courts" desc = "Juries of citizens judge officials." requires = { magistracies } modifier = { corruption_gain = -0.10 stability_target = 1 } }
+		maritime_league = { name = "Maritime League" desc = "Allies pay tribute for protected seas." modifier = { income = 0.06 relations = 1 } }
+	}
+}
+
+ruling_fascist = {
+	start_reforms = { war_band }
+	reforms = {
+		war_band = { name = "War Band" desc = "Sworn followers of the chieftain." modifier = { attack = 0.06 manpower = 0.04 } }
+		tribute_system = { name = "Tribute System" desc = "Defeated peoples pay in goods and men." requires = { war_band } modifier = { income = 0.05 war_exhaustion_gain = -0.10 } }
+		warrior_cult = { name = "Warrior Cult" desc = "Glory in battle is the highest honour." modifier = { attack = 0.04 stability_target = 1 org_recovery = 0.05 } }
+		blood_oaths = { name = "Blood Oaths" desc = "Chiefs bind themselves to the leader." requires = { war_band } modifier = { stability_target = 2 centralisation = 1 } }
+		raiding_economy = { name = "Raiding Economy" desc = "The neighbours pay for the winter." modifier = { income = 0.04 opinion = -3 speed = 0.04 } }
+	}
+}
+
+ruling_communist = {
+	start_reforms = { commons_council }
+	reforms = {
+		commons_council = { name = "Commons Council" desc = "Villages and workshops elect their own speakers." modifier = { stability_target = 3 } }
+		land_redistribution = { name = "Land Redistribution" desc = "The great estates are divided among the landless." requires = { commons_council } modifier = { pop_growth = 0.002 stability_target = 1 income = -0.03 } }
+		peoples_levy = { name = "People's Levy" desc = "Whoever can carry a spear defends the commons." modifier = { manpower = 0.10 defense = 0.04 } }
+		debt_cancellation = { name = "Debt Cancellation" desc = "Slaves for debt are freed." modifier = { pop_growth = 0.002 pop_capacity = 0.05 income = -0.02 } }
+		common_stores = { name = "Common Stores" desc = "Granaries are open to all in need." requires = { commons_council } modifier = { stability_target = 2 pop_capacity = 0.05 } }
+	}
+}
+
+ruling_oligarchic = {
+	start_reforms = { council_of_elders }
+	reforms = {
+		council_of_elders = { name = "Council of Elders" desc = "The heads of the great houses decide together." modifier = { stability_target = 3 political_power_gain = 0.03 } }
+		annual_magistrates = { name = "Annual Magistrates" desc = "Offices rotate among the noble houses." requires = { council_of_elders } modifier = { corruption_gain = -0.05 centralisation = 1 } }
+		noble_cavalry = { name = "Noble Cavalry" desc = "The rich serve on horseback at their own cost." modifier = { attack = 0.04 upkeep = -0.04 } }
+		patron_clients = { name = "Patron and Client" desc = "Houses bind the poor with favours." modifier = { stability_target = 2 manpower = 0.04 } }
+		senate_of_the_few = { name = "Senate of the Few" desc = "A small body holds the real power." requires = { council_of_elders } removes = { patron_clients } modifier = { political_power_gain = 0.08 centralisation = 1 stability_target = -1 } }
+	}
+}
+
+ruling_theocratic = {
+	start_reforms = { god_king }
+	reforms = {
+		god_king = { name = "Servant of the God" desc = "The ruler rules in the god's name." modifier = { stability_target = 4 conversion = 0.05 } }
+		temple_scribes = { name = "Temple Scribes" desc = "Priests keep the accounts of the realm." requires = { god_king } modifier = { income = 0.04 research_speed = 0.05 centralisation = 1 } }
+		holy_festivals = { name = "Holy Festivals" desc = "The calendar is full of rites." modifier = { stability_target = 2 pop_growth = 0.001 } }
+		temple_lands = { name = "Temple Lands" desc = "The god owns fields and herds." modifier = { income = 0.05 manpower = -0.03 } }
+		priestly_courts = { name = "Priestly Courts" desc = "Priests judge disputes." requires = { temple_scribes } modifier = { corruption_gain = -0.05 stability_target = 1 } }
+	}
+}

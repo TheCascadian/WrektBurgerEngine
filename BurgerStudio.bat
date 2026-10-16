@@ -16,4 +16,9 @@ if not exist "src\Burger.Studio\bin\Release\net8.0\BurgerStudio.exe" (
     exit /b 1
   )
 )
-start "" "src\Burger.Studio\bin\Release\net8.0\BurgerStudio.exe" %*
+"src\Burger.Studio\bin\Release\net8.0\BurgerStudio.exe" %*
+if errorlevel 1 (
+  echo.
+  echo Burger Studio stopped with an error. Details: src\Burger.Studio\bin\Release\net8.0\logs\studio_crash.log
+  pause
+)

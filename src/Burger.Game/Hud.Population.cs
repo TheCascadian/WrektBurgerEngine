@@ -151,6 +151,7 @@ public sealed partial class Hud
             y += 21 * S;
         }
         y = Math.Max(y, pieTop + 2 * pr) + 10 * S;
+        if (G.CultureLife.Enabled) y = DrawCultureContent(player, x, y, w) + 8 * S;
         if (P.ReligionEnabled)
         {
             Gui.Section("Religions", x, y, w, "ui_religions");

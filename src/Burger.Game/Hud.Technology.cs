@@ -56,7 +56,7 @@ public sealed partial class Hud
         foreach (var c in cats)
         {
             float bw = Math.Max(54 * S, Gui.Measure(c, 12).X + 14 * S);
-            if (bx + bw > x + w) break;
+            if (bx + bw > x + w && bx > x) { bx = x; y += 28 * S; }
             if (Gui.Button(new Rectangle(bx, y, bw, 24 * S), c, true, $"{T.Defs.Values.Count(t => t.Category == c && T.Has(player, t.Key))} of {T.Defs.Values.Count(t => t.Category == c)} known", c == _techCategory, 12)) _techCategory = c;
             bx += bw + 3 * S;
         }

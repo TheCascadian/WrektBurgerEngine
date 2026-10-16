@@ -153,7 +153,7 @@ public static partial class Builtins
             game.Script.RegisterValue(st, (ctx, x) => x switch
             {
                 Character ch => ch.GetStat(st),
-                Country c => c.Ruler?.GetStat(st),
+                Country c => c.Governing?.GetStat(st),
                 _ => null,
             });
             game.Script.RegisterEffect("add_" + st, (ctx, n) =>

@@ -1,0 +1,20 @@
+# Household law group (dynasties + laws features). Concubines are kept only under concubinage (a male ruler: concubine_chance 10% a year,
+# at most three; their children have half a claim to the throne).
+household = {
+	name = "Household"
+	default = monogamy
+	monogamy = {
+		name = "Monogamy"
+		desc = "One spouse; other children are bastards."
+		cost = 50
+		modifier = { }
+		ai_will_do = { base = 1 }
+	}
+	concubinage = {
+		name = "Concubinage"
+		desc = "The ruler may keep concubines; their children carry half a claim."
+		cost = 50
+		modifier = { stability_target = -1 }
+		ai_will_do = { base = 0.3 modifier = { add = 1.5 OR = { ruling_ideology = neutrality ruling_ideology = fascist } } }
+	}
+}
