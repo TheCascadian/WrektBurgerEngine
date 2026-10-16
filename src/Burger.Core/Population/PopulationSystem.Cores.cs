@@ -252,7 +252,7 @@ public sealed partial class PopulationSystem
             double score = Rules.AiColonyScore(_game, c, s);
             if (score > bestScore) { bestScore = score; best = s; }
         }
-        if (best != null) Colonize(c, best);
+        if (best != null && bestScore >= Rules.AiColonyMinScore(_game, c)) Colonize(c, best);
     }
 
     // =============================================================================================

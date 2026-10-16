@@ -293,10 +293,47 @@ public class GamePopulationRules : PopulationRules
     /// <summary>AI: how much the country wants to settle a state it can colonize (the highest wins): by default the nearest.</summary>
     public override double AiColonyScore(Game game, Country c, State s)
     {
-        // near, on the coast (ships carried the colonists), and with people already living there to trade with or rule
+        var d = game.Data.Defines;
+        var pop = game.Population;
+        // near, on the coast (ships carried the colonists)
         int land = s.Locations.Count(l => l.IsLand), coast = s.Locations.Count(l => l.IsLand && l.IsCoastal);
         double coastal = land > 0 ? (double)coast / land : 0;
-        return -game.Population.DistanceKm(c, s) + 400 * coastal * game.Data.Defines.Get("colony_coast_weight", 1);
+        double dist = pop.DistanceKm(c, s);
+        double score = -dist + 400 * coastal * d.Get("colony_coast_weight", 1);
+        // negative influence, scaled by how cautious the country is (trait risk, high = bold) and how colonial it is:
+        double bold = Math.Clamp(game.AiProfiles.ProfileOf(c)?.Traits.GetValueOrDefault("risk", 1) ?? 1, 0.3, 2);
+        double careful = d.Get("colony_caution", 1) / bold;
+        // 1. neighbours: land of other countries near the target is a border we cannot hold (more if at war or rival)
+        double radius = d.Get("colony_threat_km", 500), threat = 0;
+        var (sx, sy) = StateCenter(s);
+        double kmPerPx = d.KmPerPixel;
+        foreach (var o in game.World.States)
+        {
+            if (o.Owner is not { } oc || oc == c || !oc.Exists || game.World.Relations.AreAllied(c, oc) || game.World.Relations.OverlordOf(oc) == c) continue;
+            var (ox, oy) = StateCenter(o);
+            double km = Math.Sqrt((ox - sx) * (ox - sx) + (oy - sy) * (oy - sy)) * kmPerPx;
+            if (km >= radius) continue;
+            double w = 1 - km / radius;
+            if (game.World.AtWar(c, oc)) w *= 2;
+            threat += w * (1 + Math.Min(2, oc.OwnedStates.Count() / (double)Math.Max(1, c.OwnedStates.Count())));
+        }
+        score -= threat * d.Get("colony_threat_weight", 120) * careful;
+        // 2. overextension: every colony we hold or are settling makes the next one harder to defend
+        int held = pop.ColoniesOf(c).Count() + c.OwnedStates.Count(x => pop.IsColony(x));
+        score -= held * d.Get("colony_overextension", 70) * careful;
+        return score;
+    }
+
+    public override double AiColonyMinScore(Game game, Country c)
+        => game.Data.Defines.Get("colony_ai_min_score", -1100) * Math.Max(0.5, game.AiProfiles.ProfileOf(c)?.Traits.GetValueOrDefault("colonial", 1) ?? 1);
+
+    private static readonly Dictionary<State, (double X, double Y)> _centers = new();
+    private static (double X, double Y) StateCenter(State s)
+    {
+        if (_centers.TryGetValue(s, out var v)) return v;
+        double x = 0, y = 0; int n = 0;
+        foreach (var l in s.Locations) { x += l.CenterX; y += l.CenterY; n++; }
+        return _centers[s] = n == 0 ? (0, 0) : (x / n, y / n);
     }
 
     // =============================================================================================

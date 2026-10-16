@@ -26,3 +26,10 @@ colony_coast_weight = 1         # AI: how strongly it prefers coastal land
 # politics: stop the government flipping back and forth
 regime_lock_months = 24         # no snap election or overlord pressure this long after the ruling ideology changed
 incumbent_bonus = 1.08          # vote multiplier of the parties in government
+
+# AI colonization: negative influences (so it does not stretch out until enemies cut it off)
+colony_threat_km = 500          # foreign land this close to a target counts against it
+colony_threat_weight = 120      # score lost per foreign neighbour (x2 at war, more for bigger neighbours)
+colony_overextension = 70       # score lost per colony already held or being settled
+colony_caution = 1              # scales both (divided by the profile's risk trait)
+colony_ai_min_score = -1100     # below this (x the profile's colonial trait) the AI settles nothing
