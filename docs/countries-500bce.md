@@ -670,6 +670,69 @@ Bronze weapons: dagger-axe (ge), halberd (ji), spear, jian sword, composite bow,
 
 ---
 
+## All countries by founding or latest revival (HIST)
+
+Oldest first, as one plain list. Each date is the founding of the national entity, or its most recent revival where one is named. All dates are approximate (BCE), written from memory, and many are tentative or traditional rather than archaeological. Entries with the same date are in no particular order. "In game" means the country exists in `countries.txt`; "proposed" means it is not built yet and is only on the candidate list.
+
+- c. 1200: Olmec (OLM), in game. San Lorenzo, the first Olmec center.
+- c. 1046: Qi, proposed. Founded as a Zhou fief.
+- c. 1033: Jin, proposed. Founded as a Zhou fief.
+- c. 1000: Libyan and Berber tribes, proposed. Tribal peoples of the Maghreb.
+- c. 1000: Bantu homeland peoples, proposed. Start of the Bantu expansion.
+- c. 1000: Nok culture, proposed.
+- c. 1000: Thracian tribes, proposed. The Odrysian kingdom comes later, c. 480.
+- c. 1000: Ionian Greek cities, proposed (only if they are not already inside ACH). Ionian migration.
+- c. 1000: Yaya-Mama peoples of Titicaca, proposed.
+- c. 900: Chavin (CHV), in game. Chavin de Huantar rises.
+- c. 900: Corinth (COR), in game. Dorian city.
+- c. 900: Argos (ARG), in game. Dorian city.
+- c. 900: Naxos and the Cyclades (NAX), in game. Ionian settlement.
+- c. 900: Yayoi and Jomon Japan, proposed.
+- c. 814: Carthage (CAR), in game. Traditional founding from Tyre.
+- c. 800: Sparta (SPA), in game. Dorian settlement and the Lycurgan order.
+- c. 800: Etruscan League, proposed. Etruscan city-states form from the Villanovan culture.
+- c. 800: South Arabia (SAB), in game. Saba and its neighbors.
+- c. 800: Crete (CRT), in game. Iron Age city-states.
+- c. 800: Hallstatt Gaul and the Celts, proposed.
+- c. 800: Maya lowlands, proposed.
+- c. 800: Paracas, proposed.
+- c. 770: Zhou (ZHO), in game. Eastern Zhou, after the court moved east.
+- c. 770: Qin, proposed. Recognized as a state.
+- c. 753: Rome and Latium, proposed. Traditional founding; the Republic dates from 509.
+- c. 750: Kush (NUB), in game. Unified Napatan kingdom, the 25th dynasty of Egypt.
+- c. 750: Scythians, proposed. Settle the Pontic steppe.
+- c. 733: Syracuse and Eastern Sicily (SYR), in game. Founded from Corinth.
+- c. 710: Croton and Italiote Greeks (CRO), in game. Croton founded by Achaeans.
+- c. 704: Chu, proposed. The ruler takes the title of king.
+- c. 700: Athens (ATH), in game. Attica united; democracy from 508.
+- c. 700: Thebes and the Boeotian League (THB), in game.
+- c. 700: Macedon (MAC), in game. The Argead kingdom.
+- c. 700: Saka and Massagetae, proposed.
+- c. 700: Kosala and the Ganges plain, proposed.
+- c. 700: Korea (Gojoseon), proposed. Very uncertain.
+- c. 700: Ethiopian highlands (D'mt), proposed.
+- c. 700: Van Lang and the Dong Son culture, proposed.
+- c. 666: Shu and Ba, proposed. The Kaiming dynasty of Shu, traditional date.
+- c. 664: Egypt, proposed. Saite revival of the 26th dynasty; Persian satrapy since 525.
+- c. 650: Pontic Greek Cities (PNT), in game. Milesian colonies such as Istros.
+- c. 626: Babylon, proposed. Neo-Babylonian revival; Persian since 539.
+- c. 600: Thessaly (THS), in game. The Thessalian League.
+- c. 600: Iberians, proposed.
+- c. 600: Celtiberians, proposed.
+- c. 600: Sarmatians, proposed.
+- c. 600: Gandhara and the Indus lands, proposed. Persian satrapy since about 518.
+- c. 600: Deccan (Assaka and neighbors), proposed.
+- c. 585: Wu, proposed. Its ruler takes the title of king.
+- c. 550: Achaemenid Empire (ACH), in game. Cyrus; Darius reorganized it in 522.
+- c. 544: Magadha and Ganges (IND), in game. The Haryanka dynasty under Bimbisara.
+- c. 538: Judah and Yehud, proposed. Revived as a Persian province after the Babylonian exile.
+- c. 510: Yue, proposed. Rises under its new rulers.
+- c. 500: Zapotec, proposed. Monte Alban founded.
+- c. 500: Garamantes, proposed. Garama.
+- c. 500: Sahel and Mande lands, proposed. Very uncertain.
+- c. 500: Tamil south, proposed. Very uncertain.
+- c. 500: Irrawaddy and mainland Southeast Asia, proposed. Very uncertain.
+
 ## Findings to decide (not changed)
 
 1. **AI profile "china"** was fixed (see CHV).
