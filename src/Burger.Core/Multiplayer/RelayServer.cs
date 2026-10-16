@@ -261,8 +261,13 @@ public sealed class RelayHostLink : IDisposable
                 Send(s, $"H {room}\n");
                 s.ReadTimeout = 5000;
                 string? ok = ReadLine(s);
-                if (ok != "OK") { if (ok == "NO" && !everReady) { Room = 0; continue; } throw new IOException("refused"); }
+                if (ok != "OK")
+                {
+                    if (ok == "NO" && !everReady) { Log.Info("Relay: room number already taken, picking another", "multiplayer"); Room = 0; continue; }
+                    throw new IOException("the relay answered '" + (ok ?? "nothing") + "' instead of OK (room limit reached, or this is not a relay)");
+                }
                 Room = room; everReady = true; failures = 0;
+                Log.Info("Relay: registered a room with the relay; join codes through it are valid", "multiplayer");
                 _status = "Reachable over the internet through the relay"; _phase = Phase.Ready;
                 s.ReadTimeout = Timeout.Infinite;
                 string? line;
@@ -274,9 +279,12 @@ public sealed class RelayHostLink : IDisposable
                 throw new IOException("closed");
             }
             catch when (_stop.IsCancellationRequested) { break; }
-            catch
+            catch (Exception e)
             {
                 failures++;
+                // the text of socket errors names the relay address: log the kind of failure only
+                string kind = e is SocketException se ? "network error " + se.SocketErrorCode : e is AggregateException ae && ae.InnerException is SocketException se2 ? "network error " + se2.SocketErrorCode : e is IOException io && io.InnerException is SocketException se3 ? "network error " + se3.SocketErrorCode : e is IOException ? e.Message : e.GetType().Name;
+                Log.Warn($"Relay: connection problem #{failures}: {kind}" + (everReady ? " (was connected; retrying every 3 s)" : failures >= 3 ? " (giving up for this session)" : " (retrying)"), "multiplayer");
                 if (everReady) { _phase = Phase.Connecting; _status = "Lost the relay, reconnecting..."; }
                 else if (failures >= 3) { _phase = Phase.Failed; _status = "The relay is not reachable. Only players on your own network can join."; }
                 _stop.Token.WaitHandle.WaitOne(3000);

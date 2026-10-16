@@ -321,7 +321,7 @@ public sealed class TcpHostListener : IDisposable
 
     private void Handshake(TcpClient c, string ip)
     {
-        if (!Admit(ip)) { Refused++; c.Close(); return; }
+        if (!Admit(ip)) { Refused++; Log.Warn("Direct: refused a connection (too many connections or failures from one address)", "multiplayer"); c.Close(); return; }
         new Thread(() =>
         {
             try
@@ -329,8 +329,9 @@ public sealed class TcpHostListener : IDisposable
                 var t = TcpTransport.Secure(c, true, Candidates, null, _cert);
                 if (!Claim(t)) { t.Close(); throw new InvalidDataException("token already in use or revoked"); }
                 _accepted.Enqueue(t); Done(ip, false);
+                Log.Info("Direct: a player connected and passed the TLS and key check", "multiplayer");
             }
-            catch { Done(ip, true); }
+            catch (Exception e) { Log.Warn($"Direct: a connection failed the TLS or key check ({e.GetType().Name}: {e.Message.Split('\n')[0]})", "multiplayer"); Done(ip, true); }
         }) { IsBackground = true, Name = "mp-handshake" }.Start();
     }
 

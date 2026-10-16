@@ -1,3 +1,4 @@
+using System.Net.Sockets;
 using System.Net;
 
 namespace Burger.Core.Multiplayer;
@@ -34,6 +35,7 @@ public sealed class MpController
         Mapper?.Dispose(); Mapper = null; RelayLink?.Dispose(); RelayLink = null;
         Extra = source; InternetCode = internetCode; _extraStatus = status;
         Add("* Internet join code ready");
+        Burger.Core.Log.Info($"Host: internet path is the platform (Steam); status: {status}", "multiplayer");
     }
 
     /// <summary>Joins over a platform link that is already authenticated (see <see cref="LinkAcceptor.Join"/>).</summary>
@@ -66,6 +68,7 @@ public sealed class MpController
         Wire(mp);
         try { Listener = new TcpHostListener(preferredPort); } catch { Listener = new TcpHostListener(); }
         LanCode = JoinCode.Make(JoinCode.LocalAddress(), Listener.Port, Listener.Secret);
+        Burger.Core.Log.Info($"Host: direct listener on TCP port {Listener.Port} ({(relay != null ? "relay" : openRouter ? "router mapping" : "same network only")} for the internet path)", "multiplayer");
         InternetCode = "";
         // a relay, when there is one, replaces opening the router: no address of the host's goes into any internet code
         if (relay is { } rl) RelayLink = new RelayHostLink(rl.Host, rl.Port, Listener);
@@ -77,8 +80,9 @@ public sealed class MpController
     /// <summary>Connects to a host by join code. <paramref name="load"/> makes a fresh game for the host's project and seed (and refuses a project this machine does not have).</summary>
     public bool Join(string code, string playerName, Func<string, int, Game> load)
     {
-        if (!JoinCode.TryParseAny(code, out var host, out int port, out long room, out var secret)) { Message = "That join code is not valid"; return false; }
+        if (!JoinCode.TryParseAny(code, out var host, out int port, out long room, out var secret)) { Burger.Core.Log.Warn($"Join: code not valid ({code.Count(ch => ch != '-' && ch != ' ')} characters; direct and relay codes have 25, Steam codes 29)", "multiplayer"); Message = "That join code is not valid"; return false; }
         Stop();
+        Burger.Core.Log.Info($"Join: trying a {(room != 0 ? "relay" : "direct")} code", "multiplayer");
         try
         {
             ITransport link;
@@ -101,6 +105,7 @@ public sealed class MpController
         catch (Exception e)
         {
             // the text of a socket error names the address: keep it off the screen and out of logs
+            Burger.Core.Log.Warn($"Join failed: {e.GetType().Name}" + (e is InvalidDataException or ArgumentException ? ": " + e.Message : e is SocketException se ? " " + se.SocketErrorCode : e.InnerException is SocketException ie ? " " + ie.SocketErrorCode : e is TimeoutException ? " (no answer in time)" : ""), "multiplayer");
             Message = e is InvalidDataException or ArgumentException ? "Cannot connect: " + e.Message : "Cannot connect. Check the code and that the host is running.";
             return false;
         }

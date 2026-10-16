@@ -36,7 +36,7 @@ public sealed class PortMapper : IDisposable
         new Thread(Run) { IsBackground = true, Name = "mp-upnp" }.Start();
     }
 
-    private void Fail(string why) { _status = why; _phase = Phase.Failed; }
+    private void Fail(string why) { _status = why; _phase = Phase.Failed; Log.Warn("UPnP: " + why, "multiplayer"); }
 
     private void Run()
     {
@@ -45,6 +45,7 @@ public sealed class PortMapper : IDisposable
             var found = Discover(_stop.Token);
             if (found == null) { Fail("No router answered (UPnP is off or unsupported). Only players on your own network can join."); return; }
             var (control, service, local) = found.Value;
+            Log.Info("UPnP: found a router that supports port mapping", "multiplayer");
             _control = control; _service = service;
             string ip = Soap(control, service, "GetExternalIPAddress", "")?.Descendants().FirstOrDefault(e => e.Name.LocalName == "NewExternalIPAddress")?.Value ?? "";
             if (!IPAddress.TryParse(ip, out var ext) || !IsPublic(ext)) { Fail("Your internet provider shares one address between customers, so direct internet play is not possible. Players on your own network can still join."); return; }
@@ -59,6 +60,7 @@ public sealed class PortMapper : IDisposable
             }
             if (chosen == 0) { Fail("The router has no free port to open. Only players on your own network can join."); return; }
             _externalPort = chosen; _publicIp = ext.ToString();
+            Log.Info($"UPnP: port {chosen} opened on the router", "multiplayer");
             _status = "Open to the internet";
             _phase = Phase.Ready;
             while (!_stop.Token.WaitHandle.WaitOne(TimeSpan.FromMinutes(50))) Map(chosen, local, 7200);

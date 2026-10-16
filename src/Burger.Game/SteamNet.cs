@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Burger.Core;
 using Burger.Core.Multiplayer;
 using Steamworks;
 
@@ -21,12 +22,13 @@ public static class SteamService
     public static string PersonaName { get; private set; } = "";
     private static bool _tried;
 
-    private static readonly List<string> _log = new();
-    /// <summary>Timestamped diagnostics for the multiplayer screen, newest last.</summary>
-    public static string[] LogLines { get { lock (_log) return _log.ToArray(); } }
-    public static void Note(string text)
+    /// <summary>Diagnostics for the multiplayer screen and logs/error.log (category "multiplayer"), newest last.</summary>
+    public static LogEntry[] LogLines => Log.Entries.Where(e => e.Where == "multiplayer").TakeLast(200).ToArray();
+    public static void Note(string text, LogLevel level = LogLevel.Info)
     {
-        lock (_log) { _log.Add(DateTime.Now.ToString("HH:mm:ss ") + text); if (_log.Count > 80) _log.RemoveAt(0); }
+        if (level == LogLevel.Error) Log.Error("Steam: " + text, "multiplayer");
+        else if (level == LogLevel.Warning) Log.Warn("Steam: " + text, "multiplayer");
+        else Log.Info("Steam: " + text, "multiplayer");
     }
     public static string AppIdUsed { get; private set; } = "";
 
@@ -58,7 +60,7 @@ public static class SteamService
             var r = SteamAPI.InitEx(out string msg);
             if (r != ESteamAPIInitResult.k_ESteamAPIInitResult_OK)
             {
-                Note($"Steam API refused: {r}" + (string.IsNullOrWhiteSpace(msg) ? "" : " - " + msg));
+                Note($"Steam API refused: {r}" + (string.IsNullOrWhiteSpace(msg) ? "" : " - " + msg), LogLevel.Error);
                 Problem = r == ESteamAPIInitResult.k_ESteamAPIInitResult_NoSteamClient
                     ? "Steam is not running or you are not signed in. Start Steam, then press Retry."
                     : "Steam would not start (" + r.ToString().Replace("k_ESteamAPIInitResult_", "") + "). See the log.";
@@ -66,6 +68,8 @@ public static class SteamService
             }
             Note("Steam API started");
             SteamNetworkingUtils.InitRelayNetworkAccess();
+            RaiseSendBuffer();
+            Note("Asked Steam to start its relay network connection");
             MyId = SteamUser.GetSteamID().m_SteamID;
             PersonaName = SteamFriends.GetPersonaName() ?? "";
             Note($"Signed in as {PersonaName} (account {MyId})");
@@ -75,17 +79,33 @@ public static class SteamService
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
             Problem = "The Steam library is missing from this copy of the game.";
-            Note($"Steam library did not load ({e.GetType().Name}): " + (e.Message.Split('\n')[0]));
-            Note("Expected steam_api64.dll (Windows), libsteam_api.so (Linux) or libsteam_api.dylib (macOS) next to the game");
+            Note($"Steam library did not load ({e.GetType().Name}): " + (e.Message.Split('\n')[0]), LogLevel.Error);
+            Note("Expected steam_api64.dll (Windows), libsteam_api.so (Linux) or libsteam_api.dylib (macOS) next to the game, from a Steamworks SDK matching Steamworks.NET 2024.8.0", LogLevel.Error);
         }
         catch (Exception e)
         {
             Burger.Core.Log.Warn($"Steam could not start ({e.GetType().Name})", "multiplayer");
             Problem = "Steam could not be started.";
-            Note($"Unexpected Steam error: {e.GetType().Name}");
+            Note($"Unexpected Steam error: {e.GetType().Name}: {e.Message}", LogLevel.Error);
         }
         return Available;
     }
+
+    /// <summary>The default send buffer (512 KB) is smaller than the game state a joiner is sent: let a connection queue up to 16 MB.</summary>
+    private static unsafe void RaiseSendBuffer()
+    {
+        try
+        {
+            int size = 16 * 1024 * 1024;
+            bool ok = SteamNetworkingUtils.SetConfigValue(ESteamNetworkingConfigValue.k_ESteamNetworkingConfig_SendBufferSize, ESteamNetworkingConfigScope.k_ESteamNetworkingConfig_Global, IntPtr.Zero, ESteamNetworkingConfigDataType.k_ESteamNetworkingConfig_Int32, (IntPtr)(&size));
+            Note(ok ? "Send buffer raised to 16 MB" : "Could not raise the send buffer (large saves are queued by the game instead)", ok ? LogLevel.Info : LogLevel.Warning);
+        }
+        catch (Exception e) { Note($"Could not raise the send buffer ({e.GetType().Name})", LogLevel.Warning); }
+    }
+
+    private static readonly List<SteamLink> _links = new();
+    internal static void Track(SteamLink l) { lock (_links) _links.Add(l); }
+    internal static void Untrack(SteamLink l) { lock (_links) _links.Remove(l); }
 
     /// <summary>Try again after the player started Steam.</summary>
     public static void Retry() { if (Available) return; _tried = false; Note("Retrying"); Init(); }
@@ -113,30 +133,72 @@ public static class SteamService
     }
 
     /// <summary>Once per frame.</summary>
-    public static void Pump() { if (Available) SteamAPI.RunCallbacks(); }
+    public static void Pump()
+    {
+        if (!Available) return;
+        SteamAPI.RunCallbacks();
+        SteamLink[] links; lock (_links) links = _links.ToArray();
+        foreach (var l in links) l.Flush();
+    }
 
     public static void Shutdown() { if (Available) { try { SteamAPI.Shutdown(); } catch { } Available = false; } }
 }
 
-/// <summary>One Steam connection as a message link.</summary>
+/// <summary>One Steam connection as a message link. Outgoing messages are queued and handed to Steam in order as its send buffer allows, so a large save is never dropped.</summary>
 internal sealed class SteamLink : IMessageLink
 {
     private readonly HSteamNetConnection _conn;
+    private readonly string _name;
     private volatile bool _open = true;
     private readonly IntPtr[] _buffer = new IntPtr[32];
     private readonly Queue<byte[]> _in = new();
-    public SteamLink(HSteamNetConnection conn) { _conn = conn; }
-    public bool Connected => _open;
-    public void MarkClosed() => _open = false;
+    private readonly Queue<byte[]> _out = new();
+    private int _sentTotal, _queuedPeak;
+    private bool _warnedSlow;
+    public SteamLink(HSteamNetConnection conn, string name) { _conn = conn; _name = name; SteamService.Track(this); }
     public HSteamNetConnection Handle => _conn;
+    public void MarkClosed() { if (_open) { _open = false; SteamService.Untrack(this); } }
 
-    public unsafe void Send(byte[] message)
+    public bool Connected
+    {
+        get
+        {
+            if (!_open) return false;
+            if (SteamNetworkingSockets.GetConnectionInfo(_conn, out var info) &&
+                info.m_eState is ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer or ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally or ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_None)
+            {
+                SteamService.Note($"{_name}: connection ended: {info.m_eState.ToString().Replace("k_ESteamNetworkingConnectionState_", "")}, reason {info.m_eEndReason}" + (string.IsNullOrEmpty(info.m_szEndDebug) ? "" : $" ({info.m_szEndDebug})") + $"; sent {_sentTotal} messages, {_out.Count} still queued", LogLevel.Warning);
+                MarkClosed();
+            }
+            return _open;
+        }
+    }
+
+    public void Send(byte[] message)
     {
         if (!_open) return;
-        fixed (byte* p = message)
+        _out.Enqueue(message);
+        if (_out.Count > _queuedPeak) _queuedPeak = _out.Count;
+        Flush();
+    }
+
+    /// <summary>Hand queued messages to Steam until its buffer is full (then try again next frame).</summary>
+    public unsafe void Flush()
+    {
+        while (_open && _out.Count > 0)
         {
-            var r = SteamNetworkingSockets.SendMessageToConnection(_conn, (IntPtr)p, (uint)message.Length, Constants.k_nSteamNetworkingSend_Reliable, out _);
-            if (r != EResult.k_EResultOK && r != EResult.k_EResultLimitExceeded) _open = false;
+            var m = _out.Peek();
+            EResult r;
+            fixed (byte* p = m) r = SteamNetworkingSockets.SendMessageToConnection(_conn, (IntPtr)p, (uint)m.Length, Constants.k_nSteamNetworkingSend_Reliable, out _);
+            if (r == EResult.k_EResultOK) { _out.Dequeue(); _sentTotal++; continue; }
+            if (r == EResult.k_EResultLimitExceeded)
+            {
+                if (!_warnedSlow && _out.Count > 200) { _warnedSlow = true; SteamService.Note($"{_name}: Steam's send buffer is full, {_out.Count} messages waiting (peak {_queuedPeak}); the connection is slower than the data being sent", LogLevel.Warning); }
+                return;
+            }
+            SteamService.Note($"{_name}: Steam refused a {m.Length}-byte message: {r}; closing", LogLevel.Error);
+            _open = false; SteamService.Untrack(this);
+            return;
         }
     }
 
@@ -149,6 +211,7 @@ internal sealed class SteamLink : IMessageLink
             {
                 var m = Marshal.PtrToStructure<SteamNetworkingMessage_t>(_buffer[i]);
                 if (m.m_cbSize > 0 && m.m_cbSize <= Wire.MaxRawLine * 2) { var b = new byte[m.m_cbSize]; Marshal.Copy(m.m_pData, b, 0, m.m_cbSize); _in.Enqueue(b); }
+                else SteamService.Note($"{_name}: dropped a {m.m_cbSize}-byte message (limit {Wire.MaxRawLine * 2})", LogLevel.Warning);
                 SteamNetworkingMessage_t.Release(_buffer[i]);
             }
         }
@@ -160,8 +223,27 @@ internal sealed class SteamLink : IMessageLink
     {
         if (!_open) return;
         _open = false;
-        try { SteamNetworkingSockets.CloseConnection(_conn, 0, "", false); } catch { }
+        SteamService.Untrack(this);
+        SteamService.Note($"{_name}: closing the connection ourselves ({_out.Count} messages were still queued, {_sentTotal} sent)");
+        try { SteamNetworkingSockets.CloseConnection(_conn, 0, "", true); } catch { }
     }
+
+    /// <summary>One line on how the connection runs: ping and whether it goes through Steam's relays.</summary>
+    public string Describe()
+    {
+        try
+        {
+            if (SteamNetworkingSockets.GetConnectionRealTimeStatus(_conn, ref _status, 0, ref _lane) == EResult.k_EResultOK)
+            {
+                string detail = SteamNetworkingSockets.GetDetailedConnectionStatus(_conn, out string text, 2048) == 0 ? text.Replace('\n', ' ') : "";
+                return $"ping {_status.m_nPing} ms, quality {_status.m_flConnectionQualityLocal:P0} local / {_status.m_flConnectionQualityRemote:P0} remote. {detail}".Trim();
+            }
+        }
+        catch { }
+        return "no status";
+    }
+    private SteamNetConnectionRealTimeStatus_t _status;
+    private SteamNetConnectionRealTimeLaneStatus_t _lane;
 }
 
 /// <summary>Hosting over Steam: a listen socket that hands every connection to the session-secret check.</summary>
@@ -188,15 +270,29 @@ public sealed class SteamHost : IAcceptSource
     {
         if (c.m_info.m_hListenSocket != _socket) return;
         uint id = c.m_hConn.m_HSteamNetConnection;
-        SteamService.Note($"Host: connection {c.m_info.m_identityRemote.GetSteamID64()} is now {c.m_info.m_eState.ToString().Replace("k_ESteamNetworkingConnectionState_", "")}" + (c.m_info.m_eEndReason != 0 ? $" (reason {c.m_info.m_eEndReason}: {c.m_info.m_szEndDebug})" : ""));
+        ulong who = c.m_info.m_identityRemote.GetSteamID64();
+        string state = c.m_info.m_eState.ToString().Replace("k_ESteamNetworkingConnectionState_", "");
+        string was = c.m_eOldState.ToString().Replace("k_ESteamNetworkingConnectionState_", "");
+        string reason = c.m_info.m_eEndReason != 0 ? $" - reason {c.m_info.m_eEndReason}" + (string.IsNullOrEmpty(c.m_info.m_szEndDebug) ? "" : $": {c.m_info.m_szEndDebug}") : "";
+        bool bad = c.m_info.m_eState is ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally;
+        SteamService.Note($"Host: account {who}: {was} -> {state}{reason}", bad ? LogLevel.Warning : LogLevel.Info);
         switch (c.m_info.m_eState)
         {
             case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting:
-                if (_links.Count >= 32 || SteamNetworkingSockets.AcceptConnection(c.m_hConn) != EResult.k_EResultOK) SteamNetworkingSockets.CloseConnection(c.m_hConn, 0, "", false);
-                else _links[id] = new SteamLink(c.m_hConn);
+                if (_links.Count >= 32) { SteamService.Note($"Host: refused account {who}: already {_links.Count} connections", LogLevel.Warning); SteamNetworkingSockets.CloseConnection(c.m_hConn, 0, "", false); }
+                else
+                {
+                    var r = SteamNetworkingSockets.AcceptConnection(c.m_hConn);
+                    if (r != EResult.k_EResultOK) { SteamService.Note($"Host: could not accept account {who}: {r}", LogLevel.Error); SteamNetworkingSockets.CloseConnection(c.m_hConn, 0, "", false); }
+                    else _links[id] = new SteamLink(c.m_hConn, "Host/" + who);
+                }
                 break;
             case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected:
-                if (_links.TryGetValue(id, out var link)) _acceptor.Offer(link, c.m_info.m_identityRemote.GetSteamID64().ToString());
+                if (_links.TryGetValue(id, out var link))
+                {
+                    SteamService.Note($"Host: account {who} connected: {link.Describe()}");
+                    _acceptor.Offer(link, who.ToString());
+                }
                 break;
             case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer:
             case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
@@ -223,28 +319,50 @@ public static class SteamJoin
     /// <summary>Connects to the host named in the code and passes the session-secret check. Blocks up to about 15 s while pumping Steam; throws a message safe to show.</summary>
     public static ITransport Connect(ulong hostId, byte[] secret)
     {
-        SteamService.Note($"Joining host account {hostId}");
+        SteamService.Note($"Join: connecting to host account {hostId}");
+        string relay = SteamService.RelayState(out bool relayOk);
+        if (!relayOk) SteamService.Note($"Join: Steam's {relay}; the connection may take longer or fail", LogLevel.Warning);
         var id = new SteamNetworkingIdentity();
         id.SetSteamID64(hostId);
         var conn = SteamNetworkingSockets.ConnectP2P(ref id, 0, 0, null);
-        if (conn == HSteamNetConnection.Invalid) throw new InvalidDataException("Steam could not start the connection");
-        var link = new SteamLink(conn);
+        if (conn == HSteamNetConnection.Invalid) { SteamService.Note("Join: Steam returned no connection handle (invalid identity or Steam not ready)", LogLevel.Error); throw new InvalidDataException("Steam could not start the connection"); }
+        var link = new SteamLink(conn, "Join/" + hostId);
         var end = DateTime.UtcNow.AddSeconds(15);
         var last = ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_None;
+        string detail = "no state change";
         while (DateTime.UtcNow < end)
         {
             SteamService.Pump();
             if (SteamNetworkingSockets.GetConnectionInfo(conn, out var info))
             {
-                if (info.m_eState != last) { last = info.m_eState; SteamService.Note("Join: " + last.ToString().Replace("k_ESteamNetworkingConnectionState_", "") + (info.m_eEndReason != 0 ? $" (reason {info.m_eEndReason}: {info.m_szEndDebug})" : "")); }
-                if (info.m_eState == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected) return LinkAcceptor.Join(link, secret, SteamService.Pump);
-                if (info.m_eState is ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer or ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally)
-                    break;
+                if (info.m_eState != last)
+                {
+                    last = info.m_eState;
+                    detail = last.ToString().Replace("k_ESteamNetworkingConnectionState_", "") + (info.m_eEndReason != 0 ? $", reason {info.m_eEndReason}" + (string.IsNullOrEmpty(info.m_szEndDebug) ? "" : $" ({info.m_szEndDebug})") : "");
+                    SteamService.Note("Join: " + detail, info.m_eEndReason != 0 ? LogLevel.Warning : LogLevel.Info);
+                }
+                if (last == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected)
+                {
+                    SteamService.Note("Join: connected: " + link.Describe());
+                    return LinkAcceptor.Join(link, secret, SteamService.Pump);
+                }
+                if (last is ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer or ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally)
+                {
+                    string why = info.m_eEndReason switch
+                    {
+                        >= 3000 and < 4000 => "the host is not online or is not hosting (is the game running, and Steam signed in?)",
+                        >= 4000 and < 5000 => "the Steam network could not reach the host (a firewall, or Steam's relay network is down)",
+                        _ => "the connection was refused or lost",
+                    };
+                    SteamService.Note($"Join failed: {detail}: {why}", LogLevel.Error);
+                    link.Close();
+                    throw new InvalidDataException("Steam could not reach the host: " + why);
+                }
             }
             Thread.Sleep(10);
         }
-        SteamService.Note("Join failed: no connection within 15 s");
+        SteamService.Note($"Join failed: no connection within 15 s (last state: {detail}). Steam {SteamService.RelayState(out _)}", LogLevel.Error);
         link.Close();
-        throw new InvalidDataException("Could not reach the host through Steam. Check the code and that the host is playing.");
+        throw new InvalidDataException("Could not reach the host through Steam within 15 seconds. Check the code, that the host is in the game, and the Steam log.");
     }
 }

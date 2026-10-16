@@ -66,26 +66,36 @@ public sealed class LinkAcceptor : IAcceptSource
         {
             _failures.TryGetValue(o.Key, out var f);
             f?.RemoveAll(x => (DateTime.UtcNow - x).TotalSeconds > 60);
-            if (_pending.Count >= MaxPending || (f?.Count ?? 0) >= MaxFailures) { Refused++; o.Link.Close(); continue; }
+            if (_pending.Count >= MaxPending || (f?.Count ?? 0) >= MaxFailures)
+            {
+                Refused++; o.Link.Close();
+                Log.Warn($"Admission: refused {o.Key} without a check: " + (_pending.Count >= MaxPending ? $"{MaxPending} players already waiting to be checked" : $"{f!.Count} failed checks from this account in the last minute (limit {MaxFailures})"), "multiplayer");
+                continue;
+            }
             string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
             _pending.Add(new Pending(o.Link, o.Key, nonce, DateTime.UtcNow));
+            Log.Info($"Admission: {o.Key} connected, challenge sent (must answer within {AuthMs} ms)", "multiplayer");
             o.Link.Send(Encoding.ASCII.GetBytes("CH " + nonce));
         }
         for (int i = _pending.Count - 1; i >= 0; i--)
         {
             var p = _pending[i];
             bool done = false, ok = false;
+            string why = "";
             while (!done && p.Link.TryReceive(out var m))
             {
                 string s = m.Length < 100 ? Encoding.ASCII.GetString(m) : "";
                 ok = s == "PR " + Proof(_secret, p.Nonce);
+                if (!ok) why = m.Length >= 100 ? $"answer was {m.Length} bytes (too large)" : s.StartsWith("PR ") ? "wrong proof: the joiner used a code from a different hosting session" : "answer was not a proof";
                 done = true;
             }
             if (!done && p.Link.Connected && (DateTime.UtcNow - p.Since).TotalMilliseconds < AuthMs) continue;
             _pending.RemoveAt(i);
-            if (ok) { p.Link.Send(Encoding.ASCII.GetBytes("OK")); _ready.Enqueue(new MessageTransport(p.Link)); }
+            if (ok) { p.Link.Send(Encoding.ASCII.GetBytes("OK")); _ready.Enqueue(new MessageTransport(p.Link)); Log.Info($"Admission: {p.Key} passed the check after {(DateTime.UtcNow - p.Since).TotalMilliseconds:0} ms", "multiplayer"); }
             else
             {
+                if (!done) why = p.Link.Connected ? $"no answer within {AuthMs} ms" : "connection closed before answering";
+                Log.Warn($"Admission: {p.Key} failed the check: {why}", "multiplayer");
                 Refused++;
                 if (!_failures.TryGetValue(p.Key, out var f)) _failures[p.Key] = f = new();
                 f.Add(DateTime.UtcNow);
@@ -102,19 +112,21 @@ public sealed class LinkAcceptor : IAcceptSource
     {
         var end = DateTime.UtcNow.AddMilliseconds(timeoutMs);
         bool answered = false;
+        Log.Info("Join check: waiting for the host's challenge", "multiplayer");
         while (DateTime.UtcNow < end)
         {
             pump();
-            if (!link.Connected) break;
+            if (!link.Connected) { Log.Warn(answered ? "Join check: connection closed after answering (the host rejected the proof or went away)" : "Join check: connection closed before the host's challenge arrived", "multiplayer"); break; }
             while (link.TryReceive(out var m))
             {
                 string s = m.Length < 100 ? Encoding.ASCII.GetString(m) : "";
-                if (!answered && s.StartsWith("CH ")) { link.Send(Encoding.ASCII.GetBytes("PR " + Proof(secret, s[3..]))); answered = true; }
-                else if (answered && s == "OK") return new MessageTransport(link);
-                else { link.Close(); throw new InvalidDataException("the host refused the code"); }
+                if (!answered && s.StartsWith("CH ")) { link.Send(Encoding.ASCII.GetBytes("PR " + Proof(secret, s[3..]))); answered = true; Log.Info("Join check: challenge received, proof sent", "multiplayer"); }
+                else if (answered && s == "OK") { Log.Info("Join check: host accepted the proof", "multiplayer"); return new MessageTransport(link); }
+                else { Log.Warn($"Join check: unexpected {m.Length}-byte message while " + (answered ? "waiting for acceptance" : "waiting for the challenge"), "multiplayer"); link.Close(); throw new InvalidDataException("the host refused the code"); }
             }
             Thread.Sleep(5);
         }
+        Log.Warn($"Join check: no answer from the host within {timeoutMs} ms" + (answered ? " (proof was sent)" : " (no challenge received)"), "multiplayer");
         link.Close();
         throw new InvalidDataException("the host did not answer");
     }

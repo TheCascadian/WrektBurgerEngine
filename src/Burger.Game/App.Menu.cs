@@ -171,12 +171,17 @@ public sealed partial class App
         if (!_steamLogOpen) return;
         float bh = 26 * s, half = (w - 6 * s) / 2;
         if (!_menuSettings && Gui.Button(new Rectangle(x, y, half, bh), "Retry", !ok, ok ? "Steam is already connected" : "Check again after starting Steam", false, 14)) SteamService.Retry();
-        if (!_menuSettings && Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Copy log", true, "Copy the log to send to the developer", false, 14))
-            Raylib.SetClipboardText(string.Join("\n", SteamService.LogLines));
+        if (!_menuSettings && Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Copy log", true, "Copy the whole multiplayer log to send to the developer", false, 14))
+            Raylib.SetClipboardText(string.Join("\n", SteamService.LogLines.Select(e => e.ToString())));
         y += bh + 6 * s;
         var lines = SteamService.LogLines;
-        foreach (var line in lines.Skip(Math.Max(0, lines.Length - 12)))
-            y += Gui.Wrapped(line, x, y, w, 12, line.Contains("refused") || line.Contains("failed") || line.Contains("not load") || line.Contains("unavailable") ? Gui.Bad : Gui.TextDim) + 2 * s;
+        Gui.Label($"{lines.Length} entries - full log in logs/error.log", x, y, 12, Gui.TextDim);
+        y += 18 * s;
+        foreach (var e in lines.Skip(Math.Max(0, lines.Length - 18)))
+        {
+            var c = e.Level == LogLevel.Error ? Gui.Bad : e.Level == LogLevel.Warning ? Gui.Gold : Gui.TextDim;
+            y += Gui.Wrapped($"{e.Time:HH:mm:ss} {e.Message}", x, y, w, 12, c) + 2 * s;
+        }
     }
 
     private void DrawPageHost(Game game, MapRenderer map, CameraController cam, float x, float y, float w, Rectangle panel)

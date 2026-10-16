@@ -103,6 +103,7 @@ public sealed class LockstepSession
         s.Me = new PlayerInfo { Id = 0, Name = hostName, IsHost = true, Ready = true };
         s._nextId = 1;
         s.Players.Add(s.Me);
+        Log.Info($"Session: hosting '{project}' (seed {seed}, protocol {Protocol}) as {hostName}", "multiplayer");
         return s;
     }
 
@@ -111,6 +112,7 @@ public sealed class LockstepSession
     {
         var s = new LockstepSession(null!, false, loader) { _hostLink = link };
         link.Send($"HELLO|{Protocol}|{Net.Esc(Sanitize.PlayerName(playerName))}|-");
+        Log.Info($"Session: connected to the host, HELLO sent (protocol {Protocol})", "multiplayer");
         return s;
     }
 
@@ -346,9 +348,13 @@ public sealed class LockstepSession
             {
                 _pending.RemoveAt(i);
                 try { Hello(link, line); }
-                catch (Exception e) { Log.Warn($"Multiplayer: bad HELLO ({e.GetType().Name})", "multiplayer"); link.Close(); }
+                catch (Exception e) { Log.Warn($"Session: bad HELLO ({e.GetType().Name}: {e.Message})", "multiplayer"); link.Close(); }
             }
-            else if (!link.Connected || Now() - since > 10000) { _pending.RemoveAt(i); link.Close(); }
+            else if (!link.Connected || Now() - since > 10000)
+            {
+                Log.Warn(!link.Connected ? "Session: a connection closed before sending HELLO" : "Session: no HELLO within 10 s, connection dropped", "multiplayer");
+                _pending.RemoveAt(i); link.Close();
+            }
         }
         foreach (var p in Players.Where(p => p.Active && !p.IsHost).ToList())
         {
@@ -379,13 +385,14 @@ public sealed class LockstepSession
     {
         string? reject = null;
         string? bad = Wire.Check(Wire.Dir.ToHost, line, out var f, false);
-        if (bad != null || f[0] != "HELLO") { link.Close(); return; }
+        if (bad != null || f[0] != "HELLO") { Log.Warn($"Session: first message was not a valid HELLO ({bad ?? "wrong type"})", "multiplayer"); link.Close(); return; }
         if (f[1] != Protocol.ToString(CultureInfo.InvariantCulture)) reject = "Protocol mismatch";
         else if (Players.Count(p => p.Active) >= MaxPlayers) reject = "Game is full";
-        if (reject != null) { link.Send("REJECT|" + Net.Esc(reject)); link.Close(); return; }
+        if (reject != null) { Log.Warn($"Session: HELLO rejected: {reject} (peer protocol {f[1]}, ours {Protocol}, players {Players.Count(p => p.Active)}/{MaxPlayers})", "multiplayer"); link.Send("REJECT|" + Net.Esc(reject)); link.Close(); return; }
         var p = new PlayerInfo { Id = _nextId++, Name = UniqueName(Sanitize.PlayerName(Net.Unesc(f[2]))), Link = link };
         Players.Add(p);
         link.Send($"WELCOME|{p.Id}|{Net.Esc(Project)}|{Seed}|{_scriptsHash}|{ModSetHash(Game)}|{Protocol}");
+        Log.Info($"Session: {p.Name} (id {p.Id}) said HELLO, WELCOME sent; waiting for READY", "multiplayer");
     }
 
     private string UniqueName(string name)
@@ -463,6 +470,7 @@ public sealed class LockstepSession
 
     private void Remove(PlayerInfo p, string why)
     {
+        Log.Warn($"Session: {p.Name} (id {p.Id}) removed: {why} (ready {p.Ready}, strikes {p.Strikes}, link " + (p.Link?.Connected == true ? "up" : "down") + ")", "multiplayer");
         p.Active = false;
         p.Link?.Close();
         p.VotePause = null; p.VoteSpeed = null;
@@ -493,6 +501,7 @@ public sealed class LockstepSession
         string tags = string.Join(',', Game.World.Countries.Where(c => c.IsPlayer).Select(c => c.Tag).OrderBy(t => t, StringComparer.Ordinal));
         var link = p.Link!;
         p.SyncTick = Tick;
+        Log.Info($"Session: sending the game state to {p.Name}: {zip.Length:N0} bytes compressed in {(zip.Length + Wire.SyncChunk - 1) / Wire.SyncChunk} chunks (tick {Tick})", "multiplayer");
         link.Send($"SYNC|{Tick}|{tags}|{zip.Length}");
         int seq = 0;
         for (int at = 0; at < zip.Length; at += Wire.SyncChunk)
@@ -525,7 +534,7 @@ public sealed class LockstepSession
             try { OnClientMessage(f); }
             catch (Exception e) { HostStrike($"invalid {f[0]} ({e.GetType().Name})"); }
         }
-        if (!link.Connected && !Disconnected && !link.TryReceive(out _)) { Disconnected = true; Toast?.Invoke("Lost the connection to the host"); }
+        if (!link.Connected && !Disconnected && !link.TryReceive(out _)) { Disconnected = true; Log.Warn($"Session: lost the connection to the host (state: {(Me == null ? "before WELCOME" : Game == null ? "loading" : "in game")}, tick {Tick})", "multiplayer"); Toast?.Invoke("Lost the connection to the host"); }
     }
 
     private void HostStrike(string why)
@@ -538,7 +547,7 @@ public sealed class LockstepSession
     {
         switch (f[0])
         {
-            case "REJECT": Disconnected = true; Toast?.Invoke("Join refused: " + Sanitize.Text(Net.Unesc(f[1]), Sanitize.MaxToast)); break;
+            case "REJECT": Disconnected = true; Log.Warn("Session: host refused the join: " + Sanitize.Text(Net.Unesc(f[1]), 120), "multiplayer"); Toast?.Invoke("Join refused: " + Sanitize.Text(Net.Unesc(f[1]), Sanitize.MaxToast)); break;
             case "WELCOME":
             {
                 if (Me != null) { HostStrike("second WELCOME"); break; }
@@ -547,6 +556,8 @@ public sealed class LockstepSession
                 Project = Sanitize.Name(Net.Unesc(f[2]));
                 if (Project.Length == 0) throw new InvalidDataException("bad project name");
                 Seed = seed;
+                Log.Info($"Session: WELCOME received (player id {id}, project '{Project}', seed {seed}); loading the game", "multiplayer");
+                var loadWatch = Stopwatch.StartNew();
                 Me = new PlayerInfo { Id = id, Ready = true };
                 try
                 {
@@ -554,14 +565,17 @@ public sealed class LockstepSession
                     if (Net.ScriptsHash(g.Data.Root) != f[4]) throw new InvalidDataException("scripts or project code differ from the host's");
                     if (ModSetHash(g) != f[5]) throw new InvalidDataException("mod messages differ from the host's");
                     Game = g; Attach(g); _loadedForJoin = true;
+                    Log.Info($"Session: game loaded in {loadWatch.ElapsedMilliseconds} ms, scripts and mod hashes match the host's", "multiplayer");
                 }
                 catch (Exception e)
                 {
+                    Log.Error($"Session: cannot join '{Project}': {e.GetType().Name}: {e.Message}", "multiplayer");
                     Disconnected = true; _hostLink!.Close();
                     Toast?.Invoke($"Cannot join '{Project}': {e.Message}");
                     return;
                 }
                 _hostLink!.Send("READY");
+                Log.Info("Session: READY sent", "multiplayer");
                 break;
             }
             case "SYNC":
@@ -581,11 +595,17 @@ public sealed class LockstepSession
             case "SYNCEND":
             {
                 var buf = _syncBuf; _syncBuf = null;
-                if (buf == null || !Wire.Int(f[1], 0, int.MaxValue, out int n) || n != _syncSeq || buf.Length != _syncLen) throw new InvalidDataException("bad SYNCEND");
+                if (buf == null || !Wire.Int(f[1], 0, int.MaxValue, out int n) || n != _syncSeq || buf.Length != _syncLen)
+                {
+                    Log.Warn($"Session: save transfer incomplete: got {(buf?.Length ?? -1):N0} of {_syncLen:N0} bytes, {_syncSeq} chunks, host says {f[1]}", "multiplayer");
+                    throw new InvalidDataException("bad SYNCEND");
+                }
+                Log.Info($"Session: save received ({buf.Length:N0} bytes, {n} chunks); loading it", "multiplayer");
                 try { Sync(_syncTick, _syncTags, buf.ToArray()); }
                 catch (Exception e)
                 {
                     // a half-loaded game cannot be trusted: leave
+                    Log.Error($"Session: the host's save could not be loaded: {e.GetType().Name}: {e.Message}", "multiplayer");
                     Disconnected = true; _hostLink!.Close();
                     Toast?.Invoke("Left: the host sent an invalid save (" + Sanitize.Text(e.Message, 80) + ")");
                 }
