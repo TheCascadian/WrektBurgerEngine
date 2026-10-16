@@ -61,3 +61,19 @@ Add entry to `01_sites.txt`: `key = { name = "X" location = land_NNNNN weight = 
 - Rome's own location is 44 pixels, so Rome uses neighbor locations of its state. A per-site territory list is not implemented.
 - `ShowBelow`, `MetresToWorld` untuned. No instancing: one baked mesh per site.
 - Globe mode shows no sites.
+
+## Layouts that follow the land
+
+Layer kinds beyond `place`, `ring`, `street` and `scatter`:
+
+- `outline`: wall that follows the location's border. Per angle, radius = min(`radius`, edge reach - `margin`), smoothed. Gates (`gates`, `gate_angle`, `gate` piece) sit on the nearest wall piece.
+- `terrace`: one piece on the best high ground within `inner`..`radius`, low slope, facing the center.
+- `street` params: `meander` (degrees of turn per piece). Without a wall, uses its own `gates` and `gate_angle`.
+- `scatter` param: `falloff` (above 1 packs pieces towards the center). Pieces stay inside the wall; layers starting beyond the wall may use any land.
+- `place` spots outside the land slide towards the center.
+
+Tiers with `outline` or `terrace` are built at scale 1 on the most open spot of the location (the neighbors of the same state too when the location is small), by `SiteSystem.MakeTerrain`. Other tiers still use `Fit`.
+
+Rome: outline hill-town. Persian city: unwalled, palace terrace on the highest ground, winding roads. Persian town: small outline wall. Images: site-rome-outline.png, site-persian-city-ingame.png.
+
+OPEN: Persian design is unsourced. No Persian bridge pieces. Persian mud-brick colors read too bright in game.

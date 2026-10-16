@@ -1,0 +1,33 @@
+# Persian (Achaemenid) site kit. Pieces are gfx/models/site_<piece>_persian.glb (tools/assets/models/site_persian.py). Layer kinds as in 00_latin_kit.txt.
+kits = {
+	persian = {
+		name = "Persian"
+		source = "Design from general knowledge, not a looked-up source (OPEN): mud-brick flat-roofed houses, the terrace palace and apadana of Persepolis, the tower shrine and fire altar of Naqsh-e Rustam and Pasargadae, turquoise glazed tile, cypress and date palm, the paradise garden. No bridge pieces yet (OPEN)."
+		culture_groups = { iranian }
+		tiers = {
+			# a walled mud-brick town: houses and storehouses round a paved square with a fire altar
+			town = {
+				min_score = 0
+				layer = { kind = outline piece = wall gate = gate_tower gates = 2 gate_angle = 0 radius = 32 margin = 3 spacing = 8 }
+				layer = { kind = street piece = path inner = 8 outer = 28 spacing = 8 meander = 15 }
+				layer = { kind = place piece = plaza x = 0 z = 0 }
+				layer = { kind = place piece = fire_altar x = 0 z = -14 }
+				layer = { kind = scatter pieces = { mudbrick_house = 5 storehouse = 1 } count = 6 count_per_score = 90 inner = 12 outer = 26 face = center }
+				layer = { kind = scatter pieces = { palm = 3 cypress = 1 } count = 10 inner = 38 outer = 52 face = random }
+			}
+			# a royal city: no ring wall. The terrace palace stands on the best high ground, the town spreads unwalled and loose round it, with winding roads, gardens, a tower shrine and a fire altar
+			city = {
+				min_score = 0.10
+				layer = { kind = terrace piece = palace inner = 0 radius = 40 }
+				layer = { kind = street piece = path inner = 30 outer = 80 spacing = 8 meander = 18 gates = 4 gate_angle = 40 }
+				layer = { kind = place piece = plaza x = 0 z = 46 }
+				layer = { kind = place piece = tower_shrine x = 52 z = -30 yaw = 20 }
+				layer = { kind = place piece = fire_altar x = -44 z = 18 yaw = 0 }
+				layer = { kind = place piece = garden x = -44 z = -34 }
+				layer = { kind = place piece = garden x = 10 z = -58 }
+				layer = { kind = scatter pieces = { courtyard_house = 3 mudbrick_house = 5 storehouse = 1 } count = 26 count_per_score = 150 inner = 34 outer = 84 falloff = 1.6 face = center }
+				layer = { kind = scatter pieces = { cypress = 3 palm = 2 } count = 20 inner = 86 outer = 110 face = random }
+			}
+		}
+	}
+}

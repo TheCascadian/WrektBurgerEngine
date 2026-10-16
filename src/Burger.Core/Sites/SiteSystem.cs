@@ -105,13 +105,26 @@ public sealed class SiteSystem
             if (signature == site.Signature && site.Model != null) continue;
             site.Kit = kit; site.Tier = tier; site.Score = score; site.Signature = signature;
             var loc = site.Location;
+            if (tier.Layers.Any(l => l.Kind is "outline" or "terrace") && ground != null)
+            {
+                // fitted to the land: the layout reads the location's outline and heights itself
+                var (terrain, cx, cz, wideTerritory) = MakeTerrain(loc, tier, ground);
+                var built = SiteLayout.Build(kit, tier, score, Seed(site.Def.Key), RadiusOf, terrain);
+                site.Placements = built.Select(p => p with { X = p.X + cx, Z = p.Z + cz }).ToList();
+                Bridge(loc, kit, site.Placements, 1f, 0f, 0f, stone, wideTerritory);
+                site.Model = site.Placements.Count == 0 ? null
+                    : SiteLayout.Bake("site:" + site.Def.Key, site.Placements, k => _game.Figures.Find(kit.ModelKey(k)), (x, z) => ground(loc, x, z), 1f);
+            }
+            else
+            {
             var placements = SiteLayout.Build(kit, tier, score, Seed(site.Def.Key), RadiusOf);
             var (scale, ox, oz, wide) = Fit(loc, placements);
             site.Placements = placements.Where(p => Inside(loc, p.X * scale + ox, p.Z * scale + oz, wide)).Select(p => p with { X = p.X + ox / scale, Z = p.Z + oz / scale }).ToList();
-            Bridge(loc, kit, site.Placements, scale, ox, oz, stone);
+            Bridge(loc, kit, site.Placements, scale, ox, oz, stone, wide);
             site.Model = site.Placements.Count == 0 ? null
                 : SiteLayout.Bake("site:" + site.Def.Key, site.Placements, k => _game.Figures.Find(kit.ModelKey(k)), ground == null ? null : (x, z) => ground(loc, x, z), scale);
-            site.Extent = site.Placements.Count == 0 ? 0 : site.Placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z)) * scale;
+            }
+            site.Extent = site.Placements.Count == 0 ? 0 : site.Placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z));
         }
     }
 
@@ -163,7 +176,7 @@ public sealed class SiteSystem
 
     /// <summary>Logical river crossings: a street piece standing in a river becomes a bridge piece (same place and heading, 8 m long like the path). Stone where the
     /// kit allows it (year, score) and the crossing is at most 3 pieces long, timber otherwise: a timber trestle can cross wide water, an arch cannot.</summary>
-    private void Bridge(Location loc, SiteKit kit, List<SitePlacement> placements, float scale, float ox, float oz, bool stone)
+    private void Bridge(Location loc, SiteKit kit, List<SitePlacement> placements, float scale, float ox, float oz, bool stone, bool wide)
     {
         if (kit.BridgeWood.Length == 0) return;
         var wet = new List<int>();
@@ -185,6 +198,38 @@ public sealed class SiteSystem
             for (int k = a; k <= b; k++) placements[wet[k]] = placements[wet[k]] with { Piece = arch ? kit.BridgeStone : kit.BridgeWood };
             a = b + 1;
         }
+    }
+
+    /// <summary>The land a layout may use: the location (or, for a location too small for the tier, it and its land neighbors of the same state), seen from the
+    /// most open spot near its center, which becomes the site's center (metres from the location's center).</summary>
+    private (SiteTerrain Terrain, float X, float Z, bool Wide) MakeTerrain(Location loc, SiteTier tier, Func<Location, float, float, float> ground)
+    {
+        float need = tier.Layers.Where(l => l.Kind == "outline").Select(l => l.Radius).DefaultIfEmpty(40f).Max();
+        float ppm = MetresToWorld * _game.World.Map.Settings.PixelsPerUnit;
+        bool wide = loc.PixelCount / (ppm * ppm) < 0.45f * MathF.PI * need * need;
+        float bestScore = float.MinValue, bx = 0, bz = 0, step = need / 4f;
+        for (int i = -3; i <= 3; i++)
+            for (int j = -3; j <= 3; j++)
+            {
+                float cx = i * step, cz = j * step;
+                if (!Inside(loc, cx, cz, wide)) continue;
+                float sum = 0;
+                for (int k = 0; k < 24; k++)
+                {
+                    float a = MathF.Tau * k / 24, t = 0;
+                    while (t < need && Inside(loc, cx + (t + 2) * MathF.Cos(a), cz + (t + 2) * MathF.Sin(a), wide)) t += 2;
+                    sum += t;
+                }
+                sum -= 0.02f * (cx * cx + cz * cz) / need;
+                if (sum > bestScore) { bestScore = sum; bx = cx; bz = cz; }
+            }
+        float h0 = ground(loc, bx, bz);
+        var terrain = new SiteTerrain
+        {
+            Inside = (x, z) => Inside(loc, bx + x, bz + z, wide),
+            Height = (x, z) => ground(loc, bx + x, bz + z) - h0,
+        };
+        return (terrain, bx, bz, wide);
     }
 
     private float RadiusOf(string modelKey)

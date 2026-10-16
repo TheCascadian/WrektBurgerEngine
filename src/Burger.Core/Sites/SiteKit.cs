@@ -5,7 +5,8 @@ namespace Burger.Core.Sites;
 /// <summary>One step of how a tier is laid out (<c>common/sites/*.txt</c>, <c>kits = { kit = { tiers = { tier = { layers... } } } }</c>).</summary>
 public sealed class SiteLayer
 {
-    /// <summary><c>place</c> (one piece at an offset), <c>ring</c> (a wall of pieces round the site, with gates), <c>street</c> (paths from the center to the gates) or <c>scatter</c> (pieces dropped without overlap).</summary>
+    /// <summary><c>place</c> (one piece at an offset), <c>ring</c> (a circular wall with gates), <c>outline</c> (a wall that follows the location's border, with gates),
+    /// <c>terrace</c> (one piece on the best high ground), <c>street</c> (paths from the center to the gates, or to the layer's own gates when there is no wall) or <c>scatter</c> (pieces dropped without overlap).</summary>
     public string Kind = "";
     /// <summary>Pieces with weights (scatter), or one piece (the others).</summary>
     public List<(string Piece, double Weight)> Pieces = new();
@@ -25,6 +26,11 @@ public sealed class SiteLayer
     public string Face = "center";
     /// <summary>The layer only applies from this score.</summary>
     public double MinScore;
+    /// <summary><c>outline</c>: metres kept clear between the wall and the location's border.</summary>
+    public float Margin = 4;
+    /// <summary><c>street</c>: degrees the heading may turn at each piece (0 = straight). <c>scatter</c>: power of the pull towards the center (1 = even, 2 = packed in the middle).</summary>
+    public float Meander;
+    public float Falloff = 1;
 }
 
 /// <summary>A size step of a site: used from <see cref="MinScore"/> upwards.</summary>
@@ -77,7 +83,7 @@ public sealed class SiteKit
                     Inner = (float)l.GetDouble("inner"), Outer = (float)l.GetDouble("outer", 30), Radius = (float)l.GetDouble("radius", 30),
                     X = (float)l.GetDouble("x"), Z = (float)l.GetDouble("z"), Yaw = (float)l.GetDouble("yaw"),
                     Gate = l.GetString("gate", "")!, Gates = Math.Max(0, l.GetInt("gates", 1)), GateAngle = (float)l.GetDouble("gate_angle"),
-                    Spacing = (float)l.GetDouble("spacing", 8), Face = l.GetString("face", "center")!, MinScore = l.GetDouble("min_score"),
+                    Spacing = (float)l.GetDouble("spacing", 8), Margin = (float)l.GetDouble("margin", 4), Meander = (float)l.GetDouble("meander"), Falloff = (float)l.GetDouble("falloff", 1), Face = l.GetString("face", "center")!, MinScore = l.GetDouble("min_score"),
                 };
                 if (l.GetString("piece") is { } one) layer.Pieces.Add((one, 1));
                 foreach (var p in l.Get("pieces")?.All ?? Enumerable.Empty<Node>())
