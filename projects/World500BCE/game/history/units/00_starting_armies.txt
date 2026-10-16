@@ -1,0 +1,63 @@
+# Starting armies, created when the military feature was added. Edit freely.
+# TAG = { army = { name general division = { template location count } } }
+
+ACH = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07110 count = 24 }
+	}
+}
+GRK = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01113 count = 3 }
+	}
+}
+MAC = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_05247 count = 2 }
+	}
+}
+CAR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_09105 count = 2 }
+	}
+}
+NUB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08279 count = 2 }
+	}
+}
+SAB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_09216 count = 2 }
+	}
+}
+OLM = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_15261 count = 3 }
+	}
+}
+CHV = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_11805 count = 2 }
+	}
+}
+IND = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_03808 count = 22 }
+	}
+}
+ZHO = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01707 count = 24 }
+	}
+}

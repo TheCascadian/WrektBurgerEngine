@@ -67,7 +67,7 @@ public static partial class Program
         }
         catch (Exception ex)
         {
-            return Fail(ex.Message + (ex is GameLoadException ? "" : "\n" + ex.StackTrace));
+            return Fail(ex.Message + (ex is GameLoadException ? "" : "\n" + (ex is AggregateException ag ? string.Join("\n--\n", ag.Flatten().InnerExceptions.Select(e => e.GetType().Name + ": " + e.StackTrace)) : ex.StackTrace)));
         }
     }
 

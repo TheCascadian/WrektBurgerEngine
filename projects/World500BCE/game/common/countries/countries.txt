@@ -5,6 +5,8 @@ ACH = {
 	capital = land_07110
 	culture = persian
 	religion = mazdayasna
+	gold = 100
+	manpower = 10000
 }
 GRK = {
 	name = "Greek Poleis"
@@ -12,6 +14,8 @@ GRK = {
 	capital = land_01113
 	culture = greek
 	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
 }
 MAC = {
 	name = "Macedon"
@@ -19,6 +23,8 @@ MAC = {
 	capital = land_05247
 	culture = greek
 	religion = hellenic_religion
+	gold = 100
+	manpower = 10000
 }
 CAR = {
 	name = "Carthage"
@@ -26,6 +32,8 @@ CAR = {
 	capital = land_09105
 	culture = punic
 	religion = canaanite_religion
+	gold = 100
+	manpower = 10000
 }
 NUB = {
 	name = "Kush"
@@ -33,6 +41,8 @@ NUB = {
 	capital = land_08279
 	culture = kushite
 	religion = kushite_religion
+	gold = 100
+	manpower = 10000
 }
 SAB = {
 	name = "South Arabia"
@@ -40,6 +50,8 @@ SAB = {
 	capital = land_09216
 	culture = south_arabian
 	religion = south_arabian_polytheism
+	gold = 100
+	manpower = 10000
 }
 OLM = {
 	name = "Olmec"
@@ -47,6 +59,8 @@ OLM = {
 	capital = land_15261
 	culture = maya
 	religion = mesoamerican_religion
+	gold = 100
+	manpower = 10000
 }
 CHV = {
 	name = "Chavin"
@@ -54,6 +68,8 @@ CHV = {
 	capital = land_11805
 	culture = chavin
 	religion = andean_religion
+	gold = 100
+	manpower = 10000
 }
 IND = {
 	name = "Magadha and Ganges"
@@ -61,6 +77,8 @@ IND = {
 	capital = land_03808
 	culture = indo_aryan
 	religion = vedic_brahmanism
+	gold = 100
+	manpower = 10000
 }
 ZHO = {
 	name = "Zhou"
@@ -68,4 +86,6 @@ ZHO = {
 	capital = land_01707
 	culture = huaxia
 	religion = zhou_ancestor_cult
+	gold = 100
+	manpower = 10000
 }

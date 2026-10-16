@@ -4,84 +4,126 @@ arctic_north_america_m1_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_00014 land_00011 land_00002 land_00026 land_00003 land_00022 land_00027 land_00009 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m1_2 = {
 	name = "Arctic North America 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_00005 land_00029 land_00020 land_00016 land_00021 land_00023 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m1_3 = {
 	name = "Arctic North America 3"
 	manpower = 1
 	tax = 0.5
 	locations = { land_00028 land_00024 land_00015 land_00006 land_00007 land_00012 land_00013 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m1_4 = {
 	name = "Arctic North America 4"
 	manpower = 1
 	tax = 0.5
 	locations = { land_00010 land_00001 land_00025 land_17542 land_17543 land_00017 land_00008 land_00018 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m1_5 = {
 	name = "Arctic North America 5"
 	manpower = 1
 	tax = 0.5
 	locations = { land_00019 land_00004 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m2_1 = {
 	name = "Arctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_00037 land_00033 land_00038 land_00034 land_00039 land_00030 land_00035 land_00031 land_00036 land_00032 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m12_1 = {
 	name = "Arctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_09742 land_09747 land_09743 land_09744 land_09745 land_09741 land_09746 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m13_1 = {
 	name = "Arctic North America 1"
 	manpower = 1
 	tax = 0.5
 	locations = { land_11006 land_10683 land_13378 land_15247 land_13918 land_10757 land_13775 land_13332 land_13632 land_13166 land_11274 land_13000 land_11182 land_15386 land_11159 land_11902 land_11459 land_11639 land_14094 land_12825 land_11496 land_10550 land_14514 land_15437 land_13139 land_15151 land_13896 land_10052 land_12507 land_13070 land_10292 land_13813 land_10412 land_11778 land_12641 land_12092 land_14381 land_13975 land_10048 land_14049 land_12374 land_12674 land_13297 land_12531 land_13371 land_11184 land_10981 land_12490 land_11041 land_13856 land_12587 land_10635 land_11701 land_14493 land_10926 land_15190 land_12463 land_12320 land_15232 land_15569 land_15606 land_11716 land_15394 land_15288 land_12893 land_10738 land_15159 land_10872 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m13_2 = {
 	name = "Arctic North America 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_12220 land_13891 land_14317 land_09865 land_15463 land_15131 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m13_3 = {
 	name = "Arctic North America 3"
 	manpower = 1
 	tax = 0.5
 	locations = { land_13281 land_14495 land_14666 land_10799 land_13937 land_09830 land_11519 land_11316 land_14431 land_11090 land_10384 land_11367 land_15068 land_11178 land_10232 land_12521 land_15516 land_13901 land_12489 land_10274 land_13352 land_13089 land_11317 land_10611 land_13306 land_09882 land_13643 land_11087 land_14479 land_13030 land_13358 land_12412 land_11969 land_12209 land_13123 land_11905 land_12099 land_10124 land_13659 land_12390 land_12224 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m13_4 = {
 	name = "Arctic North America 4"
 	manpower = 1
 	tax = 0.5
 	locations = { land_10360 land_14929 land_09840 land_14484 land_11808 land_14014 land_10170 land_11656 land_13396 land_10475 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arctic_north_america_m24_1 = {
 	name = "Arctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15681 land_15682 land_15678 land_15674 land_15679 land_15684 land_15675 land_15680 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_1 = {
 	name = "Subarctic North America 1"
 	manpower = 1
 	tax = 0.5
 	locations = { land_11486 land_10600 land_13032 land_10697 land_11883 land_11740 land_12423 land_11477 land_13286 land_09885 land_15635 land_15612 land_13577 land_10070 land_13928 land_10767 land_10001 land_15128 land_10278 land_10758 land_15285 land_11478 land_09923 land_09937 land_11423 land_14681 land_15484 land_14612 land_12780 land_14972 land_15392 land_14340 land_12448 land_09790 land_14257 land_14497 land_15503 land_11599 land_15180 land_14211 land_12439 land_12499 land_12559 land_12416 land_12716 land_14022 land_13007 land_10852 land_10769 land_12338 land_10483 land_14447 land_14964 land_14641 land_13755 land_13312 land_11780 land_10451 land_15615 land_10119 land_13880 land_13054 land_12159 land_10184 land_10161 land_12353 land_12916 land_12653 land_10701 land_13839 land_14762 land_11984 land_11901 land_10189 land_14836 land_11495 land_10166 land_14190 land_13304 land_11412 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_2 = {
 	name = "Subarctic North America 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_12580 land_12557 land_11768 land_12036 land_11967 land_12544 land_09960 land_11040 land_10551 land_13020 land_15632 land_12231 land_14686 land_09753 land_11179 land_11313 land_11567 land_13496 land_11895 land_13141 land_12255 land_13441 land_15513 land_11937 land_15172 land_12265 land_11910 land_14928 land_12953 land_14176 land_14596 land_10046 land_14753 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_3 = {
 	name = "Subarctic North America 3"
@@ -94,12 +136,18 @@ subarctic_north_america_m13_4 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_15510 land_12086 land_12208 land_14170 land_15459 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_5 = {
 	name = "Subarctic North America 5"
 	manpower = 1
 	tax = 0.5
 	locations = { land_14767 land_10097 land_09774 land_10074 land_13009 land_11560 land_10231 land_14615 land_10268 land_13023 land_13120 land_13743 land_13923 land_10116 land_15146 land_14680 land_15483 land_12202 land_12239 land_14408 land_13679 land_14745 land_15308 land_12410 land_12470 land_10195 land_13153 land_12221 land_14676 land_12392 land_13195 land_11746 land_11414 land_12065 land_11419 land_11433 land_14631 land_10681 land_10215 land_14239 land_12024 land_11798 land_11415 land_10123 land_11249 land_11660 land_13926 land_11988 land_10839 land_11776 land_12939 land_12030 land_11767 land_10212 land_09949 land_14227 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_6 = {
 	name = "Subarctic North America 6"
@@ -112,6 +160,9 @@ subarctic_north_america_m13_7 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_14984 land_11140 land_11500 land_12506 land_15441 land_09922 land_14186 land_11205 land_14523 land_15017 land_12479 land_11713 land_09941 land_13642 land_10098 land_12110 land_12530 land_10375 land_14436 land_14999 land_12281 land_14067 land_11709 land_14727 land_13278 land_13398 land_11506 land_15470 land_12369 land_12729 land_14861 land_15604 land_11820 land_11774 land_14146 land_12194 land_13500 land_15572 land_12171 land_14303 land_11405 land_14363 land_11202 land_15143 land_12042 land_11484 land_11161 land_10395 land_15305 land_12398 land_10003 land_11586 land_11863 land_13432 land_14775 land_09962 land_10885 land_14406 land_15186 land_12025 land_15666 land_10313 land_12625 land_10733 land_12865 land_14877 land_12219 land_11010 land_14471 land_11467 land_11084 land_11887 land_10798 land_13253 land_09972 land_12404 land_13687 land_15113 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_8 = {
 	name = "Subarctic North America 8"
@@ -124,12 +175,18 @@ subarctic_north_america_m13_9 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_09820 land_12183 land_13489 land_15058 land_10208 land_13586 land_15095 land_13203 land_13946 land_14869 land_10199 land_13840 land_15469 land_14537 land_12585 land_15543 land_13651 land_11759 land_09987 land_10490 land_11173 land_09784 land_12802 land_13365 land_14108 land_14911 land_13462 land_11427 land_14122 land_10781 land_12650 land_15345 land_14399 land_13513 land_12567 land_15585 land_10832 land_11072 land_13204 land_13555 land_12669 land_15304 land_12023 land_13329 land_13389 land_10768 land_12277 land_14266 land_15272 land_12877 land_12831 land_12891 land_15586 land_14114 land_10210 land_10330 land_14917 land_12822 land_11673 land_11853 land_14991 land_11447 land_13962 land_10238 land_15268 land_10538 land_11544 land_14562 land_10155 land_13473 land_10695 land_11881 land_12947 land_13187 land_13667 land_09823 land_13824 land_09837 land_12795 land_13418 land_13981 land_11826 land_11383 land_11060 land_10737 land_10857 land_12426 land_14498 land_13169 land_10774 land_13732 land_09828 land_10931 land_14226 land_10779 land_12348 land_14720 land_13451 land_12302 land_12842 land_13848 land_11573 land_11190 land_12699 land_11813 land_15334 land_10927 land_11107 land_11024 land_10941 land_11864 land_14559 land_12464 land_12321 land_14453 land_14513 land_11149 land_12718 land_11772 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_10 = {
 	name = "Subarctic North America 10"
 	manpower = 1
 	tax = 0.5
 	locations = { land_14587 land_13558 land_12303 land_15432 land_15349 land_13508 land_10444 land_15271 land_11787 land_11584 land_13841 land_11123 land_10777 land_10113 land_11036 land_11470 land_14202 land_09975 land_12670 land_12407 land_11918 land_11595 land_10686 land_11314 land_13843 land_13137 land_10336 land_13294 land_15320 land_12316 land_13119 land_10881 land_13853 land_13267 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_11 = {
 	name = "Subarctic North America 11"
@@ -142,18 +199,27 @@ subarctic_north_america_m13_12 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_11449 land_14707 land_11426 land_12492 land_12109 land_11163 land_14864 land_13512 land_12257 land_12317 land_09899 land_13360 land_11565 land_15649 land_11422 land_10167 land_12179 land_14062 land_10255 land_11238 land_13250 land_15179 land_14404 land_13075 land_14335 land_14635 land_15138 land_11714 land_13846 land_11165 land_11645 land_15106 land_14280 land_11156 land_12725 land_13408 land_11516 land_12522 land_12762 land_10930 land_14188 land_14465 land_15531 land_11304 land_10358 land_12167 land_12084 land_13247 land_13990 land_14553 land_11069 land_15010 land_14687 land_13072 land_10174 land_14955 land_12057 land_15555 land_14166 land_12897 land_10945 land_11485 land_10659 land_11162 land_13368 land_13608 land_14674 land_14951 land_15514 land_11850 land_11324 land_14965 land_15085 land_10272 land_10392 land_14416 land_13470 land_12704 land_09926 land_11938 land_12441 land_14956 land_10143 land_11269 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_13 = {
 	name = "Subarctic North America 13"
 	manpower = 1
 	tax = 0.5
 	locations = { land_12192 land_10194 land_11297 land_12806 land_12100 land_15561 land_13300 land_15492 land_11602 land_12848 land_10610 land_15580 land_13628 land_12253 land_13762 land_13536 land_15119 land_11192 land_13984 land_14344 land_10620 land_10514 land_13869 land_10062 land_10625 land_11728 land_10173 land_12905 land_10487 land_12596 land_14165 land_14405 land_12130 land_14299 land_10312 land_11235 land_10386 land_13464 land_13178 land_10520 land_10968 land_13483 land_14909 land_11439 land_13954 land_15523 land_14794 land_12399 land_13336 land_09889 land_12967 land_13087 land_15219 land_11292 land_11472 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_14 = {
 	name = "Subarctic North America 14"
 	manpower = 1
 	tax = 0.5
 	locations = { land_14947 land_14361 land_13092 land_13595 land_11440 land_10148 land_13143 land_10222 land_13074 land_10679 land_13554 land_10836 land_14357 land_10130 land_15040 land_14214 land_14131 land_14385 land_09992 land_14519 land_11418 land_10163 land_13481 land_10417 land_10920 land_13855 land_10011 land_11760 land_14755 land_11871 land_14368 land_15088 land_12693 land_13939 land_13930 land_11978 land_10649 land_15619 land_11129 land_10243 land_10423 land_13298 land_14341 land_10940 land_17617 land_13409 land_11074 land_12117 land_14309 land_10322 land_12814 land_13414 land_14328 land_11933 land_09875 land_11384 land_11241 land_17618 land_13756 land_11112 land_10969 land_11209 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m13_15 = {
 	name = "Subarctic North America 15"
@@ -166,138 +232,207 @@ subarctic_north_america_m24_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_15677 land_15673 land_15683 land_15676 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m32_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15690 land_15686 land_15691 land_15687 land_15692 land_15688 land_15689 land_15685 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m41_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15698 land_15699 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m42_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15700 land_15701 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m48_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15707 land_15708 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m57_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15752 land_15753 land_15754 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m64_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15760 land_15759 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m80_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_14783 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m93_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15801 land_15815 land_15806 land_15820 land_15811 land_15802 land_15816 land_15807 land_15821 land_15812 land_15803 land_15817 land_15808 land_15822 land_15813 land_15804 land_15818 land_15809 land_15800 land_15814 land_15805 land_15819 }
+	buildings = {
+		naval_base = 1
+	}
 }
 subarctic_north_america_m95_1 = {
 	name = "Subarctic North America"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15825 land_15826 land_15827 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m13_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_10407 land_09771 land_11498 land_15633 land_12537 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m77_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15785 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m79_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15787 land_15786 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m83_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15792 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m85_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15795 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m86_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15794 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m88_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15798 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m90_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15799 }
+	buildings = {
+		naval_base = 1
+	}
 }
 aleutians_m92_1 = {
 	name = "Aleutians"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15797 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pacific_northwest_coast_m13_1 = {
 	name = "Pacific Northwest Coast 1"
 	manpower = 10
 	tax = 1.3
 	locations = { land_10900 land_14721 land_11823 land_12446 land_10628 land_12511 land_14643 land_10596 land_12405 land_10430 land_13965 land_14025 land_12493 land_11907 land_14782 land_13010 land_15396 land_15373 land_11603 land_11340 land_10911 land_15438 land_15295 land_14829 land_14889 land_11142 land_13491 land_12222 land_11336 land_14414 land_10824 land_14142 land_14179 land_11655 land_12698 land_14710 land_14830 land_15393 land_12232 land_10783 land_11023 land_13095 land_11646 land_11840 land_12477 land_12191 land_10982 land_14803 land_12085 land_13714 land_10433 land_11559 land_15583 land_13991 land_14771 land_14499 land_11818 land_14310 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pacific_northwest_coast_m13_2 = {
 	name = "Pacific Northwest Coast 2"
 	manpower = 12
 	tax = 1.5
 	locations = { land_15127 land_12829 land_13835 land_15584 land_15141 land_15621 land_10185 land_14366 land_12977 land_13328 land_15640 land_12373 land_12433 land_11104 land_10135 land_11575 land_14210 land_13001 land_14007 land_11206 land_10943 land_14584 land_14944 land_13172 land_13532 land_15161 land_11617 land_11705 land_12711 land_14262 land_10552 land_12624 land_13750 land_12721 land_09943 land_12135 land_09791 land_15421 land_14152 land_13003 land_13806 land_11005 land_10239 land_10096 land_15020 land_14997 land_10544 land_12210 land_10175 land_11601 land_13613 land_12921 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pacific_northwest_coast_m13_3 = {
 	name = "Pacific Northwest Coast 3"
 	manpower = 8
 	tax = 1.1
 	locations = { land_09880 land_14601 land_11057 land_15418 land_15515 land_10965 land_10522 land_10499 land_10153 land_11879 land_15400 land_12742 land_10850 land_11593 land_14168 land_12959 land_13702 land_09835 land_15368 land_14542 land_13333 land_10998 land_14579 land_14759 land_11598 land_15539 land_11100 land_09905 land_15318 land_13920 land_15609 land_14557 land_13731 land_10570 land_11133 land_13385 land_10464 land_10644 land_12896 land_13196 land_14825 land_12730 land_10778 land_12767 land_15402 land_13727 land_09800 land_10340 land_13898 land_13012 land_14941 land_11014 land_12763 land_09985 land_12560 land_11111 land_09842 land_12920 land_13151 land_13668 land_15237 land_13908 land_12962 land_12639 land_11753 land_14485 land_13636 land_11135 land_13747 land_14250 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pacific_northwest_coast_m78_1 = {
 	name = "Pacific Northwest Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15788 land_15789 land_15790 land_15791 }
+	buildings = {
+		naval_base = 1
+	}
 }
 great_plains_1 = {
 	name = "Great Plains 1"
@@ -310,6 +445,9 @@ great_plains_2 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_15030 land_10817 land_10111 land_11237 land_13309 land_13406 land_11371 land_11874 land_12940 land_10042 land_09996 land_10476 land_15423 land_10970 land_12133 land_11524 land_14099 land_12387 land_14053 land_12918 land_11889 land_10657 land_09891 land_14598 land_12706 land_10108 land_10168 land_10731 land_14312 land_12863 land_11691 land_12914 land_13214 land_14640 land_15646 land_15323 land_09887 land_10104 land_14308 land_11784 land_12241 land_12541 land_15116 land_10506 land_10663 land_12712 land_12906 land_10308 land_10428 land_13303 land_13543 land_15352 land_11568 land_14023 land_11222 land_14743 land_14757 land_11356 land_09907 land_13428 land_11333 land_11513 land_10724 land_12293 land_13599 land_15025 land_12487 land_14273 land_11675 land_13244 land_09903 }
+	buildings = {
+		naval_base = 1
+	}
 }
 great_plains_3 = {
 	name = "Great Plains 3"
@@ -346,6 +484,9 @@ western_deserts_and_basin_m13_3 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_15413 land_11629 land_15307 land_10051 land_10831 land_12460 land_15275 land_09839 land_10905 land_13540 land_12631 land_11542 land_11099 land_14154 land_12059 land_14191 land_11976 land_11487 land_11464 land_12710 land_13933 land_13107 land_14773 land_10283 land_12595 land_12655 land_14224 land_14575 land_10039 land_14040 land_14663 land_12665 land_13828 land_10524 land_14728 land_12333 land_15185 land_11964 land_13773 land_12601 land_10446 land_13967 land_14387 land_11849 land_09897 land_13215 land_14918 land_12417 land_14286 land_11448 land_11125 land_12371 land_11928 land_14946 land_14983 land_15103 land_13548 land_09764 land_11873 land_13502 land_14005 land_14042 land_13096 land_10632 land_10752 land_10706 }
+	buildings = {
+		naval_base = 1
+	}
 }
 western_deserts_and_basin_m13_4 = {
 	name = "Western Deserts and Basin 4"
@@ -358,42 +499,63 @@ western_deserts_and_basin_m13_5 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_12815 land_12995 land_12709 land_13932 land_11634 land_14629 land_13097 land_12451 land_10776 land_11279 land_12285 land_13974 land_14837 land_14671 land_12050 land_15571 land_11344 land_13776 land_11944 land_11058 land_12701 land_11372 land_11183 land_12692 land_13255 land_11451 land_13191 land_13025 land_15194 land_12956 land_13759 land_11821 land_14516 land_14576 land_10349 land_12458 land_15536 land_13321 land_11106 land_10963 land_13995 land_10631 land_14992 land_11328 land_12334 land_12671 land_11725 land_14923 land_15080 land_12902 land_13082 land_15611 land_12930 land_10978 land_13673 land_11975 land_15173 land_10766 }
+	buildings = {
+		naval_base = 1
+	}
 }
 western_deserts_and_basin_m13_6 = {
 	name = "Western Deserts and Basin 6"
 	manpower = 1
 	tax = 0.6
 	locations = { land_10120 land_12672 land_13235 land_14481 land_10554 land_14255 land_11897 land_11514 land_12760 land_10808 land_15395 land_12114 land_13983 land_10642 land_12894 land_10416 land_09904 land_14491 land_11330 land_12936 land_13273 land_11741 land_10855 land_14879 land_12115 land_11732 land_10080 land_14104 land_14201 land_10851 land_15378 land_13223 land_14566 land_12965 land_14848 land_14585 land_15208 land_15628 land_14419 land_14013 land_12195 land_09934 land_15444 land_12163 land_11351 land_10202 land_13520 land_14886 land_12168 land_11379 land_11836 land_15657 land_11790 land_10401 land_14785 land_11481 land_13050 land_14430 land_12095 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_1 = {
 	name = "Eastern Woodlands 1"
 	manpower = 4
 	tax = 0.9
 	locations = { land_09940 land_12958 land_13055 land_13535 land_10171 land_09848 land_10351 land_10448 land_13863 land_10079 land_10942 land_10859 land_14380 land_09807 land_10813 land_15460 land_14371 land_14551 land_12590 land_10029 land_13047 land_10389 land_10892 land_15599 land_10546 land_10140 land_11926 land_13052 land_10154 land_11737 land_14815 land_10025 land_11954 land_13966 land_15655 land_13883 land_15129 land_13094 land_12951 land_14940 land_10713 land_10247 land_13002 land_12116 land_15134 land_11530 land_14668 land_10178 land_12753 land_14322 land_13736 land_15545 land_10912 land_13118 land_12292 land_11203 land_15241 land_12020 land_15578 land_12860 land_15269 land_13377 land_11342 land_14360 land_14097 land_14660 land_11679 land_11273 land_10064 land_14531 land_14891 land_10987 land_14448 land_13216 land_11038 land_11661 land_11195 land_14933 land_10586 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_2 = {
 	name = "Eastern Woodlands 2"
 	manpower = 4
 	tax = 0.9
 	locations = { land_14287 land_11103 land_11223 land_13798 land_10134 land_14398 land_13369 land_15501 land_13909 land_15575 land_15829 land_11662 land_13088 land_10370 land_10587 land_11390 land_13079 land_14768 land_10984 land_13176 land_13919 land_14699 land_14819 land_11538 land_14473 land_13444 land_10560 land_10237 land_13509 land_10408 land_14769 land_11368 land_11968 land_15429 land_12508 land_13431 land_10150 land_10044 land_13505 land_14428 land_11027 land_11387 land_12933 land_10746 land_12555 land_12915 land_11766 land_11946 land_11563 land_14258 land_14655 land_11997 land_14512 land_14189 land_11854 land_11831 land_15292 land_11628 land_11102 land_09773 land_11079 land_13211 land_09847 land_13871 land_13931 land_12436 land_10821 land_15408 land_11564 land_11121 land_14882 land_14439 land_12667 land_10895 land_11052 land_13724 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_3 = {
 	name = "Eastern Woodlands 3"
 	manpower = 6
 	tax = 0.9
 	locations = { land_12898 land_11066 land_14527 land_13581 land_14204 land_15067 land_10660 land_12469 land_14924 land_12589 land_11643 land_11703 land_09765 land_13083 land_15335 land_10545 land_13217 land_12271 land_12331 land_12391 land_10296 land_10536 land_15566 land_15243 land_13411 land_13711 land_15280 land_11007 land_14722 land_13370 land_14939 land_11718 land_15239 land_10449 land_10869 land_14893 land_10463 land_09794 land_12217 land_13140 land_14326 land_13380 land_11345 land_09896 land_10902 land_12771 land_12185 land_12688 land_09804 land_10164 land_10704 land_13053 land_12287 land_14936 land_14996 land_14853 land_15596 land_13381 land_14184 land_14604 land_14724 land_09948 land_10188 land_12703 land_11374 land_14129 land_14692 land_12800 land_09939 land_11688 land_12934 land_09953 land_11522 land_11176 land_10470 land_13045 land_14351 land_10950 land_13945 land_12113 land_15574 land_11647 land_12150 land_13719 land_12570 land_14116 land_12727 land_11518 land_10812 land_09986 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_4 = {
 	name = "Eastern Woodlands 4"
 	manpower = 7
 	tax = 1.1
 	locations = { land_13844 land_10000 land_13521 land_12755 land_14264 land_12935 land_13669 land_11334 land_13826 land_10725 land_11325 land_14283 land_11482 land_12548 land_14777 land_13831 land_13448 land_15054 land_14565 land_12290 land_14842 land_11681 land_14639 land_13730 land_11898 land_10749 land_15659 land_15276 land_15013 land_11349 land_14307 land_10020 land_15493 land_10860 land_12992 land_15064 land_09831 land_14155 land_14215 land_14395 land_12443 land_15198 land_14995 land_10265 land_10685 land_09919 land_11225 land_11848 land_13274 land_13837 land_15406 land_11359 land_10533 land_12545 land_11719 land_14294 land_12845 land_15480 land_15337 land_13445 land_12236 land_10381 land_13699 land_12047 land_14502 land_10658 land_13616 land_15245 land_12061 land_13427 land_15559 land_11166 land_13801 land_10903 land_10580 land_14221 land_14581 land_12177 land_13183 land_09782 land_10825 land_14083 land_11868 land_14480 land_11139 land_13594 land_14337 land_11942 land_10050 land_12062 land_10613 land_14314 land_12362 land_10087 land_13345 land_10747 land_14568 land_11167 land_13179 land_11587 land_14665 land_15468 land_11301 land_10955 land_15422 land_13447 land_11555 land_11352 land_12155 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_5 = {
 	name = "Eastern Woodlands 5"
 	manpower = 8
 	tax = 1.1
 	locations = { land_13784 land_13964 land_12612 land_14624 land_10217 land_13978 land_12026 land_15607 land_13212 land_11763 land_12769 land_14518 land_15524 land_12123 land_11920 land_13609 land_10005 land_14209 land_13766 land_12880 land_11611 land_14066 land_11288 land_13720 land_14726 land_11948 land_14463 land_14583 land_13637 land_13614 land_13914 land_10513 land_12968 land_09927 land_14311 land_09761 land_10121 land_15534 land_13379 land_09775 land_10398 land_11201 land_15562 land_15622 land_13287 land_13024 land_12198 land_12055 land_14570 land_15073 land_13624 land_10223 land_13924 land_11649 land_09757 land_12849 land_14095 land_12203 land_12383 land_10491 land_15618 land_14732 land_13403 land_14409 land_14026 land_13583 land_11811 land_15369 land_13477 land_10076 land_11082 land_09813 land_11442 land_10916 land_11276 land_14234 land_10510 land_14714 land_13325 land_14128 land_12296 land_12979 land_15351 land_15591 land_11867 land_15328 land_13376 land_10275 land_10012 land_11018 land_11078 land_12204 land_14396 land_12361 land_10529 land_11032 land_11152 land_11212 land_13404 land_15333 land_11466 land_14987 land_13538 land_13598 land_11263 land_09874 land_10377 land_15407 land_12006 land_11683 land_13695 land_15384 land_12343 land_14092 land_11697 land_10548 land_10788 land_13220 land_14346 land_15592 land_10862 land_13114 land_14683 land_11739 land_13285 land_14411 land_11633 land_12759 land_14268 land_12676 land_12413 land_10581 land_10138 land_11684 land_10295 land_10069 land_12141 land_11855 land_14047 land_14107 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_6 = {
 	name = "Eastern Woodlands 6"
@@ -406,6 +568,9 @@ eastern_woodlands_m13_7 = {
 	manpower = 3
 	tax = 0.8
 	locations = { land_13078 land_10780 land_13429 land_13526 land_12077 land_13180 land_10822 land_15026 land_13374 land_10273 land_09821 land_12516 land_14325 land_14445 land_11644 land_12267 land_14496 land_10772 land_13084 land_11132 land_10809 land_12378 land_10726 land_13338 land_11386 land_13135 land_14704 land_13938 land_10228 land_10002 land_11511 land_10925 land_10542 land_14003 land_10159 land_11945 land_15023 land_15203 land_10893 land_14354 land_10847 land_13842 land_11950 land_14059 land_15102 land_09809 land_15319 land_13261 land_15347 land_14078 land_10414 land_11817 land_12500 land_11291 land_10636 land_14277 land_12685 land_10530 land_10327 land_14291 land_15417 land_12016 land_14425 land_15431 land_10558 land_12021 land_10129 land_15542 land_15662 land_13327 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m13_8 = {
 	name = "Eastern Woodlands 8"
@@ -418,12 +583,18 @@ eastern_woodlands_m140_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_15935 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_woodlands_m141_1 = {
 	name = "Eastern Woodlands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15934 }
+	buildings = {
+		naval_base = 1
+	}
 }
 adena_ohio_valley_1 = {
 	name = "Adena Ohio Valley"
@@ -436,42 +607,63 @@ mesoamerican_maize_farmers_1 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_10743 land_11417 land_12843 land_12520 land_10287 land_13162 land_14242 land_10578 land_13878 land_11234 land_11059 land_11862 land_09901 land_14608 land_10252 land_15056 land_15467 land_10677 land_10234 land_12994 land_10216 land_11693 land_11735 land_13041 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_2 = {
 	name = "Mesoamerican maize farmers 2"
 	manpower = 8
 	tax = 1.1
 	locations = { land_11869 land_13600 land_14791 land_15031 land_13126 land_14672 land_12245 land_12808 land_11216 land_15171 land_13654 land_12496 land_09755 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_3 = {
 	name = "Mesoamerican maize farmers 3"
 	manpower = 14
 	tax = 1.6
 	locations = { land_12409 land_10960 land_13272 land_11177 land_14412 land_11994 land_13803 land_13037 land_11616 land_11275 land_13850 land_15355 land_15037 land_15139 land_10086 land_14821 land_11674 land_15006 land_14817 land_11416 land_13622 land_12104 land_14130 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_4 = {
 	name = "Mesoamerican maize farmers 4"
 	manpower = 5
 	tax = 0.9
 	locations = { land_14071 land_12895 land_10127 land_15660 land_09851 land_14572 land_11592 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_5 = {
 	name = "Mesoamerican maize farmers 5"
 	manpower = 22
 	tax = 2.2
 	locations = { land_14809 land_11588 land_12751 land_15326 land_10024 land_12659 land_13785 land_10624 land_11547 land_14279 land_13795 land_12268 land_13911 land_13450 land_14890 land_11254 land_15149 land_10156 land_10461 land_11781 land_12787 land_14919 land_14393 land_12944 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_6 = {
 	name = "Mesoamerican maize farmers 6"
 	manpower = 11
 	tax = 1.4
 	locations = { land_13189 land_13046 land_15252 land_10139 land_15552 land_14763 land_14602 land_12244 land_12161 land_12738 land_15253 land_10482 land_14723 land_15471 land_13353 land_13690 land_10871 land_14688 land_12824 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_7 = {
 	name = "Mesoamerican maize farmers 7"
 	manpower = 19
 	tax = 2.1
 	locations = { land_12012 land_15090 land_13198 land_11394 land_10425 land_11934 land_14569 land_11851 land_13900 land_13697 land_11270 land_10564 land_09918 land_10481 land_14164 land_13375 land_14561 land_12337 land_12517 land_11608 land_15069 land_14483 land_11119 land_09878 land_10298 land_15656 land_12172 land_14927 land_14844 land_12002 land_13465 land_14831 land_15062 land_13350 land_14476 land_13650 land_10406 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mesoamerican_maize_farmers_8 = {
 	name = "Mesoamerican maize farmers 8"
@@ -486,6 +678,9 @@ zapotec_oaxaca_1 = {
 	manpower = 12
 	tax = 1.4
 	locations = { land_13277 land_12286 land_13865 land_12089 land_12883 land_13271 }
+	buildings = {
+		naval_base = 1
+	}
 }
 olmec_gulf_coast_1 = {
 	name = "Olmec Gulf Coast"
@@ -494,6 +689,9 @@ olmec_gulf_coast_1 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_15261 land_11574 land_14556 land_12632 land_12549 land_10136 land_15648 land_11998 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maya_lowlands_and_highlands_1 = {
 	name = "Maya lowlands and highlands 1"
@@ -502,6 +700,9 @@ maya_lowlands_and_highlands_1 = {
 	manpower = 21
 	tax = 2.2
 	locations = { land_13895 land_14163 land_11962 land_12498 land_11779 land_10307 land_11590 land_10049 land_10109 land_11309 land_12569 land_11319 land_10710 land_09921 land_13562 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maya_lowlands_and_highlands_2 = {
 	name = "Maya lowlands and highlands 2"
@@ -510,6 +711,9 @@ maya_lowlands_and_highlands_2 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_13284 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maya_lowlands_and_highlands_3 = {
 	name = "Maya lowlands and highlands 3"
@@ -518,6 +722,9 @@ maya_lowlands_and_highlands_3 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_10180 land_12363 land_09770 land_11556 land_12622 land_11630 land_15567 land_10837 land_15092 land_10242 land_13560 land_10256 land_12402 land_12379 land_09754 land_13635 land_14438 land_12607 land_13973 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maya_lowlands_and_highlands_4 = {
 	name = "Maya lowlands and highlands 4"
@@ -526,6 +733,9 @@ maya_lowlands_and_highlands_4 = {
 	manpower = 11
 	tax = 1.4
 	locations = { land_14090 land_09868 land_10376 land_15397 land_14691 land_15005 land_12989 land_12034 land_10673 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maya_lowlands_and_highlands_5 = {
 	name = "Maya lowlands and highlands 5"
@@ -534,6 +744,9 @@ maya_lowlands_and_highlands_5 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_14458 land_15644 land_15217 land_14622 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_american_maize_farmers_m13_1 = {
 	name = "Central American maize farmers 1"
@@ -542,12 +755,18 @@ central_american_maize_farmers_m13_1 = {
 	manpower = 19
 	tax = 2.0
 	locations = { land_13641 land_11966 land_10577 land_14338 land_14135 land_13872 land_14435 land_12986 land_10508 land_14472 land_14592 land_14246 land_11888 land_13314 land_16069 land_12728 land_13388 land_10158 land_13116 land_11081 land_11118 land_13633 land_12304 land_11358 land_11635 land_14953 land_12235 land_12272 land_14787 land_15410 land_10357 land_14321 land_10537 land_14238 land_14875 land_15558 land_12134 land_14949 land_11285 land_10473 land_14008 land_12799 land_13805 land_14382 land_11904 land_15222 land_15282 land_13104 land_14230 land_10326 land_15236 land_12638 land_11692 land_11706 land_10091 land_14175 land_12966 land_14212 land_13769 land_14272 land_12823 land_14632 land_12131 land_11199 land_10253 land_12505 land_10904 land_13922 land_12090 land_15168 land_10152 land_16068 land_09963 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_american_maize_farmers_m13_2 = {
 	name = "Central American maize farmers 2"
 	manpower = 10
 	tax = 1.3
 	locations = { land_11809 land_15630 land_10937 land_15215 land_11491 land_14509 land_10162 land_13134 land_13674 land_12225 land_13245 land_10084 land_15414 land_09849 land_10915 land_10329 land_14353 land_10006 land_12761 land_12212 land_12775 land_11063 land_12526 land_12143 land_14718 land_10865 land_15028 land_10432 land_11295 land_09906 land_10589 land_13921 land_10257 land_14563 land_09870 land_10447 land_10844 land_14102 land_09815 land_10115 land_11181 land_14236 land_12261 land_11878 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_american_maize_farmers_m201_1 = {
 	name = "Central American maize farmers"
@@ -556,102 +775,153 @@ central_american_maize_farmers_m201_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_16118 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m13_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_12714 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m143_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15946 land_15947 land_15948 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m144_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15949 land_15938 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m146_1 = {
 	name = "Caribbean islands"
 	manpower = 3
 	tax = 0.7
 	locations = { land_15953 land_15967 land_15958 land_15972 land_15963 land_15954 land_15968 land_15959 land_15973 land_15987 land_15964 land_15955 land_15969 land_15960 land_15965 land_15956 land_15970 land_15961 land_15966 land_15957 land_15971 land_15962 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m147_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15952 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m148_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15974 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m152_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15977 land_15978 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m155_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15983 land_15979 land_15984 land_15980 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m159_1 = {
 	name = "Caribbean islands"
 	manpower = 2
 	tax = 0.7
 	locations = { land_16004 land_16009 land_16000 land_16014 land_16005 land_16010 land_16001 land_16015 land_16006 land_16011 land_16002 land_16016 land_16007 land_15998 land_16012 land_16003 land_16017 land_16008 land_15999 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m161_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16013 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m164_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16051 land_16052 land_16053 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m165_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16055 land_16056 land_16057 land_16054 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m168_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16062 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m169_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16061 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m171_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16063 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caribbean_islands_m174_1 = {
 	name = "Caribbean islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16067 }
+	buildings = {
+		naval_base = 1
+	}
 }
 amazon_basin_1 = {
 	name = "Amazon basin 1"
@@ -664,6 +934,9 @@ amazon_basin_2 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_15473 land_14084 land_15007 land_11846 land_14421 land_12972 land_10065 land_13480 land_12945 land_15077 land_13665 land_15654 land_13619 land_09932 land_15262 land_12867 land_11695 land_11755 land_12858 land_13541 land_14547 land_10703 land_14667 land_13518 land_15027 land_15004 land_11963 land_15101 land_15401 land_12060 land_12180 land_14252 land_13486 land_12720 land_14469 land_11502 land_14520 land_13948 land_14811 land_13985 land_13602 land_12250 land_09749 land_10409 land_12864 land_13044 land_09883 land_10303 land_14664 land_15167 land_14784 land_12366 land_13372 land_10691 land_14835 land_14009 land_12980 land_14046 land_13077 land_12311 land_15066 land_12851 land_10373 land_13008 land_12782 land_15537 land_13382 land_12007 land_14942 land_14093 land_13424 }
+	buildings = {
+		naval_base = 1
+	}
 }
 amazon_basin_3 = {
 	name = "Amazon basin 3"
@@ -676,6 +949,9 @@ amazon_basin_4 = {
 	manpower = 7
 	tax = 1.0
 	locations = { land_09977 land_12160 land_15155 land_11791 land_13028 land_14994 land_12013 land_12756 land_14888 land_13499 land_13716 land_11381 land_09969 land_15382 land_15336 land_12152 land_15613 land_12789 land_14358 land_14921 land_13786 land_10565 land_10782 land_15166 land_13302 land_10141 land_15148 land_14470 land_13524 land_12818 land_11489 land_10100 land_13838 land_12689 land_13875 land_11960 land_14895 land_12680 land_14323 land_10027 land_09801 land_11001 land_12127 land_13553 land_14679 land_15339 land_15579 }
+	buildings = {
+		naval_base = 1
+	}
 }
 amazon_basin_5 = {
 	name = "Amazon basin 5"
@@ -688,6 +964,9 @@ amazon_basin_6 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_11832 land_12132 land_11689 land_13761 land_11726 land_09871 land_15081 land_14818 land_10471 land_11754 land_12797 land_14306 land_10462 land_13420 land_14223 land_11122 land_09793 land_12991 land_14800 land_10933 land_10730 land_13868 land_11773 land_14468 land_15082 land_12747 land_12424 land_10952 land_13970 land_10186 land_13144 land_11312 land_12618 land_11003 land_14464 land_14021 land_09854 land_13495 land_14501 land_13735 land_15364 land_10288 land_13726 land_15235 land_11834 land_11308 land_13597 land_10496 land_14017 land_12868 land_12485 land_12162 land_09767 land_11396 land_13625 land_15111 land_10884 land_11987 land_12610 land_14216 land_14719 land_11115 land_14673 land_11189 land_11729 land_10054 land_13575 land_10917 land_09971 land_12546 land_15158 land_13326 land_14420 land_13031 land_13894 land_10650 land_15117 land_14734 land_15251 land_13802 land_09935 land_13013 land_12187 land_12810 land_11361 land_13590 land_10226 land_11712 }
+	buildings = {
+		naval_base = 1
+	}
 }
 amazon_basin_7 = {
 	name = "Amazon basin 7"
@@ -706,6 +985,9 @@ amazon_basin_9 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_10383 land_14850 land_14407 land_14038 land_10494 land_13466 land_10125 land_10019 land_15049 land_15506 land_10393 land_11570 land_10181 land_15322 land_09826 land_09886 land_14916 land_09983 land_13804 land_11529 land_11769 land_12189 land_15124 land_10191 land_12263 land_14958 land_10385 land_14912 land_15415 land_13523 land_10302 land_15332 land_14506 land_11322 land_09933 land_10939 land_13514 land_13251 land_09910 land_14377 land_12785 land_11899 land_14031 land_13339 land_11890 land_10598 land_11401 land_11641 land_11761 land_15522 land_13630 land_12181 land_14816 land_13870 land_14244 land_12975 land_15564 land_14678 land_12786 land_12440 land_10045 land_13746 land_11794 land_11508 land_10682 land_10036 land_14540 land_10936 land_12579 land_11204 land_10378 land_12833 land_15002 land_12524 land_14033 land_10549 land_10789 land_13221 }
+	buildings = {
+		naval_base = 1
+	}
 }
 amazon_basin_10 = {
 	name = "Amazon basin 10"
@@ -730,30 +1012,45 @@ guianas_and_orinoco_m13_2 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_12455 land_14024 land_15150 land_15653 land_11749 land_11666 land_10720 land_13175 land_12206 land_11117 land_10531 land_14029 land_14149 land_10282 land_11925 land_09890 land_12913 land_14039 land_10735 land_09909 land_13873 land_12987 land_10712 land_14450 land_11049 land_14750 land_10200 land_11266 land_12129 land_14884 land_14441 land_15341 land_12697 land_13680 land_14243 land_14543 land_11622 land_13971 land_14474 land_11073 land_11733 land_15254 land_10764 land_15291 land_12370 land_14442 land_10095 land_14862 land_12144 land_14193 land_13344 land_12578 land_14064 land_09957 land_10700 land_13852 land_13566 land_14489 land_11651 land_11951 land_12731 land_11236 land_13691 land_14614 land_13262 land_15311 land_14868 land_12164 land_14619 land_12344 land_13004 }
+	buildings = {
+		naval_base = 1
+	}
 }
 guianas_and_orinoco_m13_3 = {
 	name = "Guianas and Orinoco 3"
 	manpower = 9
 	tax = 1.2
 	locations = { land_12275 land_12395 land_12515 land_09797 land_10771 land_12963 land_15072 land_11168 land_11085 land_12774 land_12308 land_10919 land_14440 land_12488 land_11016 land_11436 land_14634 land_10227 land_11293 land_12576 land_12193 land_12816 land_12350 land_11404 land_14219 land_10149 land_12904 land_13527 land_14533 land_12138 land_15096 land_12941 land_10906 land_14367 land_14824 land_14741 land_12406 land_14035 land_10634 land_12240 land_11917 land_11894 land_11128 land_12434 land_12997 land_12554 land_13800 land_12088 land_10699 land_12748 land_15060 land_12882 land_15457 land_11170 land_09961 land_10741 land_10515 land_14156 land_15199 land_13367 land_13224 land_13907 land_11369 land_10603 land_12112 land_11286 land_11346 land_13658 land_13515 land_14378 land_14115 land_12846 land_10608 land_11734 land_13100 land_13663 land_12777 land_14646 land_15209 land_15389 land_14863 land_14600 land_10696 land_11762 land_11056 land_13068 land_10973 land_10267 land_14651 land_10784 land_12247 land_14822 land_13230 land_14859 land_12801 land_14670 }
+	buildings = {
+		naval_base = 1
+	}
 }
 guianas_and_orinoco_m13_4 = {
 	name = "Guianas and Orinoco 4"
 	manpower = 15
 	tax = 1.7
 	locations = { land_10826 land_13341 land_15593 land_10300 land_15187 land_14998 land_12340 land_09779 land_10785 land_14989 land_11145 land_11265 land_11505 land_13254 land_09973 land_12788 land_14417 land_14657 land_12682 land_12862 land_12779 land_12336 land_11307 land_11321 land_10172 land_12101 land_13167 land_09766 land_12401 land_13407 land_11515 land_11109 land_15133 land_13241 land_12978 land_10823 land_13269 land_10934 land_12683 land_11594 land_13606 land_15175 land_10122 land_13537 land_10856 land_10390 land_11636 land_09984 land_13122 land_15637 land_11230 land_13745 land_11350 land_10021 land_14788 land_10441 land_11004 land_12107 land_15425 land_15665 land_15642 land_10972 land_12158 land_11715 land_12218 land_14793 land_15296 land_10949 land_11955 land_14027 land_14147 land_14267 land_13884 land_11046 land_14507 land_11669 land_14041 land_12149 land_13718 land_12869 land_10977 land_12223 land_13889 land_10991 land_13506 land_11614 land_15638 land_14106 land_09759 land_14143 land_09796 land_10899 land_15426 land_10996 land_11296 land_11859 land_10913 land_12459 land_12519 land_11070 land_13765 land_10041 land_11347 land_13982 land_13899 land_09995 land_15625 land_13064 }
+	buildings = {
+		naval_base = 1
+	}
 }
 guianas_and_orinoco_m191_1 = {
 	name = "Guianas and Orinoco"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16083 land_13596 land_11054 land_12794 }
+	buildings = {
+		naval_base = 1
+	}
 }
 brazilian_savanna_1 = {
 	name = "Brazilian savanna 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_11380 land_12949 land_15404 land_15201 land_14352 land_11228 land_12691 land_12368 land_15123 land_11136 land_10753 land_13951 land_11953 land_12553 land_12147 land_10878 land_11501 land_11229 land_14118 land_11843 land_13472 land_14649 land_12111 land_15189 land_13293 land_12375 land_14544 land_11120 land_13792 land_13469 land_09925 land_12380 land_11088 land_10133 land_14217 land_12888 land_13585 land_15094 land_10364 land_13885 land_15454 land_13793 land_13770 land_14813 land_13161 }
+	buildings = {
+		naval_base = 1
+	}
 }
 brazilian_savanna_2 = {
 	name = "Brazilian savanna 2"
@@ -766,6 +1063,9 @@ brazilian_savanna_3 = {
 	manpower = 3
 	tax = 0.7
 	locations = { land_11246 land_14324 land_12432 land_10277 land_10397 land_09931 land_14232 land_13969 land_13157 land_14343 land_15183 land_15100 land_14717 land_13185 land_10790 land_13725 land_10324 land_10601 land_15428 land_13956 land_10615 land_14616 land_15359 land_11252 land_13887 land_15193 land_12355 land_14870 land_15170 land_14524 land_12249 land_15387 land_13998 land_14058 land_14801 land_11460 land_13592 land_12646 land_09748 land_11257 land_13952 land_14072 land_15581 land_12743 land_12803 land_10145 land_12600 land_12900 land_14063 land_10842 land_14100 land_13897 land_15383 land_13528 land_12079 land_12702 land_14391 land_10607 land_13565 land_15434 land_13542 land_13782 land_12993 land_12550 land_09786 land_14613 land_14350 land_13704 land_13058 land_15070 land_14124 land_11226 land_13861 land_12629 land_13132 land_12043 land_12606 land_13229 land_11397 land_11194 land_10751 land_10705 land_14849 land_11065 land_12574 land_12491 land_09893 land_15546 land_09810 land_09930 land_15343 land_09990 land_13308 land_10890 land_11730 land_10018 land_13156 land_10055 land_15528 land_11744 land_12584 land_13124 land_15196 land_10083 land_10203 land_09760 }
+	buildings = {
+		naval_base = 1
+	}
 }
 brazilian_savanna_4 = {
 	name = "Brazilian savanna 4"
@@ -796,12 +1096,18 @@ brazilian_savanna_8 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_10323 land_13318 land_12732 land_10254 land_14578 land_10568 land_10365 land_14006 land_13060 land_12294 land_14966 land_12068 land_11625 land_13877 land_12502 land_14011 land_15456 land_09808 land_10528 land_10948 land_12291 land_15046 land_12199 land_14654 land_11553 land_13653 land_10815 land_13390 land_11678 land_10017 land_15481 land_13146 land_10728 land_14194 land_10387 land_15048 land_15348 land_11504 land_15145 land_14799 }
+	buildings = {
+		naval_base = 1
+	}
 }
 brazilian_savanna_9 = {
 	name = "Brazilian savanna 9"
 	manpower = 2
 	tax = 0.7
 	locations = { land_09917 land_12049 land_12529 land_14901 land_14112 land_12783 land_13789 land_14975 land_10748 land_09756 land_13688 land_15114 land_12276 land_10744 land_10864 land_13213 land_11801 land_11981 land_12041 land_10592 land_11095 land_14653 land_10486 land_11612 land_15650 land_15627 land_12226 land_10897 land_12466 land_12300 land_15258 land_14935 land_14349 land_10639 land_14160 land_12005 land_15083 land_13754 land_11479 land_11959 land_13902 land_12453 land_11244 land_13067 land_14313 land_10063 land_14327 land_14364 land_10437 land_12306 land_11420 land_11157 land_14235 land_14295 land_13723 land_14789 land_10622 land_11042 land_13742 land_13479 land_14702 land_13936 land_10595 land_13110 land_11158 land_10489 }
+	buildings = {
+		naval_base = 1
+	}
 }
 brazilian_savanna_10 = {
 	name = "Brazilian savanna 10"
@@ -826,72 +1132,108 @@ pampas_3 = {
 	manpower = 2
 	tax = 0.7
 	locations = { land_10946 land_11569 land_14647 land_12875 land_14241 land_15104 land_11680 land_11034 land_11251 land_13443 land_15012 land_09959 land_14043 land_15109 land_11708 land_10739 land_13997 land_14662 land_14256 land_13347 land_11792 land_12009 land_11483 land_13112 land_13615 land_10214 land_14298 land_13412 land_13749 land_11391 land_11188 land_14206 land_09979 land_12028 land_09993 land_14460 land_15263 land_11973 land_13159 land_11710 land_11438 land_15259 land_13307 land_14876 land_11752 land_12998 land_13446 land_09819 land_13460 land_14466 land_12431 land_13834 land_13571 land_15643 land_15297 land_09981 land_11490 land_11287 land_11527 land_12533 land_11264 land_13576 land_15588 land_14642 land_11421 land_11098 land_14716 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pampas_4 = {
 	name = "Pampas 4"
 	manpower = 2
 	tax = 0.7
 	locations = { land_12335 land_14961 land_10614 land_11214 land_10388 land_12677 land_15289 land_15303 land_12322 land_12885 land_13568 land_12299 land_12996 land_12327 land_13753 land_14510 land_14607 land_12586 land_12826 land_12563 land_14132 land_13463 land_15152 land_12254 land_11991 land_15452 land_12051 land_09836 land_13131 land_14700 land_12305 land_10833 land_11816 land_10787 land_11290 land_15051 land_14105 land_11207 land_10958 land_10575 land_10132 land_15162 land_11392 land_15213 land_12315 land_13155 land_12329 land_11480 land_11097 land_15601 land_12260 land_13829 land_15495 land_12597 land_13400 land_13017 land_12874 land_15509 land_14300 land_10516 land_15486 land_15283 land_13751 land_14554 land_12602 land_10770 land_11407 land_10964 land_13816 land_09806 land_15279 land_11375 land_12418 land_14610 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pampas_5 = {
 	name = "Pampas 5"
 	manpower = 1
 	tax = 0.6
 	locations = { land_10420 land_09894 land_15164 land_09908 land_09802 land_14126 land_12174 land_13757 land_11219 land_12082 land_14597 land_10993 land_11750 land_10015 land_10698 land_13573 land_10043 land_10606 land_12798 land_14081 land_11280 land_12480 land_11151 land_11248 land_11465 land_13657 land_15346 land_12942 land_13362 land_13099 land_11627 land_10335 land_09994 land_15264 land_15001 land_12943 land_11171 land_11914 land_14872 land_15112 land_11305 land_13317 land_13557 land_14060 land_11665 land_12228 land_14854 land_12376 land_12593 land_15122 land_14656 land_13927 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pampas_6 = {
 	name = "Pampas 6"
 	manpower = 1
 	tax = 0.6
 	locations = { land_11509 land_11260 land_10854 land_15238 land_09945 land_12497 land_15266 land_11362 land_14883 land_12345 land_14528 land_14588 land_12313 land_13453 land_11155 land_11552 land_12715 land_10477 land_11940 land_12960 land_11428 land_14626 land_12854 land_13168 land_10450 land_15314 land_11872 land_12855 land_11231 land_11388 land_12454 land_10059 land_15652 land_13257 land_12048 land_13857 land_12482 land_09884 land_12990 land_10646 }
+	buildings = {
+		naval_base = 1
+	}
 }
 patagonia_m13_1 = {
 	name = "Patagonia 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_13941 land_10457 land_10517 land_10374 land_13069 land_14735 land_09982 land_11551 land_11408 land_10319 land_09936 land_12008 land_09853 land_12871 land_13531 land_12705 land_11676 land_11533 land_11067 land_12876 land_11044 land_11141 land_12807 land_13610 land_14233 land_15036 land_11432 land_15553 land_11146 land_10057 land_13758 land_13246 land_11797 land_10205 land_13034 land_15549 land_12651 land_15286 land_10556 land_12365 land_13791 land_09864 land_10261 land_10944 land_10058 land_12227 land_09832 land_10838 land_12038 land_11512 land_10363 land_11549 land_13561 land_11406 land_14401 land_12809 land_15624 land_13386 land_10225 land_14826 land_15629 land_09750 land_12205 land_14074 land_14208 land_11047 land_14065 land_11670 land_13779 land_12307 land_10655 land_12847 land_15436 land_13484 land_13664 }
+	buildings = {
+		naval_base = 1
+	}
 }
 patagonia_m13_2 = {
 	name = "Patagonia 2"
 	manpower = 1
 	tax = 0.6
 	locations = { land_13881 land_14758 land_12377 land_14546 land_10619 land_09950 land_10693 land_11796 land_14814 land_14934 land_11833 land_13845 land_15331 land_12793 land_09872 land_15502 land_11455 land_14833 land_11026 land_13098 land_11640 land_14275 land_11354 land_13043 land_14109 land_11211 land_11571 land_13357 land_14220 land_11539 land_13108 land_10773 land_12139 land_15600 land_10547 land_11793 land_14931 land_13662 land_10321 land_12070 land_14082 land_15508 land_10935 land_13893 land_10732 land_12421 land_14433 land_11835 land_15153 land_15273 land_14950 land_11789 land_10497 land_14318 land_11277 land_10571 land_14032 land_13589 land_10811 land_10488 land_11554 land_10165 land_15472 land_10419 land_14000 land_10073 land_14840 land_09787 land_10853 land_11476 land_10244 land_11430 land_11550 land_14125 land_15634 land_12233 land_14282 land_14462 land_15565 land_15182 land_13530 land_13147 land_12561 land_10609 land_15496 }
+	buildings = {
+		naval_base = 1
+	}
 }
 patagonia_m328_1 = {
 	name = "Patagonia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17536 land_17537 land_17535 }
+	buildings = {
+		naval_base = 1
+	}
 }
 patagonia_m332_1 = {
 	name = "Patagonia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17539 }
+	buildings = {
+		naval_base = 1
+	}
 }
 atlantic_shellfish_gatherers_1 = {
 	name = "Atlantic shellfish gatherers"
 	manpower = 3
 	tax = 0.7
 	locations = { land_10157 land_11583 land_15358 land_11011 land_13457 land_13979 land_14482 land_13458 land_11806 land_13366 land_10708 land_12342 land_10810 land_13459 land_15065 land_12384 land_12495 land_11720 land_12283 land_14535 land_14069 land_10802 land_13774 land_14088 land_15214 land_15274 land_12713 land_10415 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_1 = {
 	name = "Andean farmers 1"
 	manpower = 4
 	tax = 0.8
 	locations = { land_15617 land_12309 land_09785 land_13823 land_13533 land_14392 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_2 = {
 	name = "Andean farmers 2"
 	manpower = 12
 	tax = 1.5
 	locations = { land_13452 land_12663 land_11025 land_09913 land_11690 land_14708 land_13259 land_14159 land_10495 land_15576 land_14690 land_15350 land_14183 land_12125 land_10233 land_13311 land_10990 land_13182 land_09781 land_12153 land_13113 land_09892 land_09846 land_12661 land_12768 land_13105 land_10318 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_3 = {
 	name = "Andean farmers 3"
 	manpower = 23
 	tax = 2.3
 	locations = { land_10923 land_12686 land_10974 land_14938 land_11537 land_12400 land_14532 land_10245 land_13323 land_11302 land_14828 land_15451 land_12950 land_12004 land_10246 land_13038 land_11543 land_10745 land_14866 land_10759 land_13011 land_12093 land_13999 land_09772 land_11941 land_11858 land_11009 land_10797 land_10151 land_14595 land_15315 land_12957 land_13760 land_13331 land_14494 land_15560 land_13442 land_10775 land_12284 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_4 = {
 	name = "Andean farmers 4"
@@ -910,6 +1252,9 @@ andean_farmers_6 = {
 	manpower = 20
 	tax = 2.1
 	locations = { land_11389 land_13461 land_10563 land_09991 land_15021 land_10914 land_11694 land_14892 land_14606 land_10559 land_10656 land_14117 land_11699 land_14971 land_09955 land_14293 land_11169 land_10297 land_10717 land_14178 land_12346 land_12360 land_14709 land_11765 land_15563 land_14488 land_09758 land_12430 land_13413 land_11055 land_11332 land_13035 land_14738 land_15661 land_12071 land_10599 land_13696 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_7 = {
 	name = "Andean farmers 7"
@@ -928,12 +1273,18 @@ andean_farmers_9 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_15658 land_12151 land_13232 land_10676 land_15388 land_15126 land_12182 land_15242 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_10 = {
 	name = "Andean farmers 10"
 	manpower = 16
 	tax = 1.8
 	locations = { land_13498 land_12326 land_12137 land_11745 land_15003 land_15160 land_12442 land_11335 land_10094 land_12540 land_09859 land_10861 land_10418 land_13607 land_15029 land_09967 land_11596 land_12870 land_14739 land_12658 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_11 = {
 	name = "Andean farmers 11"
@@ -946,6 +1297,9 @@ andean_farmers_12 = {
 	manpower = 11
 	tax = 1.4
 	locations = { land_10453 land_11857 land_12148 land_11299 land_12067 land_13890 }
+	buildings = {
+		naval_base = 1
+	}
 }
 andean_farmers_13 = {
 	name = "Andean farmers 13"
@@ -996,6 +1350,9 @@ chorrera_ecuador_m13_1 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_11431 land_13494 land_12461 land_12475 land_14990 land_13685 land_09841 land_11281 land_11844 land_14867 land_14858 land_14812 land_15412 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chorrera_ecuador_m13_2 = {
 	name = "Chorrera Ecuador 2"
@@ -1004,18 +1361,27 @@ chorrera_ecuador_m13_2 = {
 	manpower = 19
 	tax = 2.0
 	locations = { land_10979 land_13051 land_13905 land_10846 land_15018 land_13200 land_13957 land_13944 land_10317 land_14281 land_10880 land_12837 land_10359 land_09916 land_09838 land_10198 land_10332 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chorrera_ecuador_m220_1 = {
 	name = "Chorrera Ecuador"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16330 land_16331 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chorrera_ecuador_m228_1 = {
 	name = "Chorrera Ecuador"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16329 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chavin_peru_1 = {
 	name = "Chavin Peru 1"
@@ -1024,6 +1390,9 @@ chavin_peru_1 = {
 	manpower = 13
 	tax = 1.5
 	locations = { land_15487 land_12396 land_11972 land_10371 land_12605 land_10690 land_14705 land_10469 land_12278 land_12523 land_11365 land_11061 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chavin_peru_2 = {
 	name = "Chavin Peru 2"
@@ -1032,6 +1401,9 @@ chavin_peru_2 = {
 	manpower = 18
 	tax = 2.0
 	locations = { land_11805 land_10518 land_14196 land_11912 land_11631 land_12573 land_12675 land_13252 land_10354 land_11172 land_10346 }
+	buildings = {
+		naval_base = 1
+	}
 }
 paracas_south_coast_1 = {
 	name = "Paracas south coast"
@@ -1040,6 +1412,9 @@ paracas_south_coast_1 = {
 	manpower = 8
 	tax = 1.2
 	locations = { land_13222 land_13712 land_12983 land_11724 land_14028 land_15265 }
+	buildings = {
+		naval_base = 1
+	}
 }
 yaya_mama_titicaca_1 = {
 	name = "Yaya-Mama Titicaca"
@@ -1052,120 +1427,180 @@ chinchorro_coast_1 = {
 	manpower = 2
 	tax = 0.7
 	locations = { land_09877 land_14967 land_13851 land_10576 land_11116 land_10258 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m43_1 = {
 	name = "Britain and Ireland"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15702 land_15703 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m46_1 = {
 	name = "Britain and Ireland"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15704 land_15705 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m53_1 = {
 	name = "Britain and Ireland"
 	manpower = 8
 	tax = 1.1
 	locations = { land_15736 land_15718 land_15732 land_15714 land_15728 land_15719 land_15733 land_15710 land_15724 land_15738 land_15715 land_15720 land_15734 land_15711 land_15748 land_15725 land_15721 land_15712 land_15726 land_15740 land_15717 land_15731 land_15722 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m58_1 = {
 	name = "Britain and Ireland"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15755 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m60_1 = {
 	name = "Britain and Ireland"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15756 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m66_1 = {
 	name = "Britain and Ireland"
 	manpower = 5
 	tax = 0.9
 	locations = { land_15773 land_15764 land_15778 land_15769 land_15774 land_15765 land_15770 land_15761 land_15775 land_15766 land_15771 land_15762 land_15776 land_15767 land_15772 land_15763 land_15777 land_15768 }
+	buildings = {
+		naval_base = 1
+	}
 }
 britain_and_ireland_m75_1 = {
 	name = "Britain and Ireland"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15784 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_interior_m9_1 = {
 	name = "Iberian interior 1"
 	manpower = 13
 	tax = 1.6
 	locations = { land_06479 land_06096 land_01911 land_07158 land_06715 land_09244 land_07412 land_07892 land_00943 land_03518 land_04178 land_02554 land_04885 land_00132 land_04853 land_05287 land_09588 land_01665 land_03414 land_09367 land_07743 land_00909 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_interior_m9_2 = {
 	name = "Iberian interior 2"
 	manpower = 12
 	tax = 1.4
 	locations = { land_06170 land_08039 land_09382 land_03660 land_06369 land_02525 land_08418 land_02087 land_02078 land_06056 land_08345 land_07538 land_01299 land_07395 land_03911 land_00524 land_05065 land_09463 land_07285 land_02103 land_03746 land_00207 land_02902 land_07660 land_01961 land_04956 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_interior_m9_3 = {
 	name = "Iberian interior 3"
 	manpower = 9
 	tax = 1.2
 	locations = { land_00134 land_03503 land_03125 land_05248 land_02434 land_04271 land_07737 land_05896 land_06847 land_07941 land_03894 land_08818 land_07323 land_01772 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_interior_m116_1 = {
 	name = "Iberian interior"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15912 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_interior_m119_1 = {
 	name = "Iberian interior"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15914 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_coast_m9_1 = {
 	name = "Iberian coast 1"
 	manpower = 13
 	tax = 1.5
 	locations = { land_04181 land_05538 land_08178 land_03952 land_01917 land_08996 land_06135 land_04580 land_02042 land_07169 land_06403 land_00418 land_00875 land_06385 land_01803 land_03446 land_09727 land_09141 land_07166 land_07706 land_06594 land_01592 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_coast_m9_2 = {
 	name = "Iberian coast 2"
 	manpower = 11
 	tax = 1.4
 	locations = { land_07089 land_05576 land_05650 land_07284 land_03680 land_02541 land_09085 land_06081 land_02759 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_coast_m109_1 = {
 	name = "Iberian coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15907 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_coast_m112_1 = {
 	name = "Iberian coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15909 land_15910 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iberian_coast_m113_1 = {
 	name = "Iberian coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15911 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_iberia_1 = {
 	name = "Southern Iberia"
 	manpower = 9
 	tax = 1.2
 	locations = { land_06290 land_00651 land_07550 land_05335 land_01505 land_02124 land_08562 land_03026 land_01674 land_00290 }
+	buildings = {
+		naval_base = 1
+	}
 }
 gaul_and_the_hallstatt_lands_1 = {
 	name = "Gaul and the Hallstatt lands 1"
 	manpower = 8
 	tax = 1.1
 	locations = { land_00074 land_03466 land_03836 land_03324 land_04852 land_01073 land_04105 land_08503 land_09163 land_07811 land_00917 land_08952 land_08080 }
+	buildings = {
+		naval_base = 1
+	}
 }
 gaul_and_the_hallstatt_lands_2 = {
 	name = "Gaul and the Hallstatt lands 2"
@@ -1184,12 +1619,18 @@ gaul_and_the_hallstatt_lands_4 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_02829 land_03955 land_08773 land_07001 land_00107 land_05728 land_01672 land_02697 land_01622 land_02928 land_06389 land_01673 land_04124 land_07479 land_01208 land_00502 land_06155 land_05066 land_04803 land_08061 land_07669 land_03502 land_02113 land_07194 land_08763 land_04153 land_02441 }
+	buildings = {
+		naval_base = 1
+	}
 }
 gaul_and_the_hallstatt_lands_5 = {
 	name = "Gaul and the Hallstatt lands 5"
 	manpower = 8
 	tax = 1.2
 	locations = { land_06493 land_07615 land_04191 land_02927 land_06725 land_08013 land_09061 land_04922 land_02601 land_09039 land_01319 land_05823 land_09137 }
+	buildings = {
+		naval_base = 1
+	}
 }
 gaul_and_the_hallstatt_lands_6 = {
 	name = "Gaul and the Hallstatt lands 6"
@@ -1202,84 +1643,126 @@ gaul_and_the_hallstatt_lands_7 = {
 	manpower = 12
 	tax = 1.4
 	locations = { land_05773 land_05847 land_09308 land_04075 land_06212 land_05566 land_02622 land_06960 land_01921 land_04796 land_04510 land_02212 land_01816 land_08060 land_04133 land_01992 land_01411 land_09210 land_02639 land_02699 land_09575 }
+	buildings = {
+		naval_base = 1
+	}
 }
 armorica_and_low_countries_m9_1 = {
 	name = "Armorica and Low Countries 1"
 	manpower = 9
 	tax = 1.3
 	locations = { land_04384 land_02169 land_09447 land_05903 land_05197 land_05931 land_02830 land_05659 land_00966 land_06813 land_09568 land_00819 land_06795 land_00907 land_09675 land_00700 land_08883 land_02021 }
+	buildings = {
+		naval_base = 1
+	}
 }
 armorica_and_low_countries_m9_2 = {
 	name = "Armorica and Low Countries 2"
 	manpower = 10
 	tax = 1.3
 	locations = { land_04744 land_09728 land_06895 land_02848 land_08732 land_00398 land_00961 land_01081 land_09563 land_02106 land_05295 land_03630 land_03621 land_00857 land_07470 land_06598 land_07632 land_01896 land_05579 land_05353 }
+	buildings = {
+		naval_base = 1
+	}
 }
 armorica_and_low_countries_m53_1 = {
 	name = "Armorica and Low Countries"
 	manpower = 9
 	tax = 1.2
 	locations = { land_15713 land_15727 land_15741 land_15746 land_15723 land_15737 land_15742 land_15747 land_15729 land_15743 land_15739 land_15716 land_15730 land_15744 land_15735 land_15749 land_15745 }
+	buildings = {
+		naval_base = 1
+	}
 }
 north_european_iron_age_1 = {
 	name = "North European Iron Age"
 	manpower = 16
 	tax = 1.8
 	locations = { land_04804 land_06876 land_09128 land_08362 land_04961 land_06327 land_06664 land_02894 land_08261 land_02645 land_05843 land_06240 land_08589 land_08146 land_06374 land_00698 land_00315 land_05345 land_02244 land_02724 land_06808 land_03827 land_06139 land_09637 land_01063 land_03375 land_00754 land_06024 land_02863 land_00888 land_05858 land_03823 land_05669 land_05346 land_09670 land_00856 land_01922 land_07898 land_06126 land_04331 land_06463 land_03242 land_03482 land_02273 land_03436 land_03113 land_09149 land_00252 land_04719 land_00229 land_05836 land_06879 land_05227 land_09671 land_03875 land_07876 land_05278 land_00608 land_08536 land_08716 land_06764 land_09279 land_01088 land_03783 land_06372 land_06326 land_05897 land_06903 land_03922 land_05288 land_08043 land_07457 land_07434 land_07148 land_07245 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_south_m9_1 = {
 	name = "Scandinavia south 1"
 	manpower = 9
 	tax = 1.2
 	locations = { land_04970 land_09068 land_09691 land_02183 land_02257 land_04306 land_05146 land_05077 land_00089 land_05119 land_06125 land_06222 land_01709 land_04201 land_04298 land_00431 land_00791 land_08258 land_03325 land_05817 land_08489 land_01161 land_03150 land_01701 land_06016 land_03395 land_00714 land_02726 land_02966 land_04978 land_09339 land_02717 land_02085 land_08172 land_06963 land_02953 land_03756 land_01449 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_south_m9_2 = {
 	name = "Scandinavia south 2"
 	manpower = 13
 	tax = 1.6
 	locations = { land_05270 land_01477 land_00448 land_04652 land_08990 land_01362 land_01865 land_09581 land_02936 land_07417 land_03010 land_06651 land_04819 land_07593 land_03191 land_09647 land_03219 land_06477 land_01101 land_09426 land_06528 land_02158 land_06122 land_09491 land_02809 land_01577 land_04166 land_04060 land_09653 land_06469 land_08255 land_00567 land_09275 land_00175 land_03087 land_00226 land_05136 land_00466 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_south_m51_1 = {
 	name = "Scandinavia south"
 	manpower = 1
 	tax = 0.5
 	locations = { land_02083 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_south_m59_1 = {
 	name = "Scandinavia south"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15757 land_15758 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_south_m70_1 = {
 	name = "Scandinavia south"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15779 }
+	buildings = {
+		naval_base = 1
+	}
 }
 scandinavia_north_m9_1 = {
 	name = "Scandinavia north"
 	manpower = 1
 	tax = 0.6
 	locations = { land_05893 land_01043 land_07019 land_06936 land_00111 land_04998 land_04269 land_01994 land_02054 land_07707 land_00762 land_03974 land_04611 land_06863 land_02636 land_04325 land_06577 land_03130 land_06508 land_01718 land_02138 land_09623 land_04007 land_07002 land_03398 land_08899 land_09019 land_03177 land_08064 land_04077 land_08041 land_02748 land_01419 land_04045 land_05411 land_03196 land_06657 land_06616 land_07096 land_05204 land_08162 land_02366 land_00225 land_03183 land_05029 land_05509 land_06252 land_06875 land_02205 land_08541 land_03691 land_03248 land_01919 land_03488 land_04554 land_02722 land_00687 land_06663 land_00664 land_08546 land_07780 land_04499 land_05625 land_08380 land_03770 land_01735 land_03304 land_06562 land_01712 land_08191 }
+	buildings = {
+		naval_base = 1
+	}
 }
 finland_and_karelia_1 = {
 	name = "Finland and Karelia"
 	manpower = 4
 	tax = 0.9
 	locations = { land_07545 land_04481 land_02506 land_00854 land_02603 land_01717 land_06784 land_06881 land_00499 land_02571 land_04740 land_00956 land_05160 land_02442 land_07509 land_00564 land_03873 land_08460 land_03024 land_01875 land_06536 land_06107 land_01534 land_08087 land_08950 land_01682 land_05734 land_02744 land_07968 land_04927 land_09371 land_06510 land_00548 land_08979 land_00142 land_01545 land_01102 land_07263 land_07097 land_04762 land_08643 land_01015 land_03530 land_01878 land_07854 land_05902 land_07065 }
+	buildings = {
+		naval_base = 1
+	}
 }
 baltic_coast_m9_1 = {
 	name = "Baltic coast"
 	manpower = 12
 	tax = 1.5
 	locations = { land_03821 land_03272 land_02003 land_00328 land_03346 land_02114 land_00785 land_01902 land_03771 land_02299 land_07869 land_01704 land_07177 land_07357 land_07094 land_00126 land_06785 land_03361 land_03421 land_00523 land_05207 land_03412 land_08456 land_04672 land_09430 land_03994 land_03279 land_05351 land_02956 land_08992 land_00921 land_07400 land_04419 land_02827 land_08291 land_07082 land_04184 land_02855 land_00294 land_07770 land_02131 land_00802 land_03617 land_06409 land_00110 land_07775 land_04434 land_01130 land_09058 land_03179 land_06197 land_03659 land_04162 land_02893 land_09266 land_01818 land_06119 }
+	buildings = {
+		naval_base = 1
+	}
 }
 baltic_coast_m55_1 = {
 	name = "Baltic coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07967 land_08540 }
+	buildings = {
+		naval_base = 1
+	}
 }
 proto_slavic_lands_1 = {
 	name = "Proto-Slavic lands 1"
@@ -1298,6 +1781,9 @@ taiga_finno_ugrian_m9_1 = {
 	manpower = 2
 	tax = 0.7
 	locations = { land_01246 land_06456 land_03738 land_09654 land_07942 land_00374 land_01297 land_07213 land_00711 land_07107 land_08413 land_00139 land_03600 land_03157 land_09567 land_04214 land_09184 land_04334 land_07652 land_05497 land_03236 land_06194 land_03919 land_05465 land_07528 land_09540 land_02955 land_03458 land_03435 land_07902 land_02549 land_00597 land_05987 land_07999 land_00588 land_08553 land_02877 land_06043 land_05840 land_00667 land_03339 land_08106 land_04562 land_01881 land_04064 land_01014 land_03972 land_02020 land_04046 land_01148 land_04646 land_05329 land_01296 land_08352 land_06137 land_05371 land_04928 land_06977 land_01458 land_02967 land_06465 land_04070 land_00706 }
+	buildings = {
+		naval_base = 1
+	}
 }
 taiga_finno_ugrian_m9_2 = {
 	name = "Taiga Finno-Ugrian 2"
@@ -1316,6 +1802,9 @@ taiga_finno_ugrian_m9_4 = {
 	manpower = 2
 	tax = 0.6
 	locations = { land_04024 land_05007 land_08468 land_05067 land_04661 land_08482 land_04135 land_04029 land_05132 land_06198 land_07601 land_07408 land_04044 land_05101 land_00348 land_07930 land_07718 land_06749 land_00187 land_06643 land_02836 land_08729 land_07783 land_03796 land_02024 land_06934 land_03270 land_03390 land_08517 land_04170 land_05333 land_01563 land_08928 land_04798 land_09362 land_02251 land_03257 land_05306 land_00673 land_00973 land_02985 land_06806 land_00507 land_01887 land_08103 land_00789 land_02598 }
+	buildings = {
+		naval_base = 1
+	}
 }
 taiga_finno_ugrian_m9_5 = {
 	name = "Taiga Finno-Ugrian 5"
@@ -1328,30 +1817,45 @@ taiga_finno_ugrian_m23_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_15672 land_15671 }
+	buildings = {
+		naval_base = 1
+	}
 }
 ligurian_northwest_italy_1 = {
 	name = "Ligurian northwest Italy"
 	manpower = 6
 	tax = 1.0
 	locations = { land_05824 land_02954 land_03098 land_09014 land_02452 land_03555 land_03675 land_02729 land_04418 land_07704 land_03888 land_08467 land_01061 }
+	buildings = {
+		naval_base = 1
+	}
 }
 etruria_1 = {
 	name = "Etruria"
 	manpower = 11
 	tax = 1.4
 	locations = { land_08505 land_04532 land_00868 land_05244 land_03571 land_08961 }
+	buildings = {
+		naval_base = 1
+	}
 }
 latium_and_central_italy_1 = {
 	name = "Latium and central Italy"
 	manpower = 4
 	tax = 0.8
 	locations = { land_04924 land_00219 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_italy_interior_1 = {
 	name = "Southern Italy interior"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08811 land_07973 land_04194 }
+	buildings = {
+		naval_base = 1
+	}
 }
 magna_graecia_1 = {
 	name = "Magna Graecia"
@@ -1360,6 +1864,9 @@ magna_graecia_1 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_08888 land_02026 land_02751 land_08058 land_03204 land_00784 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_sicily_1 = {
 	name = "Eastern Sicily"
@@ -1368,6 +1875,9 @@ eastern_sicily_1 = {
 	manpower = 4
 	tax = 0.8
 	locations = { land_09005 land_00303 land_01952 }
+	buildings = {
+		naval_base = 1
+	}
 }
 western_sicily_1 = {
 	name = "Western Sicily"
@@ -1376,12 +1886,18 @@ western_sicily_1 = {
 	manpower = 4
 	tax = 0.8
 	locations = { land_07113 land_00332 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sardinia_m104_1 = {
 	name = "Sardinia"
 	manpower = 1
 	tax = 0.6
 	locations = { land_15856 land_15850 land_15851 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sardinia_m108_1 = {
 	name = "Sardinia"
@@ -1390,18 +1906,27 @@ sardinia_m108_1 = {
 	manpower = 4
 	tax = 0.8
 	locations = { land_15852 land_15853 land_15854 land_15855 }
+	buildings = {
+		naval_base = 1
+	}
 }
 illyria_1 = {
 	name = "Illyria 1"
 	manpower = 15
 	tax = 1.7
 	locations = { land_03258 land_02949 land_08136 land_03789 land_05861 land_01814 land_05912 land_02511 land_05123 land_02276 land_06420 land_02507 land_02101 land_09466 land_09263 land_07731 land_09037 land_02858 land_00477 land_06910 land_04446 land_02125 land_06712 land_00090 land_08835 land_00644 land_05799 land_07368 land_01669 land_05813 land_04198 land_01863 land_05001 land_06427 land_03437 land_04951 land_04785 land_00046 land_05256 land_04550 land_08011 land_06239 }
+	buildings = {
+		naval_base = 1
+	}
 }
 illyria_2 = {
 	name = "Illyria 2"
 	manpower = 9
 	tax = 1.2
 	locations = { land_07868 land_08002 land_05224 land_05312 land_00356 land_02262 land_02198 land_02309 land_08059 land_03546 land_05706 land_02545 land_04414 land_07797 land_08780 land_01715 land_00183 land_03561 land_08605 land_07673 land_02560 land_02948 land_06377 land_07817 land_06142 land_01292 }
+	buildings = {
+		naval_base = 1
+	}
 }
 thrace_1 = {
 	name = "Thrace"
@@ -1410,6 +1935,9 @@ thrace_1 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_02349 land_02709 land_01620 land_02483 land_04094 land_09124 land_09258 land_01404 land_07565 land_04667 land_05350 land_08308 land_00177 land_06527 land_04409 land_05955 land_06352 land_02688 land_01650 land_04788 land_00386 land_09620 land_03261 land_05135 land_02431 land_05726 land_01453 land_00904 land_02307 land_04453 land_02058 land_04407 }
+	buildings = {
+		naval_base = 1
+	}
 }
 danube_and_carpathians_1 = {
 	name = "Danube and Carpathians"
@@ -1424,6 +1952,9 @@ greek_mainland_and_aegean_m9_1 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_01113 land_08799 land_05412 land_15915 land_05800 land_03562 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m9_2 = {
 	name = "Greek mainland and Aegean 2"
@@ -1432,6 +1963,9 @@ greek_mainland_and_aegean_m9_2 = {
 	manpower = 7
 	tax = 1.1
 	locations = { land_02732 land_00504 land_08389 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m9_3 = {
 	name = "Greek mainland and Aegean 3"
@@ -1440,6 +1974,9 @@ greek_mainland_and_aegean_m9_3 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_08335 land_09076 land_07184 land_04217 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m111_1 = {
 	name = "Greek mainland and Aegean"
@@ -1448,6 +1985,9 @@ greek_mainland_and_aegean_m111_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_15908 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m117_1 = {
 	name = "Greek mainland and Aegean"
@@ -1456,6 +1996,9 @@ greek_mainland_and_aegean_m117_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_06880 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m122_1 = {
 	name = "Greek mainland and Aegean"
@@ -1464,6 +2007,9 @@ greek_mainland_and_aegean_m122_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_15916 land_15917 }
+	buildings = {
+		naval_base = 1
+	}
 }
 greek_mainland_and_aegean_m125_1 = {
 	name = "Greek mainland and Aegean"
@@ -1472,6 +2018,9 @@ greek_mainland_and_aegean_m125_1 = {
 	manpower = 4
 	tax = 0.8
 	locations = { land_15921 land_15919 land_15920 }
+	buildings = {
+		naval_base = 1
+	}
 }
 macedon_and_epirus_1 = {
 	name = "Macedon and Epirus"
@@ -1480,6 +2029,9 @@ macedon_and_epirus_1 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_05247 land_04675 land_04537 land_07883 land_04542 land_09180 land_06167 land_09688 land_02725 land_08152 land_06011 land_08383 land_05472 land_01532 }
+	buildings = {
+		naval_base = 1
+	}
 }
 black_sea_greek_coast_1 = {
 	name = "Black Sea Greek coast"
@@ -1488,18 +2040,27 @@ black_sea_greek_coast_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_07952 land_08396 land_07007 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pontic_steppe_scythians_1 = {
 	name = "Pontic steppe Scythians 1"
 	manpower = 11
 	tax = 1.3
 	locations = { land_01809 land_06853 land_06387 land_05801 land_03023 land_05478 land_03083 land_05012 land_08487 land_05806 land_03088 land_00250 land_04897 land_06503 land_09461 land_06060 land_05474 land_08432 land_05534 land_01127 land_02793 land_07823 land_00195 land_08686 land_06411 land_08723 land_03933 land_06185 land_09383 land_05599 land_09120 land_01815 land_02415 land_00080 land_08751 land_02392 land_02992 land_02226 land_02849 land_05604 land_08156 land_08193 land_07750 land_02757 land_02111 land_05046 land_08604 land_02845 land_00367 land_09481 land_08535 land_03293 land_04802 land_02527 land_06994 land_02504 land_02121 land_02181 land_07834 land_00769 land_06805 land_05979 land_04650 land_07728 land_08794 land_04424 land_02689 land_05707 land_08665 land_02929 land_04115 land_06104 land_03063 land_07281 land_04946 land_03174 land_02971 land_06612 land_02122 land_03188 land_02805 land_03871 land_07189 land_02459 land_06603 land_05731 land_06857 land_01864 land_08966 land_07734 land_02861 land_08251 }
+	buildings = {
+		naval_base = 1
+	}
 }
 pontic_steppe_scythians_2 = {
 	name = "Pontic steppe Scythians 2"
 	manpower = 8
 	tax = 1.2
 	locations = { land_08994 land_00254 land_08745 land_08985 land_05321 land_07730 land_06355 land_04320 land_08141 land_04874 land_02013 land_00864 land_01907 land_02913 land_07560 land_08483 land_00292 land_02484 land_06882 land_09517 land_02655 land_00763 land_02895 land_04907 land_07602 land_06190 land_05747 land_01511 land_05092 land_06601 land_08230 land_09296 land_00985 land_06052 land_04280 land_08281 land_06952 land_09324 land_06726 land_07146 land_05494 land_06620 land_00824 land_05088 land_07543 land_00741 land_05891 land_01904 land_04193 land_08494 land_02495 land_05633 land_01466 land_00197 land_07839 land_04235 land_01840 land_02920 land_09196 land_01891 land_08827 land_03211 land_02136 land_05657 land_09681 land_00281 land_09215 land_03839 land_00498 land_05948 land_00392 land_03950 land_08537 land_09460 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sarmatian_steppe_1 = {
 	name = "Sarmatian steppe 1"
@@ -1512,12 +2073,18 @@ sarmatian_steppe_2 = {
 	manpower = 6
 	tax = 1.0
 	locations = { land_07365 land_08325 land_04629 land_07587 land_01768 land_06295 land_07338 land_03937 land_09641 land_03499 land_01344 land_05488 land_09226 land_01155 land_06665 land_08737 land_03444 land_02798 land_05373 land_05184 land_09199 land_08313 land_06901 land_06015 land_06698 land_06029 land_00390 land_02139 land_06223 land_07446 land_01807 land_04945 land_07765 land_04904 land_04641 land_02989 land_07050 land_00345 land_07004 land_04383 land_09293 land_07078 land_03331 land_07226 land_09358 land_07711 land_09723 land_08574 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sarmatian_steppe_3 = {
 	name = "Sarmatian steppe 3"
 	manpower = 6
 	tax = 1.0
 	locations = { land_00300 land_00194 land_03669 land_02340 land_06964 land_04380 land_08201 land_07818 land_08695 land_06254 land_05368 land_00938 land_03956 land_09046 land_03753 land_01215 land_02369 land_07579 land_01220 land_06864 land_00579 land_08244 land_04197 land_06343 land_09158 land_04968 land_03579 land_04825 land_04382 land_03856 land_01078 land_00372 land_01798 land_00086 land_03547 land_00506 land_04221 land_02389 land_00534 land_07696 land_06247 land_01900 land_01374 land_00645 land_06035 land_03640 land_06778 land_00576 land_03631 land_01416 land_03428 land_05251 land_09566 land_01089 land_01329 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_asian_saka_1 = {
 	name = "Central Asian Saka 1"
@@ -1530,6 +2097,9 @@ central_asian_saka_2 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_04112 land_01011 land_08796 land_06018 land_04929 land_08307 land_08367 land_17596 land_07449 land_02576 land_05654 land_00361 land_17578 land_05765 land_09586 land_00892 land_04547 land_08225 land_01520 land_01820 land_05844 land_01188 land_17579 land_02005 land_00150 land_01396 land_00990 land_09555 land_04096 land_07354 land_01618 land_03990 land_09297 land_05453 land_02412 land_04632 land_02657 land_06538 land_09030 land_00899 land_08264 land_04037 land_07309 land_03645 land_05717 land_03027 land_07051 land_03567 land_07185 land_00886 }
+	buildings = {
+		naval_base = 1
+	}
 }
 tarim_and_gansu_yuezhe_1 = {
 	name = "Tarim and Gansu Yuezhe 1"
@@ -1590,12 +2160,18 @@ manchuria_m9_1 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_07859 land_06627 land_05372 land_08127 land_03517 land_06535 land_02871 land_01602 land_02968 land_02742 land_06826 land_01593 land_08109 land_01441 land_09023 land_05313 land_02489 land_04921 land_01054 land_04875 land_06947 land_05498 land_05055 land_03606 land_03260 land_02591 land_06592 land_06066 land_06486 land_07349 land_05014 land_01410 land_05374 land_09698 land_07843 land_08849 land_01844 land_02001 land_02984 land_08457 land_04230 land_03847 land_09034 land_06473 land_07599 land_06653 land_03626 land_07927 land_06072 land_04743 land_03954 land_07572 land_08075 land_03885 land_01264 land_06797 land_05911 land_02570 land_04702 land_08163 land_07900 land_00895 land_07374 land_00632 }
+	buildings = {
+		naval_base = 1
+	}
 }
 manchuria_m9_2 = {
 	name = "Manchuria 2"
 	manpower = 8
 	tax = 1.2
 	locations = { land_03881 land_04121 land_05427 land_03595 land_04758 land_01454 land_03143 land_09119 land_06318 land_05169 land_01685 land_01745 land_08524 land_00753 land_01976 land_04551 land_07080 land_02230 land_07703 land_01501 land_01058 land_09429 land_00809 land_03264 land_05013 land_01649 land_06093 land_05830 land_02563 land_07473 land_07030 land_03246 land_04492 land_03343 land_06375 land_05932 land_02148 land_06615 land_05646 land_03971 land_02942 land_00344 land_07386 land_05628 land_00935 land_05019 land_06325 land_01189 land_01106 land_00663 land_07262 land_03921 land_03718 land_09191 land_02629 land_04558 land_02463 land_05421 land_00188 land_06607 land_08273 land_04143 land_08938 land_02316 land_06031 land_04882 land_08020 land_06428 land_09543 land_09100 land_06299 }
+	buildings = {
+		naval_base = 1
+	}
 }
 manchuria_m9_3 = {
 	name = "Manchuria 3"
@@ -1608,12 +2184,18 @@ manchuria_m9_4 = {
 	manpower = 7
 	tax = 1.0
 	locations = { land_07033 land_02543 land_04915 land_08879 land_02077 land_07144 land_04477 land_08095 land_03227 land_04307 land_05936 land_08105 land_02932 land_09485 land_08216 land_05881 land_01031 land_02074 land_04386 land_03620 land_05752 land_06818 land_00893 land_07995 land_08609 land_01304 land_03819 land_05748 land_03593 land_03750 land_07225 land_04830 land_00377 land_08785 land_01268 land_08670 land_08144 land_05320 land_01716 land_08195 land_02339 land_05920 land_00304 land_04508 land_03479 land_05385 land_05745 land_06308 land_01352 land_07771 land_03987 land_07508 }
+	buildings = {
+		naval_base = 1
+	}
 }
 manchuria_m76_1 = {
 	name = "Manchuria"
 	manpower = 1
 	tax = 0.6
 	locations = { land_07772 land_02618 land_09157 land_00971 land_00865 land_00173 land_08886 land_06053 land_06358 land_06243 land_07406 land_05002 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_1 = {
 	name = "Siberian taiga and tundra 1"
@@ -1626,6 +2208,9 @@ siberian_taiga_and_tundra_m9_2 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_01786 land_05095 land_00905 land_03397 land_03208 land_01736 land_07149 land_07911 land_03121 land_02129 land_04718 land_04612 land_06398 land_02028 land_00376 land_07921 land_06606 land_00750 land_03353 land_08743 land_01092 land_03081 land_02906 land_03146 land_04212 land_02763 land_09422 land_03543 land_04969 land_03197 land_01425 land_08204 land_00530 land_06686 land_04651 land_08749 land_04896 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_3 = {
 	name = "Siberian taiga and tundra 3"
@@ -1638,6 +2223,9 @@ siberian_taiga_and_tundra_m9_4 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_04601 land_00697 land_01380 land_00471 land_02091 land_09318 land_17601 land_07380 land_04399 land_01238 land_02904 land_01889 land_07819 land_01963 land_05632 land_03920 land_08807 land_09490 land_08235 land_02859 land_00081 land_00764 land_01867 land_05102 land_05559 land_09454 land_08305 land_09385 land_04572 land_03926 land_01974 land_02034 land_04729 land_07341 land_09007 land_07858 land_06003 land_07840 land_01038 land_01158 land_09709 land_07554 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_5 = {
 	name = "Siberian taiga and tundra 5"
@@ -1650,6 +2238,9 @@ siberian_taiga_and_tundra_m9_6 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_01569 land_07702 land_02469 land_06996 land_06770 land_05418 land_07670 land_03263 land_01611 land_06078 land_04869 land_03480 land_03457 land_05640 land_06886 land_06623 land_02899 land_08746 land_08303 land_07860 land_06028 land_00232 land_09148 land_02969 land_08945 land_01940 land_07330 land_00205 land_05115 land_06578 land_02734 land_00916 land_09527 land_01253 land_04774 land_04894 land_06906 land_08955 land_03496 land_07760 land_03510 land_07534 land_06588 land_01235 land_06768 land_08314 land_08531 land_06136 land_07825 land_05167 land_07299 land_07659 land_04941 land_09002 land_04249 land_03040 land_02754 land_04443 land_03234 land_04720 land_08301 land_03451 land_08638 land_06220 land_07969 land_02233 land_08283 land_06834 land_02081 land_09626 land_01209 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_7 = {
 	name = "Siberian taiga and tundra 7"
@@ -1662,6 +2253,9 @@ siberian_taiga_and_tundra_m9_8 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_08062 land_01851 land_04643 land_03351 land_02659 land_01561 land_00112 land_02784 land_05456 land_00122 land_03214 land_01562 land_06186 land_00797 land_03672 land_02703 land_07613 land_08430 land_08227 land_09736 land_08910 land_05749 land_08218 land_04005 land_03239 land_09446 land_06548 land_04167 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_9 = {
 	name = "Siberian taiga and tundra 9"
@@ -1680,18 +2274,27 @@ siberian_taiga_and_tundra_m9_11 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_05953 land_01163 land_06696 land_02086 land_06050 land_00988 land_08044 land_08967 land_05926 land_01076 land_08561 land_03065 land_06263 land_09221 land_00887 land_00638 land_07620 land_07680 land_00878 land_05885 land_07754 land_03850 land_03407 land_09503 land_07851 land_03744 land_04584 land_03698 land_04381 land_01040 land_03232 land_08645 land_07256 land_03915 land_05424 land_01114 land_02180 land_00279 land_00399 land_07252 land_00247 land_04728 land_03782 land_07986 land_05245 land_05642 land_01069 land_01489 land_03478 land_04595 land_06224 land_07087 land_03483 land_03160 land_06621 land_00193 land_00050 land_09464 land_04411 land_08652 land_03982 land_04462 land_07720 land_00978 land_04942 land_06691 land_01998 land_00969 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m9_12 = {
 	name = "Siberian taiga and tundra 12"
 	manpower = 1
 	tax = 0.5
 	locations = { land_05916 land_03392 land_06913 land_03646 land_01791 land_01413 land_05114 land_07103 land_02530 land_08603 land_01298 land_07454 land_05539 land_00103 land_01086 land_00980 land_05378 land_02291 land_03980 land_05729 land_04557 land_05563 land_05240 land_03099 land_07248 land_09500 land_05804 land_05975 land_08993 land_09067 land_04374 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberian_taiga_and_tundra_m18_1 = {
 	name = "Siberian taiga and tundra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15669 }
+	buildings = {
+		naval_base = 1
+	}
 }
 siberia_south_of_the_taiga_1 = {
 	name = "Siberia south of the taiga 1"
@@ -1746,30 +2349,45 @@ chukotka_and_kamchatka_m9_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_17563 land_08145 land_03032 land_03535 land_07656 land_07938 land_03148 land_02147 land_01261 land_01764 land_05082 land_02304 land_02641 land_03181 land_05673 land_04404 land_17597 land_08622 land_08479 land_09522 land_05918 land_08170 land_06458 land_05009 land_07081 land_09190 land_04340 land_03874 land_04354 land_07815 land_04128 land_09038 land_04931 land_04165 land_03256 land_03376 land_05388 land_08346 land_06574 land_17598 land_03976 land_09569 land_00612 land_06948 land_02098 land_07608 land_01226 land_05753 land_04987 land_01157 land_09662 land_05255 land_06501 land_06801 land_01688 land_06718 land_17562 land_02994 land_02048 land_04757 land_02099 land_01287 land_03013 land_01389 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chukotka_and_kamchatka_m9_2 = {
 	name = "Chukotka and Kamchatka 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_08108 land_00360 land_08519 land_05298 land_06724 land_02737 land_17545 land_09336 land_03439 land_07274 land_00057 land_02803 land_00408 land_04234 land_06929 land_01313 land_05416 land_00677 land_08402 land_01600 land_01314 land_01245 land_02311 land_01476 land_06566 land_01310 land_17544 land_08440 land_08094 land_07651 land_02335 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chukotka_and_kamchatka_m9_3 = {
 	name = "Chukotka and Kamchatka 3"
 	manpower = 1
 	tax = 0.6
 	locations = { land_03461 land_03078 land_01740 land_00282 land_04043 land_07804 land_06849 land_03868 land_07846 land_06914 land_01409 land_08774 land_02535 land_04787 land_01243 land_08165 land_00671 land_04312 land_05415 land_04266 land_01225 land_06255 land_04303 land_07155 land_00976 land_00210 land_06380 land_04465 land_06597 land_01244 land_07280 land_04502 land_06071 land_07151 land_06685 land_07308 land_06039 land_04890 land_02043 land_04392 land_09302 land_09219 land_06178 land_01568 land_05943 land_05934 land_05168 land_09469 land_01398 land_02907 land_06368 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chukotka_and_kamchatka_m54_1 = {
 	name = "Chukotka and Kamchatka"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15750 land_15751 }
+	buildings = {
+		naval_base = 1
+	}
 }
 chukotka_and_kamchatka_m94_1 = {
 	name = "Chukotka and Kamchatka"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15824 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_1 = {
 	name = "Anatolia 1"
@@ -1778,6 +2396,9 @@ anatolia_m9_1 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_07190 land_05124 land_05318 land_09476 land_04317 land_07802 land_00165 land_09644 land_06068 land_01232 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_2 = {
 	name = "Anatolia 2"
@@ -1802,6 +2423,9 @@ anatolia_m9_4 = {
 	manpower = 17
 	tax = 1.8
 	locations = { land_07485 land_05653 land_03573 land_04939 land_00465 land_01075 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_5 = {
 	name = "Anatolia 5"
@@ -1810,6 +2434,9 @@ anatolia_m9_5 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_07943 land_06172 land_08881 land_09154 land_03400 land_02810 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_6 = {
 	name = "Anatolia 6"
@@ -1818,6 +2445,9 @@ anatolia_m9_6 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_00240 land_07642 land_00768 land_02979 land_09223 land_06736 land_03898 land_05265 land_03050 land_05062 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_7 = {
 	name = "Anatolia 7"
@@ -1826,6 +2456,9 @@ anatolia_m9_7 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_07310 land_07301 land_03269 land_07363 land_06843 land_00055 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_8 = {
 	name = "Anatolia 8"
@@ -1834,6 +2467,9 @@ anatolia_m9_8 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_06694 land_05250 land_03968 land_04296 land_04850 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_9 = {
 	name = "Anatolia 9"
@@ -1842,6 +2478,9 @@ anatolia_m9_9 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_09497 land_05764 land_02558 land_06596 land_08267 land_07215 land_01913 land_00493 land_00913 land_03364 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_10 = {
 	name = "Anatolia 10"
@@ -1850,6 +2489,9 @@ anatolia_m9_10 = {
 	manpower = 14
 	tax = 1.7
 	locations = { land_07499 land_08653 land_05174 land_08470 land_01539 land_04692 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_11 = {
 	name = "Anatolia 11"
@@ -1858,6 +2500,9 @@ anatolia_m9_11 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_00989 land_03749 land_07635 land_06163 land_06219 land_08882 land_01610 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_12 = {
 	name = "Anatolia 12"
@@ -1866,6 +2511,9 @@ anatolia_m9_12 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_02312 land_04444 land_08612 land_02189 land_06407 land_04455 land_02471 land_00174 land_06021 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m9_13 = {
 	name = "Anatolia 13"
@@ -1882,6 +2530,9 @@ anatolia_m115_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_07871 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m121_1 = {
 	name = "Anatolia"
@@ -1890,6 +2541,9 @@ anatolia_m121_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_08787 land_05781 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m123_1 = {
 	name = "Anatolia"
@@ -1898,12 +2552,18 @@ anatolia_m123_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_15918 }
+	buildings = {
+		naval_base = 1
+	}
 }
 anatolia_m126_1 = {
 	name = "Anatolia"
 	manpower = 2
 	tax = 0.6
 	locations = { land_15922 land_15923 land_15924 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_anatolia_and_armenia_1 = {
 	name = "Eastern Anatolia and Armenia 1"
@@ -1912,12 +2572,18 @@ eastern_anatolia_and_armenia_1 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_00180 land_02783 land_08196 land_04126 land_01228 land_02654 land_06166 land_08700 land_06582 land_02032 land_03961 land_03878 land_03772 land_01331 land_09416 land_08207 land_00593 land_01087 land_05831 land_00972 land_03344 land_09431 land_01134 land_01351 land_02154 land_07687 land_05260 land_07037 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_anatolia_and_armenia_2 = {
 	name = "Eastern Anatolia and Armenia 2"
 	manpower = 8
 	tax = 1.1
 	locations = { land_03554 land_00481 land_04879 land_08599 land_03929 land_00847 land_05614 land_04119 land_00349 land_09099 land_02634 land_05952 land_05117 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_anatolia_and_armenia_3 = {
 	name = "Eastern Anatolia and Armenia 3"
@@ -1926,6 +2592,9 @@ eastern_anatolia_and_armenia_3 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_09645 land_06364 land_00245 land_03794 land_06729 land_00370 land_09106 land_09286 land_04473 land_06522 land_01354 land_01142 land_07058 land_00981 land_00890 land_09658 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_anatolia_and_armenia_4 = {
 	name = "Eastern Anatolia and Armenia 4"
@@ -1958,6 +2627,9 @@ iranian_plateau_persians_and_medes_3 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_04076 land_08397 land_07526 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_4 = {
 	name = "Iranian plateau (Persians and Medes) 4"
@@ -1982,6 +2654,9 @@ iranian_plateau_persians_and_medes_6 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_06747 land_05865 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_7 = {
 	name = "Iranian plateau (Persians and Medes) 7"
@@ -1998,6 +2673,9 @@ iranian_plateau_persians_and_medes_8 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_02811 land_07897 land_07714 land_17557 land_03709 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_9 = {
 	name = "Iranian plateau (Persians and Medes) 9"
@@ -2044,6 +2722,9 @@ iranian_plateau_persians_and_medes_14 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_07717 land_05239 land_00606 land_03159 land_04097 land_17549 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_15 = {
 	name = "Iranian plateau (Persians and Medes) 15"
@@ -2052,6 +2733,9 @@ iranian_plateau_persians_and_medes_15 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_05949 land_05737 land_03136 land_02670 land_02578 land_01143 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_16 = {
 	name = "Iranian plateau (Persians and Medes) 16"
@@ -2060,6 +2744,9 @@ iranian_plateau_persians_and_medes_16 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_03858 land_05635 land_06378 land_06794 land_09203 land_03837 land_06229 land_09257 }
+	buildings = {
+		naval_base = 1
+	}
 }
 iranian_plateau_persians_and_medes_17 = {
 	name = "Iranian plateau (Persians and Medes) 17"
@@ -2076,6 +2763,9 @@ media_1 = {
 	manpower = 12
 	tax = 1.4
 	locations = { land_04698 land_06341 land_07970 land_09609 land_07519 land_03629 land_06269 land_01936 land_02296 land_04733 land_08688 land_08748 land_00830 }
+	buildings = {
+		naval_base = 1
+	}
 }
 media_2 = {
 	name = "Media 2"
@@ -2248,6 +2938,9 @@ syria_3 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_09234 land_02977 land_01588 land_02890 land_01633 }
+	buildings = {
+		naval_base = 1
+	}
 }
 syria_4 = {
 	name = "Syria 4"
@@ -2288,6 +2981,9 @@ phoenician_coast_1 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_08713 land_00536 land_04188 land_05508 land_04180 }
+	buildings = {
+		naval_base = 1
+	}
 }
 judah_and_israel_1 = {
 	name = "Judah and Israel 1"
@@ -2304,12 +3000,18 @@ judah_and_israel_2 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_05544 }
+	buildings = {
+		naval_base = 1
+	}
 }
 judah_and_israel_3 = {
 	name = "Judah and Israel 3"
 	manpower = 28
 	tax = 2.7
 	locations = { land_02221 }
+	buildings = {
+		naval_base = 1
+	}
 }
 judah_and_israel_4 = {
 	name = "Judah and Israel 4"
@@ -2324,42 +3026,63 @@ north_arabian_tribes_1 = {
 	manpower = 3
 	tax = 0.7
 	locations = { land_04084 land_07116 land_06890 land_08459 land_05995 land_05326 land_05520 land_06586 land_09521 land_08492 land_00375 land_07311 land_07048 land_00306 land_00860 land_04658 land_06204 land_04755 land_08936 land_07261 land_09370 land_08927 land_01599 land_07492 land_07672 land_01747 land_05951 land_01784 land_00455 land_08600 land_06159 land_00100 land_04775 land_03889 land_00788 land_03423 land_04697 land_03045 land_00327 land_00064 land_08435 land_04199 land_03996 land_03170 }
+	buildings = {
+		naval_base = 1
+	}
 }
 north_arabian_tribes_2 = {
 	name = "North Arabian tribes 2"
 	manpower = 4
 	tax = 0.8
 	locations = { land_09174 land_02769 land_08399 land_03226 land_17591 land_01971 land_00490 land_02313 land_05525 land_17592 land_00140 land_00357 land_03855 land_07653 land_00265 land_03283 land_05715 land_04183 land_06412 land_06426 land_09117 land_02315 land_04807 land_05624 land_03654 land_07655 land_09261 land_04591 land_06497 land_02510 land_02127 land_00692 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arabian_peninsula_m9_1 = {
 	name = "Arabian peninsula 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_09008 land_02963 land_07407 land_01399 land_04694 land_00790 land_02110 land_08543 land_02521 land_01377 land_03491 land_04617 land_01636 land_01138 land_05942 land_01789 land_03815 land_04738 land_06967 land_02168 land_03811 land_07812 land_04808 land_00078 land_06174 land_09312 land_04259 land_09040 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arabian_peninsula_m9_2 = {
 	name = "Arabian peninsula 2"
 	manpower = 2
 	tax = 0.7
 	locations = { land_00060 land_06659 land_04938 land_17568 land_07541 land_02142 land_05377 land_03928 land_03139 land_08788 land_06873 land_09328 land_03089 land_00371 land_00874 land_07833 land_08613 land_00607 land_01664 land_02287 land_04004 land_06376 land_03538 land_04069 land_03100 land_02611 land_05629 land_03511 land_04088 land_17567 land_05957 land_08149 land_05768 land_08463 land_03327 land_08717 land_03221 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arabian_peninsula_m9_3 = {
 	name = "Arabian peninsula 3"
 	manpower = 2
 	tax = 0.7
 	locations = { land_09151 land_03775 land_03309 land_02151 land_07052 land_07209 land_01330 land_04911 land_08031 land_07302 land_06490 land_02240 land_01585 land_17593 land_03810 land_04147 land_05610 land_17594 land_01494 land_01388 land_06478 land_08347 land_09344 land_05888 land_04190 land_07448 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arabian_peninsula_m9_4 = {
 	name = "Arabian peninsula 4"
 	manpower = 3
 	tax = 0.7
 	locations = { land_05090 land_06110 land_03992 land_07513 land_05358 land_08381 land_04348 land_05571 land_02664 land_05276 land_00163 land_01229 land_01829 land_07925 land_07039 land_00740 land_08668 land_00920 land_04944 land_04598 land_07796 land_09462 land_03117 land_05480 land_04488 land_06962 land_05324 land_05398 land_09542 land_07950 land_02325 land_02658 }
+	buildings = {
+		naval_base = 1
+	}
 }
 arabian_peninsula_m167_1 = {
 	name = "Arabian peninsula"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16060 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_arabia_1 = {
 	name = "South Arabia 1"
@@ -2368,6 +3091,9 @@ south_arabia_1 = {
 	manpower = 17
 	tax = 1.9
 	locations = { land_09216 land_04943 land_03388 land_00467 land_08289 land_09162 land_09615 land_02864 land_08328 land_05740 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_arabia_2 = {
 	name = "South Arabia 2"
@@ -2376,6 +3102,9 @@ south_arabia_2 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_06982 land_02746 land_04592 land_05215 land_09078 land_09332 land_00214 land_05218 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_arabia_3 = {
 	name = "South Arabia 3"
@@ -2392,6 +3121,9 @@ south_arabia_4 = {
 	manpower = 17
 	tax = 1.8
 	locations = { land_01708 land_01662 land_01594 land_05152 land_03648 land_08595 land_05319 land_07931 land_01697 land_07055 land_05560 land_06866 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_arabia_5 = {
 	name = "South Arabia 5"
@@ -2408,6 +3140,9 @@ south_arabia_6 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_09465 land_00079 land_05105 land_06471 land_08926 land_04372 land_00630 land_05961 land_07821 land_06626 land_05436 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bactria_and_sogdia_1 = {
 	name = "Bactria and Sogdia 1"
@@ -2494,6 +3229,9 @@ persian_southeast_and_makran_1 = {
 	manpower = 13
 	tax = 1.5
 	locations = { land_00480 land_00817 land_05344 land_01837 land_07430 land_09276 land_08630 land_04726 land_01385 land_04883 land_07389 land_02627 land_06208 land_04556 land_04533 land_17546 land_01326 land_09268 land_06084 land_01414 land_07381 land_01022 land_06149 land_03002 land_17547 land_05185 land_05808 land_04470 land_09394 land_02357 land_07807 land_02371 land_00922 land_01259 land_06972 land_00410 land_07549 land_06285 }
+	buildings = {
+		naval_base = 1
+	}
 }
 persian_southeast_and_makran_2 = {
 	name = "Persian southeast and Makran 2"
@@ -2502,18 +3240,27 @@ persian_southeast_and_makran_2 = {
 	manpower = 13
 	tax = 1.5
 	locations = { land_06013 land_08436 land_06175 land_03780 land_08344 land_08118 land_06969 land_03305 land_01353 land_08132 land_06840 land_02498 land_07242 land_09605 land_06195 land_05526 land_06260 land_05785 land_05116 land_08817 land_07885 land_02306 land_07779 land_08139 land_07996 land_09732 land_08906 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_1 = {
 	name = "Sahara 1"
 	manpower = 1
 	tax = 0.5
 	locations = { land_05533 land_05118 land_00951 land_03406 land_06041 land_03826 land_08893 land_09696 land_06143 land_03259 land_00172 land_04316 land_05036 land_03384 land_05553 land_07016 land_06061 land_01276 land_08761 land_02439 land_01613 land_07769 land_06297 land_03044 land_02518 land_04207 land_07705 land_06556 land_09514 land_02186 land_05647 land_08199 land_05998 land_08370 land_00470 land_04914 land_06100 land_09132 land_07471 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_2 = {
 	name = "Sahara 2"
 	manpower = 1
 	tax = 0.6
 	locations = { land_04504 land_06763 land_00423 land_09400 land_05173 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_3 = {
 	name = "Sahara 3"
@@ -2556,6 +3303,9 @@ sahara_m9_9 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_03701 land_07767 land_06171 land_07394 land_06425 land_02983 land_08484 land_05120 land_02342 land_07566 land_03173 land_07437 land_09366 land_00792 land_02278 land_02006 land_01240 land_02426 land_08702 land_02265 land_06289 land_01730 land_01504 land_06608 land_01149 land_03784 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_10 = {
 	name = "Sahara 10"
@@ -2568,12 +3318,18 @@ sahara_m9_11 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_04662 land_07477 land_00574 land_03422 land_04110 land_08822 land_07586 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_12 = {
 	name = "Sahara 12"
 	manpower = 1
 	tax = 0.6
 	locations = { land_09091 land_00965 land_09650 land_03328 land_08275 land_01044 land_05682 land_07445 land_04104 land_04164 land_05263 land_00598 land_07045 land_09289 land_03507 land_06645 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahara_m9_13 = {
 	name = "Sahara 13"
@@ -2610,24 +3366,36 @@ maghreb_1 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_02109 land_05884 land_09719 land_05414 land_06097 land_04565 land_02235 land_00500 land_07482 land_08045 land_00777 land_08784 land_03168 land_02019 land_02592 land_08707 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maghreb_2 = {
 	name = "Maghreb 2"
 	manpower = 8
 	tax = 1.1
 	locations = { land_17610 land_09526 land_04187 land_05332 land_07766 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maghreb_3 = {
 	name = "Maghreb 3"
 	manpower = 13
 	tax = 1.6
 	locations = { land_06027 land_02580 land_08496 land_02617 land_06272 land_05506 land_05243 land_03550 land_04210 land_05719 land_07768 land_05041 land_04132 land_06048 land_03321 land_05730 land_07359 land_05938 land_01508 land_00096 land_05569 land_00346 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maghreb_4 = {
 	name = "Maghreb 4"
 	manpower = 17
 	tax = 1.9
 	locations = { land_02972 land_06927 land_07684 land_08238 land_03342 land_09738 land_00952 land_00343 land_05507 land_01580 land_06509 land_04705 land_09140 land_07456 land_00525 land_08864 land_05417 land_06483 land_08555 land_02473 land_04093 land_04213 land_03904 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maghreb_5 = {
 	name = "Maghreb 5"
@@ -2640,6 +3408,9 @@ maghreb_6 = {
 	manpower = 8
 	tax = 1.2
 	locations = { land_02100 land_02640 land_07329 land_04205 land_02373 land_05894 land_08220 land_05802 land_01432 land_07985 land_06693 land_06001 land_02337 land_07801 land_08101 land_04151 land_07289 land_09601 land_08775 land_07243 land_03676 land_09440 land_07788 land_06699 land_03229 land_06907 land_04466 land_04563 land_07475 land_03322 land_04065 land_01647 land_00558 }
+	buildings = {
+		naval_base = 1
+	}
 }
 maghreb_7 = {
 	name = "Maghreb 7"
@@ -2662,6 +3433,9 @@ carthage_and_tunisia_2 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_09105 land_02253 land_07877 }
+	buildings = {
+		naval_base = 1
+	}
 }
 carthage_and_tunisia_3 = {
 	name = "Carthage and Tunisia 3"
@@ -2670,6 +3444,9 @@ carthage_and_tunisia_3 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_05038 land_08398 land_00235 land_00946 }
+	buildings = {
+		naval_base = 1
+	}
 }
 carthage_and_tunisia_4 = {
 	name = "Carthage and Tunisia 4"
@@ -2678,6 +3455,9 @@ carthage_and_tunisia_4 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_04324 land_05175 land_08941 land_00787 land_04082 }
+	buildings = {
+		naval_base = 1
+	}
 }
 cyrenaica_1 = {
 	name = "Cyrenaica"
@@ -2686,6 +3466,9 @@ cyrenaica_1 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_07841 land_03366 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_valley_1 = {
 	name = "Nile Valley 1"
@@ -2718,6 +3501,9 @@ nile_valley_4 = {
 	manpower = 23
 	tax = 2.4
 	locations = { land_05690 land_07781 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_valley_5 = {
 	name = "Nile Valley 5"
@@ -2732,6 +3518,9 @@ nile_valley_6 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_08393 land_03041 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_valley_7 = {
 	name = "Nile Valley 7"
@@ -2754,6 +3543,9 @@ nile_delta_2 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_08929 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_delta_3 = {
 	name = "Nile Delta 3"
@@ -2762,6 +3554,9 @@ nile_delta_3 = {
 	manpower = 17
 	tax = 1.8
 	locations = { land_03997 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_delta_4 = {
 	name = "Nile Delta 4"
@@ -2770,6 +3565,9 @@ nile_delta_4 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_08821 land_08965 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nile_delta_5 = {
 	name = "Nile Delta 5"
@@ -2778,6 +3576,9 @@ nile_delta_5 = {
 	manpower = 17
 	tax = 1.8
 	locations = { land_06020 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nubia_and_napata_1 = {
 	name = "Nubia and Napata 1"
@@ -2808,6 +3609,9 @@ sahel_and_west_african_farmers_1 = {
 	manpower = 11
 	tax = 1.4
 	locations = { land_08168 land_05898 land_02502 land_04385 land_09415 land_03476 land_04902 land_02281 land_03347 land_04450 land_03624 land_00846 land_02475 land_03218 land_01137 land_02646 land_09545 land_04026 land_01991 land_00270 land_02522 land_08475 land_05254 land_05231 land_02910 land_01166 land_05933 land_04604 land_06976 land_07350 land_03903 land_03760 land_02182 land_07272 land_08486 land_03433 land_03350 land_05196 land_00143 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahel_and_west_african_farmers_2 = {
 	name = "Sahel and West African farmers 2"
@@ -2826,12 +3630,18 @@ sahel_and_west_african_farmers_4 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_03521 land_00273 land_02516 land_02193 land_04122 land_06637 land_04196 land_08400 land_04113 land_02461 land_06928 land_07025 land_09397 land_03186 land_09139 land_01811 land_01668 land_03740 land_04363 land_09181 land_01447 land_00561 land_05130 land_03658 land_09071 land_01946 land_08513 land_09376 land_00562 land_05223 land_05191 land_08814 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahel_and_west_african_farmers_5 = {
 	name = "Sahel and West African farmers 5"
 	manpower = 12
 	tax = 1.4
 	locations = { land_07462 land_05524 land_02866 land_09239 land_07421 land_03633 land_06268 land_05359 land_02918 land_02249 land_05341 land_02831 land_07755 land_05720 land_01207 land_04142 land_05651 land_00718 land_03736 land_05162 land_02564 land_08697 land_02901 land_07465 land_04664 land_08476 land_08776 land_08753 land_03737 land_07198 land_00456 land_08744 land_01536 land_03945 land_04125 land_08186 land_04319 land_04596 land_02321 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sahel_and_west_african_farmers_6 = {
 	name = "Sahel and West African farmers 6"
@@ -2844,6 +3654,9 @@ bantu_homeland_m9_1 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_00623 land_01749 land_01260 land_05381 land_02843 land_00116 land_02308 land_06609 land_08538 land_06674 land_01321 land_00532 land_05216 land_00283 land_00260 land_01446 land_09448 land_01174 land_06772 land_07838 land_00870 land_07266 land_05845 land_03367 land_03021 land_07156 land_01960 land_08919 land_03866 land_03280 land_03460 land_04208 land_00927 land_01550 land_04305 land_07383 land_01587 land_05759 land_04873 land_08131 land_03401 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bantu_homeland_m9_2 = {
 	name = "Bantu homeland 2"
@@ -2856,12 +3669,18 @@ bantu_homeland_m213_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_16283 land_16284 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_african_forest_m9_1 = {
 	name = "Central African forest 1"
 	manpower = 3
 	tax = 0.8
 	locations = { land_07822 land_08625 land_09248 land_02723 land_01274 land_00508 land_08916 land_05575 land_07901 land_01879 land_00167 land_08838 land_09341 land_05151 land_00301 land_09235 land_02996 land_05511 land_01284 land_01524 land_02590 land_04579 land_05262 land_02364 land_00915 land_03144 land_04270 land_04833 land_08068 land_04284 land_07542 land_09614 land_01543 land_05401 land_02060 land_07773 land_00528 land_06038 land_02051 land_05069 land_00113 land_03025 land_05037 land_03588 land_05600 land_00307 land_05960 land_07160 land_07017 land_03473 land_04216 land_05222 land_01115 land_07091 land_02481 land_04673 land_09597 land_06759 land_01083 land_05670 land_02772 land_04581 land_04138 land_06870 land_02823 land_08236 land_06861 land_05772 land_06395 land_05869 land_07512 land_02279 land_05297 land_00364 land_01670 land_08209 land_07886 land_03147 land_00369 land_04393 land_02178 land_09603 land_07628 land_01892 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_african_forest_m9_2 = {
 	name = "Central African forest 2"
@@ -2880,6 +3699,9 @@ central_african_forest_m9_4 = {
 	manpower = 3
 	tax = 0.7
 	locations = { land_02252 land_05833 land_07402 land_06073 land_03715 land_06350 land_07153 land_09285 land_01191 land_04832 land_02940 land_03180 land_08593 land_00176 land_06332 land_09401 land_07629 land_09498 land_08349 land_09392 land_07440 land_09572 land_06591 land_07011 land_07108 land_09360 land_01169 land_04630 land_09660 land_05613 land_01949 land_04358 land_02323 land_02886 land_09305 land_03509 land_01128 land_06961 land_05572 land_01908 land_07884 land_09393 land_03154 land_02499 land_06200 land_08332 land_09338 land_05171 land_04345 land_04405 land_07142 land_06090 land_00354 land_00834 land_04835 land_08010 land_03520 land_04623 land_00839 land_09510 land_07392 land_07286 land_07023 land_09718 land_01144 land_06617 land_02833 land_05791 land_02390 land_04139 land_05145 land_07517 land_08260 land_04416 land_04033 land_04130 land_05616 }
+	buildings = {
+		naval_base = 1
+	}
 }
 central_african_forest_m9_5 = {
 	name = "Central African forest 5"
@@ -2898,6 +3720,9 @@ central_african_forest_m219_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_16328 }
+	buildings = {
+		naval_base = 1
+	}
 }
 ethiopian_highlands_1 = {
 	name = "Ethiopian highlands 1"
@@ -2910,12 +3735,18 @@ ethiopian_highlands_2 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_06410 land_08704 land_06079 land_05138 land_03699 land_06897 land_08282 land_04189 land_04983 land_07032 }
+	buildings = {
+		naval_base = 1
+	}
 }
 ethiopian_highlands_3 = {
 	name = "Ethiopian highlands 3"
 	manpower = 12
 	tax = 1.4
 	locations = { land_05030 land_09474 land_07799 land_06249 land_07205 land_06356 land_05567 land_00274 land_01705 land_05079 land_07391 land_02781 land_08448 land_05827 land_01628 }
+	buildings = {
+		naval_base = 1
+	}
 }
 ethiopian_highlands_4 = {
 	name = "Ethiopian highlands 4"
@@ -2946,18 +3777,27 @@ horn_of_africa_m9_1 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_07605 land_04684 land_01537 land_06004 land_04292 land_08676 land_07024 land_07084 land_07827 land_01085 land_01265 land_01182 land_06092 land_08547 land_03434 land_03591 land_05280 land_08298 land_01676 land_07592 land_06000 land_06480 land_05271 land_05774 land_01367 land_05188 land_01464 land_08063 land_03333 land_01095 land_00712 land_05696 land_01289 land_02092 land_06753 land_05281 land_00731 land_09282 land_01474 land_00422 land_02674 land_09333 land_09633 land_03011 land_03131 land_03851 land_00953 land_00127 land_09624 land_02379 land_01110 land_02393 land_06860 land_05771 land_06514 land_01461 land_03916 land_04036 land_08300 land_01941 land_08134 land_02458 land_08434 land_02698 land_01932 land_05010 land_02292 land_03326 land_02943 land_02980 land_00442 land_03151 land_06109 land_05846 land_08924 land_04171 land_05477 land_04439 land_06631 land_07111 land_08477 land_01615 }
+	buildings = {
+		naval_base = 1
+	}
 }
 horn_of_africa_m9_2 = {
 	name = "Horn of Africa 2"
 	manpower = 4
 	tax = 0.9
 	locations = { land_04910 land_08491 land_00540 land_02995 land_02903 land_01754 land_07924 land_01805 land_03914 land_02322 land_05668 land_05419 land_03052 land_04741 land_00334 land_00897 land_05964 land_06970 land_09010 land_07238 land_08978 land_04442 land_01812 land_05910 land_00114 land_08176 land_07018 land_01282 land_04863 land_01965 land_05486 land_01762 land_09501 land_03825 land_05011 land_00844 land_05551 land_02750 land_03793 land_03844 }
+	buildings = {
+		naval_base = 1
+	}
 }
 horn_of_africa_m179_1 = {
 	name = "Horn of Africa"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16084 land_16085 }
+	buildings = {
+		naval_base = 1
+	}
 }
 east_african_pastoralists_m9_1 = {
 	name = "East African pastoralists 1"
@@ -2982,42 +3822,63 @@ east_african_pastoralists_m9_4 = {
 	manpower = 7
 	tax = 1.0
 	locations = { land_04001 land_08948 land_00637 land_04315 land_06447 land_05958 land_07527 land_07264 land_09013 land_02728 land_05746 land_00573 land_07929 land_06554 land_05225 land_01861 land_07874 land_00569 land_00749 land_05433 land_06942 land_07159 land_05064 land_04515 land_04192 land_03403 land_06361 land_01954 land_08830 land_05000 land_05503 land_01133 land_06703 land_07063 land_02490 land_08526 land_07474 land_09606 land_00852 land_05656 land_01872 land_02555 land_06676 land_04341 land_03312 land_09228 land_08153 land_01291 land_00945 land_06349 land_00793 land_02302 land_09584 land_06183 land_08975 land_05491 land_08449 land_09686 land_06682 }
+	buildings = {
+		naval_base = 1
+	}
 }
 east_african_pastoralists_m250_1 = {
 	name = "East African pastoralists"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16541 land_16542 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_1 = {
 	name = "Southern Africa Khoisan 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_00679 land_01302 land_08667 land_00550 land_03365 land_01533 land_02539 land_07126 land_03725 land_08815 land_03762 land_05331 land_04948 land_00721 land_03859 land_02267 land_04782 land_08806 land_08423 land_04136 land_00472 land_06688 land_02761 land_09531 land_07127 land_06721 land_07344 land_02914 land_01465 land_00136 land_08161 land_07958 land_02905 land_06869 land_05420 land_06546 land_01733 land_06205 land_09726 land_04373 land_05379 land_03104 land_05739 land_04387 land_07585 land_07562 land_08365 land_01743 land_05444 land_05181 land_01937 land_02620 land_01305 land_03317 land_02768 land_08361 land_04014 land_00170 land_09081 land_07429 land_00627 land_04148 land_04711 land_09538 land_08629 land_04656 land_07674 land_08980 land_06322 land_02838 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_2 = {
 	name = "Southern Africa Khoisan 2"
 	manpower = 2
 	tax = 0.6
 	locations = { land_00923 land_09031 land_03355 land_08445 land_05907 land_00231 land_07716 land_08722 land_04818 land_06687 land_05155 land_01251 land_08330 land_00213 land_08764 land_07375 land_01699 land_01376 land_03568 land_04754 land_05317 land_03042 land_01713 land_05354 land_09618 land_03176 land_02290 land_09272 land_09452 land_06448 land_03047 land_01778 land_03587 land_02738 land_06116 land_07182 land_00440 land_04261 land_09734 land_01603 land_04058 land_08262 land_02909 land_06287 land_01234 land_08336 land_04769 land_06292 land_07298 land_00616 land_02628 land_05143 land_04054 land_01156 land_04797 land_01576 land_03085 land_06283 land_09301 land_02116 land_07317 land_04156 land_04756 land_01858 land_06565 land_07631 land_00340 land_08208 land_02352 land_02832 land_01383 land_06916 land_05481 land_00631 land_05601 land_08093 land_00285 land_08647 land_09150 land_02745 land_09404 land_08052 land_06677 land_01218 land_09086 land_09423 land_03807 land_01975 land_02538 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_3 = {
 	name = "Southern Africa Khoisan 3"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02935 land_03438 land_07259 land_06553 land_04638 land_01800 land_08782 land_06244 land_02857 land_06678 land_03374 land_03111 land_09027 land_00730 land_01390 land_03582 land_03356 land_06148 land_00149 land_01658 land_06568 land_05050 land_08428 land_06213 land_06273 land_07842 land_06993 land_08982 land_00288 land_08133 land_02374 land_07201 land_01202 land_08424 land_03754 land_05946 land_00653 land_03671 land_05683 land_05134 land_05854 land_09232 land_09389 land_02707 land_03570 land_02301 land_04050 land_01152 land_03155 land_03215 land_06796 land_03806 land_07447 land_02071 land_02228 land_02625 land_07212 land_02542 land_05537 land_08112 land_04748 land_01947 land_08403 land_00932 land_09220 land_01269 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_4 = {
 	name = "Southern Africa Khoisan 4"
 	manpower = 1
 	tax = 0.6
 	locations = { land_05473 land_03498 land_08528 land_06673 land_09668 land_01071 land_06692 land_06383 land_07689 land_03416 land_06088 land_09549 land_02152 land_09194 land_05304 land_01294 land_06338 land_05429 land_08507 land_01216 land_02702 land_03708 land_04368 land_17584 land_01567 land_02633 land_01604 land_00275 land_05688 land_02924 land_04447 land_00520 land_00760 land_06593 land_05495 land_17585 land_09713 land_05283 land_07314 land_06968 land_00669 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_5 = {
 	name = "Southern Africa Khoisan 5"
 	manpower = 2
 	tax = 0.6
 	locations = { land_07162 land_06216 land_08205 land_03415 land_03009 land_05944 land_03166 land_05395 land_09659 land_06821 land_02414 land_04283 land_05589 land_05829 land_07961 land_02382 land_06346 land_04574 land_05137 land_04048 land_06923 land_07403 land_06111 land_04159 land_08183 land_05405 land_07168 land_05396 land_08211 land_01363 land_01986 land_06513 land_08968 land_04118 land_08885 land_02443 land_02000 land_04889 land_05189 land_05369 land_05609 land_06915 land_04017 land_06975 land_05323 land_09384 land_04977 land_07852 land_01290 land_08392 land_08046 land_02167 land_07580 land_08143 land_05305 land_00898 land_09269 land_06874 land_01641 land_07594 land_05882 land_02721 land_08254 land_08374 land_05716 land_08734 land_03944 land_05956 land_00280 land_03349 land_03206 land_09625 land_08896 land_08287 land_04420 land_03031 land_00313 land_00447 land_04448 land_02616 land_06760 land_09335 land_00701 land_00378 land_04342 land_01481 land_09506 land_01435 land_05316 land_02155 land_02778 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_6 = {
 	name = "Southern Africa Khoisan 6"
@@ -3054,12 +3915,18 @@ southern_africa_khoisan_m9_11 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_04587 land_00757 land_09188 land_01883 land_01131 land_09059 land_03706 land_03360 land_09576 land_06489 land_03651 land_04394 land_06300 land_03522 land_03739 land_04302 land_01824 land_08843 land_08903 land_01598 land_01455 land_06868 land_07085 land_04930 land_00514 land_00071 land_00491 land_03066 land_06767 land_02540 land_01728 land_06878 land_03034 land_09573 land_07681 land_08521 land_06366 land_02582 land_09504 land_08678 land_03828 land_06237 land_03953 land_03127 land_06648 land_04493 land_09740 land_06902 land_06256 land_00963 land_06353 land_06833 land_05541 land_08499 land_07553 land_09122 land_09482 land_05172 land_07304 land_07101 land_09556 land_00982 land_07415 land_05463 land_01679 land_08098 land_04877 land_08772 land_00521 land_07000 land_02150 land_00918 land_03590 land_09280 land_00526 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_12 = {
 	name = "Southern Africa Khoisan 12"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02695 land_00863 land_01366 land_05330 land_01177 land_06507 land_01657 land_01634 land_01694 land_05229 land_01339 land_02585 land_08598 land_08658 land_01856 land_06120 land_05294 land_07366 land_02410 land_06245 land_08797 land_04067 land_05876 land_02009 land_00094 land_09088 land_01460 land_04215 land_07413 land_04635 land_05641 land_04815 land_00145 land_04169 land_01774 land_07247 land_00505 land_08913 land_08327 land_03657 land_03311 land_01719 land_03685 land_02333 land_06980 land_03639 land_08420 land_09583 land_08877 land_07848 land_02998 land_02749 land_06390 land_06547 land_05375 land_08573 land_01831 land_07235 land_02385 land_08721 land_04314 land_00604 land_04545 land_06451 land_09386 land_07005 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_13 = {
 	name = "Southern Africa Khoisan 13"
@@ -3078,36 +3945,54 @@ southern_africa_khoisan_m9_15 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_09114 land_05667 land_07979 land_08819 land_00222 land_07315 land_01819 land_03831 land_01796 land_00601 land_08949 land_02184 land_08820 land_08534 land_08008 land_05973 land_07339 land_03495 land_06250 land_02420 land_09379 land_02194 land_00722 land_00459 land_01885 land_07418 land_05457 land_04631 land_05877 land_06777 land_06454 land_03533 land_06228 land_08360 land_04350 land_04590 land_01346 land_02269 land_02066 land_06030 land_04489 land_09016 land_09699 land_04849 land_07498 land_04157 land_06912 land_08878 land_00341 land_02916 land_06940 land_05671 land_00881 land_02187 land_01721 land_06405 land_09077 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m9_16 = {
 	name = "Southern Africa Khoisan 16"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02455 land_01006 land_02049 land_00840 land_03918 land_00997 land_00734 land_04495 land_06184 land_04366 land_09456 land_07278 land_03171 land_02945 land_02179 land_03688 land_00850 land_02359 land_09281 land_03425 land_00084 land_00264 land_06720 land_00098 land_02650 land_00255 land_02770 land_07597 land_09443 land_04593 land_04773 land_06619 land_03638 land_01423 land_03172 land_09725 land_01151 land_07044 land_04206 land_03380 land_02614 land_00699 land_06675 land_04903 land_00713 land_02402 land_01433 land_02559 land_02236 land_00584 land_02596 land_04645 land_06274 land_00335 land_02970 land_01318 land_08960 land_04613 land_06985 land_06579 land_01706 land_00940 land_04715 land_02297 land_00382 land_09496 land_08527 land_07258 land_08767 land_06492 land_04540 land_02145 land_09252 land_05025 land_01744 land_02344 land_01901 land_00955 land_06045 land_05279 land_08417 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m256_1 = {
 	name = "Southern Africa Khoisan"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16553 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m292_1 = {
 	name = "Southern Africa Khoisan"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17305 land_17365 land_17342 land_17402 land_17319 land_17379 land_17356 land_17333 land_17393 land_17310 land_17370 land_17347 land_17407 land_17324 land_17384 land_17301 land_17361 land_17338 land_17398 land_17315 land_17375 land_17352 land_17329 land_17389 land_17306 land_17366 land_17343 land_17403 land_17320 land_17380 land_17357 land_17334 land_17394 land_17311 land_17371 land_17348 land_17408 land_17325 land_17385 land_17302 land_17362 land_17339 land_17399 land_17316 land_17376 land_17353 land_17330 land_17390 land_17307 land_17367 land_17344 land_17404 land_17321 land_17381 land_17358 land_17335 land_17395 land_17312 land_17372 land_17349 land_17409 land_17326 land_17386 land_17303 land_17363 land_17340 land_17400 land_17317 land_17377 land_17354 land_17331 land_17391 land_17308 land_17368 land_17345 land_17405 land_17322 land_17382 land_17359 land_17336 land_17396 land_17313 land_17373 land_17350 land_17410 land_17327 land_17387 land_17304 land_17364 land_17341 land_17401 land_17318 land_17378 land_17355 land_17332 land_17392 land_17309 land_17369 land_17346 land_17406 land_17323 land_17383 land_17360 land_17337 land_17397 land_17314 land_17374 land_17351 land_17411 land_17328 land_17388 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m309_1 = {
 	name = "Southern Africa Khoisan"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17428 land_17429 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_africa_khoisan_m312_1 = {
 	name = "Southern Africa Khoisan"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17435 land_17436 }
+	buildings = {
+		naval_base = 1
+	}
 }
 eastern_sahel_nilotic_1 = {
 	name = "Eastern Sahel Nilotic 1"
@@ -3172,6 +4057,9 @@ indus_lands_6 = {
 	manpower = 17
 	tax = 1.9
 	locations = { land_08602 land_01616 land_02096 land_02073 land_04953 land_01700 land_00062 land_02951 land_09412 land_00931 land_00544 land_09340 }
+	buildings = {
+		naval_base = 1
+	}
 }
 indus_lands_7 = {
 	name = "Indus lands 7"
@@ -3210,6 +4098,9 @@ indus_lands_11 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_00674 land_00485 land_06397 land_05285 land_06402 land_07630 land_06541 land_00058 land_05365 land_02652 }
+	buildings = {
+		naval_base = 1
+	}
 }
 indus_lands_12 = {
 	name = "Indus lands 12"
@@ -3226,6 +4117,9 @@ indus_lands_13 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_00171 land_06867 land_09513 land_02365 land_09421 land_08752 land_06505 land_04973 land_01443 land_05564 land_07230 land_00779 land_07351 }
+	buildings = {
+		naval_base = 1
+	}
 }
 indus_lands_14 = {
 	name = "Indus lands 14"
@@ -3812,12 +4706,18 @@ deccan_2 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_07739 land_02922 land_02779 land_03656 land_03896 land_04616 land_06933 land_08096 land_01045 land_02933 land_06491 land_09053 land_01984 }
+	buildings = {
+		naval_base = 1
+	}
 }
 deccan_3 = {
 	name = "Deccan 3"
 	manpower = 12
 	tax = 1.5
 	locations = { land_09054 land_04578 land_00688 land_01168 land_06798 land_00656 land_07578 land_05230 land_08405 land_05761 land_06218 land_01059 land_03071 land_01839 land_08655 land_01027 land_00501 land_06957 land_06099 land_05776 land_04295 land_01591 land_07507 land_08130 land_06741 land_09321 land_06991 }
+	buildings = {
+		naval_base = 1
+	}
 }
 deccan_4 = {
 	name = "Deccan 4"
@@ -3830,18 +4730,27 @@ deccan_5 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_07905 land_04878 land_07393 land_07956 land_08053 land_05252 land_08104 land_05234 land_02456 land_08649 land_05045 land_04150 land_07072 land_03925 land_07889 land_01890 land_01341 land_08443 land_00709 land_07691 land_04092 land_01817 land_05292 land_04909 land_06829 land_06160 land_01753 land_09238 land_00761 land_06294 }
+	buildings = {
+		naval_base = 1
+	}
 }
 deccan_6 = {
 	name = "Deccan 6"
 	manpower = 14
 	tax = 1.6
 	locations = { land_05210 land_00600 land_04555 land_05921 land_02008 land_07458 land_01307 land_03684 land_00823 land_06979 land_00800 land_06347 land_09559 land_07584 land_07589 land_05448 land_08263 land_03607 land_03967 land_02758 land_04858 land_07936 land_06044 land_09459 land_04134 land_02159 land_06248 land_08860 }
+	buildings = {
+		naval_base = 1
+	}
 }
 deccan_7 = {
 	name = "Deccan 7"
 	manpower = 12
 	tax = 1.4
 	locations = { land_07928 land_05409 land_06526 land_08783 land_04141 land_01160 land_09065 land_02720 land_07187 land_08618 land_05397 land_09638 land_01544 land_03584 land_08674 land_00040 land_01586 land_00257 land_07576 land_02583 land_08047 land_02851 land_05020 land_00821 land_06382 land_09017 }
+	buildings = {
+		naval_base = 1
+	}
 }
 deccan_8 = {
 	name = "Deccan 8"
@@ -3854,36 +4763,54 @@ deccan_9 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_00517 land_07287 land_04223 land_08681 land_08755 land_05922 land_01072 land_05364 land_09042 land_08747 land_09287 land_03431 land_06117 land_01124 land_08277 land_05919 land_01752 land_08891 land_02892 land_04964 land_07193 land_01734 land_07544 land_01365 land_08970 land_06635 land_00203 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_india_1 = {
 	name = "South India 1"
 	manpower = 11
 	tax = 1.4
 	locations = { land_01200 land_04458 land_06955 land_09724 land_01547 land_03813 land_02069 land_01760 land_02314 land_04895 land_00262 land_07466 land_01181 land_03936 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_india_2 = {
 	name = "South India 2"
 	manpower = 14
 	tax = 1.6
 	locations = { land_08408 land_04564 land_03092 land_00088 land_02917 land_01099 land_09710 land_07472 land_09101 land_04994 land_08529 land_04722 land_01995 land_06416 land_03015 land_05807 land_07810 land_09246 land_00169 land_03644 land_05264 land_05924 land_04526 land_09676 land_01725 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_india_3 = {
 	name = "South India 3"
 	manpower = 17
 	tax = 1.8
 	locations = { land_07873 land_08390 land_04103 land_05040 land_02239 land_09166 land_01838 land_05193 land_04838 land_09716 land_03934 land_01184 land_02347 land_05532 land_07964 land_02888 land_08915 land_02870 land_07997 land_03830 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_india_4 = {
 	name = "South India 4"
 	manpower = 12
 	tax = 1.5
 	locations = { land_05787 land_09170 land_16272 land_05700 land_06065 land_05479 land_04727 land_08488 land_02023 land_03948 land_07700 land_05273 land_07405 land_01162 land_04960 land_07595 land_02736 land_05242 }
+	buildings = {
+		naval_base = 1
+	}
 }
 south_india_5 = {
 	name = "South India 5"
 	manpower = 9
 	tax = 1.2
 	locations = { land_16273 land_02711 land_01327 land_07806 land_01120 land_01079 land_02685 land_07803 land_01098 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bengal_and_brahmaputra_1 = {
 	name = "Bengal and Brahmaputra 1"
@@ -3898,6 +4825,9 @@ bengal_and_brahmaputra_2 = {
 	manpower = 8
 	tax = 1.2
 	locations = { land_05686 land_04768 land_08368 land_00049 land_09103 land_00045 land_02602 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bengal_and_brahmaputra_3 = {
 	name = "Bengal and Brahmaputra 3"
@@ -3906,6 +4836,9 @@ bengal_and_brahmaputra_3 = {
 	manpower = 13
 	tax = 1.6
 	locations = { land_03678 land_09096 land_05815 land_09364 land_09092 land_01566 land_01391 land_09619 land_08590 land_07649 land_05005 land_01295 land_05121 land_09708 land_05352 land_01448 land_05394 land_03539 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bengal_and_brahmaputra_4 = {
 	name = "Bengal and Brahmaputra 4"
@@ -3922,6 +4855,9 @@ bengal_and_brahmaputra_5 = {
 	manpower = 16
 	tax = 1.8
 	locations = { land_06539 land_03037 land_04699 land_03370 land_06305 land_02466 land_00611 land_03726 land_09702 land_00099 land_02328 land_06786 land_06145 land_00414 land_09265 land_07710 land_05454 land_09418 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bengal_and_brahmaputra_6 = {
 	name = "Bengal and Brahmaputra 6"
@@ -3936,6 +4872,9 @@ sri_lanka_1 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_08025 land_02266 land_04200 land_02405 land_08621 land_02119 land_01473 land_03402 land_04505 land_03093 land_05848 land_05110 land_00934 land_09365 land_06684 land_02776 land_07423 land_04396 land_06146 land_05703 land_06063 land_01010 land_07600 land_03673 land_02847 land_03973 }
+	buildings = {
+		naval_base = 1
+	}
 }
 tibetan_plateau_1 = {
 	name = "Tibetan plateau 1"
@@ -3972,18 +4911,27 @@ irrawaddy_m9_1 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_01186 land_06156 land_04398 land_08902 land_00748 land_03720 land_02488 land_08852 land_01021 land_06434 land_08137 land_02581 land_09683 land_08511 land_08908 land_01880 land_04552 land_00325 land_00565 land_00302 land_08004 land_04220 land_04760 land_09730 land_03007 land_07188 land_02140 land_06141 land_05795 land_05652 land_08167 land_09127 land_05380 land_05883 land_01979 land_01167 land_04868 land_00581 land_00941 land_00618 land_03387 land_03064 land_06022 land_02898 }
+	buildings = {
+		naval_base = 1
+	}
 }
 irrawaddy_m9_2 = {
 	name = "Irrawaddy 2"
 	manpower = 11
 	tax = 1.4
 	locations = { land_04527 land_01426 land_03429 land_05755 land_04486 land_02534 land_02594 land_01122 land_07218 land_09350 land_04491 land_07666 land_09189 land_08151 land_08548 land_01746 land_04035 land_08502 land_05724 land_03140 land_07607 land_05212 land_07907 land_02531 land_03334 land_09250 land_05909 land_01013 land_04991 land_06920 land_04262 land_01424 land_03067 land_01678 land_07128 land_07539 land_02320 land_03303 land_06658 land_04503 land_06423 land_05574 land_08126 land_05205 land_03733 land_08920 land_00609 }
+	buildings = {
+		naval_base = 1
+	}
 }
 irrawaddy_m9_3 = {
 	name = "Irrawaddy 3"
 	manpower = 13
 	tax = 1.5
 	locations = { land_09437 land_05164 land_08856 land_00199 land_00716 land_01556 land_06083 land_03107 land_00772 land_08497 land_08054 land_04690 land_06176 land_07376 land_09508 land_05309 land_08567 land_08724 land_06306 land_08212 land_08932 land_04179 land_07617 land_04290 land_00723 land_02329 land_03635 land_03649 land_00825 land_00239 land_01850 land_00198 land_02164 land_05685 land_06825 }
+	buildings = {
+		naval_base = 1
+	}
 }
 irrawaddy_m9_4 = {
 	name = "Irrawaddy 4"
@@ -3996,24 +4944,36 @@ irrawaddy_m177_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_16073 land_16070 land_16071 land_16072 }
+	buildings = {
+		naval_base = 1
+	}
 }
 tai_lands_1 = {
 	name = "Tai lands"
 	manpower = 5
 	tax = 0.9
 	locations = { land_00900 land_09613 land_01930 land_00435 land_01183 land_01017 land_08839 land_08733 land_03537 land_02130 land_02753 land_01964 land_01475 land_02052 land_09311 land_02680 land_08070 land_04023 land_07987 land_03497 land_09247 land_01070 land_08735 land_08855 land_02104 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_1 = {
 	name = "Mainland Southeast Asia rice farmers 1"
 	manpower = 15
 	tax = 1.7
 	locations = { land_04264 land_08076 land_07250 land_03960 land_02668 land_01053 land_08026 land_06494 land_03647 land_02378 land_04663 land_01502 land_09657 land_00119 land_01656 land_04614 land_07489 land_01767 land_09672 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_2 = {
 	name = "Mainland Southeast Asia rice farmers 2"
 	manpower = 15
 	tax = 1.7
 	locations = { land_03983 land_01062 land_01607 land_04062 land_00901 land_08419 land_02900 land_03773 land_09486 land_06999 land_04378 land_08836 land_09413 land_05163 land_02062 land_02925 land_05620 land_08375 land_00101 land_02413 land_01827 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_3 = {
 	name = "Mainland Southeast Asia rice farmers 3"
@@ -4026,18 +4986,27 @@ mainland_southeast_asia_rice_farmers_m9_4 = {
 	manpower = 3
 	tax = 0.7
 	locations = { land_00596 land_09470 land_07292 land_04567 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_5 = {
 	name = "Mainland Southeast Asia rice farmers 5"
 	manpower = 18
 	tax = 1.9
 	locations = { land_01546 land_04624 land_06133 land_04241 land_07984 land_00453 land_03702 land_06900 land_01898 land_08091 land_09337 land_03938 land_02222 land_06523 land_03865 land_04982 land_07511 land_00686 land_01323 land_05089 land_05343 land_08458 land_04328 land_02201 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_6 = {
 	name = "Mainland Southeast Asia rice farmers 6"
 	manpower = 16
 	tax = 1.8
 	locations = { land_02372 land_08376 land_09359 land_07647 land_08953 land_02391 land_05483 land_03005 land_07043 land_03536 land_00615 land_06965 land_09134 land_05383 land_06846 land_04751 land_09458 land_02850 land_01055 land_06265 land_03123 land_07664 land_01578 land_08657 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_7 = {
 	name = "Mainland Southeast Asia rice farmers 7"
@@ -4050,12 +5019,18 @@ mainland_southeast_asia_rice_farmers_m9_8 = {
 	manpower = 19
 	tax = 2.0
 	locations = { land_07633 land_09705 land_00425 land_01948 land_01256 land_06323 land_06683 land_06937 land_08077 land_09323 land_09277 land_09434 land_06790 land_05701 land_02854 land_05674 land_06242 land_00580 land_05195 land_05435 land_09579 land_02108 land_01642 land_07480 land_01855 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_9 = {
 	name = "Mainland Southeast Asia rice farmers 9"
 	manpower = 14
 	tax = 1.6
 	locations = { land_04509 land_09433 land_00859 land_07463 land_05890 land_07764 land_04783 land_05277 land_02476 land_03039 land_09643 land_02435 land_09274 land_06049 land_07535 land_02353 land_00092 land_02404 land_03724 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_10 = {
 	name = "Mainland Southeast Asia rice farmers 10"
@@ -4068,24 +5043,36 @@ mainland_southeast_asia_rice_farmers_m9_11 = {
 	manpower = 3
 	tax = 0.8
 	locations = { land_03175 land_02397 land_02070 land_08577 land_03132 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_12 = {
 	name = "Mainland Southeast Asia rice farmers 12"
 	manpower = 13
 	tax = 1.6
 	locations = { land_03138 land_00305 land_00545 land_05192 land_07947 land_06655 land_05709 land_08552 land_06365 land_04607 land_02609 land_08719 land_01779 land_08295 land_08798 land_08023 land_02647 land_09186 land_07917 land_00529 land_03284 land_01392 land_03141 land_07502 land_09168 land_07083 land_08726 land_07337 land_09003 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m9_13 = {
 	name = "Mainland Southeast Asia rice farmers 13"
 	manpower = 11
 	tax = 1.4
 	locations = { land_05630 land_04343 land_00416 land_00767 land_08640 land_03795 land_08825 land_04326 land_04428 land_06680 land_09320 land_08951 land_06893 land_08333 land_03391 land_07715 land_08832 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mainland_southeast_asia_rice_farmers_m160_1 = {
 	name = "Mainland Southeast Asia rice farmers"
 	manpower = 5
 	tax = 0.9
 	locations = { land_15995 land_15991 land_15996 land_15992 land_15997 land_15993 land_15994 }
+	buildings = {
+		naval_base = 1
+	}
 }
 red_river_van_lang_1 = {
 	name = "Red River (Van Lang)"
@@ -4116,6 +5103,9 @@ zhou_states_yellow_river_3 = {
 	manpower = 25
 	tax = 2.5
 	locations = { land_01270 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_4 = {
 	name = "Zhou states (Yellow River) 4"
@@ -4124,6 +5114,9 @@ zhou_states_yellow_river_4 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_02683 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_5 = {
 	name = "Zhou states (Yellow River) 5"
@@ -4156,6 +5149,9 @@ zhou_states_yellow_river_8 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_02355 land_01841 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_9 = {
 	name = "Zhou states (Yellow River) 9"
@@ -4170,6 +5166,9 @@ zhou_states_yellow_river_10 = {
 	manpower = 7
 	tax = 1.0
 	locations = { land_01943 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_11 = {
 	name = "Zhou states (Yellow River) 11"
@@ -4344,6 +5343,9 @@ zhou_states_yellow_river_32 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_08439 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_33 = {
 	name = "Zhou states (Yellow River) 33"
@@ -4408,6 +5410,9 @@ zhou_states_yellow_river_40 = {
 	manpower = 7
 	tax = 1.1
 	locations = { land_00628 land_02826 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_41 = {
 	name = "Zhou states (Yellow River) 41"
@@ -4424,6 +5429,9 @@ zhou_states_yellow_river_42 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_03666 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_43 = {
 	name = "Zhou states (Yellow River) 43"
@@ -4512,6 +5520,9 @@ zhou_states_yellow_river_53 = {
 	manpower = 7
 	tax = 1.0
 	locations = { land_03869 land_05452 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_54 = {
 	name = "Zhou states (Yellow River) 54"
@@ -4544,6 +5555,9 @@ zhou_states_yellow_river_57 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_01267 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_58 = {
 	name = "Zhou states (Yellow River) 58"
@@ -4560,6 +5574,9 @@ zhou_states_yellow_river_59 = {
 	manpower = 6
 	tax = 1.0
 	locations = { land_09352 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_60 = {
 	name = "Zhou states (Yellow River) 60"
@@ -4616,6 +5633,9 @@ zhou_states_yellow_river_66 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_02387 land_07008 land_05408 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_67 = {
 	name = "Zhou states (Yellow River) 67"
@@ -4632,6 +5652,9 @@ zhou_states_yellow_river_68 = {
 	manpower = 5
 	tax = 0.9
 	locations = { land_05141 land_01627 land_06441 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_69 = {
 	name = "Zhou states (Yellow River) 69"
@@ -4640,6 +5663,9 @@ zhou_states_yellow_river_69 = {
 	manpower = 3
 	tax = 0.7
 	locations = { land_00043 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_yellow_river_70 = {
 	name = "Zhou states (Yellow River) 70"
@@ -4672,6 +5698,10 @@ zhou_states_north_china_plain_2 = {
 	manpower = 37
 	tax = 3.4
 	locations = { land_03741 }
+	buildings = {
+		naval_base = 1
+		dockyard = 1
+	}
 }
 zhou_states_north_china_plain_3 = {
 	name = "Zhou states (north China plain) 3"
@@ -4688,6 +5718,9 @@ zhou_states_north_china_plain_4 = {
 	manpower = 11
 	tax = 1.4
 	locations = { land_00164 land_06931 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_5 = {
 	name = "Zhou states (north China plain) 5"
@@ -4736,6 +5769,9 @@ zhou_states_north_china_plain_10 = {
 	manpower = 23
 	tax = 2.3
 	locations = { land_04485 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_11 = {
 	name = "Zhou states (north China plain) 11"
@@ -4760,6 +5796,9 @@ zhou_states_north_china_plain_13 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_06319 land_02615 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_14 = {
 	name = "Zhou states (north China plain) 14"
@@ -4872,6 +5911,9 @@ zhou_states_north_china_plain_27 = {
 	manpower = 8
 	tax = 1.1
 	locations = { land_02097 land_05841 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_28 = {
 	name = "Zhou states (north China plain) 28"
@@ -4880,6 +5922,9 @@ zhou_states_north_china_plain_28 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_06730 land_03616 land_02288 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_29 = {
 	name = "Zhou states (north China plain) 29"
@@ -4888,6 +5933,9 @@ zhou_states_north_china_plain_29 = {
 	manpower = 4
 	tax = 0.8
 	locations = { land_04812 }
+	buildings = {
+		naval_base = 1
+	}
 }
 zhou_states_north_china_plain_30 = {
 	name = "Zhou states (north China plain) 30"
@@ -5168,6 +6216,9 @@ wu_and_yue_1 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_00665 land_02341 land_04123 land_02846 land_00401 land_07983 }
+	buildings = {
+		naval_base = 1
+	}
 }
 wu_and_yue_2 = {
 	name = "Wu and Yue 2"
@@ -5176,6 +6227,9 @@ wu_and_yue_2 = {
 	manpower = 18
 	tax = 1.9
 	locations = { land_04427 land_07524 land_08032 land_04679 }
+	buildings = {
+		naval_base = 1
+	}
 }
 wu_and_yue_3 = {
 	name = "Wu and Yue 3"
@@ -5208,6 +6262,9 @@ wu_and_yue_6 = {
 	manpower = 10
 	tax = 1.3
 	locations = { land_07638 land_03053 land_05905 land_09326 }
+	buildings = {
+		naval_base = 1
+	}
 }
 wu_and_yue_7 = {
 	name = "Wu and Yue 7"
@@ -5224,6 +6281,9 @@ wu_and_yue_8 = {
 	manpower = 14
 	tax = 1.6
 	locations = { land_01514 land_01538 land_00394 land_09528 land_01333 }
+	buildings = {
+		naval_base = 1
+	}
 }
 wu_and_yue_9 = {
 	name = "Wu and Yue 9"
@@ -5256,6 +6316,9 @@ wu_and_yue_12 = {
 	manpower = 11
 	tax = 1.4
 	locations = { land_04764 land_08642 }
+	buildings = {
+		naval_base = 1
+	}
 }
 wu_and_yue_13 = {
 	name = "Wu and Yue 13"
@@ -5272,6 +6335,9 @@ wu_and_yue_14 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_02852 land_02055 land_07557 land_01761 }
+	buildings = {
+		naval_base = 1
+	}
 }
 shu_and_ba_sichuan_1 = {
 	name = "Shu and Ba (Sichuan) 1"
@@ -5320,6 +6386,9 @@ southern_china_baiyue_1 = {
 	manpower = 7
 	tax = 1.1
 	locations = { land_04841 land_07753 land_02017 land_07998 land_07260 land_08414 land_08082 land_06587 land_05485 land_01190 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_china_baiyue_2 = {
 	name = "Southern China Baiyue 2"
@@ -5332,6 +6401,9 @@ southern_china_baiyue_3 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_02815 land_02834 land_04763 land_07763 land_06351 land_07131 land_00320 land_01340 land_06329 land_02965 land_05513 land_07202 land_09533 land_09515 land_06474 land_05708 land_01052 land_04370 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_china_baiyue_4 = {
 	name = "Southern China Baiyue 4"
@@ -5344,6 +6416,9 @@ southern_china_baiyue_5 = {
 	manpower = 19
 	tax = 2.0
 	locations = { land_03420 land_05068 land_02604 land_04676 land_04090 land_05156 land_06679 land_05447 land_09711 land_02706 land_09721 land_07294 land_09062 land_07170 land_07604 land_06732 land_05523 land_06746 land_06783 land_06054 }
+	buildings = {
+		naval_base = 1
+	}
 }
 southern_china_baiyue_6 = {
 	name = "Southern China Baiyue 6"
@@ -5380,780 +6455,1170 @@ korea_1 = {
 	manpower = 17
 	tax = 1.8
 	locations = { land_02285 land_08358 land_05530 land_03112 land_08119 land_04898 land_03943 land_04521 land_03755 land_05546 land_08666 land_04356 land_07494 land_00489 land_00106 land_04753 }
+	buildings = {
+		naval_base = 1
+	}
 }
 korea_2 = {
 	name = "Korea 2"
 	manpower = 10
 	tax = 1.3
 	locations = { land_03526 land_05672 land_00439 land_05543 land_00241 land_05516 land_07639 land_08904 land_03879 land_01927 land_01877 land_04129 land_00263 }
+	buildings = {
+		naval_base = 1
+	}
 }
 korea_3 = {
 	name = "Korea 3"
 	manpower = 13
 	tax = 1.5
 	locations = { land_01136 land_05631 land_09655 land_01575 land_08202 land_07515 land_02665 land_06123 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m9_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.6
 	locations = { land_06036 land_09048 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m107_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 18
 	tax = 1.9
 	locations = { land_15870 land_15884 land_15861 land_15898 land_15875 land_15889 land_15903 land_15880 land_15857 land_15894 land_15871 land_15862 land_15899 land_15876 land_15890 land_15904 land_15881 land_15895 land_15872 land_15863 land_15900 land_15877 land_15891 land_15905 land_15882 land_15859 land_15896 land_15873 land_15864 land_15901 land_15878 land_15892 land_15906 land_15883 land_15860 land_15897 land_15874 land_15888 land_15865 land_15902 land_15879 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m118_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15913 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m128_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15925 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m131_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15927 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m132_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15929 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m134_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15928 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m135_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15931 }
+	buildings = {
+		naval_base = 1
+	}
 }
 japan_honshu_and_kyushu_m137_1 = {
 	name = "Japan (Honshu and Kyushu)"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15933 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m96_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15828 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m98_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15830 land_15831 land_15832 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m99_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 2
 	tax = 0.7
 	locations = { land_15847 land_15838 land_15843 land_15848 land_15839 land_15844 land_15835 land_15849 land_15840 land_15845 land_15836 land_15841 land_15846 land_15837 land_15842 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m100_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15833 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m101_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15834 }
+	buildings = {
+		naval_base = 1
+	}
 }
 northern_honshu_and_hokkaido_m107_1 = {
 	name = "Northern Honshu and Hokkaido"
 	manpower = 1
 	tax = 0.6
 	locations = { land_15893 land_15866 land_15885 land_15867 land_15858 land_15886 land_15868 land_15887 land_15869 }
+	buildings = {
+		naval_base = 1
+	}
 }
 taiwan_m139_1 = {
 	name = "Taiwan"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15936 land_15937 }
+	buildings = {
+		naval_base = 1
+	}
 }
 taiwan_m142_1 = {
 	name = "Taiwan"
 	manpower = 1
 	tax = 0.6
 	locations = { land_15940 land_15945 land_15941 land_15943 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m163_1 = {
 	name = "Philippines"
 	manpower = 13
 	tax = 1.5
 	locations = { land_16036 land_16050 land_16041 land_16018 land_16032 land_16046 land_16037 land_16028 land_16042 land_16019 land_16033 land_16047 land_16024 land_16038 land_16029 land_16043 land_16020 land_16048 land_16039 land_16021 land_16035 land_16049 land_16026 land_16040 land_16031 land_16045 land_16022 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m173_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16066 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m181_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16077 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m182_1 = {
 	name = "Philippines"
 	manpower = 2
 	tax = 0.7
 	locations = { land_16027 land_16023 land_16034 land_16025 land_16030 land_16044 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m184_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16087 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m185_1 = {
 	name = "Philippines"
 	manpower = 3
 	tax = 0.8
 	locations = { land_16078 land_16074 land_16079 land_16075 land_16080 land_16076 land_16082 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m188_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16089 land_16090 land_16086 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m194_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16108 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m195_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16081 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m198_1 = {
 	name = "Philippines"
 	manpower = 10
 	tax = 1.3
 	locations = { land_16096 land_16110 land_16101 land_16115 land_16092 land_16106 land_16097 land_16111 land_16102 land_16116 land_16093 land_16107 land_16098 land_16112 land_16103 land_16117 land_16094 land_16099 land_16113 land_16104 land_16095 land_16109 land_16100 land_16114 land_16091 land_16105 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m202_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16088 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m206_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16276 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m208_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16274 land_16275 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m210_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16277 land_16278 }
+	buildings = {
+		naval_base = 1
+	}
 }
 philippines_m211_1 = {
 	name = "Philippines"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16280 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m9_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 13
 	tax = 1.5
 	locations = { land_04767 land_08768 land_07010 land_04712 land_04066 land_07712 land_06037 land_04390 land_09457 land_05770 land_06550 land_02263 land_04935 land_04995 land_06315 land_05434 land_08854 land_06196 land_05384 land_03054 land_02025 land_01139 land_08181 land_00936 land_01499 land_07069 land_05680 land_08135 land_04965 land_09589 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m204_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16120 land_16119 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m209_1 = {
 	name = "Malay peninsula and Sumatra 1"
 	manpower = 13
 	tax = 1.6
 	locations = { land_00342 land_04989 land_02105 land_05626 land_00693 land_06406 land_05797 land_09632 land_07694 land_08760 land_01958 land_08174 land_04501 land_07496 land_06647 land_04792 land_01548 land_01959 land_01530 land_05711 land_04359 land_01129 land_05213 land_08610 land_02911 land_04397 land_01596 land_01393 land_03585 land_04010 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m209_2 = {
 	name = "Malay peninsula and Sumatra 2"
 	manpower = 7
 	tax = 1.1
 	locations = { land_07167 land_02331 land_07269 land_09596 land_00316 land_04765 land_03233 land_01609 land_02915 land_08790 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m209_3 = {
 	name = "Malay peninsula and Sumatra 3"
 	manpower = 13
 	tax = 1.5
 	locations = { land_02492 land_01666 land_01648 land_00619 land_06909 land_07546 land_00218 land_03513 land_07191 land_04413 land_01926 land_09665 land_01977 land_01322 land_08272 land_00215 land_06468 land_02624 land_09357 land_09334 land_01693 land_09243 land_09363 land_06202 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m214_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16286 land_16285 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m218_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16327 land_16326 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m221_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16332 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m222_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16333 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m223_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07974 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m230_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16507 land_16508 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m233_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08150 land_07192 land_01558 land_03787 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m238_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16517 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m239_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16520 }
+	buildings = {
+		naval_base = 1
+	}
 }
 malay_peninsula_and_sumatra_m241_1 = {
 	name = "Malay peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16516 }
+	buildings = {
+		naval_base = 1
+	}
 }
 borneo_m203_1 = {
 	name = "Borneo"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16193 }
+	buildings = {
+		naval_base = 1
+	}
 }
 borneo_m205_1 = {
 	name = "Borneo 1"
 	manpower = 12
 	tax = 1.5
 	locations = { land_16156 land_16216 land_16147 land_16124 land_16184 land_16161 land_16138 land_16198 land_16152 land_16166 land_16240 land_16217 land_16134 land_16125 land_16185 land_16162 land_16222 land_16199 land_16236 land_16153 land_16213 land_16130 land_16190 land_16167 land_16241 land_16158 land_16218 land_16135 land_16172 land_16232 land_16149 land_16209 land_16269 land_16246 land_16223 land_16154 land_16214 land_16168 land_16122 land_16182 land_16242 land_16159 land_16196 land_16210 land_16247 land_16141 land_16178 land_16132 land_16192 land_16169 land_16229 land_16266 land_16243 land_16137 land_16234 land_16211 land_16271 land_16188 land_16225 land_16142 land_16202 land_16262 }
+	buildings = {
+		naval_base = 1
+	}
 }
 borneo_m205_2 = {
 	name = "Borneo 2"
 	manpower = 17
 	tax = 1.9
 	locations = { land_16239 land_16133 land_16253 land_16170 land_16230 land_16207 land_16267 land_16244 land_16221 land_16258 land_16175 land_16235 land_16212 land_16129 land_16189 land_16249 land_16226 land_16143 land_16263 land_16180 land_16157 land_16194 land_16254 land_16171 land_16231 land_16148 land_16208 land_16268 land_16245 land_16139 land_16259 land_16176 land_16250 land_16227 land_16144 land_16204 land_16264 land_16121 land_16181 land_16195 land_16255 land_16126 land_16186 land_16163 land_16140 land_16200 land_16260 land_16177 land_16237 land_16131 land_16191 land_16251 land_16228 land_16145 land_16205 land_16265 land_16219 land_16136 land_16256 land_16173 land_16233 land_16150 land_16270 land_16127 land_16187 land_16164 land_16224 land_16201 land_16261 land_16238 land_16155 land_16215 land_16252 land_16146 land_16206 land_16123 land_16183 land_16160 land_16220 land_16197 land_16257 land_16174 land_16151 land_16128 land_16248 land_16165 land_16179 }
+	buildings = {
+		naval_base = 1
+	}
 }
 borneo_m212_1 = {
 	name = "Borneo"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16281 land_16282 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m259_1 = {
 	name = "Java and the Lesser Sundas 1"
 	manpower = 12
 	tax = 1.4
 	locations = { land_03618 land_04772 land_02300 land_03413 land_05259 land_08213 land_09524 land_04291 land_08495 land_04799 land_01135 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m259_2 = {
 	name = "Java and the Lesser Sundas 2"
 	manpower = 9
 	tax = 1.2
 	locations = { land_08067 land_08404 land_02599 land_05170 land_00085 land_01033 land_05851 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m261_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16556 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m271_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 3
 	tax = 0.8
 	locations = { land_16572 land_16577 land_16579 land_16570 land_16571 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m272_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 3
 	tax = 0.7
 	locations = { land_16576 land_16573 land_16569 land_16574 land_16575 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m273_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16578 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m275_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 3
 	tax = 0.7
 	locations = { land_16581 land_16582 land_16583 }
+	buildings = {
+		naval_base = 1
+	}
 }
 java_and_the_lesser_sundas_m280_1 = {
 	name = "Java and the Lesser Sundas"
 	manpower = 2
 	tax = 0.6
 	locations = { land_16592 land_16593 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m205_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16203 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m211_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16279 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m215_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16290 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m216_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16291 land_16287 land_16292 land_16288 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m217_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 9
 	tax = 1.2
 	locations = { land_16299 land_16313 land_16304 land_16318 land_16295 land_16309 land_16323 land_16300 land_16314 land_16305 land_16319 land_16296 land_16310 land_16324 land_16301 land_16315 land_16306 land_16320 land_16297 land_16311 land_16325 land_16302 land_16316 land_16293 land_16307 land_16321 land_16298 land_16312 land_16317 land_16294 land_16308 land_16322 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m224_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16334 land_16335 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m225_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16289 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m226_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16336 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m231_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16303 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m232_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16509 land_16510 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m234_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16512 land_16513 land_16511 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m236_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16514 land_16515 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m243_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16526 land_16527 land_16528 land_16524 land_16529 land_16525 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m245_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16530 land_16531 land_16532 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m251_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16543 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m262_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16557 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m265_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16563 land_16564 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m269_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16568 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m274_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16580 }
+	buildings = {
+		naval_base = 1
+	}
 }
 sulawesi_and_moluccas_m275_1 = {
 	name = "Sulawesi and Moluccas"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16584 land_16585 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m227_1 = {
 	name = "New Guinea 1"
 	manpower = 15
 	tax = 1.7
 	locations = { land_16373 land_16433 land_16341 land_16401 land_16461 land_16498 land_16420 land_16374 land_16351 land_16342 land_16393 land_16453 land_16384 land_16375 land_16435 land_16495 land_16486 land_16343 land_16380 land_16500 land_16468 land_16385 land_16445 land_16362 land_16339 land_16376 land_16367 land_16427 land_16487 land_16381 land_16395 land_16386 land_16460 land_16391 land_16451 land_16345 land_16465 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m227_2 = {
 	name = "New Guinea 2"
 	manpower = 8
 	tax = 1.2
 	locations = { land_16355 land_16489 land_16406 land_16485 land_16462 land_16439 land_16504 land_16361 land_16338 land_16357 land_16482 land_16459 land_16418 land_16409 land_16414 land_16502 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m227_3 = {
 	name = "New Guinea 3"
 	manpower = 12
 	tax = 1.4
 	locations = { land_16387 land_16364 land_16438 land_16475 land_16452 land_16369 land_16383 land_16503 land_16397 land_16494 land_16471 land_16388 land_16448 land_16365 land_16425 land_16356 land_16430 land_16490 land_16407 land_16467 land_16412 land_16449 land_16440 land_16454 land_16431 land_16496 land_16353 land_16344 land_16478 land_16455 land_16432 land_16483 land_16377 land_16354 land_16368 land_16405 land_16442 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m227_4 = {
 	name = "New Guinea 4"
 	manpower = 10
 	tax = 1.3
 	locations = { land_16359 land_16419 land_16410 land_16415 land_16429 land_16346 land_16466 land_16443 land_16480 land_16337 land_16389 land_16463 land_16477 land_16371 land_16491 land_16348 land_16408 land_16390 land_16358 land_16372 land_16492 land_16469 land_16423 land_16340 land_16437 land_16474 land_16428 land_16382 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m227_5 = {
 	name = "New Guinea 5"
 	manpower = 14
 	tax = 1.6
 	locations = { land_16396 land_16493 land_16350 land_16447 land_16424 land_16484 land_16378 land_16392 land_16360 land_16457 land_16434 land_16402 land_16499 land_16416 land_16476 land_16370 land_16347 land_16444 land_16421 land_16481 land_16398 land_16458 land_16352 land_16366 land_16426 land_16403 land_16417 land_16394 land_16436 land_16413 land_16473 land_16450 land_16404 land_16441 land_16501 land_16349 land_16446 land_16363 land_16400 land_16497 land_16488 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m229_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16505 land_16506 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m235_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16411 land_16379 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m237_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16518 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m253_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16548 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m254_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16549 land_16550 land_16551 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m255_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16552 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m258_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16547 }
+	buildings = {
+		naval_base = 1
+	}
 }
 new_guinea_m264_1 = {
 	name = "New Guinea"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16558 land_16559 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m227_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 2
 	tax = 0.6
 	locations = { land_16479 land_16456 land_16472 land_16422 land_16399 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m240_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16519 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m244_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16521 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m246_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16522 land_16523 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m248_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 2
 	tax = 0.7
 	locations = { land_16539 land_16535 land_16540 land_16536 land_16537 land_16533 land_16538 land_16534 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m252_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16544 land_16545 land_16546 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m260_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16554 land_16555 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m267_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16560 land_16561 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m270_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16567 land_16565 land_16566 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m276_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16587 land_16588 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m278_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16589 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m279_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16470 land_16464 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m281_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16590 land_16591 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m283_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16595 land_16594 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m291_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17300 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m297_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17416 land_17418 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m299_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17417 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m300_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17415 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m306_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17424 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m307_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17426 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m310_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17430 land_17431 land_17432 land_17433 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m311_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17434 }
+	buildings = {
+		naval_base = 1
+	}
 }
 bismarck_solomons_vanuatu_m313_1 = {
 	name = "Bismarck, Solomons, Vanuatu"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17437 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_tonga_samoa_m301_1 = {
 	name = "Fiji, Tonga, Samoa"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17419 land_17420 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_tonga_samoa_m304_1 = {
 	name = "Fiji, Tonga, Samoa"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17421 land_17422 land_17423 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_tonga_samoa_m308_1 = {
 	name = "Fiji, Tonga, Samoa"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17427 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_western_m294_1 = {
 	name = "Fiji western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17412 land_17413 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_western_m296_1 = {
 	name = "Fiji western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17414 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fiji_western_m305_1 = {
 	name = "Fiji western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17425 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_1 = {
 	name = "Australia 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16982 land_16973 land_16650 land_16830 land_16627 land_16904 land_17001 land_17181 land_17218 land_16609 land_17112 land_17089 land_16766 land_16886 land_16803 land_16757 land_17117 land_16748 land_17251 land_16928 land_16905 land_16762 land_17196 land_16670 land_16804 land_16961 land_16629 land_17132 land_17109 land_17146 land_16703 land_16860 land_16717 land_17257 land_16888 land_17008 land_16985 land_17239 land_16856 land_17096 land_17004 land_17221 land_17198 land_17032 land_16889 land_17009 land_16746 land_16926 land_17000 land_16991 land_16848 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_2 = {
 	name = "Australia 2"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16922 land_16756 land_17153 land_16807 land_16927 land_17144 land_16858 land_17232 land_16946 land_17283 land_17260 land_17228 land_17085 land_16882 land_16707 land_17270 land_16624 land_16744 land_17081 land_17141 land_16698 land_16823 land_17183 land_16837 land_16634 land_17054 land_17114 land_16911 land_17262 land_16939 land_16736 land_16773 land_16833 land_17073 land_17170 land_17281 land_16755 land_17115 land_17295 land_17272 land_16700 land_16677 land_17180 land_17240 land_17037 land_16751 land_17088 land_16682 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_3 = {
 	name = "Australia 3"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16599 land_16719 land_16673 land_16710 land_17015 land_16669 land_16729 land_16849 land_16646 land_16960 land_16697 land_16794 land_17094 land_16771 land_17011 land_16822 land_17039 land_17099 land_17016 land_16850 land_17247 land_17044 land_16938 land_16652 land_17049 land_17003 land_16740 land_17220 land_17017 land_16694 land_16671 land_17294 land_17068 land_16602 land_17082 land_16616 land_17244 land_16838 land_16898 land_16875 land_16672 land_17097 land_17014 land_16968 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_4 = {
 	name = "Australia 4"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17185 land_16659 land_17259 land_17236 land_17296 land_16770 land_17250 land_16867 land_17227 land_16641 land_16775 land_16955 land_16706 land_16623 land_16743 land_16900 land_17080 land_17200 land_17057 land_16711 land_16979 land_17256 land_17233 land_17293 land_17090 land_17150 land_16767 land_17067 land_17127 land_17104 land_17224 land_16638 land_16758 land_17261 land_17178 land_17238 land_16952 land_16689 land_16809 land_17086 land_16800 land_16777 land_16814 land_16934 land_16731 land_16791 land_17165 land_16782 land_17142 land_17059 land_16976 land_17216 land_16630 land_16787 land_16972 land_16649 land_16709 land_16986 land_17226 land_16640 land_17143 land_17203 land_16797 land_16668 land_16945 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_5 = {
 	name = "Australia 5"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17282 land_17167 land_17628 land_16821 land_17154 land_17205 land_16661 land_17058 land_16675 land_17155 land_16712 land_17266 land_16597 land_17621 land_16828 land_17022 land_17013 land_16847 land_16967 land_16741 land_17622 land_17092 land_17166 land_17171 land_17231 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_6 = {
 	name = "Australia 6"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17245 land_16862 land_17019 land_16687 land_16784 land_16761 land_16678 land_16738 land_17241 land_16715 land_16895 land_16992 land_16683 land_17246 land_16923 land_17103 land_16734 land_16785 land_16596 land_17113 land_16781 land_17284 land_16818 land_16878 land_17035 land_17275 land_16892 land_17012 land_16929 land_16786 land_16906 land_17026 land_17193 land_16667 land_16727 land_17184 land_16921 land_16815 land_17069 land_16626 land_16843 land_16963 land_17263 land_16954 land_16631 land_16691 land_17051 land_16908 land_17268 land_16885 land_17065 land_16622 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_7 = {
 	name = "Australia 7"
@@ -6166,48 +7631,72 @@ australia_m286_8 = {
 	manpower = 1
 	tax = 0.6
 	locations = { land_16802 land_17623 land_17033 land_17264 land_16798 land_17135 land_17043 land_17624 land_16637 land_17071 land_16859 land_16633 land_16873 land_16901 land_17169 land_17229 land_16846 land_17123 land_16680 land_17197 land_17225 land_16681 land_16792 land_16912 land_17189 land_17111 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_9 = {
 	name = "Australia 9"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17139 land_16936 land_16793 land_17093 land_16747 land_17047 land_17107 land_16881 land_17098 land_17158 land_16932 land_17126 land_16600 land_16854 land_16688 land_17288 land_17025 land_16642 land_16942 land_16919 land_16656 land_16896 land_17076 land_17030 land_17164 land_17021 land_16915 land_16772 land_17252 land_17289 land_16980 land_16948 land_16685 land_17156 land_17276 land_17133 land_16750 land_17253 land_16607 land_17290 land_16598 land_16658 land_16695 land_17258 land_16769 land_16949 land_16723 land_17194 land_16825 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_10 = {
 	name = "Australia 10"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16839 land_16636 land_16733 land_16950 land_17190 land_16987 land_16618 land_16655 land_16812 land_16872 land_16909 land_16877 land_17237 land_16891 land_16628 land_17131 land_16619 land_17122 land_16679 land_17182 land_17219 land_16956 land_16693 land_16753 land_17053 land_17173 land_16970 land_16984 land_17201 land_16749 land_16726 land_16966 land_16643 land_17206 land_16657 land_16957 land_16754 land_17174 land_16805 land_16865 land_17179 land_16796 land_16916 land_17050 land_17230 land_17147 land_16704 land_16621 land_17124 land_16861 land_17101 land_17138 land_16686 land_16806 land_16866 land_16603 land_16820 land_16737 land_16654 land_16774 land_17074 land_16871 land_17005 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_11 = {
 	name = "Australia 11"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17116 land_17130 land_17024 land_16701 land_16918 land_17195 land_17149 land_16983 land_17223 land_16951 land_16988 land_16665 land_16725 land_16716 land_17210 land_17040 land_16745 land_16902 land_17202 land_16990 land_16981 land_17046 land_16834 land_16608 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_12 = {
 	name = "Australia 12"
 	manpower = 1
 	tax = 0.6
 	locations = { land_17042 land_17162 land_17056 land_16853 land_17010 land_16664 land_17204 land_17075 land_17052 land_17172 land_17029 land_16720 land_16937 land_16651 land_17191 land_17048 land_17265 land_17242 land_16836 land_16813 land_16790 land_16827 land_16947 land_16684 land_16924 land_16841 land_16975 land_17072 land_16666 land_16620 land_17100 land_17280 land_16897 land_16874 land_16994 land_17211 land_17271 land_16625 land_16925 land_16662 land_17285 land_16699 land_16759 land_16819 land_16879 land_16999 land_17119 land_17036 land_16930 land_17110 land_16824 land_16944 land_16801 land_17055 land_16612 land_17175 land_17152 land_17212 land_17106 land_16783 land_17286 land_16903 land_17023 land_17060 land_17291 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_13 = {
 	name = "Australia 13"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16876 land_17061 land_17278 land_16692 land_17292 land_16969 land_17066 land_17186 land_17020 land_16817 land_16997 land_16914 land_16831 land_16808 land_17108 land_16845 land_17136 land_16910 land_17215 land_17160 land_17137 land_16971 land_17031 land_16639 land_17027 land_17207 land_16764 land_16718 land_17078 land_16635 land_16935 land_17249 land_17083 land_16940 land_17120 land_16917 land_17254 land_17028 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_14 = {
 	name = "Australia 14"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16742 land_17222 land_16899 land_17079 land_17199 land_16816 land_17176 land_16913 land_17273 land_16844 land_16941 land_17038 land_16835 land_17209 land_17006 land_17163 land_16614 land_16674 land_16974 land_17034 land_17274 land_16605 land_17002 land_17159 land_16776 land_16933 land_16730 land_17187 land_16601 land_16998 land_17095 land_16989 land_17077 land_17234 land_16851 land_17091 land_17151 land_17045 land_16962 land_16713 land_16893 land_16953 land_16810 land_16644 land_16852 land_16760 land_16617 land_16857 land_17157 land_17217 land_17277 land_16894 land_17134 land_16931 land_16705 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_15 = {
 	name = "Australia 15"
 	manpower = 1
 	tax = 0.6
 	locations = { land_16959 land_16996 land_16890 land_16604 land_16724 land_17287 land_17084 land_16826 land_16660 land_16840 land_17177 land_17214 land_17168 land_16702 land_17062 land_16799 land_17279 land_16887 land_17007 land_16864 land_16721 land_16832 land_17192 land_16869 land_16763 land_16883 land_16920 land_16611 land_16768 land_17188 land_17267 land_16884 land_17064 land_17041 land_17161 land_16778 land_16958 land_17018 land_16995 land_16663 land_17627 land_16977 land_16728 land_16765 land_17125 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m286_16 = {
 	name = "Australia 16"
@@ -6220,42 +7709,63 @@ australia_m286_17 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_17102 land_17121 land_17619 land_17255 land_16739 land_17620 land_16610 land_16615 land_17118 land_16735 land_16795 land_16606 land_16943 land_17063 land_16648 land_16907 land_16732 land_16829 land_16714 land_16811 land_16788 land_16645 land_17208 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m316_1 = {
 	name = "Australia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17462 land_17439 land_17453 land_17467 land_17444 land_17458 land_17449 land_17463 land_17440 land_17454 land_17468 land_17445 land_17459 land_17450 land_17464 land_17441 land_17455 land_17469 land_17446 land_17460 land_17451 land_17465 land_17442 land_17456 land_17447 land_17461 land_17438 land_17452 land_17466 land_17443 land_17457 land_17448 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m317_1 = {
 	name = "Australia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17140 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m319_1 = {
 	name = "Australia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17472 land_17471 }
+	buildings = {
+		naval_base = 1
+	}
 }
 australia_m321_1 = {
 	name = "Australia"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17522 land_17499 land_17513 land_17490 land_17527 land_17504 land_17518 land_17495 land_17509 land_17523 land_17500 land_17514 land_17491 land_17505 land_17519 land_17496 land_17510 land_17524 land_17501 land_17515 land_17492 land_17506 land_17520 land_17497 land_17511 land_17525 land_17502 land_17516 land_17493 land_17507 land_17521 land_17498 land_17512 land_17489 land_17526 land_17503 land_17517 land_17494 land_17508 }
+	buildings = {
+		naval_base = 1
+	}
 }
 tasmania_m320_1 = {
 	name = "Tasmania"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17485 land_17476 land_17481 land_17486 land_17477 land_17482 land_17473 land_17487 land_17478 land_17483 land_17474 land_17488 land_17479 land_17484 land_17475 land_17480 }
+	buildings = {
+		naval_base = 1
+	}
 }
 samoyed_lands_m9_1 = {
 	name = "Samoyed lands 1"
 	manpower = 1
 	tax = 0.5
 	locations = { land_03318 land_05187 land_05621 land_03623 land_06498 land_03217 land_03757 land_07135 land_00347 land_04934 land_00804 land_06314 land_08626 land_00223 land_07893 land_00542 land_03814 land_03427 land_03764 land_02172 land_06944 land_04457 land_06386 land_09160 land_05053 }
+	buildings = {
+		naval_base = 1
+	}
 }
 samoyed_lands_m9_2 = {
 	name = "Samoyed lands 2"
@@ -6268,18 +7778,27 @@ samoyed_lands_m9_3 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_04020 land_00647 land_03019 land_09558 land_05779 land_03195 land_07053 land_05161 land_07990 land_05812 land_07335 land_08078 land_04571 land_05757 land_07506 land_00095 land_07077 land_00755 land_06362 land_04918 land_08379 land_09173 land_07784 land_09353 land_04360 land_04277 land_03442 land_03410 land_00069 land_00752 }
+	buildings = {
+		naval_base = 1
+	}
 }
 samoyed_lands_m9_4 = {
 	name = "Samoyed lands 4"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07522 land_05307 land_09391 land_06267 land_03106 land_06281 land_02437 land_05455 land_07444 land_08510 land_08224 land_01542 land_08081 land_00227 land_09604 land_04168 land_05211 land_00421 land_01104 land_07583 land_08317 land_02295 land_07385 land_08848 land_00657 land_02586 land_01737 land_02637 land_06855 land_00736 land_04257 land_09347 land_01193 land_02799 land_01853 land_04668 land_09578 land_08623 land_09343 land_01429 land_07036 land_07636 land_00331 land_06644 land_01116 land_00590 land_00950 land_05274 land_03613 land_08523 land_08777 land_04107 land_04730 land_05796 land_05856 }
+	buildings = {
+		naval_base = 1
+	}
 }
 massagetae_1 = {
 	name = "Massagetae 1"
 	manpower = 7
 	tax = 1.0
 	locations = { land_03752 land_07453 land_06844 land_08007 land_08570 land_01325 land_05289 land_05026 land_03545 land_08072 land_08935 land_07020 land_00458 land_00592 land_02258 land_02678 land_08331 land_08691 land_03892 land_06324 land_06495 land_03897 land_03251 land_09264 land_09564 land_05937 land_08789 land_09652 land_09209 land_08240 land_05596 land_09057 land_04304 land_03012 land_04018 land_01637 land_04332 land_03506 land_04609 land_05449 land_01605 land_01204 land_04056 land_04573 }
+	buildings = {
+		naval_base = 1
+	}
 }
 massagetae_2 = {
 	name = "Massagetae 2"
@@ -6310,6 +7829,9 @@ libyans_1 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_00102 land_02714 land_00527 land_08312 land_00661 land_05428 land_04842 land_00200 land_00237 land_06887 land_03800 land_06754 land_06371 land_02804 land_06445 land_04410 land_05015 land_02704 land_02884 land_17609 }
+	buildings = {
+		naval_base = 1
+	}
 }
 mande_lands_1 = {
 	name = "Mande lands 1"
@@ -6370,12 +7892,18 @@ kwa_coast_1 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_07665 land_07790 land_00836 land_08944 land_09706 land_04990 land_01783 land_08922 land_05106 land_03694 land_04700 land_07455 land_07612 land_08369 land_05208 land_06279 land_06113 land_06787 land_05514 land_00766 }
+	buildings = {
+		naval_base = 1
+	}
 }
 kwa_coast_2 = {
 	name = "Kwa coast 2"
 	manpower = 13
 	tax = 1.5
 	locations = { land_06719 land_09428 land_05238 land_08427 land_07283 land_07966 land_02701 land_08977 land_03583 land_04843 land_02573 land_01041 land_02887 land_02149 land_08808 land_01342 land_06995 land_01573 land_05754 land_03816 land_08943 land_05602 }
+	buildings = {
+		naval_base = 1
+	}
 }
 nok_culture_1 = {
 	name = "Nok culture 1"
@@ -6394,12 +7922,18 @@ west_atlantic_coast_m9_1 = {
 	manpower = 11
 	tax = 1.3
 	locations = { land_01320 land_08639 land_04246 land_02022 land_01939 land_03665 land_07117 land_01944 land_02964 land_06605 land_09402 land_08641 land_04848 land_09551 land_06713 land_00202 land_08984 land_05985 }
+	buildings = {
+		naval_base = 1
+	}
 }
 west_atlantic_coast_m9_2 = {
 	name = "West Atlantic coast 2"
 	manpower = 12
 	tax = 1.4
 	locations = { land_00683 land_00531 land_01957 land_08030 land_04920 land_03711 land_03942 land_01787 land_07200 land_07214 land_03601 land_04644 land_03532 land_00131 land_07556 land_01197 land_07953 land_06744 land_07358 land_00353 land_05623 land_05217 land_05568 land_02467 land_03870 land_08074 land_05153 land_03381 land_05993 land_06298 land_04683 land_03765 land_06280 land_03373 }
+	buildings = {
+		naval_base = 1
+	}
 }
 west_atlantic_coast_m9_3 = {
 	name = "West Atlantic coast 3"
@@ -6412,24 +7946,36 @@ west_atlantic_coast_m166_1 = {
 	manpower = 1
 	tax = 0.5
 	locations = { land_16058 land_16059 }
+	buildings = {
+		naval_base = 1
+	}
 }
 west_atlantic_coast_m172_1 = {
 	name = "West Atlantic coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16064 }
+	buildings = {
+		naval_base = 1
+	}
 }
 west_atlantic_coast_m175_1 = {
 	name = "West Atlantic coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16065 }
+	buildings = {
+		naval_base = 1
+	}
 }
 west_atlantic_coast_m187_1 = {
 	name = "West Atlantic coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_05994 }
+	buildings = {
+		naval_base = 1
+	}
 }
 fur_darfur_1 = {
 	name = "Fur (Darfur)"
@@ -6448,24 +7994,36 @@ min_yue_coast_m9_1 = {
 	manpower = 15
 	tax = 1.7
 	locations = { land_02912 land_04472 land_01574 land_06055 land_03379 land_06771 land_03135 land_08290 land_08124 land_02454 land_08698 land_09109 land_05422 }
+	buildings = {
+		naval_base = 1
+	}
 }
 min_yue_coast_m9_2 = {
 	name = "Min-Yue coast 2"
 	manpower = 15
 	tax = 1.7
 	locations = { land_08611 land_04080 land_00896 land_05751 land_02950 land_02217 land_04433 land_07488 land_08310 land_05712 land_05832 land_01153 land_05431 land_07254 land_02501 }
+	buildings = {
+		naval_base = 1
+	}
 }
 min_yue_coast_m142_1 = {
 	name = "Min-Yue coast"
 	manpower = 4
 	tax = 0.8
 	locations = { land_15944 land_15951 land_15942 land_15939 }
+	buildings = {
+		naval_base = 1
+	}
 }
 min_yue_coast_m145_1 = {
 	name = "Min-Yue coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15950 }
+	buildings = {
+		naval_base = 1
+	}
 }
 man_tribes_middle_han_1 = {
 	name = "Man tribes (middle Han) 1"
@@ -6484,6 +8042,9 @@ colchis_1 = {
 	manpower = 9
 	tax = 1.2
 	locations = { land_08551 land_04440 land_06429 land_05470 land_01631 }
+	buildings = {
+		naval_base = 1
+	}
 }
 caucasian_iberia_1 = {
 	name = "Caucasian Iberia"
@@ -6492,10 +8053,16 @@ caucasian_iberia_1 = {
 	manpower = 12
 	tax = 1.5
 	locations = { land_09475 land_05705 land_06005 land_09176 land_05895 land_02088 land_00233 land_04820 land_06832 land_08461 land_03792 land_02477 land_08781 land_03359 land_07360 }
+	buildings = {
+		naval_base = 1
+	}
 }
 gallic_veneti_and_armorica_1 = {
 	name = "Gallic Veneti and Armorica"
 	manpower = 4
 	tax = 0.8
 	locations = { land_01509 land_03558 land_09142 land_05627 land_01308 land_03768 land_08171 land_07525 land_00853 land_00747 land_02930 land_06571 }
+	buildings = {
+		naval_base = 1
+	}
 }

@@ -1,0 +1,314 @@
+# Diplomatic actions (Imperator: Rome style) - shown in the country panel.
+# Scopes:  ROOT / scope:actor = the country doing the action,  scope:recipient = the target country.
+#   potential        shown only if true
+#   allow            clickable only if true (each condition is listed in the tooltip)
+#   cost             gold paid when used           cooldown_days   per target
+#   requires_acceptance = yes  → the AI decides with ai_acceptance (> 0 = yes), the player gets a popup
+#   ai_acceptance    base + modifiers; opinion_factor = recipient's opinion of us × factor;
+#                    strength_factor = factor × (our military / their military - 1)
+#   on_accept / on_decline   effects        ai_will_do   how much the AI wants to do it (0 = never)
+
+improve_relations = {
+	name = "Improve Relations"
+	desc = "Send diplomats to improve their opinion of us (+25, decays over time)."
+	cost = 10
+	cooldown_days = 180
+	potential = { NOT = { is_at_war_with = scope:recipient } }
+	allow = { OR = { NOT = { has_feature = economy } gold >= 10 } }
+	on_accept = {
+		reverse_add_opinion = { target = scope:recipient value = 25 name = "Improved relations" }
+	}
+	ai_will_do = {
+		base = 0
+		modifier = { add = 2 scope:recipient = { opinion = { target = ROOT value < 0 } } }
+		modifier = { add = 1 borders = scope:recipient }
+	}
+}
+
+send_gift = {
+	name = "Send Gift"
+	desc = "Send 50 gold as a gift (+40 opinion)."
+	cost = 50
+	cooldown_days = 365
+	potential = {
+		has_feature = economy
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	allow = { gold >= 50 }
+	on_accept = {
+		scope:recipient = { add_gold = 50 }
+		reverse_add_opinion = { target = scope:recipient value = 40 name = "Gift" }
+	}
+}
+
+insult = {
+	name = "Insult"
+	desc = "Make our contempt known (-40 opinion)."
+	cooldown_days = 365
+	potential = { NOT = { is_allied_with = scope:recipient } }
+	on_accept = {
+		reverse_add_opinion = { target = scope:recipient value = -40 name = "Insulted" }
+	}
+}
+
+offer_alliance = {
+	name = "Offer Alliance"
+	desc = "Allies are called to arms when either of us is attacked."
+	requires_acceptance = yes
+	potential = {
+		NOT = { is_allied_with = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	allow = {
+		free_relations >= 1
+		scope:recipient = { free_relations >= 1 }
+	}
+	ai_acceptance = {
+		base = -25
+		opinion_factor = 0.5
+		modifier = { add = 15 borders = scope:recipient }
+		modifier = { add = -1000 scope:recipient = { is_at_war_with = ROOT } }
+		# two countries of one people are rivals for the same nation, not allies
+		modifier = { add = -1000 same_culture = scope:recipient }
+	}
+	on_accept = {
+		create_alliance = scope:recipient
+		reverse_add_opinion = { target = scope:recipient value = 20 name = "Alliance" }
+	}
+	on_decline = {
+		reverse_add_opinion = { target = scope:recipient value = -5 name = "Rejected alliance" }
+	}
+	ai_will_do = {
+		base = 0
+		modifier = { add = 1 scope:recipient = { opinion = { target = ROOT value > 25 } } }
+		modifier = { factor = 0 same_culture = scope:recipient }
+	}
+}
+
+break_alliance = {
+	name = "Break Alliance"
+	potential = { is_allied_with = scope:recipient }
+	ai_will_do = {
+		base = 0
+		modifier = { add = 2 opinion = { target = scope:recipient value < -20 } }
+		# an ally of our own people is a rival for our nation
+		modifier = { add = 3 same_culture = scope:recipient }
+		# ambition: a strong ally next door that we have claims on is worth more as a conquest
+		modifier = {
+			add = 1
+			has_claim_on = scope:recipient
+			borders = scope:recipient
+			stronger_than = { target = scope:recipient ratio = 1.5 }
+		}
+	}
+	on_accept = {
+		break_alliance = scope:recipient
+		reverse_add_opinion = { target = scope:recipient value = -50 name = "Broke alliance" }
+	}
+}
+
+request_military_access = {
+	name = "Request Military Access"
+	desc = "Allows our armies to move through their land."
+	requires_acceptance = yes
+	potential = {
+		NOT = { has_military_access = scope:recipient }
+		NOT = { is_allied_with = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	ai_acceptance = {
+		base = -10
+		opinion_factor = 0.4
+	}
+	on_accept = {
+		scope:recipient = { grant_military_access = ROOT }
+	}
+}
+
+guarantee_independence = {
+	name = "Guarantee Independence"
+	desc = "We will defend them if they are attacked."
+	potential = {
+		NOT = { is_guaranteeing = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	allow = { free_relations >= 1 }
+	on_accept = {
+		guarantee = scope:recipient
+		reverse_add_opinion = { target = scope:recipient value = 30 name = "Guaranteed us" }
+	}
+}
+
+fabricate_claim = {
+	name = "Fabricate Claim"
+	desc = "Forge documents proving one of their states is rightfully ours. Claims give a cheaper casus belli."
+	cost = 30
+	cooldown_days = 365
+	potential = {
+		borders = scope:recipient
+		NOT = { is_allied_with = scope:recipient }
+	}
+	allow = { OR = { NOT = { has_feature = economy } gold >= 30 } }
+	on_accept = {
+		fabricate_claim = { target = scope:recipient }
+		reverse_add_opinion = { target = scope:recipient value = -25 name = "Fabricated claims" }
+	}
+	ai_will_do = {
+		base = 0
+		modifier = { add = 1 military_strength > scope:recipient.military_strength }
+		modifier = { factor = 0 is_at_war = yes }
+	}
+}
+
+declare_war = {
+	name = "Declare War"
+	desc = "Choose a casus belli: it decides what the war is about, which demands are cheap and how much the world dislikes it."
+	dialog = declare_war
+	potential = {
+		NOT = { is_at_war_with = scope:recipient }
+		NOT = { is_allied_with = scope:recipient }
+	}
+	allow = {
+		can_declare_war_on = scope:recipient
+		num_of_divisions >= 1
+	}
+	on_accept = {
+		declare_war = scope:recipient
+	}
+	# the AI uses the best casus belli it has (highest ai_weight)
+	ai_will_do = {
+		base = 0
+		# lost cores and our people abroad
+		modifier = { add = 5 has_casus_belli = { target = scope:recipient type = reclaim_cores } military_strength > scope:recipient.military_strength }
+		modifier = { add = 4 has_casus_belli = { target = scope:recipient type = cultural_unification } military_strength > scope:recipient.military_strength }
+		modifier = { add = 4 has_claim_on = scope:recipient borders = scope:recipient military_strength > scope:recipient.military_strength }
+		# subjects that want to be free strike when the overlord is weak or busy
+		modifier = { add = 6 has_casus_belli = { target = scope:recipient type = independence } liberty_desire >= 50 }
+		modifier = { add = 3 has_casus_belli = { target = scope:recipient type = independence } stronger_than = { target = scope:recipient ratio = 0.7 } }
+		# ideology: extremists go to war against the governments they despise
+		modifier = { add = 1.5 has_casus_belli = { target = scope:recipient type = ideological_war } borders = scope:recipient stronger_than = { target = scope:recipient ratio = 1.2 } }
+		modifier = { factor = 2 OR = { ruling_ideology = fascist ruling_ideology = communist } }
+		# conquest: a much stronger neighbour attacks even without claims (less often)
+		modifier = {
+			add = 1
+			borders = scope:recipient
+			stronger_than = { target = scope:recipient ratio = 1.6 }
+			NOT = { is_overlord_of = scope:recipient }
+		}
+		# enclaves: a country wants back the foreign enclaves inside its land
+		modifier = { add = 4 enclave_held_by = scope:recipient stronger_than = { target = scope:recipient ratio = 1.2 } }
+		modifier = { factor = 0 is_at_war = yes }
+		modifier = { factor = 0.4 war_exhaustion > 4 }
+		modifier = { factor = 0 war_exhaustion > 8 }
+	}
+}
+
+demand_state = {
+	name = "Demand State"
+	desc = "Demand the state we have the strongest claim on. If they refuse, it means war (diplomatic play)."
+	requires_acceptance = yes
+	cooldown_days = 730
+	potential = {
+		borders = scope:recipient
+		OR = { has_claim_on = scope:recipient has_casus_belli = { target = scope:recipient type = reclaim_cores } }
+		NOT = { is_at_war_with = scope:recipient }
+		NOT = { is_allied_with = scope:recipient }
+	}
+	allow = { can_declare_war_on = scope:recipient num_of_divisions >= 1 }
+	ai_acceptance = {
+		base = -40
+		strength_factor = 25
+		opinion_factor = 0.2
+		modifier = { add = -1000 scope:recipient = { num_of_states < 2 } }
+	}
+	on_accept = {
+		cede_claimed_state = scope:recipient
+		reverse_add_opinion = { target = scope:recipient value = -40 name = "Forced to cede land" }
+	}
+	on_decline = {
+		declare_war = scope:recipient
+	}
+	ai_will_do = {
+		base = 0
+		modifier = { add = 1 stronger_than = { target = scope:recipient ratio = 2 } }
+		modifier = { factor = 0 is_at_war = yes }
+		modifier = { factor = 0 war_exhaustion > 5 }
+	}
+}
+
+offer_non_aggression_pact = {
+	name = "Offer Non-Aggression Pact"
+	desc = "Neither of us may declare war on the other for 10 years (breaking it angers everyone)."
+	requires_acceptance = yes
+	cooldown_days = 365
+	potential = {
+		NOT = { has_non_aggression_pact = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+		NOT = { is_allied_with = scope:recipient }
+	}
+	ai_acceptance = {
+		base = -10
+		opinion_factor = 0.4
+		modifier = { add = 30 scope:recipient = { stronger_than = { target = ROOT ratio = 1 } } }
+		modifier = { add = -40 scope:recipient = { has_claim_on = ROOT } }
+	}
+	on_accept = {
+		create_non_aggression_pact = { target = scope:recipient years = 10 }
+		reverse_add_opinion = { target = scope:recipient value = 15 name = "Non-aggression pact" }
+	}
+	ai_will_do = {
+		base = 0
+		modifier = { add = 0.5 borders = scope:recipient scope:recipient = { stronger_than = { target = ROOT ratio = 1 } } }
+	}
+}
+
+break_non_aggression_pact = {
+	name = "Break Non-Aggression Pact"
+	desc = "End the pact now (they and everyone else will think less of us)."
+	potential = { has_non_aggression_pact = scope:recipient }
+	on_accept = { break_non_aggression_pact = scope:recipient }
+	ai_will_do = {
+		base = 0
+		modifier = { add = 1 has_claim_on = scope:recipient stronger_than = { target = scope:recipient ratio = 2 } }
+	}
+}
+
+demand_subjugation = {
+	name = "Demand Subjugation"
+	desc = "Demand that they become our client state."
+	requires_acceptance = yes
+	cooldown_days = 730
+	potential = {
+		borders = scope:recipient
+		NOT = { is_subject_of = scope:recipient }
+		NOT = { is_overlord_of = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	allow = { free_relations >= 1 }
+	ai_acceptance = {
+		base = -60
+		opinion_factor = 0.3
+		strength_factor = 20
+		modifier = { add = -50 scope:recipient = { num_of_states >= 4 } }
+	}
+	on_accept = {
+		make_subject = { target = scope:recipient type = client_state }
+	}
+	on_decline = {
+		reverse_add_opinion = { target = scope:recipient value = -30 name = "Demanded our submission" }
+	}
+}
+
+release_subject = {
+	name = "Release Subject"
+	potential = { is_overlord_of = scope:recipient }
+	on_accept = {
+		release_subject = scope:recipient
+		reverse_add_opinion = { target = scope:recipient value = 50 name = "Released us" }
+	}
+	# a subject that wants out and could win is better let go in peace
+	ai_will_do = {
+		base = 0
+		modifier = { add = 1 scope:recipient = { liberty_desire >= 80 } NOT = { stronger_than = { target = scope:recipient ratio = 2 } } }
+	}
+}

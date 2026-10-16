@@ -22,11 +22,11 @@ public class AiSystem
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Max degree of parallelism for the per-country AI ticks (null = one thread per core).
-    /// Set to 1 to serialize the AI (for debugging or when a mod's overrides are not thread-safe);
-    /// results stay identical either way thanks to the per-country RNG streams.
+    /// Max degree of parallelism for the per-country AI ticks (null = one thread per core). Serial by default: with the military, navy and
+    /// character mechanics on, the per-country work still writes shared lists and dictionaries (the world's armies, the navy's orders), which
+    /// crashes the parallel tick on a full map. Serial also keeps lockstep multiplayer exact. Raise it only after validate-par passes.
     /// </summary>
-    public static int? Parallelism = null;
+    public static int? Parallelism = 1;
 
     // DailyTick and MonthlyTick run sequentially. Reuse their work buffer, but
     // rebuild membership each time to observe existence/player changes while

@@ -5,4 +5,16 @@ features = {
 	religion
 	social_classes
 	cores_claims
+	military
+	diplomacy
+	characters
+	economy
+	politics
+	ai
+	combat_imperator
+	laws
+	civil_wars
+	independence
+	ai_profiles
+	navy
 }

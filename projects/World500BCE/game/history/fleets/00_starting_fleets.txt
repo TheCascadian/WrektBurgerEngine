@@ -1,0 +1,67 @@
+# Starting fleets, created when the navy feature was added. Edit freely.
+# TAG = { fleet = { name location ships = { ship_type = count } } }
+# 'location' must be a coastal land location (a port) or a sea location.
+
+ACH = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_09609
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+GRK = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_01113
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+MAC = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_05247
+		ships = { destroyer = 2 light_cruiser = 1 transport = 1 }
+	}
+}
+CAR = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_09105
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+SAB = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_03388
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+OLM = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_12632
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+CHV = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_12675
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+IND = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_03726
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}
+ZHO = {
+	fleet = {
+		name = "Home Fleet"
+		location = land_02615
+		ships = { destroyer = 4 light_cruiser = 1 battleship = 1 transport = 2 }
+	}
+}

@@ -1,0 +1,6 @@
+# Relations at the start of 500 BCE (diplomacy feature): subjects, alliances, guarantees. Placeholder map: one country stands for each large power or people.
+
+subject = { overlord = ACH subject = SAB type = tributary }
+subject = { overlord = ACH subject = NUB type = client_state }
+alliance = { first = GRK second = MAC }
+alliance = { first = CHV second = OLM }

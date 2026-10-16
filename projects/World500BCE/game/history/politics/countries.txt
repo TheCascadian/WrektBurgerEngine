@@ -1,0 +1,54 @@
+# Starting politics of 500 BCE for the parallelism test copy. Deliberately restless: every country has a shut-out ideology with real support,
+# so movements, coups and civil wars happen within ten years. democratic = citizen assemblies and republics; neutrality = kings and priests;
+# fascist = warrior-nationalist factions; communist = commoner and slave levelers.
+
+ACH = {
+	ruling_party = neutrality
+	popularity = { neutrality = 45 fascist = 30 democratic = 15 communist = 10 }
+	laws = { political_parties = restricted_parties }
+}
+GRK = {
+	ruling_party = democratic
+	popularity = { democratic = 38 neutrality = 22 fascist = 22 communist = 18 }
+	laws = { political_parties = multi_party }
+}
+MAC = {
+	ruling_party = neutrality
+	popularity = { neutrality = 42 fascist = 38 democratic = 12 communist = 8 }
+	laws = { political_parties = restricted_parties }
+}
+CAR = {
+	ruling_party = democratic
+	popularity = { democratic = 36 neutrality = 30 fascist = 14 communist = 20 }
+	laws = { political_parties = multi_party }
+}
+NUB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 40 communist = 28 fascist = 20 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+SAB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 fascist = 26 communist = 18 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+OLM = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 34 communist = 16 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+CHV = {
+	ruling_party = neutrality
+	popularity = { neutrality = 41 communist = 27 fascist = 22 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+IND = {
+	ruling_party = neutrality
+	popularity = { neutrality = 40 democratic = 24 fascist = 20 communist = 16 }
+	laws = { political_parties = restricted_parties }
+}
+ZHO = {
+	ruling_party = neutrality
+	popularity = { neutrality = 43 fascist = 27 communist = 18 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}

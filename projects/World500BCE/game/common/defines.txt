@@ -5,3 +5,5 @@ end_date = 2020.1.1
 pause_on_event = yes            # events can override this with pause = yes/no/{ trigger }
 # in-game days per real second for speeds 1-5 (0 = as fast as the computer can go)
 game_speeds = { 0.5 1.5 4 10 0 }
+
+combat_model = imperator
