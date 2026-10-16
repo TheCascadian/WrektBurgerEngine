@@ -30,3 +30,9 @@ Code: `src/Burger.Core/Multiplayer/`. Test: `burger mp-test <project> [--days N]
 - Resync sends one base64 line; the reader has no line limit so it works, but there is no progress display.
 - Mid-game player takeover of a country with a pending human proposal is untested.
 - Host-side `Notify` and AI notifications are per machine and not part of the checksum.
+
+## Testing
+Path chosen automatically (`TransportSelector`): Steam (`TransportKind.SteamSdr`) when the Steam client is running, else the relay (`relay.txt`), else same-network only (`Lan`). Join codes say which path they need.
+- Steam path before the real App ID exists: run under Valve's test app 480. `src/Burger.Game/Properties/launchSettings.json` sets `SteamAppId=480` for `dotnet run`; for a built exe, put a `steam_appid.txt` containing `480` next to it (the game also sets 480 itself when neither is present). Steam must be running and signed in, and `steam_api64.dll` / `libsteam_api.so` / `libsteam_api.dylib` must sit beside the exe. See steam.md.
+- Do NOT ship a `steam_appid.txt` with 480 in a release build.
+- Relay path: see relay.md. No-Steam check: `burger link-test`, `burger relay-test`.
