@@ -276,6 +276,18 @@ public static partial class Program
             Console.WriteLine($"  battle plans: {game.World.Armies.Count(x => x.Objective != null)} armies with an offensive arrow, {game.World.Armies.Count(x => x.Fallback.Count > 0)} with a fallback line");
         if (game.Features.Has(FeatureSet.LendLease))
             Console.WriteLine($"  lend-lease: {game.Support.Deals.Count} deals, {game.Support.EquipmentSent:0} equipment sent; volunteers: {game.Support.VolunteersSent} sent, {game.World.Divisions.Count(d => d.VolunteerFrom != null)} abroad now");
+        {
+            var divs = game.World.Divisions.ToList();
+            int moving = divs.Count(d => d.IsMoving), fighting = divs.Count(d => d.InBattle);
+            var idle = divs.Where(d => !d.IsMoving && !d.InBattle).ToList();
+            int idleWar = idle.Count(d => game.World.WarsOf(d.Owner).Any()), idleAbroad = idle.Count(d => d.Location.Controller != d.Owner);
+            int idleHome = idle.Count(d => d.Owner.Capital == d.Location);
+            int noFront = idle.Count(d => d.FrontPost == null), atPost = idle.Count(d => d.FrontPost != null && d.FrontPost == d.Location);
+            var atWar = idle.Where(d => game.World.WarsOf(d.Owner).Any()).ToList();
+            Console.WriteLine($"  idle at war: {atWar.Count(d => d.Army?.FrontEnemy == null)} in armies with no front enemy, {atWar.Count(d => d.Army?.FrontEnemy != null && d.Army.FrontPairs.Count == 0)} with a front enemy but no border pairs, {atWar.Count(d => d.Army?.FrontPairs.Count > 0 && d.FrontPost == null)} with border pairs but no post, {atWar.Count(d => d.Army?.Mode == ArmyMode.Hold)} in Hold, {atWar.Count(d => d.Army?.Mode == ArmyMode.Offensive)} in Offensive");
+            int idleOwners = idle.Select(d => d.Owner).Distinct().Count();
+            Console.WriteLine($"  divisions: {divs.Count} total, {moving} moving, {fighting} fighting, {idle.Count} idle ({idleWar} of countries at war, {idleAbroad} abroad, {idleHome} at the capital, {noFront} without a front post, {atPost} at their post) across {idleOwners} countries");
+        }
         if (game.Population.Enabled)
         {
             var Pop = game.Population;

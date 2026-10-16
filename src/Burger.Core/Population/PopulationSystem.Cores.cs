@@ -249,7 +249,8 @@ public sealed partial class PopulationSystem
             sp.OwnedSinceDay = _game.World.Date.TotalDays;
             ColoniesFounded++;
             ApplyOutput(s, sp);
-            _game.NotifyPlayer($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Good, c);
+            if (_game.World.Player == null) _game.Notify($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Info, s.Locations.FirstOrDefault(l => l.IsLand)); // an observer sees the AI settle
+            else _game.NotifyPlayer($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Good, c);
             _game.Events.FireOnAction("on_colony_founded", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
             CheckColonialNation(c, s);
         }

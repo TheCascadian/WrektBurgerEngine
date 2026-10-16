@@ -914,7 +914,7 @@ public sealed class WarfareSystem
                 if (d.Location == d.FrontPost) continue;
                 if (d.Path.Count > 0 && d.Path[^1] == d.FrontPost) continue;
                 int today = _game.World.Date.TotalDays;
-                if (today < d.PathRetryDay) continue; // a blocked division tries again later, not every day
+                if (d.PathRetryDay != 0 && today < d.PathRetryDay) continue; // a blocked division tries again later, not every day
                 d.PathRetryDay = today + 3;
                 if (!OrderMove(d, d.FrontPost, manual: false)) d.FrontPost = null;
             }

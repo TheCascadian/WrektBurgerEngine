@@ -188,7 +188,20 @@ public class AiSystem
 
         if (wars.Count == 0)
         {
-            foreach (var a in armies.Where(a => a.FrontEnemy != null)) Game.Warfare.SetFront(a, null, ArmyMode.Hold);
+            // at peace the armies garrison the borders with neighbours that are neither allies nor family, one neighbour per army
+            var rel = Game.World.Relations;
+            var neighbours = Game.World.Countries.Where(e => e.Exists && e != c && BorderCache.ContainsKey((c.Index, e.Index))
+                && !rel.AreAllied(c, e) && !rel.AreOverlordAndSubject(c, e)).OrderBy(e => e.Index).ToList();
+            for (int i = 0; i < armies.Count; i++)
+            {
+                var a = armies[i];
+                if (neighbours.Count > 0 && a.MoveTarget == null)
+                {
+                    var guard = neighbours[(i + c.Index) % neighbours.Count];
+                    if (a.FrontEnemy != guard || a.Mode != ArmyMode.Hold) Game.Warfare.SetFront(a, guard, ArmyMode.Hold);
+                }
+                else if (a.FrontEnemy != null) Game.Warfare.SetFront(a, null, ArmyMode.Hold);
+            }
             // walk home from foreign land
             foreach (var d in divisions.Where(d => !d.IsMoving && d.Location.Controller != c && !d.InBattle))
             {
