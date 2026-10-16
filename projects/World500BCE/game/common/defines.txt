@@ -33,3 +33,5 @@ colony_threat_weight = 120      # score lost per foreign neighbour (x2 at war, m
 colony_overextension = 70       # score lost per colony already held or being settled
 colony_caution = 1              # scales both (divided by the profile's risk trait)
 colony_ai_min_score = -1100     # below this (x the profile's colonial trait) the AI settles nothing
+
+colony_land_link = 1            # a colony target must border a state connected by land to the capital (no overseas colonies)

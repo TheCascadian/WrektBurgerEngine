@@ -152,6 +152,12 @@ public sealed partial class PopulationSystem
         if (sp.Colonizer != null && sp.Colonizer.Exists) return sp.Colonizer == c ? "Our colonists are already there" : $"{sp.Colonizer.Name} is settling it";
         if (ColoniesOf(c).Count() >= MaxColonies(c)) return $"All our colonists are busy ({MaxColonies(c)})";
         if (ColonizeCost > 0 && c.Gold < ColonizeCost) return $"Needs {ColonizeCost:0} gold";
+        // colonies must reach the homeland by land: next to a state connected to the capital (a finished colony joins that chain)
+        if (_game.Data.Defines.Get("colony_land_link", 0) > 0)
+        {
+            var home = HomeOf(c);
+            if (!NeighbourStates(s).Any(home.Contains)) return "Not connected by land to our homeland (next to our land or a connected colony)";
+        }
         double range = Rules.ColonyRangeKm(_game, c);
         if (DistanceKm(c, s) > range) return $"Too far from our land (more than {range:0} km)";
         return null;
@@ -222,6 +228,7 @@ public sealed partial class PopulationSystem
             sp.Colonizer = null;
             sp.ColonyProgress = 0;
             _game.Diplomacy.TransferState(s, c);
+            _home.Remove(c); // the new colony extends the land connected to the capital
             var cp = Of(c);
             double settlers = Rules.ColonySettlers(_game, s, c);
             if (cp.Culture != null && settlers > 0)
