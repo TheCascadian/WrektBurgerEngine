@@ -292,6 +292,9 @@ public class PopulationRules
         => (game.Data.Defines.Get("colony_tax", 1), game.Data.Defines.Get("colony_manpower", 20));
 
     /// <summary>AI: how much the country wants to settle a state it can colonize (the highest wins): by default the nearest.</summary>
+    /// <summary>Can the country settle land it has no land link to, by ship? (with colony_land_link on; default no)</summary>
+    public virtual bool CanColonizeOverseas(Game game, Country c) => false;
+
     /// <summary>AI: the lowest score at which the country still settles anything (below it the colonists stay home).</summary>
     public virtual double AiColonyMinScore(Game game, Country c) => double.NegativeInfinity;
 

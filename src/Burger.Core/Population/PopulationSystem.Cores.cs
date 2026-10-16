@@ -153,11 +153,17 @@ public sealed partial class PopulationSystem
         var region = RegionOf(s);
         if (ColoniesInRegion(c, region) >= MaxColoniesIn(c, region)) return $"All our colonists in {region?.Name ?? "this land"} are busy ({MaxColoniesIn(c, region)})";
         if (ColonizeCost > 0 && c.Gold < ColonizeCost) return $"Needs {ColonizeCost:0} gold";
-        // colonies must reach the homeland by land: next to a state connected to the capital (a finished colony joins that chain)
+        // colonies must reach the homeland by land (next to a state connected to the capital; a finished colony joins that chain),
+        // unless the country has the ships and the seafaring tradition to settle a coast overseas (Rules.CanColonizeOverseas)
         if (_game.Data.Defines.Get("colony_land_link", 0) > 0)
         {
             var home = HomeOf(c);
-            if (!NeighbourStates(s).Any(home.Contains)) return "Not connected by land to our homeland (next to our land or a connected colony)";
+            if (!NeighbourStates(s).Any(home.Contains))
+            {
+                if (!Rules.CanColonizeOverseas(_game, c)) return "Not connected by land to our homeland (next to our land or a connected colony)";
+                if (!s.Locations.Any(l => l.IsLand && l.IsCoastal)) return "Overseas colonists need a coast to land on";
+                if (!c.OwnedStates.Any(o => o.Locations.Any(l => l.IsLand && l.IsCoastal))) return "No harbor to sail from";
+            }
         }
         double range = Rules.ColonyRangeKm(_game, c);
         if (DistanceKm(c, s) > range) return $"Too far from our land (more than {range:0} km)";

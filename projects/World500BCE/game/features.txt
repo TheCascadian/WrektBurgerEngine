@@ -6,6 +6,7 @@ features = {
 	social_classes
 	cores_claims
 	military
+	fog_of_war
 	diplomacy
 	characters
 	economy

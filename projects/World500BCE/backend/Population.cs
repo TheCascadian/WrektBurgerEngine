@@ -324,6 +324,16 @@ public class GamePopulationRules : PopulationRules
         return score;
     }
 
+    /// <summary>
+    /// Overseas colonies, as far as the age allows: only the seafaring peoples (Hellenic cultures, Phoenician and its Carthaginian
+    /// colonies) with oared warships (penteconters, from about 900 BCE) settle coasts they have no land link to, within colony_range_km.
+    /// </summary>
+    public override bool CanColonizeOverseas(Game game, Country c)
+    {
+        if (!(game.Population.Culture(game.Population.Of(c).Culture)?.Group.Key == "hellenic" || game.Population.Of(c).Culture == "phoenician")) return false;
+        return !game.Tech.Enabled || game.Tech.Has(c, "oared_warships");
+    }
+
     public override double AiColonyMinScore(Game game, Country c)
         => game.Data.Defines.Get("colony_ai_min_score", -1100) * Math.Max(0.5, game.AiProfiles.ProfileOf(c)?.Traits.GetValueOrDefault("colonial", 1) ?? 1);
 
