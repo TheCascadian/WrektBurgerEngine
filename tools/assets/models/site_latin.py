@@ -224,6 +224,59 @@ def gate_tower():
     return m
 
 
+def oquad(m, a, b, c, d, out, color):
+    """A quad whose winding is fixed to face the direction `out`."""
+    a, b, c, d = V(*a), V(*b), V(*c), V(*d)
+    if np.dot(np.cross(b - a, c - a), V(*out)) < 0: a, b, c, d = d, c, b, a
+    m.quad(a, b, c, d, V(*out), color, W)
+
+
+# ------------------------------------------------------------------------------------------ bridges
+def bridge_wood():
+    """Timber trestle bridge, 8 m along x and 3.2 m wide: pile bents driven into the river bed, cross-beams, a plank deck at 1.5 m and a post-and-rail parapet.
+    (The Pons Sublicius, the first Tiber bridge, was all timber, built without iron, 6th c. BCE.)"""
+    m = Mesh(); DECK = 1.5
+    for x in (-3.4, 0, 3.4):                                    # pile bents: two posts and a cap beam
+        for z in (-1.25, 1.25):
+            m.box((x - .22, -1.4, z - .22), (x + .22, DECK - .2, z + .22), TIMBER, W)
+        m.box((x - .3, DECK - .55, -1.55), (x + .3, DECK - .25, 1.55), (.33, .21, .11, 1), W)
+        m.box((x - .1, -.2, -1.25), (x + .1, DECK - .6, 1.25), (.33, .21, .11, 1), W)     # sway brace across
+    for z in (-1.0, 0, 1.0):                                    # stringers
+        m.box((-4, DECK - .25, z - .15), (4, DECK, z + .15), (.36, .24, .13, 1), W)
+    for i in range(16):                                         # deck planks, alternating tone
+        x = -4 + i * .5
+        m.box((x + .02, DECK, -1.6), (x + .48, DECK + .12, 1.6), (.40, .30, .18, 1) if i % 2 else (.35, .26, .16, 1), W)
+    for z in (-1.55, 1.55):
+        for x in (-3.8, -1.9, 0, 1.9, 3.8):
+            m.box((x - .1, DECK, z - .1), (x + .1, DECK + 1.0, z + .1), TIMBER, W)
+        m.box((-4, DECK + .85, z - .08), (4, DECK + 1.0, z + .08), TIMBER, W)
+    return m
+
+
+def bridge_stone():
+    """Stone arch bridge, 8 m along x and 3.6 m wide: one round travertine arch (5.8 m span) between abutments, a paved deck at 3.4 m, parapets.
+    (Rome's first stone-arched bridges date from the 2nd c. BCE, the Pons Aemilius of 179 BCE on stone piers; the arch itself came from the Etruscans.)"""
+    m = Mesh(); R0, R1, DECK, Zh = 2.9, 3.5, 3.4, 1.8
+    STONE, STONE_D, STONE_L = (.60, .58, .52, 1), (.46, .45, .41, 1), (.70, .68, .60, 1)
+    n = 10
+    for k in range(n):                                          # the arch ring: voussoirs, alternating tone
+        a0, a1 = math.pi * k / n, math.pi * (k + 1) / n
+        p = lambda a, r, z: (r * math.cos(a), r * math.sin(a), z)
+        col = STONE_L if k % 2 else STONE
+        oquad(m, p(a0, R0, -Zh), p(a1, R0, -Zh), p(a1, R1, -Zh), p(a0, R1, -Zh), (0, 0, -1), col)
+        oquad(m, p(a0, R0, Zh), p(a1, R0, Zh), p(a1, R1, Zh), p(a0, R1, Zh), (0, 0, 1), col)
+        mid = (a0 + a1) / 2
+        oquad(m, p(a0, R0, -Zh), p(a1, R0, -Zh), p(a1, R0, Zh), p(a0, R0, Zh), (-math.cos(mid), -math.sin(mid), 0), STONE_D)   # soffit
+    for i in range(16):                                         # spandrel and abutment fill from the arch up to the deck
+        x0 = -4 + i * .5; xm = abs(x0 + .25)
+        ybot = math.sqrt(R1 * R1 - xm * xm) - .02 if xm < R1 else -.6
+        m.box((x0, ybot, -Zh), (x0 + .5, DECK, Zh), STONE_D if xm > R1 else STONE, W)
+    m.box((-4, DECK, -Zh), (4, DECK + .08, Zh), (.40, .39, .35, 1), W)                    # paving
+    for z in (-Zh, Zh - .35):
+        m.box((-4, DECK, z), (4, DECK + .8, z + .35), STONE_L, W)                           # parapets
+    return m
+
+
 def tree():
     """A small tree: for the olives and oaks around a town."""
     m = Mesh()
@@ -236,7 +289,7 @@ def tree():
 PIECES = [("hut_round", hut_round, 220), ("hut_oval", hut_oval, 220), ("house_timber", house_timber, 300), ("house_tile", house_tile, 300),
           ("courtyard_house", courtyard_house, 400), ("granary", granary, 200), ("shrine", shrine, 300), ("temple_tuscan", temple_tuscan, 700),
           ("temple_round", temple_round, 250), ("hall", hall, 300), ("path", path, 100), ("plaza", plaza, 400), ("rampart", rampart, 600),
-          ("gate_tower", gate_tower, 300), ("tree", tree, 250)]
+          ("gate_tower", gate_tower, 300), ("tree", tree, 250), ("bridge_wood", bridge_wood, 600), ("bridge_stone", bridge_stone, 700)]
 
 if __name__ == "__main__":
     ok = True

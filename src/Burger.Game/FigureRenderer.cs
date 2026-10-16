@@ -434,6 +434,36 @@ void main()
                 Raylib.UnloadImage(image);
                 renderer.Forget(model);
             }
+        // bridges: both kinds over a river, with the street pieces on their banks
+        foreach (var kit in kits.Values.Where(k => k.BridgeWood.Length > 0 && (onlyKit == null || k.Key.Equals(onlyKit, StringComparison.OrdinalIgnoreCase))))
+        {
+            var placements = new List<Burger.Core.Sites.SitePlacement>();
+            foreach (var (piece, z) in new[] { (kit.BridgeWood, -9f), (kit.BridgeStone, 9f) })
+            {
+                if (piece.Length == 0) continue;
+                placements.Add(new(piece, 0, z, MathF.PI / 2 * 0));
+                foreach (float x in new[] { -8f, 8f }) placements.Add(new("path", x, z, 0));
+            }
+            var model = Burger.Core.Sites.SiteLayout.Bake($"sheet:{kit.Key}/bridges", placements, k => figures.Find(kit.ModelKey(k)));
+            var cam = new Camera3D(new Vector3(8f, 14f, 32f), new Vector3(0, 1f, 0), Vector3.UnitY, 32f, CameraProjection.Perspective);
+            var skin = new Matrix4x4[model.Rig.Count];
+            Array.Fill(skin, Matrix4x4.Identity);
+            Raylib.BeginTextureMode(target);
+            Raylib.ClearBackground(new Color(120, 150, 175, 255));
+            Raylib.BeginMode3D(cam);
+            Raylib.DrawCube(new Vector3(0, -0.4f, 0), 60f, 0.7f, 60f, new Color(104, 118, 66, 255));
+            Raylib.DrawCube(new Vector3(0, -0.2f, 0), 4.4f, 0.5f, 60f, new Color(40, 90, 140, 255));   // the river, across the x axis
+            renderer.Begin(cam);
+            renderer.Draw(model, skin, Matrix4x4.Identity, Color.White);
+            Raylib.EndMode3D();
+            Raylib.DrawText($"{kit.Name}: stone arch bridge (front), timber bridge (back)", 14, 10, 26, Color.White);
+            Raylib.EndTextureMode();
+            var image = Raylib.LoadImageFromTexture(target.Texture);
+            Raylib.ImageFlipVertical(ref image);
+            Raylib.ExportImage(image, Path.Combine(dir, $"site_{kit.Key}_bridges.png"));
+            Raylib.UnloadImage(image);
+            renderer.Forget(model);
+        }
         Raylib.UnloadRenderTexture(target);
         renderer.Dispose();
         Raylib.CloseWindow();

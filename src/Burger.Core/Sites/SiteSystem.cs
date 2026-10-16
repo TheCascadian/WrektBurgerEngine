@@ -100,13 +100,15 @@ public sealed class SiteSystem
             double score = Math.Round(ScoreOf(site) / ScoreStep) * ScoreStep;
             var tier = kit.TierFor(score);
             if (tier == null) { site.Model = null; continue; }
-            string signature = $"{kit.Key}/{tier.Key}/{score:F2}/{_figureVersion}";
+            bool stone = kit.BridgeStone.Length > 0 && _game.World.Date.Year >= kit.StoneYear && score >= kit.StoneMinScore;
+            string signature = $"{kit.Key}/{tier.Key}/{score:F2}/{_figureVersion}/{(stone ? "stone" : "wood")}";
             if (signature == site.Signature && site.Model != null) continue;
             site.Kit = kit; site.Tier = tier; site.Score = score; site.Signature = signature;
             var loc = site.Location;
             var placements = SiteLayout.Build(kit, tier, score, Seed(site.Def.Key), RadiusOf);
             var (scale, ox, oz, wide) = Fit(loc, placements);
             site.Placements = placements.Where(p => Inside(loc, p.X * scale + ox, p.Z * scale + oz, wide)).Select(p => p with { X = p.X + ox / scale, Z = p.Z + oz / scale }).ToList();
+            Bridge(loc, kit, site.Placements, scale, ox, oz, stone);
             site.Model = site.Placements.Count == 0 ? null
                 : SiteLayout.Bake("site:" + site.Def.Key, site.Placements, k => _game.Figures.Find(kit.ModelKey(k)), ground == null ? null : (x, z) => ground(loc, x, z), scale);
             site.Extent = site.Placements.Count == 0 ? 0 : site.Placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z)) * scale;
@@ -142,6 +144,47 @@ public sealed class SiteSystem
                     if (placements.Count(p => Inside(loc, p.X * s + o.X, p.Z * s + o.Z, wide)) >= placements.Count * 0.85f) return (s, o.X, o.Z, wide);
             }
         return (0.3f, 0, 0, true);
+    }
+
+    /// <summary>Whether a river runs at a point (metres from the location's center, after scaling): a river pixel there or next to it.</summary>
+    private bool RiverAt(Location loc, float x, float z)
+    {
+        var map = _game.World.Map;
+        float ppm = MetresToWorld * map.Settings.PixelsPerUnit;
+        int px = (int)MathF.Floor(loc.CenterX + x * ppm), py = (int)MathF.Floor(loc.CenterY + z * ppm);
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                int qx = px + dx, qy = py + dy;
+                if (qx >= 0 && qy >= 0 && qx < map.Width && qy < map.Height && map.RiverMap[qy * map.Width + qx] != 0) return true;
+            }
+        return false;
+    }
+
+    /// <summary>Logical river crossings: a street piece standing in a river becomes a bridge piece (same place and heading, 8 m long like the path). Stone where the
+    /// kit allows it (year, score) and the crossing is at most 3 pieces long, timber otherwise: a timber trestle can cross wide water, an arch cannot.</summary>
+    private void Bridge(Location loc, SiteKit kit, List<SitePlacement> placements, float scale, float ox, float oz, bool stone)
+    {
+        if (kit.BridgeWood.Length == 0) return;
+        var wet = new List<int>();
+        for (int i = 0; i < placements.Count; i++)
+        {
+            var p = placements[i];
+            if (p.Piece != "path") continue;
+            float cx = p.X * scale + ox, cz = p.Z * scale + oz, dx = MathF.Cos(p.Yaw), dz = -MathF.Sin(p.Yaw);
+            int hits = 0;
+            for (int k = -2; k <= 2; k++) if (RiverAt(loc, cx + dx * k * 2f * scale, cz + dz * k * 2f * scale)) hits++;
+            if (hits >= 2) wet.Add(i);
+        }
+        // runs of consecutive wet street pieces are one crossing (they are laid out in order along a street)
+        for (int a = 0; a < wet.Count;)
+        {
+            int b = a;
+            while (b + 1 < wet.Count && wet[b + 1] == wet[b] + 1) b++;
+            bool arch = stone && b - a + 1 <= 3;
+            for (int k = a; k <= b; k++) placements[wet[k]] = placements[wet[k]] with { Piece = arch ? kit.BridgeStone : kit.BridgeWood };
+            a = b + 1;
+        }
     }
 
     private float RadiusOf(string modelKey)

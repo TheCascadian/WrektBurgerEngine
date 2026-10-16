@@ -46,6 +46,12 @@ public sealed class SiteKit
     /// <summary>Ordered by <see cref="SiteTier.MinScore"/>.</summary>
     public List<SiteTier> Tiers = new();
 
+    /// <summary>Bridge pieces (8 m, replacing a street piece that crosses a river) and when stone is used: from the year (<c>stone_year</c>, negative = BCE)
+    /// and from the score (<c>stone_min_score</c>); before that, or in a poorer site, the timber bridge.</summary>
+    public string BridgeWood = "", BridgeStone = "";
+    public int StoneYear = int.MaxValue;
+    public double StoneMinScore;
+
     public string ModelKey(string piece) => $"site_{piece}_{Key}";
 
     public SiteTier? TierFor(double score)
@@ -79,6 +85,11 @@ public sealed class SiteKit
                 tier.Layers.Add(layer);
             }
             kit.Tiers.Add(tier);
+        }
+        if (n.Get("bridge") is { } b)
+        {
+            kit.BridgeWood = b.GetString("wood", "")!; kit.BridgeStone = b.GetString("stone", "")!;
+            kit.StoneYear = b.GetInt("stone_year", int.MaxValue); kit.StoneMinScore = b.GetDouble("stone_min_score");
         }
         kit.Tiers.Sort((a, b) => a.MinScore.CompareTo(b.MinScore));
         return kit;

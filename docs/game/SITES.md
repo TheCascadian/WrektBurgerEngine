@@ -24,6 +24,16 @@ Yaw 0 = +Z, turning towards +X. Footprint radius = max horizontal reach x 0.8. T
 
 Fit: after layout, `SiteSystem.Fit` shrinks the whole site (down to 0.7) and shifts it (up to 4 steps) until 85% of the placements stand on the site's own location pixels; placements outside are dropped. If that fails, it may use land neighbors of the same state, down to scale 0.3 (Rome's location is only 44 pixels). Startup log shows pixel counts.
 
+## Bridges
+
+![bridges](img/site-latin-bridges.png)
+
+Kit key `bridge = { wood = <piece> stone = <piece> stone_year = Y stone_min_score = S }`. Pieces are 8 m long like `path`. After the fit, `SiteSystem.Bridge` checks every street (`path`) piece against `Map.RiverMap` (river pixel within 1 px of 5 sample points along the piece; 2 hits = wet). A run of consecutive wet pieces is one crossing, and its pieces become bridge pieces at the same place and heading.
+- Stone: game year >= `stone_year` (negative = BCE), site score >= `stone_min_score` (development: state urbanization x site weight), and a crossing of at most 3 pieces (an arch cannot span wide water).
+- Otherwise timber (a trestle crosses wide water). The sheet `site_<kit>_bridges.png` shows both.
+- Latin: `stone_year = -300`, `stone_min_score = 0.15`. OPEN: design choices, not sourced; Rome's first stone-arched bridge was 179 BCE, the Pons Sublicius was timber. At 500 BCE Rome gets timber.
+- Only street pieces cross rivers. Bridges are not instanced separately, they are part of the site's baked model. They do not follow the terrain between banks (the deck is level).
+
 ## Commands
 
 Preview sheets (offscreen, no game load):

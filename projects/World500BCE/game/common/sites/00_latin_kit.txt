@@ -6,6 +6,8 @@ kits = {
 		name = "Latin"
 		source = "Design from general knowledge, not a looked-up source (OPEN): Iron Age Latin huts, mud-brick and timber houses with terracotta roofs from the later 6th century, the Tuscan temple of Jupiter Optimus Maximus (509 BCE), the round Temple of Vesta, an earthen rampart with a palisade."
 		culture_groups = { italic }
+		# Street pieces standing in a river become bridges. Stone only from stone_year (negative = BCE) and from stone_min_score, and for a crossing of at most 3 pieces; otherwise timber (OPEN: the years and scores are design choices, Rome's first stone-arched bridge was 179 BCE).
+		bridge = { wood = bridge_wood stone = bridge_stone stone_year = -300 stone_min_score = 0.15 }
 		tiers = {
 			# a hill town: a palisaded village of huts and timber houses round a small market, a shrine and a granary
 			town = {
