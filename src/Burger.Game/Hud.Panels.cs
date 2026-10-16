@@ -82,29 +82,54 @@ public sealed partial class Hud
             }
             y += lh;
         }
-        Row("Terrain", l.Terrain.Name + (l.IsCoastal ? " (coastal)" : "") + (l.Continent != null ? "  ·  " + l.Continent.DisplayName : ""));
-        if (l.IsWater) { Row("Type", l.IsLake ? "Lake" : "Sea"); FitEnd("loc", r, y); return; }
+        // the panel is cut into cells: small label over a value, several to a row
+        const float CellH = 38;
+        float gap = 8 * S;
+        Rectangle CellAt(int i, int n) { float cw = (w - gap * (n - 1)) / n; return new Rectangle(x + i * (cw + gap), y, cw, CellH * S); }
+        void Cell(int i, int n, string k, string v, Color? col = null, string? tip = null, Country? flag = null, string? delta = null, Color? deltaCol = null)
+        {
+            var c = CellAt(i, n);
+            Raylib.DrawRectangleRounded(c, 0.12f, 4, new Color(255, 255, 255, 10));
+            Gui.Label(k, c.X + 8 * S, c.Y + 3 * S, 12, Gui.TextDim);
+            float tx = c.X + 8 * S;
+            if (flag != null) tx += FlagChip(flag, tx, c.Y + 19 * S, 14 * S) + 2 * S;
+            string txt = Gui.Fit(v, c.Width - (tx - c.X) - 6 * S - (delta != null ? 44 * S : 0), 15);
+            Gui.Label(txt, tx, c.Y + 18 * S, 15, col ?? Gui.Text, FontKind.Bold);
+            if (delta != null) Gui.Label(delta, tx + Gui.Measure(txt, 15, FontKind.Bold).X + 6 * S, c.Y + 20 * S, 13, deltaCol ?? Gui.TextDim);
+            if (Gui.Hover(c)) Gui.Tooltip(tip ?? $"{k}\n{v}");
+        }
+        void CellsEnd() => y += (CellH + 6) * S;
+
         var st = l.State;
-        if (st != null) Row("State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
-        CountryRow("Owner", l.Owner);
-        if (l.Controller != l.Owner) CountryRow("Controller", l.Controller, Gui.Bad);
+        string terr = l.Terrain.Name + (l.IsCoastal ? " (coastal)" : "");
+        if (l.IsWater) { Cell(0, 2, "Terrain", terr); Cell(1, 2, "Type", l.IsLake ? "Lake" : "Sea"); CellsEnd(); FitEnd("loc", r, y); return; }
+        Cell(0, 2, "Terrain", terr);
+        Cell(1, 2, l.Continent != null && l.Continent.IsOcean ? "Ocean" : "Continent", l.Continent?.DisplayName ?? "-");
+        CellsEnd();
+        if (st != null)
+        {
+            Cell(0, 1, "State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
+            CellsEnd();
+        }
+        bool split = l.Controller != l.Owner;
+        Cell(0, split ? 2 : 1, "Owner", l.Owner?.Name ?? "-", null, null, l.Owner);
+        if (split) Cell(1, 2, "Controller", l.Controller?.Name ?? "-", Gui.Bad, null, l.Controller);
+        CellsEnd();
         if (st != null)
         {
             // tax and manpower against the average state of the owner: above is green, below is red
             var peers = (l.Owner?.OwnedStates ?? new List<State>()).Where(s => s != st).ToList();
             double avgTax = peers.Count > 0 ? peers.Average(s => s.Tax) : st.Tax, avgMan = peers.Count > 0 ? peers.Average(s => s.Manpower) : st.Manpower;
-            void Stat2(string k, double v, double avg, string text)
+            void Stat2(int i, string k, double v, double avg, string text)
             {
                 double rel = avg > 0 ? v / avg - 1 : 0;
-                Gui.Label(k, x, y, 15, Gui.TextDim);
-                Gui.Label(text, x + 100 * S, y, 15, Gui.Text, FontKind.Bold);
-                if (peers.Count > 0 && Math.Abs(rel) >= 0.005)
-                    Gui.Label($"{(rel >= 0 ? "+" : "")}{rel:P0}", x + 100 * S + Gui.Measure(text, 15, FontKind.Bold).X + 8 * S, y + 1 * S, 13, DeltaColor(rel));
-                if (Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip($"{k}\n{text} a month\nOwner's average state: {avg:0.##}" + (peers.Count > 0 ? $"\n{(rel >= 0 ? "+" : "")}{rel:P0} against the average" : ""));
-                y += lh;
+                bool show = peers.Count > 0 && Math.Abs(rel) >= 0.005;
+                Cell(i, 2, k, text, null, $"{k}\n{text} a month\nOwner's average state: {avg:0.##}" + (peers.Count > 0 ? $"\n{(rel >= 0 ? "+" : "")}{rel:P0} against the average" : ""),
+                    null, show ? $"{(rel >= 0 ? "+" : "")}{rel:P0}" : null, DeltaColor(rel));
             }
-            Stat2("Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
-            Stat2("Manpower", st.Manpower, avgMan, Num(st.Manpower));
+            Stat2(0, "Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
+            Stat2(1, "Manpower", st.Manpower, avgMan, Num(st.Manpower));
+            CellsEnd();
             y += 2 * S;
             if (G.Development.Enabled) y = DrawStateDevelopment(st, x, y, w);
             if (G.Population.Enabled)

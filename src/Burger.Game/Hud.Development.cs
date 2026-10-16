@@ -51,28 +51,31 @@ public sealed partial class Hud
         y += 26 * S;
         if (!open) return y;
 
-        float Meter(string k, double v, string tip)
+        // two meters side by side, each in its own cell
+        void Meter(int i, string k, double v, string tip)
         {
-            Gui.Label(k, x + 8 * S, y, 15, Gui.TextDim);
-            var bar = new Rectangle(x + 108 * S, y + 6 * S, w - 108 * S - 64 * S, 8 * S);
+            float gap = 8 * S, cw = (w - gap) / 2;
+            var c = new Rectangle(x + i * (cw + gap), y, cw, 38 * S);
+            Raylib.DrawRectangleRounded(c, 0.12f, 4, new Color(255, 255, 255, 10));
+            Gui.Label(k, c.X + 8 * S, c.Y + 3 * S, 12, Gui.TextDim);
+            Gui.Label($"{v:P1}", c.X + c.Width - Gui.Measure($"{v:P1}", 15, FontKind.Bold).X - 8 * S, c.Y + 2 * S, 15, Gui.Text, FontKind.Bold);
+            var bar = new Rectangle(c.X + 8 * S, c.Y + 24 * S, c.Width - 16 * S, 8 * S);
             Raylib.DrawRectangleRec(bar, new Color(30, 34, 42, 255));
             Raylib.DrawRectangleRec(new Rectangle(bar.X, bar.Y, bar.Width * (float)Math.Clamp(v, 0, 1), bar.Height), new Color(110, 170, 210, 255));
-            Gui.Label($"{v:P1}", bar.X + bar.Width + 8 * S, y, 15, Gui.Text, FontKind.Bold);
-            if (Gui.Hover(new Rectangle(x, y, w, 20 * S))) Gui.Tooltip(tip);
-            return 22 * S;
+            if (Gui.Hover(c)) Gui.Tooltip(tip);
         }
-        y += Meter("Literacy", D.Literacy(st), "Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
-        y += Meter("Urbanization", D.Urbanization(st), "Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
+        Meter(0, "Literacy", D.Literacy(st), "Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
+        Meter(1, "Urbanization", D.Urbanization(st), "Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
+        y += 44 * S;
         if (have.Count > 0)
         {
-            y += 4 * S;
-            float cx = x + 8 * S;
+            float cx = x;
             foreach (var i in have)
             {
                 bool got = D.Adopted(i, st);
                 var m = Gui.Measure(i.Name, 13);
                 float cw = m.X + 14 * S;
-                if (cx + cw > x + w) { cx = x + 8 * S; y += 24 * S; }
+                if (cx + cw > x + w) { cx = x; y += 24 * S; }
                 var chip = new Rectangle(cx, y, cw, 20 * S);
                 Raylib.DrawRectangleRounded(chip, 0.4f, 4, got ? new Color(40, 90, 60, 255) : new Color(40, 44, 54, 255));
                 Gui.Label(i.Name, cx + 7 * S, y + 2 * S, 13, got ? Gui.Text : Gui.TextDim);
