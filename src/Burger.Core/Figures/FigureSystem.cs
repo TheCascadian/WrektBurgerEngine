@@ -102,7 +102,7 @@ public sealed class FigureSystem
         if (!_models.TryGetValue(bodyKey, out var body)) _models[bodyKey] = body = HumanMale.BuildVariant(human, look);
         if (baseKey.Equals(HumanMale.Key, StringComparison.OrdinalIgnoreCase)) return body;
         if (!_outfits.TryGetValue(baseKey, out var outfit) || !outfit.Body.Equals(HumanMale.Key, StringComparison.OrdinalIgnoreCase)) return null;
-        var model = SoldierGear.Compose(key, body, outfit.Pieces.Select(p => _models.GetValueOrDefault(p) ?? (SoldierGear.Fallback(p) is { } fb ? _models.GetValueOrDefault(fb) : null)).OfType<FigureModel>());
+        var model = SoldierGear.Compose(key, body, OutfitParts(baseKey, outfit.Pieces));
         _models[key] = model;
         return model;
     }
@@ -133,16 +133,22 @@ public sealed class FigureSystem
         Version++;
     }
 
+    /// <summary>The models of an outfit's pieces, plus a country's own weapon or shield (gear_spear_&lt;tag&gt;.glb, gear_shield_&lt;tag&gt;.glb) when the file exists.</summary>
+    private List<FigureModel> OutfitParts(string outfitKey, IEnumerable<string> pieces)
+    {
+        var parts = pieces.Select(p => _models.GetValueOrDefault(p) ?? (SoldierGear.Fallback(p) is { } fb ? _models.GetValueOrDefault(fb) : null)).OfType<FigureModel>().ToList();
+        if (outfitKey.StartsWith(SoldierGear.Soldier + "_", StringComparison.OrdinalIgnoreCase))
+            foreach (string extra in new[] { "gear_spear", "gear_shield" })
+                if (_models.GetValueOrDefault(extra + outfitKey[SoldierGear.Soldier.Length..]) is { } e) parts.Add(e);
+        return parts;
+    }
+
     private void RebuildOutfits()
     {
         foreach (var (key, (body, pieces)) in _outfits)
         {
             if (!_models.TryGetValue(body, out var b)) continue;
-            var parts = pieces.Select(p => _models.GetValueOrDefault(p) ?? (SoldierGear.Fallback(p) is { } fb ? _models.GetValueOrDefault(fb) : null)).OfType<FigureModel>().ToList();
-            // a country's own weapon or shield (gear_spear_<tag>.glb, gear_shield_<tag>.glb) is carried on top of the kit when the file exists
-            if (key.StartsWith(SoldierGear.Soldier + "_", StringComparison.OrdinalIgnoreCase))
-                foreach (string extra in new[] { "gear_spear", "gear_shield" })
-                    if (_models.GetValueOrDefault(extra + key[SoldierGear.Soldier.Length..]) is { } e) parts.Add(e);
+            var parts = OutfitParts(key, pieces);
             _models[key] = SoldierGear.Compose(key, b, parts);
         }
     }

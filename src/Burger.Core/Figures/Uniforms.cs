@@ -108,10 +108,23 @@ public static class Uniforms
     public static string ClipFor(string tag, string clip, FigureModel model)
     {
         var u = Find(tag);
+        // the firing drill is only for soldiers who carry a firearm: anyone else with gear on (a spear, a sword) attacks in melee instead
+        if (clip == HumanMale.Fire && model.Parts.Count > 0 && !model.Parts.Any(IsFirearm))
+        {
+            var melee = new[] { HumanMale.Attack + "_" + tag.ToLowerInvariant(), model.Parts.Any(p => p.Contains("spear", StringComparison.OrdinalIgnoreCase)) ? HumanMale.AttackSpear : null, HumanMale.AttackSpear };
+            return melee.FirstOrDefault(c => c != null && model.Clips.ContainsKey(c)) ?? HumanMale.Idle;
+        }
         var candidates = new List<string?> { clip + "_" + tag.ToLowerInvariant(), clip == HumanMale.Fire ? u?.FireClip : null, clip };
         if (clip == HumanMale.Fire) candidates.Add(HumanMale.FireSide);
         return candidates.FirstOrDefault(c => c != null && model.Clips.ContainsKey(c)) ?? clip;
     }
+
+    /// <summary>Words in a gear piece's name that mark a firearm.</summary>
+    private static readonly string[] FirearmWords = { "rifle", "musket", "carbine", "pistol", "revolver", "handgun", "shotgun", "smg", "machinegun", "machine_gun", "arquebus", "blunderbuss", "flintlock", "matchlock", "firearm", "cannon", "mortar", "bazooka", "launcher", "sniper", "mauser", "garand", "kalashnikov", "ak47", "gun", "guns", "lmg", "mg" };
+
+    /// <summary>True when a gear piece's name (<c>gear_rifle_semi</c>, <c>gear_musket_fra</c>) names a firearm.</summary>
+    public static bool IsFirearm(string pieceName) =>
+        pieceName.Contains("rifle", StringComparison.OrdinalIgnoreCase) || pieceName.Split('_', '.', '-', ' ').Any(tok => FirearmWords.Contains(tok, StringComparer.OrdinalIgnoreCase));
 
     /// <summary>The key of the outfit a country's soldiers use (it exists only for countries with a uniform).</summary>
     public static string OutfitKey(string tag) => SoldierGear.Soldier + "_" + tag.ToLowerInvariant();

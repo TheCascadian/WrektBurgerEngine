@@ -63,6 +63,8 @@ public sealed class FigureModel
     public Rig Rig { get; }
     public FigureMesh Mesh { get; }
     public Dictionary<string, Clip> Clips { get; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Keys of the gear pieces this model was composed from (empty for a bare body). Weapons are told apart by these names.</summary>
+    public List<string> Parts { get; } = new();
     /// <summary>Height of the rest pose in metres (feet are at y = 0).</summary>
     public float Height { get; }
 

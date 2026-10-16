@@ -614,9 +614,11 @@ public static class SoldierGear
     public static FigureModel Compose(string key, FigureModel body, IEnumerable<FigureModel> pieces)
     {
         var meshes = new List<FigureMesh> { body.Mesh };
+        var parts = new List<string>();
         foreach (var piece in pieces)
-            if (SameRig(body.Rig, piece.Rig)) meshes.Add(piece.Mesh);
+            if (SameRig(body.Rig, piece.Rig)) { meshes.Add(piece.Mesh); parts.Add(piece.Key); }
         var model = new FigureModel(key, body.Rig, FigureMesh.Merge(meshes));
+        model.Parts.AddRange(parts);
         foreach (var clip in body.Clips.Values) model.Clips[clip.Name] = clip;
         return model;
     }
