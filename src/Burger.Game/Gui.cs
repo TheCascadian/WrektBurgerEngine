@@ -453,6 +453,11 @@ public static class Gui
             int ch;
             while ((ch = Raylib.GetCharPressed()) > 0)
                 if (value.Length < maxLength && ch >= 32) value += char.ConvertFromUtf32(ch);
+            if ((Raylib.IsKeyDown(KeyboardKey.LeftControl) || Raylib.IsKeyDown(KeyboardKey.RightControl) || Raylib.IsKeyDown(KeyboardKey.LeftSuper) || Raylib.IsKeyDown(KeyboardKey.RightSuper)) && Raylib.IsKeyPressed(KeyboardKey.V))
+            {
+                foreach (char c in Raylib.GetClipboardText_() ?? "")
+                    if (value.Length < maxLength && c >= ' ' && c != '\u007f') value += c;
+            }
             if ((Raylib.IsKeyPressed(KeyboardKey.Backspace) || Raylib.IsKeyPressedRepeat(KeyboardKey.Backspace)) && value.Length > 0) value = value[..^1];
             if (Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.KpEnter) || Raylib.IsKeyPressed(KeyboardKey.Escape)) _focusedField = null;
         }

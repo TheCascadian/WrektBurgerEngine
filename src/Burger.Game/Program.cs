@@ -14,6 +14,7 @@ public sealed class AppOptions
     public int Width = 1600;
     public int Height = 900;
     public bool Hidden;
+    public string? HostTag, JoinCode;
     /// <summary>Take a screenshot after this many frames and quit (for automated tests).</summary>
     public string? Screenshot;
     public int ScreenshotFrame = 120;
@@ -51,6 +52,8 @@ public static class Program
   --game       game folder (default: 'game' next to the exe)
   --tag        skip the menu and play as TAG
   --observe    skip the menu and watch the AI
+  --host TAG   skip the menu and host a multiplayer game as TAG (the join code is written to the console)
+  --join CODE  skip the menu and join a multiplayer game
   --load       load a save file
   --log-dir <folder>     write error.log and --perf output to this folder
   --monitor N  open the window on monitor N (0 = first); BURGER_MONITOR does the same
@@ -78,6 +81,8 @@ public static class Program
                     case "--log-dir": opt.LogDir = Path.GetFullPath(Next()); break;
                     case "--tag": opt.Tag = Next().ToUpperInvariant(); break;
                     case "--observe": opt.Observe = true; break;
+                    case "--host": opt.HostTag = Next().ToUpperInvariant(); break;
+                    case "--join": opt.JoinCode = Next(); break;
                     case "--load": opt.LoadSave = Next(); break;
                     case "--screenshot": opt.Screenshot = Path.GetFullPath(Next()); break;
                     case "--frames": opt.ScreenshotFrame = int.Parse(Next()); break;

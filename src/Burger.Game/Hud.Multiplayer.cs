@@ -56,10 +56,21 @@ public sealed partial class Hud
         int lines = Math.Min(6, chat.Count);
         bool picking = mp.Me != null && mp.Me.Tag.Length == 0;
         float rows = mp.Players.Count * 24 * s;
-        float h = 30 * s + rows + 8 * s + lines * 18 * s + 34 * s + (picking ? 190 * s : 0);
+        var mpc = _app.Mpc;
+        bool invite = mp.IsHost && mpc.LanCode.Length > 0;
+        float inviteH = invite ? (40 + (mpc.InternetCode.Length > 0 ? 28 : 0) + 28 + 6) * s : 0;
+        float h = 30 * s + inviteH + rows + 8 * s + lines * 18 * s + 34 * s + (picking ? 190 * s : 0);
         var r = new Rectangle(sw - w - 6 * s, toggle.Y - h - 4 * s, w, h);
         Gui.Panel(r, mp.IsHost ? "Players (host)" : "Players");
         float x = r.X + 10 * s, y = r.Y + 30 * s;
+        if (invite)
+        {
+            Gui.Wrapped(mpc.NetworkStatus, x, y, w - 20 * s, 12, mpc.InternetCode.Length > 0 ? Gui.Good : Gui.TextDim);
+            y += 40 * s;
+            if (mpc.InternetCode.Length > 0) { InviteRow(x, ref y, w, "Internet", mpc.InternetCode); }
+            InviteRow(x, ref y, w, "Network", mpc.LanCode);
+            y += 6 * s;
+        }
         foreach (var p in mp.Players)
         {
             var c = p.Tag.Length > 0 ? G.World.GetCountry(p.Tag) : null;
@@ -102,5 +113,17 @@ public sealed partial class Hud
         Gui.TextField("mp-chat", new Rectangle(x, y + 4 * s, w - 20 * s, 24 * s), ref _chatText, 120, "Chat (Enter sends)");
         if (was && (Raylib.IsKeyPressed(KeyboardKey.Enter) || Raylib.IsKeyPressed(KeyboardKey.KpEnter)) && _chatText.Trim().Length > 0) { mp.SendChat(_chatText.Trim()); _chatText = ""; }
         Gui.Block(r);
+    }
+
+    private void InviteRow(float x, ref float y, float w, string label, string code)
+    {
+        float s = S;
+        Gui.Label(code, x, y + 5 * s, 12, Gui.Gold);
+        if (Gui.Button(new Rectangle(x + w - 20 * s - 96 * s, y, 96 * s, 24 * s), "Copy " + label.ToLowerInvariant(), true, label + " join code: copies it, then send it to your friend. Anyone with this code can join.", false, 13))
+        {
+            Raylib.SetClipboardText(code);
+            Ui.SetStatus(label + " join code copied");
+        }
+        y += 28 * s;
     }
 }

@@ -11,8 +11,8 @@ public sealed partial class App
     private readonly MpController _mpc = new();
     public LockstepSession? Mp => _mpc.Session;
     public List<string> MpChat => _mpc.Log;
-    private string _joinCode = "", _joinName = Environment.UserName, _mpMessage = "";
-    private bool _joinOpen;
+    private string _joinCode = "", _mpMessage = "";
+    public MpController Mpc => _mpc;
     private bool _mpWired;
     private string Project => Path.GetFileName(Path.GetFullPath(_gameRoot).TrimEnd('/', '\\'));
 
@@ -48,68 +48,55 @@ public sealed partial class App
         LoadGame(keepMap: true, seed: seed);
         if (Game == null) return;
         Game.StartNewGame(null);
-        string code = _mpc.Host(Game, Project, seed, _joinName);
+        var relayCfg = RelayConfig.Load();
+        var kind = TransportSelector.ForHost(SteamService.Init(), relayCfg != null);
+        bool steam = kind == TransportKind.SteamSdr;
+        // with Steam the internet path is Steam's relay network: no router change, no address in the code; otherwise fall back to router and relay
+        _mpc.Host(Game, Project, seed, UserSettings.EffectiveName, openRouter: !steam && UserSettings.OpenRouter, relay: kind == TransportKind.Relay ? relayCfg : null);
+        if (steam)
+        {
+            try { var sh = new SteamHost(); _mpc.UsePlatform(sh, sh.Code, "Online through Steam"); }
+            catch (Exception e) { Burger.Core.Log.Warn($"Steam hosting failed ({e.GetType().Name})", "multiplayer"); }
+        }
         EnterPlaying();
         if (tag != null) Mp!.Pick(tag);
-        Ui.SetStatus("Hosting. Join code " + code + " (paused: press Space to start)");
+        Ui.SetStatus("Hosting. Invite players from the Multiplayer panel (paused: press Space to start)");
     }
 
     public void JoinMultiplayer(string code, string name)
     {
         WireController();
-        _mpc.Join(code, name, (project, seed) =>
+        Func<string, int, Game> load = (project, seed) =>
         {
             if (project != Project) throw new InvalidDataException($"this machine has '{Project}', the host plays '{project}'");
             var g = Game.Load(_gameRoot, compileScripts: true, seed: seed);
             g.StartNewGame(null);
             return g;
-        });
+        };
+        if (TransportSelector.ForCode(code) == TransportKind.SteamSdr && Burger.Core.Multiplayer.SteamCode.TryParse(code, out ulong hostId, out var secret))
+        {
+            if (!SteamService.Init()) { _mpMessage = SteamService.Problem; return; }
+            try { _mpc.JoinLink(SteamJoin.Connect(hostId, secret), name, load); _mpMessage = _mpc.Message; }
+            catch (Exception e) { _mpMessage = e is InvalidDataException ? e.Message : "Cannot connect through Steam."; }
+            return;
+        }
+        else _mpc.Join(code, name, load);
         _mpMessage = _mpc.Message;
     }
 
     public void MpStop() => _mpc.Stop();
 
+    private bool _codePrinted;
+
     private void MpPump(float dt)
     {
         if (_mpc.Session == null) return;
+        if (_opt.HostTag != null && !_codePrinted && _mpc.InternetCode.Length > 0) { _codePrinted = true; Console.WriteLine("host: internet " + _mpc.InternetCode); }
         if (!_mpc.Pump(dt))
         {
             _mpMessage = _mpc.Message;
-            if (_screen == AppScreen.Playing) _screen = AppScreen.Menu;
+            if (_screen == AppScreen.Playing) { _menuPage = MenuPage.Multiplayer; _pending = () => LoadGame(keepMap: true); }
         }
         else if (_mpc.Message != "" ) _mpMessage = _mpc.Message;
-    }
-
-    private void DrawMenuMultiplayer(float x, float y, float w, float half, float bh)
-    {
-        float s = Gui.Scale;
-        if (Gui.Button(new Rectangle(x, y, half, bh), "Host game", _menuSelection != null, "Others join with a code; you play the selected country")) { HostMultiplayer(_menuSelection!.Tag); Gui.EndFrame(); Raylib.EndDrawing(); return; }
-        if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Join game", true, "Enter a join code")) _joinOpen = !_joinOpen;
-    }
-
-    private void DrawMenuJoin()
-    {
-        float s = Gui.Scale;
-        if (_joinOpen)
-        {
-            var r = new Rectangle(460 * s, 30 * s, 420 * s, 200 * s);
-            Gui.Panel(r, "Join a game");
-            float x = r.X + 16 * s, y = r.Y + 40 * s, w = r.Width - 32 * s;
-            Gui.Label("Your name", x, y, 14, Gui.TextDim);
-            Gui.TextField("mp-name", new Rectangle(x, y + 20 * s, w, 28 * s), ref _joinName, 24, "Name");
-            y += 58 * s;
-            Gui.Label("Join code (XXXXX-XXXXX)", x, y, 14, Gui.TextDim);
-            Gui.TextField("mp-code", new Rectangle(x, y + 20 * s, w, 28 * s), ref _joinCode, 16, "Code");
-            y += 58 * s;
-            if (Gui.Button(new Rectangle(x, y, w, 32 * s), "Connect", _joinCode.Length > 0)) JoinMultiplayer(_joinCode, _joinName);
-            Gui.Block(r);
-        }
-        if (_mpMessage.Length > 0 && _screen == AppScreen.Menu)
-        {
-            float w = Gui.Measure(_mpMessage, 16).X + 24 * s;
-            var r = new Rectangle(460 * s, Raylib.GetScreenHeight() - 50 * s, w, 32 * s);
-            Gui.Panel(r);
-            Gui.Label(_mpMessage, r.X + 12 * s, r.Y + 7 * s, 16, Gui.Gold);
-        }
     }
 }

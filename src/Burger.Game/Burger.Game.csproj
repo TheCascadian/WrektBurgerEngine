@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="7.0.2" />
+    <PackageReference Include="Steamworks.NET" Version="2024.8.0" />
     <ProjectReference Include="..\Burger.Core\Burger.Core.csproj" />
     <!-- the project's locked game code, only when exporting (burger export passes BackendDir) -->
     <ProjectReference Include="..\Burger.Backend\Burger.Backend.csproj" Condition="'$(BackendDir)' != ''" />

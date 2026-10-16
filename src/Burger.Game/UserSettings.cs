@@ -32,6 +32,13 @@ public static class UserSettings
     /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>
     public static double Speed1DaysPerSecond;
 
+    /// <summary>The name other players see in multiplayer.</summary>
+    public static string PlayerName = "";
+    /// <summary>Hosting opens the router's port by itself (UPnP). Off: only players on the same network can join.</summary>
+    public static bool OpenRouter = true;
+
+    public static string EffectiveName => PlayerName.Trim().Length > 0 ? PlayerName.Trim() : Environment.UserName;
+
     private static string PathOf => System.IO.Path.Combine(AppContext.BaseDirectory, "settings.cfg");
 
     public static void Load()
@@ -42,6 +49,7 @@ public static class UserSettings
             foreach (var raw in File.ReadAllLines(PathOf))
             {
                 var parts = raw.Split('=', 2, StringSplitOptions.TrimEntries);
+                if (parts.Length == 2 && parts[0] == "player_name") { PlayerName = parts[1].Length > 24 ? parts[1][..24] : parts[1]; continue; }
                 if (parts.Length != 2 || !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var v)) continue;
                 if (parts[0] == "speed5_days_per_second") Speed5DaysPerSecond = Math.Max(0, v);
                 else if (parts[0] == "historical_bias") HistoricalBias = Math.Clamp(v, 0, 1);
@@ -50,6 +58,7 @@ public static class UserSettings
                 else if (parts[0] == "portrait_sound") PortraitSound = v != 0;
                 else if (parts[0] == "globe_mode") GlobeMode = v != 0;
                 else if (parts[0] == "sun_cycle") SunCycle = v != 0;
+                else if (parts[0] == "open_router") OpenRouter = v != 0;
                 else if (parts[0] == "speed1_days_per_second") Speed1DaysPerSecond = Math.Max(0, v);
             }
         }
@@ -69,6 +78,8 @@ public static class UserSettings
                 $"portrait_sound = {(PortraitSound ? 1 : 0)}",
                 $"globe_mode = {(GlobeMode ? 1 : 0)}",
                 $"sun_cycle = {(SunCycle ? 1 : 0)}",
+                $"player_name = {PlayerName.Replace('\n', ' ').Replace('\r', ' ')}",
+                $"open_router = {(OpenRouter ? 1 : 0)}",
                 $"speed1_days_per_second = {Speed1DaysPerSecond.ToString("0.####", CultureInfo.InvariantCulture)}",
             });
         }

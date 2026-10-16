@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Burger.Game (Steam test app 480)": {
+      "commandName": "Project",
+      "environmentVariables": { "SteamAppId": "480" }
+    }
+  }
+}

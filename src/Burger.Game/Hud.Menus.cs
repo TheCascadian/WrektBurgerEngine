@@ -32,11 +32,12 @@ public sealed partial class Hud
     /// <summary>Settings: the most days per second speed 5 may run (0 = as fast as the computer allows).</summary>
     private void DrawSettingsPanel()
     {
-        float w = 420 * S, h = 560 * S;
+        float w = 840 * S, h = 560 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
         Gui.Panel(r, "Settings");
         if (Gui.CloseButton(r)) { Ui.SettingsOpen = false; UserSettings.Save(); return; }
-        float x = r.X + 20 * S, y = r.Y + 46 * S, bw = w - 40 * S;
+        float x = r.X + 20 * S, y = r.Y + 46 * S, bw = 380 * S;
+        DrawMultiplayerSettings(r.X + 440 * S, r.Y + 46 * S, 380 * S);
         if (_speed5Text.Length == 0) _speed5Text = UserSettings.Speed5DaysPerSecond.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
         Gui.Label("Speed 5: most days per second", x, y, 16);
         y += 26 * S;
@@ -103,6 +104,30 @@ public sealed partial class Hud
         }
         y += 44 * S;
         if (Gui.Button(new Rectangle(x, y, bw, 34 * S), "Done")) { Ui.SettingsOpen = false; UserSettings.Save(); }
+    }
+
+    /// <summary>Settings page for the main menu (the same panel as in the pause menu).</summary>
+    public void DrawSettings() => DrawSettingsPanel();
+
+    private void DrawMultiplayerSettings(float x, float y, float w)
+    {
+        Gui.Label("Multiplayer", x, y, 16, Gui.Gold);
+        y += 28 * S;
+        Gui.Label("Your name (shown to other players)", x, y, 14, Gui.TextDim);
+        y += 20 * S;
+        string name = UserSettings.PlayerName;
+        if (Gui.TextField("mp-setting-name", new Rectangle(x, y, w, 30 * S), ref name, 24, UserSettings.EffectiveName)) UserSettings.PlayerName = name;
+        UserSettings.PlayerName = name;
+        y += 44 * S;
+        if (Gui.Button(new Rectangle(x, y, w, 32 * S), UserSettings.OpenRouter ? "Hosting: open the router automatically" : "Hosting: same network only", true,
+                "On: when you host, the game asks your router to let friends in from the internet, and closes it again when you stop. No router settings needed.\nOff: only players on your own network can join.",
+                UserSettings.OpenRouter, 15))
+        {
+            UserSettings.OpenRouter = !UserSettings.OpenRouter;
+            UserSettings.Save();
+        }
+        y += 38 * S;
+        Gui.Label("Your address is only ever inside a join code you hand out.", x, y, 13, Gui.TextDim);
     }
 
     private bool _saveCacheValid;

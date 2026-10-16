@@ -69,6 +69,8 @@ public sealed partial class App
 
         LoadGame();
         if (Game != null && _opt.LoadSave != null) DoLoadSave(_opt.LoadSave);
+        else if (Game != null && _opt.HostTag != null) { HostMultiplayer(_opt.HostTag); Console.WriteLine("host: lan " + _mpc.LanCode); }
+        else if (Game != null && _opt.JoinCode != null) { _menuPage = MenuPage.Join; _joinCode = _opt.JoinCode; JoinMultiplayer(_joinCode, UserSettings.EffectiveName); }
         else if (Game != null && (_opt.Tag != null || _opt.Observe)) StartGame(_opt.Observe ? null : _opt.Tag);
         _perfDay = Game?.World.Date.TotalDays ?? 0;
 
@@ -84,6 +86,7 @@ public sealed partial class App
             if (Game != null) Gui.CheckTheme(Game.Interface.Theme);
             Gui.Scale = Gui.ScaleFor(Raylib.GetScreenHeight());
             Gui.BeginFrame();
+            SteamService.Pump();
             MpPump(dt);
             switch (_screen)
             {
@@ -106,6 +109,8 @@ public sealed partial class App
         Figures?.Dispose();
         Particles?.Dispose();
         Media.Shutdown();
+        MpStop();
+        SteamService.Shutdown();
         Raylib.CloseWindow();
     }
 
@@ -403,7 +408,7 @@ public sealed partial class App
 
     /// <summary>Reloads all game files and shows the main menu (runs between frames).</summary>
     /// <summary>Back to the main menu with a fresh world. The map's terrain, textures and shader are kept, only the game is read again.</summary>
-    public void ReturnToMainMenu() => _pending = () => LoadGame(keepMap: true);
+    public void ReturnToMainMenu() => _pending = () => { MpStop(); _menuPage = MenuPage.Home; LoadGame(keepMap: true); };
 
     /// <summary>Reads every game file again and rebuilds the map too (the Reload files button).</summary>
     public void ReloadFiles() => _pending = () => LoadGame();
@@ -721,81 +726,7 @@ public sealed partial class App
         }
         if (hovered != null && !Gui.MouseOverUi) DrawHoverInfo(hovered);
 
-        float s = Gui.Scale;
-        int sh = Raylib.GetScreenHeight();
-        var panel = new Rectangle(16 * s, 16 * s, 420 * s, sh - 32 * s);
-        Gui.Panel(panel);
-        float x = panel.X + 18 * s, y = panel.Y + 16 * s, w = panel.Width - 36 * s;
-        Gui.LabelShadow(game.Data.Info.Name, x, y, 32, Gui.Gold, FontKind.Header);
-        y += 40 * s;
-        string sub = $"Version {game.Data.Info.Version}" + (game.Data.Info.Author.Length > 0 ? $" - by {game.Data.Info.Author}" : "");
-        Gui.Label(sub, x, y, 15, Gui.TextDim);
-        y += 24 * s;
-        if (game.Data.Info.Description.Length > 0) y += Gui.Wrapped(game.Data.Info.Description, x, y, w, 15, Gui.Text) + 6 * s;
-        Gui.Label($"Start date: {game.World.Date.ToDisplay()}", x, y, 15, Gui.TextDim);
-        y += 26 * s;
-        if (Log.ErrorCount > 0)
-        {
-            if (Gui.Button(new Rectangle(x, y, w, 26 * s), $"{Log.ErrorCount} error(s), {Log.WarningCount} warning(s) - view log", true, "Problems found in the game files", false, 14))
-                Ui.ErrorsOpen = !Ui.ErrorsOpen;
-            y += 32 * s;
-        }
-
-        Gui.Label("Choose a country (or click it on the map):", x, y, 16);
-        y += 26 * s;
-        var playable = game.World.Countries.Where(c => c.Playable && c.Exists).OrderBy(c => c.Name).ToList();
-        float listH = panel.Y + panel.Height - y - 296 * s;
-        var countryList = new Rectangle(x, y, w, Math.Max(40 * s, listH));
-        float top = Gui.BeginScroll("menu-countries", countryList, playable.Count * 40 * s);
-        float cy = top;
-        foreach (var c in playable)
-        {
-            var row = new Rectangle(x, cy, w - 10 * s, 36 * s);
-            bool sel = c == _menuSelection;
-            Gui.ButtonFrame(row, true, Gui.Hover(row), sel);
-            Gui.Flag(c, new Rectangle(row.X + 4, row.Y + 4, 42 * s, 28 * s));
-            Gui.Label(c.Name, row.X + 54 * s, row.Y + 8 * s, 17, sel ? Color.White : Gui.Text, FontKind.Bold);
-            // Scissor mode clips drawing, not mouse hit testing. Ignore rows
-            // outside the visible list so they cannot steal Play/Quit clicks.
-            if (Raylib.CheckCollisionRecs(row, countryList) && Gui.Clicked(row))
-            {
-                _menuSelection = c;
-                if (c.Capital != null) cam.LookAt(map.LocationPos(c.Capital));
-            }
-            cy += 40 * s;
-        }
-        Gui.EndScroll();
-        y += listH + 10 * s;
-
-        if (_menuSelection != null)
-        {
-            var c = _menuSelection;
-            Gui.Flag(c, new Rectangle(x, y, 60 * s, 40 * s));
-            Gui.LabelShadow(c.Name, x + 70 * s, y, 21, Gui.Gold, FontKind.Header);
-            Gui.Label($"{c.OwnedStates.Count} states - ruler: {c.Ruler?.DisplayName ?? "none"}", x + 70 * s, y + 24 * s, 14, Gui.TextDim);
-            y += 50 * s;
-        }
-        float bh = 36 * s;
-        if (Gui.Button(new Rectangle(x, y, w, bh), _menuSelection != null ? $"Play as {_menuSelection.Name}" : "Select a country", _menuSelection != null, null, false, 18))
-        {
-            StartGame(_menuSelection!.Tag);
-            Gui.EndFrame();
-            Raylib.EndDrawing();
-            return;
-        }
-        y += bh + 6 * s;
-        float half = (w - 6 * s) / 2;
-        if (Gui.Button(new Rectangle(x, y, half, bh), "Observe", true, "Watch the AI play")) { StartGame(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
-        if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Load game", ListSaves().Count > 0)) Ui.SaveMenuOpen = !Ui.SaveMenuOpen;
-        y += bh + 6 * s;
-        if (Gui.Button(new Rectangle(x, y, half, bh), "Reload files", true, "Re-read all game files (after editing them)")) ReloadFiles();
-        if (Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Quit")) _quit = true;
-        y += bh + 6 * s;
-        DrawMenuMultiplayer(x, y, w, half, bh);
-
-        if (Ui.ErrorsOpen) DrawMenuErrors();
-        if (Ui.SaveMenuOpen) DrawMenuSaves();
-        DrawMenuJoin();
+        DrawMenuPages(game, map, cam);
         Gui.EndFrame();
         Raylib.EndDrawing();
     }
