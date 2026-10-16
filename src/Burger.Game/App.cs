@@ -316,6 +316,7 @@ public sealed partial class App
     private void StartGame(string? tag)
     {
         if (Game == null) return;
+        Game.Exploration.SetEnabled(tag != null && UserSettings.TerraIncognita && Game.Exploration.Allowed);
         Game.StartNewGame(tag);
         EnterPlaying();
     }
@@ -649,8 +650,9 @@ public sealed partial class App
 
     private void DrawHoverInfo(Location l)
     {
-        string text = l.DisplayName;
-        if (l.IsLand)
+        bool unknown = Game != null && !Game.Exploration.IsCharted(l);
+        string text = unknown ? "Terra incognita" : l.DisplayName;
+        if (l.IsLand && !unknown)
         {
             text += l.State != null ? $" ({l.State.DisplayName})" : "";
             if (l.Owner != null) text += $" - {l.Owner.Name}";
@@ -705,6 +707,7 @@ public sealed partial class App
             extra = reason == null ? $"Click to train {Ui.RecruitTemplate.Name} here" : $"Cannot train here: {reason}";
             if (reason != null) extraColor = Gui.Bad;
         }
+        if (unknown) { extra = l.IsWater ? "Uncharted waters" : "Unexplored by your people"; extraColor = Gui.TextDim; }
         var m = Gui.Measure(text, 15);
         var m2 = extra.Length > 0 ? Gui.Measure(extra, 14) : Vector2.Zero;
         float x = Gui.Mouse.X + 16, y = Gui.Mouse.Y + 18;

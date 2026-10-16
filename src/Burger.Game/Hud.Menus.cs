@@ -9,7 +9,7 @@ public sealed partial class Hud
     {
         G.Clock.Paused = true;
         Raylib.DrawRectangle(0, 0, Raylib.GetScreenWidth(), Raylib.GetScreenHeight(), new Color(0, 0, 0, 120));
-        if (Ui.SettingsOpen) { DrawSettingsPanel(); return; }
+        if (Ui.SettingsOpen) { _settingsInGame = true; DrawSettingsPanel(); return; }
         float w = 300 * S, h = 380 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
         Gui.Panel(r, "Menu");
@@ -28,11 +28,14 @@ public sealed partial class Hud
     }
 
     private string _speed5Text = "", _speed1Text = "";
+    /// <summary>The settings panel is open from the pause menu of a running game (not from the main menu).</summary>
+    private bool _settingsInGame;
 
     /// <summary>Settings: the most days per second speed 5 may run (0 = as fast as the computer allows).</summary>
     private void DrawSettingsPanel()
     {
-        float w = 840 * S, h = 560 * S;
+        if (Ui.TerraConfirmOpen) { DrawTerraConfirm(); return; }
+        float w = 840 * S, h = 620 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
         Gui.Panel(r, "Settings");
         if (Gui.CloseButton(r)) { Ui.SettingsOpen = false; UserSettings.Save(); return; }
@@ -104,11 +107,43 @@ public sealed partial class Hud
             UserSettings.Save();
         }
         y += 44 * S;
+        if (G.Exploration.Allowed && (!_settingsInGame || G.World.Player != null))
+        {
+            bool on = _settingsInGame ? G.Exploration.Enabled : UserSettings.TerraIncognita;
+            string tip = _settingsInGame
+                ? "On: lands your nation has never seen stay an unknown chart; explore with armies and ships.\nTurning it off reveals the whole map and asks first. Turning it on again hides what was never charted."
+                : "On: lands your nation has never seen stay an unknown chart. Applies to new games; each game keeps its own choice.";
+            if (Gui.Button(new Rectangle(x, y, bw, 32 * S), on ? "Terra incognita: on" : "Terra incognita: off", true, tip, on, 15))
+            {
+                if (!_settingsInGame) { UserSettings.TerraIncognita = !UserSettings.TerraIncognita; UserSettings.Save(); }
+                else if (on) Ui.TerraConfirmOpen = true;
+                else G.Exploration.SetEnabled(true);
+            }
+            y += 44 * S;
+        }
         if (Gui.Button(new Rectangle(x, y, bw, 34 * S), "Done")) { Ui.SettingsOpen = false; UserSettings.Save(); }
     }
 
     /// <summary>Settings page for the main menu (the same panel as in the pause menu).</summary>
-    public void DrawSettings() => DrawSettingsPanel();
+    public void DrawSettings() { _settingsInGame = false; DrawSettingsPanel(); }
+
+    /// <summary>Asks before the unknown lands are revealed: terra incognita is the intended way to play, so this is a soft rule, not a lock.</summary>
+    private void DrawTerraConfirm()
+    {
+        float w = 480 * S, h = 292 * S;
+        var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, (Raylib.GetScreenHeight() - h) / 2, w, h);
+        Gui.Panel(r, "Reveal the whole map?");
+        float x = r.X + 20 * S, y = r.Y + 44 * S, tw = w - 40 * S;
+        y += Gui.Wrapped("Terra incognita is the intended way to play: the world beyond your borders stays unknown until your armies and ships chart it, and settling new lands is a discovery.", x, y, tw, 15, Gui.Text) + 10 * S;
+        y += Gui.Wrapped("Switching it off shows every land, sea and nation at once. What you have already charted stays charted, and you can switch it back on later.", x, y, tw, 14, Gui.TextDim) + 10 * S;
+        float by = r.Y + h - 52 * S, half = (tw - 8 * S) / 2;
+        if (Gui.Button(new Rectangle(x, by, half, 36 * S), "Keep exploring", true, null, true, 16)) Ui.TerraConfirmOpen = false;
+        if (Gui.Button(new Rectangle(x + half + 8 * S, by, half, 36 * S), "Reveal the map", true, "Switch terra incognita off for this game", false, 16))
+        {
+            G.Exploration.SetEnabled(false);
+            Ui.TerraConfirmOpen = false;
+        }
+    }
 
     private void DrawGraphicsSettings(float x, float y, float w)
     {

@@ -52,6 +52,8 @@ public sealed class UiState
     public bool EditorActive;
     public bool PauseMenuOpen;
     public bool SettingsOpen;
+    /// <summary>Asking whether to switch terra incognita off for the running game.</summary>
+    public bool TerraConfirmOpen;
     public bool SaveMenuOpen;
     public PeaceDraft? Peace;
     public string Status = "";

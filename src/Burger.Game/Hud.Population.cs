@@ -349,7 +349,8 @@ public sealed partial class Hud
             }
             else
             {
-                var reason = P.CannotColonize(player, st);
+                var reason = G.Exploration.Enabled && !st.Locations.Any(l => l.IsLand && G.Exploration.IsCharted(l))
+                    ? "Terra incognita: chart this land first (send a fleet or an army)" : P.CannotColonize(player, st);
                 string cost = P.ColonizeCost > 0 ? $" ({P.ColonizeCost:0} gold)" : "";
                 if (Gui.Button(new Rectangle(x, y, w, 26 * S), "Send colonists" + cost, reason == null,
                         reason ?? "Colonists settle the land over the next years (they cost gold every month); natives may resist. Then it becomes your state.", false, 14))

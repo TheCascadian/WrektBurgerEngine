@@ -25,6 +25,12 @@ public class VisionRules
     /// <summary>How many steps around owned or controlled land is visible.</summary>
     public virtual int BorderSight(Game game, Country viewer) => 1;
 
+    /// <summary>How many steps around a fleet it charts for terra incognita (the sea horizon is wider than a march).</summary>
+    public virtual int FleetSight(Game game, Fleet f) => 2;
+
+    /// <summary>How many steps around the lands we own are known from the start (terra incognita begins just beyond).</summary>
+    public virtual int HomeSight(Game game, Country viewer) => 2;
+
     /// <summary>Visibility of every location (index = Location.Index) for a viewer.</summary>
     public virtual bool[] Compute(Game game, Country viewer)
     {

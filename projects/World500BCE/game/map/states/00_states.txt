@@ -603,7 +603,7 @@ adena_ohio_valley_1 = {
 	locations = { land_10983 land_12386 land_15464 land_10794 land_13249 land_11071 land_12234 land_11399 land_15377 land_10887 land_09863 land_12558 land_09780 land_12932 land_10980 land_10454 land_10694 land_12120 land_11525 land_14580 land_13256 land_09952 land_13487 land_13201 land_10806 land_13958 land_13612 land_13289 land_15541 land_13700 land_12791 land_12722 land_11393 land_10521 land_14162 land_12427 land_11615 land_10466 }
 }
 mesoamerican_maize_farmers_1 = {
-	name = "Mesoamerican maize farmers 1"
+	name = "Mesoamerican Maize Farmers 1"
 	manpower = 9
 	tax = 1.2
 	locations = { land_10743 land_11417 land_12843 land_12520 land_10287 land_13162 land_14242 land_10578 land_13878 land_11234 land_11059 land_11862 land_09901 land_14608 land_10252 land_15056 land_15467 land_10677 land_10234 land_12994 land_10216 land_11693 land_11735 land_13041 }
@@ -612,7 +612,7 @@ mesoamerican_maize_farmers_1 = {
 	}
 }
 mesoamerican_maize_farmers_2 = {
-	name = "Mesoamerican maize farmers 2"
+	name = "Mesoamerican Maize Farmers 2"
 	manpower = 8
 	tax = 1.1
 	locations = { land_11869 land_13600 land_14791 land_15031 land_13126 land_14672 land_12245 land_12808 land_11216 land_15171 land_13654 land_12496 land_09755 }
@@ -621,7 +621,7 @@ mesoamerican_maize_farmers_2 = {
 	}
 }
 mesoamerican_maize_farmers_3 = {
-	name = "Mesoamerican maize farmers 3"
+	name = "Mesoamerican Maize Farmers 3"
 	manpower = 14
 	tax = 1.6
 	locations = { land_12409 land_10960 land_13272 land_11177 land_14412 land_11994 land_13803 land_13037 land_11616 land_11275 land_13850 land_15355 land_15037 land_15139 land_10086 land_14821 land_11674 land_15006 land_14817 land_11416 land_13622 land_12104 land_14130 }
@@ -630,7 +630,7 @@ mesoamerican_maize_farmers_3 = {
 	}
 }
 mesoamerican_maize_farmers_4 = {
-	name = "Mesoamerican maize farmers 4"
+	name = "Mesoamerican Maize Farmers 4"
 	manpower = 5
 	tax = 0.9
 	locations = { land_14071 land_12895 land_10127 land_15660 land_09851 land_14572 land_11592 }
@@ -639,7 +639,7 @@ mesoamerican_maize_farmers_4 = {
 	}
 }
 mesoamerican_maize_farmers_5 = {
-	name = "Mesoamerican maize farmers 5"
+	name = "Mesoamerican Maize Farmers 5"
 	manpower = 22
 	tax = 2.2
 	locations = { land_14809 land_11588 land_12751 land_15326 land_10024 land_12659 land_13785 land_10624 land_11547 land_14279 land_13795 land_12268 land_13911 land_13450 land_14890 land_11254 land_15149 land_10156 land_10461 land_11781 land_12787 land_14919 land_14393 land_12944 }
@@ -648,7 +648,7 @@ mesoamerican_maize_farmers_5 = {
 	}
 }
 mesoamerican_maize_farmers_6 = {
-	name = "Mesoamerican maize farmers 6"
+	name = "Mesoamerican Maize Farmers 6"
 	manpower = 11
 	tax = 1.4
 	locations = { land_13189 land_13046 land_15252 land_10139 land_15552 land_14763 land_14602 land_12244 land_12161 land_12738 land_15253 land_10482 land_14723 land_15471 land_13353 land_13690 land_10871 land_14688 land_12824 }
@@ -657,7 +657,7 @@ mesoamerican_maize_farmers_6 = {
 	}
 }
 mesoamerican_maize_farmers_7 = {
-	name = "Mesoamerican maize farmers 7"
+	name = "Mesoamerican Maize Farmers 7"
 	manpower = 19
 	tax = 2.1
 	locations = { land_12012 land_15090 land_13198 land_11394 land_10425 land_11934 land_14569 land_11851 land_13900 land_13697 land_11270 land_10564 land_09918 land_10481 land_14164 land_13375 land_14561 land_12337 land_12517 land_11608 land_15069 land_14483 land_11119 land_09878 land_10298 land_15656 land_12172 land_14927 land_14844 land_12002 land_13465 land_14831 land_15062 land_13350 land_14476 land_13650 land_10406 }
@@ -666,7 +666,7 @@ mesoamerican_maize_farmers_7 = {
 	}
 }
 mesoamerican_maize_farmers_8 = {
-	name = "Mesoamerican maize farmers 8"
+	name = "Mesoamerican Maize Farmers 8"
 	manpower = 12
 	tax = 1.4
 	locations = { land_12889 land_10435 land_11534 land_15512 land_11659 land_09860 land_13063 land_14549 land_15200 land_11033 land_10992 }
@@ -694,7 +694,7 @@ olmec_gulf_coast_1 = {
 	}
 }
 maya_lowlands_and_highlands_1 = {
-	name = "Maya lowlands and highlands 1"
+	name = "Maya Lowlands and Highlands 1"
 	owner = MAY
 	cores = { MAY }
 	manpower = 21
@@ -705,7 +705,7 @@ maya_lowlands_and_highlands_1 = {
 	}
 }
 maya_lowlands_and_highlands_2 = {
-	name = "Maya lowlands and highlands 2"
+	name = "Maya Lowlands and Highlands 2"
 	owner = MAY
 	cores = { MAY }
 	manpower = 5
@@ -716,7 +716,7 @@ maya_lowlands_and_highlands_2 = {
 	}
 }
 maya_lowlands_and_highlands_3 = {
-	name = "Maya lowlands and highlands 3"
+	name = "Maya Lowlands and Highlands 3"
 	owner = MAY
 	cores = { MAY }
 	manpower = 13
@@ -727,7 +727,7 @@ maya_lowlands_and_highlands_3 = {
 	}
 }
 maya_lowlands_and_highlands_4 = {
-	name = "Maya lowlands and highlands 4"
+	name = "Maya Lowlands and Highlands 4"
 	owner = MAY
 	cores = { MAY }
 	manpower = 11
@@ -738,7 +738,7 @@ maya_lowlands_and_highlands_4 = {
 	}
 }
 maya_lowlands_and_highlands_5 = {
-	name = "Maya lowlands and highlands 5"
+	name = "Maya Lowlands and Highlands 5"
 	owner = MAY
 	cores = { MAY }
 	manpower = 14
@@ -749,7 +749,7 @@ maya_lowlands_and_highlands_5 = {
 	}
 }
 central_american_maize_farmers_m13_1 = {
-	name = "Central American maize farmers 1"
+	name = "Central American Maize Farmers 1"
 	owner = OLM
 	cores = { OLM }
 	manpower = 19
@@ -760,7 +760,7 @@ central_american_maize_farmers_m13_1 = {
 	}
 }
 central_american_maize_farmers_m13_2 = {
-	name = "Central American maize farmers 2"
+	name = "Central American Maize Farmers 2"
 	manpower = 10
 	tax = 1.3
 	locations = { land_11809 land_15630 land_10937 land_15215 land_11491 land_14509 land_10162 land_13134 land_13674 land_12225 land_13245 land_10084 land_15414 land_09849 land_10915 land_10329 land_14353 land_10006 land_12761 land_12212 land_12775 land_11063 land_12526 land_12143 land_14718 land_10865 land_15028 land_10432 land_11295 land_09906 land_10589 land_13921 land_10257 land_14563 land_09870 land_10447 land_10844 land_14102 land_09815 land_10115 land_11181 land_14236 land_12261 land_11878 }
@@ -769,7 +769,7 @@ central_american_maize_farmers_m13_2 = {
 	}
 }
 central_american_maize_farmers_m201_1 = {
-	name = "Central American maize farmers"
+	name = "Central American Maize Farmers"
 	owner = OLM
 	cores = { OLM }
 	manpower = 1
@@ -780,7 +780,7 @@ central_american_maize_farmers_m201_1 = {
 	}
 }
 caribbean_islands_m13_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_12714 }
@@ -789,7 +789,7 @@ caribbean_islands_m13_1 = {
 	}
 }
 caribbean_islands_m143_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15946 land_15947 land_15948 }
@@ -798,7 +798,7 @@ caribbean_islands_m143_1 = {
 	}
 }
 caribbean_islands_m144_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15949 land_15938 }
@@ -807,7 +807,7 @@ caribbean_islands_m144_1 = {
 	}
 }
 caribbean_islands_m146_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 3
 	tax = 0.7
 	locations = { land_15953 land_15967 land_15958 land_15972 land_15963 land_15954 land_15968 land_15959 land_15973 land_15987 land_15964 land_15955 land_15969 land_15960 land_15965 land_15956 land_15970 land_15961 land_15966 land_15957 land_15971 land_15962 }
@@ -816,7 +816,7 @@ caribbean_islands_m146_1 = {
 	}
 }
 caribbean_islands_m147_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15952 }
@@ -825,7 +825,7 @@ caribbean_islands_m147_1 = {
 	}
 }
 caribbean_islands_m148_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15974 }
@@ -834,7 +834,7 @@ caribbean_islands_m148_1 = {
 	}
 }
 caribbean_islands_m152_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15977 land_15978 }
@@ -843,7 +843,7 @@ caribbean_islands_m152_1 = {
 	}
 }
 caribbean_islands_m155_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15983 land_15979 land_15984 land_15980 }
@@ -852,7 +852,7 @@ caribbean_islands_m155_1 = {
 	}
 }
 caribbean_islands_m159_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 2
 	tax = 0.7
 	locations = { land_16004 land_16009 land_16000 land_16014 land_16005 land_16010 land_16001 land_16015 land_16006 land_16011 land_16002 land_16016 land_16007 land_15998 land_16012 land_16003 land_16017 land_16008 land_15999 }
@@ -861,7 +861,7 @@ caribbean_islands_m159_1 = {
 	}
 }
 caribbean_islands_m161_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16013 }
@@ -870,7 +870,7 @@ caribbean_islands_m161_1 = {
 	}
 }
 caribbean_islands_m164_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16051 land_16052 land_16053 }
@@ -879,7 +879,7 @@ caribbean_islands_m164_1 = {
 	}
 }
 caribbean_islands_m165_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16055 land_16056 land_16057 land_16054 }
@@ -888,7 +888,7 @@ caribbean_islands_m165_1 = {
 	}
 }
 caribbean_islands_m168_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16062 }
@@ -897,7 +897,7 @@ caribbean_islands_m168_1 = {
 	}
 }
 caribbean_islands_m169_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16061 }
@@ -906,7 +906,7 @@ caribbean_islands_m169_1 = {
 	}
 }
 caribbean_islands_m171_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16063 }
@@ -915,7 +915,7 @@ caribbean_islands_m171_1 = {
 	}
 }
 caribbean_islands_m174_1 = {
-	name = "Caribbean islands"
+	name = "Caribbean Islands"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16067 }
@@ -924,13 +924,13 @@ caribbean_islands_m174_1 = {
 	}
 }
 amazon_basin_1 = {
-	name = "Amazon basin 1"
+	name = "Amazon Basin 1"
 	manpower = 13
 	tax = 1.5
 	locations = { land_13401 land_11186 land_12349 land_13415 land_14661 land_10877 land_10291 land_15381 land_12543 land_11094 land_10891 land_12017 land_14389 land_10665 land_12474 land_11062 land_14320 land_14620 land_14297 land_11113 land_11856 land_10038 land_11704 land_11561 land_12627 land_10675 land_10472 land_10089 land_10689 land_10929 land_13384 land_11672 land_11289 land_14810 land_11326 land_10117 land_11303 land_15267 land_11114 land_11977 land_12097 land_13906 land_14446 land_11105 land_10219 land_13740 land_10579 land_11885 land_14594 land_11756 land_11830 land_10501 land_12504 land_14770 land_11623 land_15324 land_11217 land_13672 land_10894 land_15098 land_10285 land_10848 land_14369 land_13820 land_13497 land_11402 land_12408 land_12528 land_11702 land_14254 land_15260 land_11093 land_14171 land_10507 land_15597 land_10101 land_13239 land_12510 land_10009 land_14979 land_14153 land_11315 land_13387 land_12058 land_14370 }
 }
 amazon_basin_2 = {
-	name = "Amazon basin 2"
+	name = "Amazon Basin 2"
 	manpower = 9
 	tax = 1.2
 	locations = { land_15473 land_14084 land_15007 land_11846 land_14421 land_12972 land_10065 land_13480 land_12945 land_15077 land_13665 land_15654 land_13619 land_09932 land_15262 land_12867 land_11695 land_11755 land_12858 land_13541 land_14547 land_10703 land_14667 land_13518 land_15027 land_15004 land_11963 land_15101 land_15401 land_12060 land_12180 land_14252 land_13486 land_12720 land_14469 land_11502 land_14520 land_13948 land_14811 land_13985 land_13602 land_12250 land_09749 land_10409 land_12864 land_13044 land_09883 land_10303 land_14664 land_15167 land_14784 land_12366 land_13372 land_10691 land_14835 land_14009 land_12980 land_14046 land_13077 land_12311 land_15066 land_12851 land_10373 land_13008 land_12782 land_15537 land_13382 land_12007 land_14942 land_14093 land_13424 }
@@ -939,13 +939,13 @@ amazon_basin_2 = {
 	}
 }
 amazon_basin_3 = {
-	name = "Amazon basin 3"
+	name = "Amazon Basin 3"
 	manpower = 12
 	tax = 1.5
 	locations = { land_15270 land_14444 land_11043 land_11906 land_11620 land_14103 land_11002 land_10716 land_13734 land_14860 land_10670 land_15197 land_11210 land_14288 land_14648 land_10301 land_11607 land_11667 land_10218 land_09895 land_11021 land_15488 land_13670 land_12258 land_13827 land_10523 land_13315 land_13435 land_10394 land_10957 land_14478 land_11700 land_11880 land_13929 land_14552 land_12314 land_11488 land_13620 land_15489 land_13454 land_13574 land_14820 land_13874 land_09970 land_13551 land_12176 land_09818 land_12273 land_11687 land_15651 land_15125 land_14359 land_15342 land_12001 land_10266 land_13021 land_11572 land_13764 land_12615 land_11443 land_15647 land_10105 land_14932 land_10585 land_13603 land_13280 land_10562 land_15089 land_13437 land_10539 land_11965 land_12708 land_10876 land_14374 land_11153 land_10484 land_14245 land_10918 land_10835 land_11015 land_11075 land_12081 land_14693 land_14167 land_10263 }
 }
 amazon_basin_4 = {
-	name = "Amazon basin 4"
+	name = "Amazon Basin 4"
 	manpower = 7
 	tax = 1.0
 	locations = { land_09977 land_12160 land_15155 land_11791 land_13028 land_14994 land_12013 land_12756 land_14888 land_13499 land_13716 land_11381 land_09969 land_15382 land_15336 land_12152 land_15613 land_12789 land_14358 land_14921 land_13786 land_10565 land_10782 land_15166 land_13302 land_10141 land_15148 land_14470 land_13524 land_12818 land_11489 land_10100 land_13838 land_12689 land_13875 land_11960 land_14895 land_12680 land_14323 land_10027 land_09801 land_11001 land_12127 land_13553 land_14679 land_15339 land_15579 }
@@ -954,13 +954,13 @@ amazon_basin_4 = {
 	}
 }
 amazon_basin_5 = {
-	name = "Amazon basin 5"
+	name = "Amazon Basin 5"
 	manpower = 13
 	tax = 1.5
 	locations = { land_14790 land_14970 land_13258 land_09857 land_12792 land_11080 land_13572 land_11777 land_12280 land_14855 land_14089 land_14832 land_12437 land_13623 land_13397 land_13171 land_10310 land_10347 land_12096 land_12719 land_12899 land_11187 land_12696 land_11247 land_12673 land_12853 land_10315 land_15405 land_10555 land_13301 land_12835 land_09997 land_10597 land_13689 land_12734 land_10016 land_11825 land_12425 land_13588 land_13768 land_10367 land_13888 land_14068 land_12356 land_10404 land_11410 land_13436 land_11521 land_13976 land_10289 land_12744 land_13164 land_11323 land_15361 land_15338 land_12657 land_12108 land_13354 land_12985 land_14711 land_15011 land_13682 land_13876 land_15039 land_13627 land_11089 land_15616 }
 }
 amazon_basin_6 = {
-	name = "Amazon basin 6"
+	name = "Amazon Basin 6"
 	manpower = 15
 	tax = 1.7
 	locations = { land_11832 land_12132 land_11689 land_13761 land_11726 land_09871 land_15081 land_14818 land_10471 land_11754 land_12797 land_14306 land_10462 land_13420 land_14223 land_11122 land_09793 land_12991 land_14800 land_10933 land_10730 land_13868 land_11773 land_14468 land_15082 land_12747 land_12424 land_10952 land_13970 land_10186 land_13144 land_11312 land_12618 land_11003 land_14464 land_14021 land_09854 land_13495 land_14501 land_13735 land_15364 land_10288 land_13726 land_15235 land_11834 land_11308 land_13597 land_10496 land_14017 land_12868 land_12485 land_12162 land_09767 land_11396 land_13625 land_15111 land_10884 land_11987 land_12610 land_14216 land_14719 land_11115 land_14673 land_11189 land_11729 land_10054 land_13575 land_10917 land_09971 land_12546 land_15158 land_13326 land_14420 land_13031 land_13894 land_10650 land_15117 land_14734 land_15251 land_13802 land_09935 land_13013 land_12187 land_12810 land_11361 land_13590 land_10226 land_11712 }
@@ -969,19 +969,19 @@ amazon_basin_6 = {
 	}
 }
 amazon_basin_7 = {
-	name = "Amazon basin 7"
+	name = "Amazon Basin 7"
 	manpower = 15
 	tax = 1.7
 	locations = { land_10480 land_12552 land_14121 land_11786 land_10591 land_11597 land_10328 land_11048 land_13683 land_11468 land_10582 land_12594 land_13660 land_10236 land_10190 land_13148 land_11353 land_14874 land_11473 land_14228 land_10827 land_11810 land_10361 land_10338 land_12770 land_14459 land_14136 land_13693 land_15202 land_13790 land_14150 land_10666 land_10343 land_11566 land_10177 land_14141 land_10740 land_15244 land_11017 land_12083 land_11137 land_10874 land_14695 land_13546 land_10828 land_14529 land_13943 land_13237 land_10962 land_15226 land_15526 land_13694 land_14760 land_13611 land_15623 land_13288 land_10007 land_15097 land_10750 land_11936 land_10224 land_12873 land_14922 land_12647 land_12707 land_10169 land_15379 land_15176 land_10829 land_12841 land_15416 land_14973 land_12592 land_10271 land_13529 land_12080 land_10525 land_14729 land_10922 land_11785 land_15366 land_10193 land_13631 land_14111 land_11130 land_12819 land_14185 land_10281 land_12856 land_14222 land_14776 }
 }
 amazon_basin_8 = {
-	name = "Amazon basin 8"
+	name = "Amazon Basin 8"
 	manpower = 12
 	tax = 1.4
 	locations = { land_12635 land_13138 land_10037 land_12169 land_09834 land_10840 land_13655 land_14652 land_13014 land_12045 land_12165 land_11579 land_14034 land_14145 land_11727 land_13416 land_10075 land_15465 land_15022 land_15419 land_13767 land_15636 land_11086 land_09951 land_11077 land_15544 land_13832 land_10431 land_09965 land_12037 land_12074 land_13260 land_12974 land_10030 land_13048 land_11493 land_11913 land_12536 land_14885 land_10192 land_14659 land_13584 land_10866 land_11429 land_12052 land_09777 land_13238 land_12532 land_10640 land_12509 land_10617 land_11517 land_12583 land_14429 land_10502 land_14180 land_12468 land_12325 land_12948 land_14457 land_13248 land_14434 land_10590 land_15057 land_11310 land_13059 land_13862 land_14545 land_09912 land_14056 land_11758 land_10932 land_10729 land_10909 land_12981 }
 }
 amazon_basin_9 = {
-	name = "Amazon basin 9"
+	name = "Amazon Basin 9"
 	manpower = 15
 	tax = 1.7
 	locations = { land_10383 land_14850 land_14407 land_14038 land_10494 land_13466 land_10125 land_10019 land_15049 land_15506 land_10393 land_11570 land_10181 land_15322 land_09826 land_09886 land_14916 land_09983 land_13804 land_11529 land_11769 land_12189 land_15124 land_10191 land_12263 land_14958 land_10385 land_14912 land_15415 land_13523 land_10302 land_15332 land_14506 land_11322 land_09933 land_10939 land_13514 land_13251 land_09910 land_14377 land_12785 land_11899 land_14031 land_13339 land_11890 land_10598 land_11401 land_11641 land_11761 land_15522 land_13630 land_12181 land_14816 land_13870 land_14244 land_12975 land_15564 land_14678 land_12786 land_12440 land_10045 land_13746 land_11794 land_11508 land_10682 land_10036 land_14540 land_10936 land_12579 land_11204 land_10378 land_12833 land_15002 land_12524 land_14033 land_10549 land_10789 land_13221 }
@@ -990,13 +990,13 @@ amazon_basin_9 = {
 	}
 }
 amazon_basin_10 = {
-	name = "Amazon basin 10"
+	name = "Amazon Basin 10"
 	manpower = 11
 	tax = 1.4
 	locations = { land_13438 land_13618 land_13295 land_13955 land_14315 land_15118 land_09825 land_11814 land_11671 land_13240 land_12354 land_11242 land_13351 land_13208 land_15663 land_14454 land_13305 land_12359 land_14085 land_14205 land_11870 land_13236 land_15608 land_13190 land_13430 land_14736 land_14030 land_14187 land_11409 land_13218 land_10680 land_11243 land_14764 land_11031 land_15212 land_14386 land_12494 land_14123 land_10616 land_10593 land_11253 land_11364 land_11341 land_12324 land_09929 land_14456 land_11618 land_12121 land_11355 land_09966 land_15499 land_13847 land_11452 land_14004 land_14461 land_14526 land_11462 land_11019 land_14900 land_12565 land_12925 land_15620 land_15477 land_15071 land_10078 land_15228 land_15602 land_12201 land_11435 }
 }
 amazon_basin_11 = {
-	name = "Amazon basin 11"
+	name = "Amazon Basin 11"
 	manpower = 12
 	tax = 1.4
 	locations = { land_10886 land_12072 land_12372 land_14744 land_11800 land_12866 land_14555 land_13886 land_15086 land_13268 land_14394 land_12562 land_13282 land_10504 land_15525 land_10260 land_15147 land_12872 land_11160 land_10131 land_13772 land_12886 land_13006 land_14229 land_15009 land_13860 land_11239 land_09827 land_15360 land_10953 land_14894 land_13039 land_13219 land_14285 land_14908 land_12513 land_14645 land_14802 land_10889 land_13644 land_14304 land_10294 land_11360 land_10714 land_13912 land_09902 land_11771 land_13940 land_14937 land_12279 land_14914 land_13022 land_15371 land_11624 land_11961 land_12764 }
@@ -1045,7 +1045,7 @@ guianas_and_orinoco_m191_1 = {
 	}
 }
 brazilian_savanna_1 = {
-	name = "Brazilian savanna 1"
+	name = "Brazilian Savanna 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_11380 land_12949 land_15404 land_15201 land_14352 land_11228 land_12691 land_12368 land_15123 land_11136 land_10753 land_13951 land_11953 land_12553 land_12147 land_10878 land_11501 land_11229 land_14118 land_11843 land_13472 land_14649 land_12111 land_15189 land_13293 land_12375 land_14544 land_11120 land_13792 land_13469 land_09925 land_12380 land_11088 land_10133 land_14217 land_12888 land_13585 land_15094 land_10364 land_13885 land_15454 land_13793 land_13770 land_14813 land_13161 }
@@ -1054,13 +1054,13 @@ brazilian_savanna_1 = {
 	}
 }
 brazilian_savanna_2 = {
-	name = "Brazilian savanna 2"
+	name = "Brazilian Savanna 2"
 	manpower = 1
 	tax = 0.6
 	locations = { land_10014 land_14841 land_12483 land_13706 land_10702 land_12834 land_14943 land_11999 land_11233 land_13485 land_13605 land_11164 land_14625 land_13799 land_14016 land_14316 land_14376 land_10532 land_13993 land_11958 land_14487 land_10251 land_11474 land_10662 land_10399 land_11908 land_10436 land_13634 land_14880 land_12282 land_10630 land_15157 land_10870 land_11050 land_12619 land_10621 land_14036 land_12984 land_15310 land_13275 land_15144 land_12749 land_11300 land_11923 land_10594 land_13026 land_10668 land_13243 land_10908 land_12717 land_09879 land_14960 land_12745 land_15177 land_14148 land_10424 land_10664 land_14808 land_10618 land_15385 land_13027 land_13710 land_10023 land_13544 land_13604 }
 }
 brazilian_savanna_3 = {
-	name = "Brazilian savanna 3"
+	name = "Brazilian Savanna 3"
 	manpower = 3
 	tax = 0.7
 	locations = { land_11246 land_14324 land_12432 land_10277 land_10397 land_09931 land_14232 land_13969 land_13157 land_14343 land_15183 land_15100 land_14717 land_13185 land_10790 land_13725 land_10324 land_10601 land_15428 land_13956 land_10615 land_14616 land_15359 land_11252 land_13887 land_15193 land_12355 land_14870 land_15170 land_14524 land_12249 land_15387 land_13998 land_14058 land_14801 land_11460 land_13592 land_12646 land_09748 land_11257 land_13952 land_14072 land_15581 land_12743 land_12803 land_10145 land_12600 land_12900 land_14063 land_10842 land_14100 land_13897 land_15383 land_13528 land_12079 land_12702 land_14391 land_10607 land_13565 land_15434 land_13542 land_13782 land_12993 land_12550 land_09786 land_14613 land_14350 land_13704 land_13058 land_15070 land_14124 land_11226 land_13861 land_12629 land_13132 land_12043 land_12606 land_13229 land_11397 land_11194 land_10751 land_10705 land_14849 land_11065 land_12574 land_12491 land_09893 land_15546 land_09810 land_09930 land_15343 land_09990 land_13308 land_10890 land_11730 land_10018 land_13156 land_10055 land_15528 land_11744 land_12584 land_13124 land_15196 land_10083 land_10203 land_09760 }
@@ -1069,31 +1069,31 @@ brazilian_savanna_3 = {
 	}
 }
 brazilian_savanna_4 = {
-	name = "Brazilian savanna 4"
+	name = "Brazilian Savanna 4"
 	manpower = 2
 	tax = 0.7
 	locations = { land_15353 land_15427 land_10734 land_14698 land_09862 land_15455 land_11528 land_14486 land_12091 land_14906 land_11782 land_13794 land_14920 land_09964 land_14413 land_09803 land_11363 land_12923 land_13103 land_14169 land_11008 land_12471 land_13071 land_09850 land_13671 land_10270 land_13205 land_15517 land_13242 land_11101 land_14119 land_10875 land_15439 land_10543 land_14521 land_14701 land_09888 land_10954 land_13972 land_12643 land_10368 land_13423 land_12094 land_11208 land_12053 land_13313 land_15302 land_11398 land_12884 }
 }
 brazilian_savanna_5 = {
-	name = "Brazilian savanna 5"
+	name = "Brazilian Savanna 5"
 	manpower = 3
 	tax = 0.7
 	locations = { land_11952 land_13115 land_12266 land_11320 land_10674 land_11980 land_11154 land_15598 land_11648 land_14080 land_15589 land_14740 land_13291 land_12645 land_09867 land_13005 land_13402 land_11450 land_09858 land_15511 land_15248 land_12664 land_11012 land_13324 land_14330 land_10426 land_13947 land_13564 land_13744 land_14247 land_13421 land_14847 land_11949 land_15207 land_10800 land_13292 land_15424 land_11580 land_12503 land_13666 land_09762 land_10182 land_12937 land_10985 land_12328 land_10293 land_14437 land_14797 land_12582 land_12259 land_14331 land_11770 land_11124 land_13639 land_11807 land_11604 land_12924 land_15356 land_10183 land_11812 land_12435 land_10160 land_15490 land_13335 land_11886 land_15527 land_13049 land_12726 land_11457 land_13086 land_11637 land_13949 land_12237 land_12740 land_14249 land_10345 land_11268 land_13340 land_10442 land_12551 land_13234 land_10959 land_12828 land_13128 land_12242 land_15357 land_10687 land_15154 land_14342 land_10858 land_12367 land_10092 land_10715 land_09769 land_13290 land_10249 land_12178 land_13987 land_12538 land_15053 }
 }
 brazilian_savanna_6 = {
-	name = "Brazilian savanna 6"
+	name = "Brazilian Savanna 6"
 	manpower = 2
 	tax = 0.7
 	locations = { land_11892 land_14347 land_10443 land_14504 land_14564 land_12852 land_15547 land_14218 land_12040 land_13646 land_10988 land_11971 land_15446 land_10250 land_14048 land_11510 land_14002 land_14182 land_10638 land_13707 land_11815 land_12821 land_14127 land_14427 land_12623 land_10422 land_13980 land_14986 land_11613 land_14742 land_12970 land_11138 land_14073 land_15047 land_12772 land_12449 land_14355 land_10068 land_15255 land_11411 land_11425 land_13474 land_12122 land_13645 land_12616 land_13036 land_11827 land_13959 land_13170 land_13410 land_15399 land_13507 land_11915 land_12598 }
 }
 brazilian_savanna_7 = {
-	name = "Brazilian savanna 7"
+	name = "Brazilian Savanna 7"
 	manpower = 2
 	tax = 0.7
 	locations = { land_15210 land_12312 land_14887 land_11283 land_14781 land_11657 land_14675 land_10688 land_12534 land_12954 land_13817 land_10333 land_12142 land_15137 land_10910 land_14265 land_10421 land_10924 land_14925 land_12830 land_12124 land_11215 land_10629 land_13647 land_10403 land_12415 land_14418 land_14538 land_10814 land_11497 land_14432 land_12157 land_11271 land_09822 land_15595 land_11045 land_13777 land_12568 land_13348 land_13708 land_12739 land_14548 land_11147 land_11507 land_13016 land_13519 land_10035 land_15605 land_10372 land_12961 land_15093 land_15130 land_10723 land_14807 land_12029 land_14101 land_12652 land_15287 land_11240 land_11743 land_13649 land_15398 land_15435 land_10765 land_11185 land_15246 land_15163 land_15140 land_13188 land_10147 land_14231 land_09824 land_13705 land_15191 land_15491 land_12330 land_15445 land_14536 land_10286 land_15376 land_15556 }
 }
 brazilian_savanna_8 = {
-	name = "Brazilian savanna 8"
+	name = "Brazilian Savanna 8"
 	manpower = 1
 	tax = 0.6
 	locations = { land_10323 land_13318 land_12732 land_10254 land_14578 land_10568 land_10365 land_14006 land_13060 land_12294 land_14966 land_12068 land_11625 land_13877 land_12502 land_14011 land_15456 land_09808 land_10528 land_10948 land_12291 land_15046 land_12199 land_14654 land_11553 land_13653 land_10815 land_13390 land_11678 land_10017 land_15481 land_13146 land_10728 land_14194 land_10387 land_15048 land_15348 land_11504 land_15145 land_14799 }
@@ -1102,7 +1102,7 @@ brazilian_savanna_8 = {
 	}
 }
 brazilian_savanna_9 = {
-	name = "Brazilian savanna 9"
+	name = "Brazilian Savanna 9"
 	manpower = 2
 	tax = 0.7
 	locations = { land_09917 land_12049 land_12529 land_14901 land_14112 land_12783 land_13789 land_14975 land_10748 land_09756 land_13688 land_15114 land_12276 land_10744 land_10864 land_13213 land_11801 land_11981 land_12041 land_10592 land_11095 land_14653 land_10486 land_11612 land_15650 land_15627 land_12226 land_10897 land_12466 land_12300 land_15258 land_14935 land_14349 land_10639 land_14160 land_12005 land_15083 land_13754 land_11479 land_11959 land_13902 land_12453 land_11244 land_13067 land_14313 land_10063 land_14327 land_14364 land_10437 land_12306 land_11420 land_11157 land_14235 land_14295 land_13723 land_14789 land_10622 land_11042 land_13742 land_13479 land_14702 land_13936 land_10595 land_13110 land_11158 land_10489 }
@@ -1111,7 +1111,7 @@ brazilian_savanna_9 = {
 	}
 }
 brazilian_savanna_10 = {
-	name = "Brazilian savanna 10"
+	name = "Brazilian Savanna 10"
 	manpower = 2
 	tax = 0.7
 	locations = { land_10060 land_12695 land_10803 land_15330 land_10314 land_15224 land_11943 land_10411 land_15321 land_11311 land_14449 land_10102 land_10379 land_10882 land_13517 land_14237 land_12908 land_13748 land_14754 land_12982 land_10707 land_15174 land_13342 land_13199 land_14302 land_13656 land_09752 land_14796 land_13467 land_13264 land_11935 land_11995 land_12678 land_10966 land_13158 land_13698 land_12166 land_12000 land_15115 land_13163 land_15535 land_13177 land_15000 land_10427 land_12679 land_15374 land_13722 land_09855 land_13173 land_13233 land_13796 land_10455 land_14839 land_11272 land_13395 land_12246 land_11803 land_12140 land_11877 land_14332 land_13903 land_12694 land_11748 land_10479 land_13677 land_15306 land_13977 land_11822 land_10793 land_11370 land_12796 land_09898 land_10641 land_15551 land_15108 land_11444 land_14199 land_10032 land_11541 land_14356 land_10309 land_09866 land_12681 }
@@ -1201,7 +1201,7 @@ patagonia_m332_1 = {
 	}
 }
 atlantic_shellfish_gatherers_1 = {
-	name = "Atlantic shellfish gatherers"
+	name = "Atlantic Shellfish Gatherers"
 	manpower = 3
 	tax = 0.7
 	locations = { land_10157 land_11583 land_15358 land_11011 land_13457 land_13979 land_14482 land_13458 land_11806 land_13366 land_10708 land_12342 land_10810 land_13459 land_15065 land_12384 land_12495 land_11720 land_12283 land_14535 land_14069 land_10802 land_13774 land_14088 land_15214 land_15274 land_12713 land_10415 }
@@ -1210,7 +1210,7 @@ atlantic_shellfish_gatherers_1 = {
 	}
 }
 andean_farmers_1 = {
-	name = "Andean farmers 1"
+	name = "Andean Farmers 1"
 	manpower = 4
 	tax = 0.8
 	locations = { land_15617 land_12309 land_09785 land_13823 land_13533 land_14392 }
@@ -1219,7 +1219,7 @@ andean_farmers_1 = {
 	}
 }
 andean_farmers_2 = {
-	name = "Andean farmers 2"
+	name = "Andean Farmers 2"
 	manpower = 12
 	tax = 1.5
 	locations = { land_13452 land_12663 land_11025 land_09913 land_11690 land_14708 land_13259 land_14159 land_10495 land_15576 land_14690 land_15350 land_14183 land_12125 land_10233 land_13311 land_10990 land_13182 land_09781 land_12153 land_13113 land_09892 land_09846 land_12661 land_12768 land_13105 land_10318 }
@@ -1228,7 +1228,7 @@ andean_farmers_2 = {
 	}
 }
 andean_farmers_3 = {
-	name = "Andean farmers 3"
+	name = "Andean Farmers 3"
 	manpower = 23
 	tax = 2.3
 	locations = { land_10923 land_12686 land_10974 land_14938 land_11537 land_12400 land_14532 land_10245 land_13323 land_11302 land_14828 land_15451 land_12950 land_12004 land_10246 land_13038 land_11543 land_10745 land_14866 land_10759 land_13011 land_12093 land_13999 land_09772 land_11941 land_11858 land_11009 land_10797 land_10151 land_14595 land_15315 land_12957 land_13760 land_13331 land_14494 land_15560 land_13442 land_10775 land_12284 }
@@ -1237,19 +1237,19 @@ andean_farmers_3 = {
 	}
 }
 andean_farmers_4 = {
-	name = "Andean farmers 4"
+	name = "Andean Farmers 4"
 	manpower = 13
 	tax = 1.5
 	locations = { land_15035 land_12105 land_10527 land_13296 land_14856 land_12955 land_13717 land_14834 land_13062 land_10755 land_15610 land_11051 land_12011 land_11919 land_12173 land_13567 }
 }
 andean_farmers_5 = {
-	name = "Andean farmers 5"
+	name = "Andean Farmers 5"
 	manpower = 8
 	tax = 1.1
 	locations = { land_10061 land_10652 land_15448 land_14682 land_12098 land_14530 land_14627 land_09768 land_10331 land_14213 }
 }
 andean_farmers_6 = {
-	name = "Andean farmers 6"
+	name = "Andean Farmers 6"
 	manpower = 20
 	tax = 2.1
 	locations = { land_11389 land_13461 land_10563 land_09991 land_15021 land_10914 land_11694 land_14892 land_14606 land_10559 land_10656 land_14117 land_11699 land_14971 land_09955 land_14293 land_11169 land_10297 land_10717 land_14178 land_12346 land_12360 land_14709 land_11765 land_15563 land_14488 land_09758 land_12430 land_13413 land_11055 land_11332 land_13035 land_14738 land_15661 land_12071 land_10599 land_13696 }
@@ -1258,19 +1258,19 @@ andean_farmers_6 = {
 	}
 }
 andean_farmers_7 = {
-	name = "Andean farmers 7"
+	name = "Andean Farmers 7"
 	manpower = 18
 	tax = 1.9
 	locations = { land_14910 land_10863 land_12912 land_10028 land_14292 land_12700 land_12857 land_12419 land_13836 land_10103 land_12295 land_13361 land_09988 land_12591 land_12642 land_13265 land_14271 land_10921 land_14636 land_14050 land_10146 land_15033 land_12352 land_13935 land_15504 land_11577 land_11028 land_14706 land_14157 land_13165 land_12256 land_10304 land_10761 land_13516 land_14319 land_15505 land_10452 land_10429 land_13807 }
 }
 andean_farmers_8 = {
-	name = "Andean farmers 8"
+	name = "Andean Farmers 8"
 	manpower = 17
 	tax = 1.9
 	locations = { land_11376 land_15474 land_14865 land_10818 land_09946 land_14713 land_10583 land_13449 land_10505 land_10362 land_14423 land_12628 land_11696 land_12033 land_11064 land_10118 land_14945 land_14133 land_15430 land_11180 land_12214 land_10382 land_15223 land_10867 land_10572 land_13867 }
 }
 andean_farmers_9 = {
-	name = "Andean farmers 9"
+	name = "Andean Farmers 9"
 	manpower = 5
 	tax = 0.9
 	locations = { land_15658 land_12151 land_13232 land_10676 land_15388 land_15126 land_12182 land_15242 }
@@ -1279,7 +1279,7 @@ andean_farmers_9 = {
 	}
 }
 andean_farmers_10 = {
-	name = "Andean farmers 10"
+	name = "Andean Farmers 10"
 	manpower = 16
 	tax = 1.8
 	locations = { land_13498 land_12326 land_12137 land_11745 land_15003 land_15160 land_12442 land_11335 land_10094 land_12540 land_09859 land_10861 land_10418 land_13607 land_15029 land_09967 land_11596 land_12870 land_14739 land_12658 }
@@ -1288,13 +1288,13 @@ andean_farmers_10 = {
 	}
 }
 andean_farmers_11 = {
-	name = "Andean farmers 11"
+	name = "Andean Farmers 11"
 	manpower = 5
 	tax = 0.9
 	locations = { land_13392 land_10107 land_17616 land_12422 land_12621 }
 }
 andean_farmers_12 = {
-	name = "Andean farmers 12"
+	name = "Andean Farmers 12"
 	manpower = 11
 	tax = 1.4
 	locations = { land_10453 land_11857 land_12148 land_11299 land_12067 land_13890 }
@@ -1303,43 +1303,43 @@ andean_farmers_12 = {
 	}
 }
 andean_farmers_13 = {
-	name = "Andean farmers 13"
+	name = "Andean Farmers 13"
 	manpower = 17
 	tax = 1.9
 	locations = { land_13821 land_15450 land_15372 land_10762 land_14786 land_11685 land_11722 land_13545 land_11764 land_13550 land_10209 land_13015 land_11686 land_14644 land_13818 land_09914 land_09974 land_10791 land_13154 land_14903 land_10081 land_14225 land_12633 land_12310 land_11461 land_15227 land_11503 land_10142 land_14586 land_11545 land_10013 land_10110 land_15034 land_13539 }
 }
 andean_farmers_14 = {
-	name = "Andean farmers 14"
+	name = "Andean Farmers 14"
 	manpower = 13
 	tax = 1.6
 	locations = { land_10623 land_10868 land_12262 land_15340 land_14897 land_11838 land_11294 land_13145 land_10967 land_12476 land_14345 land_12467 land_12901 land_10220 land_12892 land_13266 land_14969 land_14517 land_15362 land_15256 }
 }
 andean_farmers_15 = {
-	name = "Andean farmers 15"
+	name = "Andean Farmers 15"
 	manpower = 16
 	tax = 1.8
 	locations = { land_12649 land_13752 land_14878 land_13992 land_12640 land_09816 land_13780 land_14403 land_12128 land_15206 land_15063 land_13065 land_15557 land_10684 land_13356 land_09789 land_12341 land_12175 land_11986 land_13029 land_14898 land_13283 land_13994 land_15120 land_12804 land_10557 land_11134 land_10465 land_15375 land_10022 land_13174 land_11956 land_09829 land_14333 }
 }
 andean_farmers_16 = {
-	name = "Andean farmers 16"
+	name = "Andean Farmers 16"
 	manpower = 15
 	tax = 1.7
 	locations = { land_10240 land_15390 land_15044 land_11454 land_13434 land_12525 land_10975 land_13915 land_12351 land_12928 land_15300 land_13422 land_09989 land_14899 land_10026 land_12938 land_10760 land_13192 land_15121 land_10834 land_14475 land_10128 land_14503 land_12450 land_14633 }
 }
 andean_farmers_17 = {
-	name = "Andean farmers 17"
+	name = "Andean Farmers 17"
 	manpower = 13
 	tax = 1.6
 	locations = { land_11126 land_12003 land_15178 land_11131 land_13563 land_12428 land_14694 land_14611 land_11224 land_14422 land_12364 land_11220 land_13629 land_12014 land_13080 land_15249 land_12411 land_10879 land_14857 land_09924 land_10898 land_09869 land_11175 land_12518 land_13815 land_12929 land_09999 land_13917 land_15043 land_12298 }
 }
 andean_farmers_18 = {
-	name = "Andean farmers 18"
+	name = "Andean Farmers 18"
 	manpower = 6
 	tax = 1.0
 	locations = { land_13849 land_14560 land_10647 land_15631 land_13033 land_10380 land_13343 land_12813 land_14982 land_15587 land_13986 land_12394 land_12754 land_13534 land_12662 land_12270 land_12118 land_14873 }
 }
 andean_farmers_19 = {
-	name = "Andean farmers 19"
+	name = "Andean Farmers 19"
 	manpower = 5
 	tax = 0.9
 	locations = { land_12931 land_11284 land_17615 land_13864 land_10311 land_12776 land_11213 }
@@ -1407,7 +1407,7 @@ chavin_peru_2 = {
 	}
 }
 paracas_south_coast_1 = {
-	name = "Paracas south coast"
+	name = "Paracas South Coast"
 	owner = PAR
 	cores = { PAR }
 	manpower = 8
@@ -1426,7 +1426,7 @@ yaya_mama_titicaca_1 = {
 	locations = { land_09811 land_14805 land_11884 land_12184 land_12319 land_14373 land_10114 land_10082 }
 }
 chinchorro_coast_1 = {
-	name = "Chinchorro coast"
+	name = "Chinchorro Coast"
 	manpower = 2
 	tax = 0.7
 	locations = { land_09877 land_14967 land_13851 land_10576 land_11116 land_10258 }
@@ -1498,7 +1498,7 @@ britain_and_ireland_m75_1 = {
 	}
 }
 iberian_interior_m9_1 = {
-	name = "Iberian interior 1"
+	name = "Iberian Interior 1"
 	owner = CIB
 	cores = { CIB }
 	manpower = 13
@@ -1509,7 +1509,7 @@ iberian_interior_m9_1 = {
 	}
 }
 iberian_interior_m9_2 = {
-	name = "Iberian interior 2"
+	name = "Iberian Interior 2"
 	owner = CIB
 	cores = { CIB }
 	manpower = 12
@@ -1520,7 +1520,7 @@ iberian_interior_m9_2 = {
 	}
 }
 iberian_interior_m9_3 = {
-	name = "Iberian interior 3"
+	name = "Iberian Interior 3"
 	owner = CIB
 	cores = { CIB }
 	manpower = 9
@@ -1531,7 +1531,7 @@ iberian_interior_m9_3 = {
 	}
 }
 iberian_interior_m116_1 = {
-	name = "Iberian interior"
+	name = "Iberian Interior"
 	owner = CIB
 	cores = { CIB }
 	manpower = 1
@@ -1542,7 +1542,7 @@ iberian_interior_m116_1 = {
 	}
 }
 iberian_interior_m119_1 = {
-	name = "Iberian interior"
+	name = "Iberian Interior"
 	owner = CIB
 	cores = { CIB }
 	manpower = 1
@@ -1553,7 +1553,7 @@ iberian_interior_m119_1 = {
 	}
 }
 iberian_coast_m9_1 = {
-	name = "Iberian coast 1"
+	name = "Iberian Coast 1"
 	owner = IBE
 	cores = { IBE }
 	manpower = 13
@@ -1564,7 +1564,7 @@ iberian_coast_m9_1 = {
 	}
 }
 iberian_coast_m9_2 = {
-	name = "Iberian coast 2"
+	name = "Iberian Coast 2"
 	owner = IBE
 	cores = { IBE }
 	manpower = 11
@@ -1575,7 +1575,7 @@ iberian_coast_m9_2 = {
 	}
 }
 iberian_coast_m109_1 = {
-	name = "Iberian coast"
+	name = "Iberian Coast"
 	owner = IBE
 	cores = { IBE }
 	manpower = 1
@@ -1586,7 +1586,7 @@ iberian_coast_m109_1 = {
 	}
 }
 iberian_coast_m112_1 = {
-	name = "Iberian coast"
+	name = "Iberian Coast"
 	owner = IBE
 	cores = { IBE }
 	manpower = 1
@@ -1597,7 +1597,7 @@ iberian_coast_m112_1 = {
 	}
 }
 iberian_coast_m113_1 = {
-	name = "Iberian coast"
+	name = "Iberian Coast"
 	owner = IBE
 	cores = { IBE }
 	manpower = 1
@@ -1619,7 +1619,7 @@ southern_iberia_1 = {
 	}
 }
 gaul_and_the_hallstatt_lands_1 = {
-	name = "Gaul and the Hallstatt lands 1"
+	name = "Gaul and the Hallstatt Lands 1"
 	owner = CEL
 	cores = { CEL }
 	manpower = 8
@@ -1630,7 +1630,7 @@ gaul_and_the_hallstatt_lands_1 = {
 	}
 }
 gaul_and_the_hallstatt_lands_2 = {
-	name = "Gaul and the Hallstatt lands 2"
+	name = "Gaul and the Hallstatt Lands 2"
 	owner = CEL
 	cores = { CEL }
 	manpower = 17
@@ -1638,7 +1638,7 @@ gaul_and_the_hallstatt_lands_2 = {
 	locations = { land_01140 land_01357 land_01348 land_08450 land_04703 land_06392 land_04057 land_02225 land_01842 land_04131 land_02682 land_03523 land_04483 land_05406 land_02065 land_07598 land_07432 land_04211 land_07040 land_04202 land_03930 land_03058 land_07022 land_06330 land_04881 land_01660 land_03289 land_08319 land_00848 land_00742 land_05606 land_01822 land_07355 land_09072 land_01638 land_02921 }
 }
 gaul_and_the_hallstatt_lands_3 = {
-	name = "Gaul and the Hallstatt lands 3"
+	name = "Gaul and the Hallstatt Lands 3"
 	owner = CEL
 	cores = { CEL }
 	manpower = 19
@@ -1646,7 +1646,7 @@ gaul_and_the_hallstatt_lands_3 = {
 	locations = { land_07102 land_06064 land_00979 land_04436 land_04496 land_03001 land_01552 land_01852 land_03615 land_05664 land_04469 land_07178 land_01553 land_01170 land_05111 land_02513 land_08826 land_00589 land_09094 land_08559 land_02200 land_06584 land_06238 land_00087 land_03193 land_06774 land_09146 land_07688 land_08754 }
 }
 gaul_and_the_hallstatt_lands_4 = {
-	name = "Gaul and the Hallstatt lands 4"
+	name = "Gaul and the Hallstatt Lands 4"
 	owner = CEL
 	cores = { CEL }
 	manpower = 16
@@ -1657,7 +1657,7 @@ gaul_and_the_hallstatt_lands_4 = {
 	}
 }
 gaul_and_the_hallstatt_lands_5 = {
-	name = "Gaul and the Hallstatt lands 5"
+	name = "Gaul and the Hallstatt Lands 5"
 	owner = CEL
 	cores = { CEL }
 	manpower = 8
@@ -1668,7 +1668,7 @@ gaul_and_the_hallstatt_lands_5 = {
 	}
 }
 gaul_and_the_hallstatt_lands_6 = {
-	name = "Gaul and the Hallstatt lands 6"
+	name = "Gaul and the Hallstatt Lands 6"
 	owner = CEL
 	cores = { CEL }
 	manpower = 7
@@ -1676,7 +1676,7 @@ gaul_and_the_hallstatt_lands_6 = {
 	locations = { land_06258 land_02474 land_00379 land_01950 land_08286 land_05679 land_06524 land_08578 }
 }
 gaul_and_the_hallstatt_lands_7 = {
-	name = "Gaul and the Hallstatt lands 7"
+	name = "Gaul and the Hallstatt Lands 7"
 	owner = CEL
 	cores = { CEL }
 	manpower = 12
@@ -1723,7 +1723,7 @@ north_european_iron_age_1 = {
 	}
 }
 scandinavia_south_m9_1 = {
-	name = "Scandinavia south 1"
+	name = "Scandinavia South 1"
 	manpower = 9
 	tax = 1.2
 	locations = { land_04970 land_09068 land_09691 land_02183 land_02257 land_04306 land_05146 land_05077 land_00089 land_05119 land_06125 land_06222 land_01709 land_04201 land_04298 land_00431 land_00791 land_08258 land_03325 land_05817 land_08489 land_01161 land_03150 land_01701 land_06016 land_03395 land_00714 land_02726 land_02966 land_04978 land_09339 land_02717 land_02085 land_08172 land_06963 land_02953 land_03756 land_01449 }
@@ -1732,7 +1732,7 @@ scandinavia_south_m9_1 = {
 	}
 }
 scandinavia_south_m9_2 = {
-	name = "Scandinavia south 2"
+	name = "Scandinavia South 2"
 	manpower = 13
 	tax = 1.6
 	locations = { land_05270 land_01477 land_00448 land_04652 land_08990 land_01362 land_01865 land_09581 land_02936 land_07417 land_03010 land_06651 land_04819 land_07593 land_03191 land_09647 land_03219 land_06477 land_01101 land_09426 land_06528 land_02158 land_06122 land_09491 land_02809 land_01577 land_04166 land_04060 land_09653 land_06469 land_08255 land_00567 land_09275 land_00175 land_03087 land_00226 land_05136 land_00466 }
@@ -1741,7 +1741,7 @@ scandinavia_south_m9_2 = {
 	}
 }
 scandinavia_south_m51_1 = {
-	name = "Scandinavia south"
+	name = "Scandinavia South"
 	manpower = 1
 	tax = 0.5
 	locations = { land_02083 }
@@ -1750,7 +1750,7 @@ scandinavia_south_m51_1 = {
 	}
 }
 scandinavia_south_m59_1 = {
-	name = "Scandinavia south"
+	name = "Scandinavia South"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15757 land_15758 }
@@ -1759,7 +1759,7 @@ scandinavia_south_m59_1 = {
 	}
 }
 scandinavia_south_m70_1 = {
-	name = "Scandinavia south"
+	name = "Scandinavia South"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15779 }
@@ -1768,7 +1768,7 @@ scandinavia_south_m70_1 = {
 	}
 }
 scandinavia_north_m9_1 = {
-	name = "Scandinavia north"
+	name = "Scandinavia North"
 	manpower = 1
 	tax = 0.6
 	locations = { land_05893 land_01043 land_07019 land_06936 land_00111 land_04998 land_04269 land_01994 land_02054 land_07707 land_00762 land_03974 land_04611 land_06863 land_02636 land_04325 land_06577 land_03130 land_06508 land_01718 land_02138 land_09623 land_04007 land_07002 land_03398 land_08899 land_09019 land_03177 land_08064 land_04077 land_08041 land_02748 land_01419 land_04045 land_05411 land_03196 land_06657 land_06616 land_07096 land_05204 land_08162 land_02366 land_00225 land_03183 land_05029 land_05509 land_06252 land_06875 land_02205 land_08541 land_03691 land_03248 land_01919 land_03488 land_04554 land_02722 land_00687 land_06663 land_00664 land_08546 land_07780 land_04499 land_05625 land_08380 land_03770 land_01735 land_03304 land_06562 land_01712 land_08191 }
@@ -1786,7 +1786,7 @@ finland_and_karelia_1 = {
 	}
 }
 baltic_coast_m9_1 = {
-	name = "Baltic coast"
+	name = "Baltic Coast"
 	manpower = 12
 	tax = 1.5
 	locations = { land_03821 land_03272 land_02003 land_00328 land_03346 land_02114 land_00785 land_01902 land_03771 land_02299 land_07869 land_01704 land_07177 land_07357 land_07094 land_00126 land_06785 land_03361 land_03421 land_00523 land_05207 land_03412 land_08456 land_04672 land_09430 land_03994 land_03279 land_05351 land_02956 land_08992 land_00921 land_07400 land_04419 land_02827 land_08291 land_07082 land_04184 land_02855 land_00294 land_07770 land_02131 land_00802 land_03617 land_06409 land_00110 land_07775 land_04434 land_01130 land_09058 land_03179 land_06197 land_03659 land_04162 land_02893 land_09266 land_01818 land_06119 }
@@ -1795,7 +1795,7 @@ baltic_coast_m9_1 = {
 	}
 }
 baltic_coast_m55_1 = {
-	name = "Baltic coast"
+	name = "Baltic Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07967 land_08540 }
@@ -1804,13 +1804,13 @@ baltic_coast_m55_1 = {
 	}
 }
 proto_slavic_lands_1 = {
-	name = "Proto-Slavic lands 1"
+	name = "Proto-Slavic Lands 1"
 	manpower = 11
 	tax = 1.4
 	locations = { land_00577 land_07296 land_02986 land_03046 land_03000 land_07181 land_09733 land_08321 land_00684 land_09480 land_09577 land_05290 land_06153 land_01903 land_04072 land_08959 land_05272 land_07935 land_06989 land_07640 land_04479 land_07054 land_04313 land_08148 land_09717 land_08222 land_00128 land_05158 land_01757 land_03949 land_03363 land_00765 land_04997 land_06317 land_00738 land_05362 land_07171 }
 }
 proto_slavic_lands_2 = {
-	name = "Proto-Slavic lands 2"
+	name = "Proto-Slavic Lands 2"
 	manpower = 12
 	tax = 1.5
 	locations = { land_05044 land_00268 land_08976 land_00296 land_06872 land_06992 land_04634 land_06646 land_00910 land_04085 land_07671 land_06227 land_03103 land_09116 land_06841 land_01165 land_07644 land_04714 land_08309 land_04682 land_06191 land_01775 land_08194 land_02375 land_04627 land_09537 land_02532 land_03838 land_03575 land_08102 land_02800 land_04789 land_08813 land_06575 land_07318 land_06529 land_01859 land_08518 land_06114 land_05782 land_08034 land_04813 land_00406 land_06885 land_00083 }
@@ -1861,7 +1861,7 @@ taiga_finno_ugrian_m23_1 = {
 	}
 }
 ligurian_northwest_italy_1 = {
-	name = "Ligurian northwest Italy"
+	name = "Ligurian Northwest Italy"
 	manpower = 6
 	tax = 1.0
 	locations = { land_05824 land_02954 land_03098 land_09014 land_02452 land_03555 land_03675 land_02729 land_04418 land_07704 land_03888 land_08467 land_01061 }
@@ -1881,7 +1881,7 @@ etruria_1 = {
 	}
 }
 latium_and_central_italy_1 = {
-	name = "Latium and central Italy"
+	name = "Latium and Central Italy"
 	owner = ROM
 	cores = { ROM }
 	manpower = 4
@@ -1892,7 +1892,7 @@ latium_and_central_italy_1 = {
 	}
 }
 southern_italy_interior_1 = {
-	name = "Southern Italy interior"
+	name = "Southern Italy Interior"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08811 land_07973 land_04194 }
@@ -2121,7 +2121,7 @@ macedon_and_epirus_1 = {
 	}
 }
 black_sea_greek_coast_1 = {
-	name = "Black Sea Greek coast"
+	name = "Black Sea Greek Coast"
 	owner = PNT
 	cores = { PNT }
 	manpower = 1
@@ -2132,7 +2132,7 @@ black_sea_greek_coast_1 = {
 	}
 }
 pontic_steppe_scythians_1 = {
-	name = "Pontic steppe Scythians 1"
+	name = "Pontic Steppe Scythians 1"
 	owner = SCY
 	cores = { SCY }
 	manpower = 11
@@ -2143,7 +2143,7 @@ pontic_steppe_scythians_1 = {
 	}
 }
 pontic_steppe_scythians_2 = {
-	name = "Pontic steppe Scythians 2"
+	name = "Pontic Steppe Scythians 2"
 	owner = SCY
 	cores = { SCY }
 	manpower = 8
@@ -2154,7 +2154,7 @@ pontic_steppe_scythians_2 = {
 	}
 }
 sarmatian_steppe_1 = {
-	name = "Sarmatian steppe 1"
+	name = "Sarmatian Steppe 1"
 	owner = SAR
 	cores = { SAR }
 	manpower = 6
@@ -2162,7 +2162,7 @@ sarmatian_steppe_1 = {
 	locations = { land_01486 land_01606 land_00877 land_03572 land_01920 land_05681 land_05718 land_03803 land_09064 land_04311 land_06443 land_05091 land_05714 land_00541 land_03273 land_03776 land_02161 land_06545 land_05133 land_06762 land_01912 land_01589 land_06559 land_02332 land_09254 land_09351 land_00454 land_02203 land_09185 land_07981 land_09610 land_05923 land_00570 land_09001 land_02619 land_02370 land_09735 land_08466 land_05665 land_08660 land_04876 land_05499 land_02398 land_02961 land_05476 land_01632 land_03238 land_04484 land_07442 land_04535 land_01254 land_06344 land_01051 land_01531 land_02334 land_02837 land_05855 land_01951 land_02791 land_03774 land_01619 land_04688 land_08712 land_05311 land_07923 land_02284 land_04859 land_01518 land_06622 }
 }
 sarmatian_steppe_2 = {
-	name = "Sarmatian steppe 2"
+	name = "Sarmatian Steppe 2"
 	owner = SAR
 	cores = { SAR }
 	manpower = 6
@@ -2173,7 +2173,7 @@ sarmatian_steppe_2 = {
 	}
 }
 sarmatian_steppe_3 = {
-	name = "Sarmatian steppe 3"
+	name = "Sarmatian Steppe 3"
 	owner = SAR
 	cores = { SAR }
 	manpower = 6
@@ -2221,37 +2221,37 @@ tarim_and_gansu_yuezhe_3 = {
 	locations = { land_09377 land_09562 land_17605 land_00702 land_09207 land_09018 land_00624 land_17606 land_09697 land_08701 land_04008 land_07949 land_03893 land_02075 land_09560 land_06782 land_02029 land_05984 land_04263 land_05177 land_00770 land_08758 land_01813 land_08232 land_05634 land_01001 land_09169 land_08223 land_01698 land_00249 land_02801 land_03664 }
 }
 mongolian_steppe_1 = {
-	name = "Mongolian steppe 1"
+	name = "Mongolian Steppe 1"
 	manpower = 4
 	tax = 0.8
 	locations = { land_02303 land_04855 land_08939 land_08270 land_09493 land_05783 land_07006 land_09198 land_02733 land_00643 land_04095 land_08627 land_05203 land_04451 land_01521 land_00732 land_17552 land_00460 land_09131 land_03252 land_09348 land_03852 land_02500 land_01554 land_01028 land_02214 land_04826 land_07581 land_05200 land_17553 land_03165 land_03705 land_08329 land_00549 land_08214 }
 }
 mongolian_steppe_2 = {
-	name = "Mongolian steppe 2"
+	name = "Mongolian Steppe 2"
 	manpower = 5
 	tax = 0.9
 	locations = { land_09557 land_09617 land_03798 land_01417 land_08847 land_02165 land_07758 land_06983 land_08049 land_04962 land_05562 land_03255 land_05166 land_05466 land_05074 land_08715 land_03722 land_06288 land_04516 land_01415 land_01692 land_03681 land_17603 land_07327 land_03663 land_06981 land_03917 land_00373 land_09598 land_17604 land_04222 land_06751 land_02118 }
 }
 mongolian_steppe_3 = {
-	name = "Mongolian steppe 3"
+	name = "Mongolian Steppe 3"
 	manpower = 4
 	tax = 0.8
 	locations = { land_08791 land_01989 land_02229 land_01500 land_08219 land_05561 land_05695 land_05446 land_01436 land_00061 land_04685 land_04653 land_07971 land_09074 land_08022 land_03786 land_04349 land_04243 land_00796 land_02808 land_02199 land_02176 land_05582 land_05762 land_08937 land_04544 land_03335 land_05850 land_03829 land_01434 land_08416 land_09436 land_08084 land_04817 land_05500 land_07623 land_02667 land_07028 land_05556 land_04670 }
 }
 mongolian_steppe_4 = {
-	name = "Mongolian steppe 4"
+	name = "Mongolian Steppe 4"
 	manpower = 7
 	tax = 1.0
 	locations = { land_06807 land_08113 land_17573 land_04431 land_06217 land_17555 land_03084 land_01312 land_00906 land_08862 land_17588 land_01451 land_06098 land_03763 land_04423 land_05083 land_07372 land_05097 land_01590 land_00635 land_07954 land_17589 land_03958 land_07073 land_03603 land_02731 land_17590 land_05034 land_06040 land_01444 land_17572 }
 }
 mongolian_steppe_5 = {
-	name = "Mongolian steppe 5"
+	name = "Mongolian Steppe 5"
 	manpower = 6
 	tax = 1.0
 	locations = { land_05870 land_09488 land_07384 land_08464 land_01639 land_04597 land_02027 land_17583 land_07362 land_02812 land_03975 land_09388 land_09628 land_04275 land_06467 land_03809 land_04829 land_00782 land_04160 land_06472 land_06532 land_02245 land_03551 land_05780 land_03690 land_05236 land_07751 land_04507 land_00640 land_17580 land_04175 land_02514 land_05154 land_03742 land_03862 land_03036 land_03216 land_03719 land_03876 }
 }
 mongolian_steppe_6 = {
-	name = "Mongolian steppe 6"
+	name = "Mongolian Steppe 6"
 	manpower = 6
 	tax = 1.0
 	locations = { land_08851 land_02289 land_02386 land_17554 land_01431 land_17582 land_03314 land_04828 land_04999 land_17569 land_00403 land_05027 land_09051 land_17574 land_07321 land_06089 land_09107 land_17556 land_04654 land_17570 land_01221 land_03030 land_17575 land_04530 land_04761 land_03589 land_17571 land_05555 land_01711 land_01328 land_07789 land_02090 land_17581 land_05925 land_09197 }
@@ -2299,13 +2299,13 @@ manchuria_m76_1 = {
 	}
 }
 siberian_taiga_and_tundra_m9_1 = {
-	name = "Siberian taiga and tundra 1"
+	name = "Siberian Taiga and Tundra 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_04827 land_02280 land_00831 land_09682 land_07467 land_08210 land_07744 land_06572 land_09530 land_05580 land_01450 land_04805 land_09009 land_08243 land_05742 land_00486 land_06199 land_04810 land_08248 land_08285 land_06333 land_02789 land_07270 land_06121 land_02494 land_02411 land_05872 land_04114 land_05863 land_02882 land_09361 land_03505 land_07972 land_06883 land_08249 land_07903 land_07880 land_08097 land_02038 land_06182 land_00566 land_02112 land_08568 land_08125 land_09468 land_07493 land_03003 land_02237 land_00968 land_07890 land_07867 land_04203 land_02551 land_07618 land_04051 land_03345 land_09381 land_05597 land_03119 land_03516 land_00415 land_05565 land_08823 land_02681 land_06765 land_02418 }
 }
 siberian_taiga_and_tundra_m9_2 = {
-	name = "Siberian taiga and tundra 2"
+	name = "Siberian Taiga and Tundra 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_01786 land_05095 land_00905 land_03397 land_03208 land_01736 land_07149 land_07911 land_03121 land_02129 land_04718 land_04612 land_06398 land_02028 land_00376 land_07921 land_06606 land_00750 land_03353 land_08743 land_01092 land_03081 land_02906 land_03146 land_04212 land_02763 land_09422 land_03543 land_04969 land_03197 land_01425 land_08204 land_00530 land_06686 land_04651 land_08749 land_04896 }
@@ -2314,13 +2314,13 @@ siberian_taiga_and_tundra_m9_2 = {
 	}
 }
 siberian_taiga_and_tundra_m9_3 = {
-	name = "Siberian taiga and tundra 3"
+	name = "Siberian Taiga and Tundra 3"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08828 land_00974 land_09082 land_00725 land_09253 land_00093 land_08584 land_02345 land_02465 land_04274 land_07915 land_08635 land_03319 land_05608 land_08566 land_05165 land_00389 land_09300 land_08465 land_00228 land_04229 land_03320 land_07441 land_04497 land_07012 land_07552 land_06666 land_01350 land_02790 land_09329 land_03330 land_08637 land_06745 land_00123 land_06542 land_08028 land_08088 land_06773 land_02223 land_07756 land_02260 land_03580 land_04480 land_06672 land_09630 land_09187 land_04988 land_02713 land_09049 land_02487 land_02464 land_08237 land_01938 land_06442 land_05293 }
 }
 siberian_taiga_and_tundra_m9_4 = {
-	name = "Siberian taiga and tundra 4"
+	name = "Siberian Taiga and Tundra 4"
 	manpower = 1
 	tax = 0.6
 	locations = { land_04601 land_00697 land_01380 land_00471 land_02091 land_09318 land_17601 land_07380 land_04399 land_01238 land_02904 land_01889 land_07819 land_01963 land_05632 land_03920 land_08807 land_09490 land_08235 land_02859 land_00081 land_00764 land_01867 land_05102 land_05559 land_09454 land_08305 land_09385 land_04572 land_03926 land_01974 land_02034 land_04729 land_07341 land_09007 land_07858 land_06003 land_07840 land_01038 land_01158 land_09709 land_07554 }
@@ -2329,13 +2329,13 @@ siberian_taiga_and_tundra_m9_4 = {
 	}
 }
 siberian_taiga_and_tundra_m9_5 = {
-	name = "Siberian taiga and tundra 5"
+	name = "Siberian Taiga and Tundra 5"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02958 land_01066 land_02875 land_03941 land_03978 land_05727 land_08759 land_06424 land_07993 land_08736 land_00462 land_03014 land_06069 land_05363 land_05220 land_04454 land_01510 land_00121 land_03199 land_04265 land_06780 land_02050 land_03056 land_08326 land_00758 land_08123 land_04519 land_04759 land_01358 land_08257 land_00689 land_01612 land_03301 land_08271 land_01529 land_04884 land_07076 land_01317 land_04012 land_01271 land_07870 land_04649 land_01359 land_00773 land_00487 land_05314 land_05051 land_07303 land_09532 land_06851 land_01535 land_03464 land_00926 land_08471 land_05047 land_02163 land_08619 land_00368 land_05915 land_03700 land_02874 land_01785 land_00959 land_08001 land_02828 land_07918 land_08481 land_02362 land_07835 land_03668 land_06986 land_09035 land_04402 land_01684 land_00355 land_08620 land_04633 land_00729 land_07831 }
 }
 siberian_taiga_and_tundra_m9_6 = {
-	name = "Siberian taiga and tundra 6"
+	name = "Siberian Taiga and Tundra 6"
 	manpower = 1
 	tax = 0.6
 	locations = { land_01569 land_07702 land_02469 land_06996 land_06770 land_05418 land_07670 land_03263 land_01611 land_06078 land_04869 land_03480 land_03457 land_05640 land_06886 land_06623 land_02899 land_08746 land_08303 land_07860 land_06028 land_00232 land_09148 land_02969 land_08945 land_01940 land_07330 land_00205 land_05115 land_06578 land_02734 land_00916 land_09527 land_01253 land_04774 land_04894 land_06906 land_08955 land_03496 land_07760 land_03510 land_07534 land_06588 land_01235 land_06768 land_08314 land_08531 land_06136 land_07825 land_05167 land_07299 land_07659 land_04941 land_09002 land_04249 land_03040 land_02754 land_04443 land_03234 land_04720 land_08301 land_03451 land_08638 land_06220 land_07969 land_02233 land_08283 land_06834 land_02081 land_09626 land_01209 }
@@ -2344,13 +2344,13 @@ siberian_taiga_and_tundra_m9_6 = {
 	}
 }
 siberian_taiga_and_tundra_m9_7 = {
-	name = "Siberian taiga and tundra 7"
+	name = "Siberian Taiga and Tundra 7"
 	manpower = 1
 	tax = 0.5
 	locations = { land_04647 land_00217 land_03212 land_09262 land_06221 land_01671 land_03683 land_05612 land_01205 land_00407 land_00924 land_06517 land_03984 land_08991 land_03149 land_05586 land_05660 land_02550 land_02421 land_02638 land_01969 land_08388 land_09251 land_05407 land_08425 land_09722 land_04992 land_08956 land_07378 land_04600 land_08901 land_08892 land_03899 land_02007 land_06511 land_09206 land_04287 }
 }
 siberian_taiga_and_tundra_m9_8 = {
-	name = "Siberian taiga and tundra 8"
+	name = "Siberian Taiga and Tundra 8"
 	manpower = 1
 	tax = 0.5
 	locations = { land_08062 land_01851 land_04643 land_03351 land_02659 land_01561 land_00112 land_02784 land_05456 land_00122 land_03214 land_01562 land_06186 land_00797 land_03672 land_02703 land_07613 land_08430 land_08227 land_09736 land_08910 land_05749 land_08218 land_04005 land_03239 land_09446 land_06548 land_04167 }
@@ -2359,19 +2359,19 @@ siberian_taiga_and_tundra_m9_8 = {
 	}
 }
 siberian_taiga_and_tundra_m9_9 = {
-	name = "Siberian taiga and tundra 9"
+	name = "Siberian Taiga and Tundra 9"
 	manpower = 1
 	tax = 0.6
 	locations = { land_03332 land_03632 land_02400 land_07490 land_08353 land_00162 land_09539 land_04606 land_00259 land_05266 land_04823 land_02562 land_00144 land_04648 land_00518 land_08889 land_09309 land_06974 land_07980 land_08294 land_06845 land_01732 land_01792 land_00883 land_06776 land_01437 land_07090 land_09222 land_07427 land_02577 land_02134 land_03643 land_06998 land_08664 land_03528 land_02033 land_09015 land_03662 land_01687 land_06154 land_08166 land_02047 land_00395 land_05139 land_04770 land_00543 land_04161 land_00317 land_07419 land_00654 land_09325 land_06404 land_01042 land_02648 land_06852 land_07332 land_00147 land_04185 land_06700 land_05108 land_07563 land_00115 land_06331 land_08583 land_03913 land_03650 land_08297 land_04933 land_00826 }
 }
 siberian_taiga_and_tundra_m9_10 = {
-	name = "Siberian taiga and tundra 10"
+	name = "Siberian Taiga and Tundra 10"
 	manpower = 1
 	tax = 0.5
 	locations = { land_09354 land_07582 land_01966 land_08865 land_09525 land_04389 land_07347 land_03120 land_03540 land_05732 land_01782 land_01999 land_01810 land_02553 land_08769 land_02544 land_06822 land_06236 land_09111 land_02946 land_00108 land_09079 land_09213 land_06435 land_03454 land_07275 land_05360 land_08558 land_02739 land_09398 land_05997 land_06168 land_06708 land_03524 land_08111 land_00234 land_07959 land_01614 land_07064 land_07761 land_03622 land_04042 land_07503 land_03599 land_03276 land_07531 land_01675 }
 }
 siberian_taiga_and_tundra_m9_11 = {
-	name = "Siberian taiga and tundra 11"
+	name = "Siberian Taiga and Tundra 11"
 	manpower = 1
 	tax = 0.6
 	locations = { land_05953 land_01163 land_06696 land_02086 land_06050 land_00988 land_08044 land_08967 land_05926 land_01076 land_08561 land_03065 land_06263 land_09221 land_00887 land_00638 land_07620 land_07680 land_00878 land_05885 land_07754 land_03850 land_03407 land_09503 land_07851 land_03744 land_04584 land_03698 land_04381 land_01040 land_03232 land_08645 land_07256 land_03915 land_05424 land_01114 land_02180 land_00279 land_00399 land_07252 land_00247 land_04728 land_03782 land_07986 land_05245 land_05642 land_01069 land_01489 land_03478 land_04595 land_06224 land_07087 land_03483 land_03160 land_06621 land_00193 land_00050 land_09464 land_04411 land_08652 land_03982 land_04462 land_07720 land_00978 land_04942 land_06691 land_01998 land_00969 }
@@ -2380,7 +2380,7 @@ siberian_taiga_and_tundra_m9_11 = {
 	}
 }
 siberian_taiga_and_tundra_m9_12 = {
-	name = "Siberian taiga and tundra 12"
+	name = "Siberian Taiga and Tundra 12"
 	manpower = 1
 	tax = 0.5
 	locations = { land_05916 land_03392 land_06913 land_03646 land_01791 land_01413 land_05114 land_07103 land_02530 land_08603 land_01298 land_07454 land_05539 land_00103 land_01086 land_00980 land_05378 land_02291 land_03980 land_05729 land_04557 land_05563 land_05240 land_03099 land_07248 land_09500 land_05804 land_05975 land_08993 land_09067 land_04374 }
@@ -2389,7 +2389,7 @@ siberian_taiga_and_tundra_m9_12 = {
 	}
 }
 siberian_taiga_and_tundra_m18_1 = {
-	name = "Siberian taiga and tundra"
+	name = "Siberian Taiga and Tundra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15669 }
@@ -2398,49 +2398,49 @@ siberian_taiga_and_tundra_m18_1 = {
 	}
 }
 siberia_south_of_the_taiga_1 = {
-	name = "Siberia south of the taiga 1"
+	name = "Siberia South of the Taiga 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_07236 land_04901 land_07416 land_06087 land_05201 land_02663 land_07933 land_01311 land_07910 land_01731 land_04186 land_07324 land_01565 land_09147 land_04860 land_04034 land_04657 land_04717 land_07172 land_06226 land_04837 land_06766 land_02479 land_08395 land_03965 land_08995 land_03213 land_06988 land_08391 land_05590 land_00154 land_06310 land_03426 land_04049 land_06181 land_06241 land_05978 land_07487 land_08110 land_01405 land_04866 land_04926 land_05286 land_07778 land_08318 land_02462 land_01516 land_09121 land_05291 land_06131 land_04539 land_02767 land_02444 land_00289 land_09523 land_03404 land_00986 land_06819 land_04821 land_02343 land_02403 land_01457 land_09242 land_04009 land_05638 land_09390 land_02708 land_02565 land_09284 land_06949 land_02219 land_03082 land_02196 land_08795 land_03313 land_08786 land_00595 land_00512 land_04476 land_05662 land_07748 }
 }
 siberia_south_of_the_taiga_2 = {
-	name = "Siberia south of the taiga 2"
+	name = "Siberia South of the Taiga 2"
 	manpower = 1
 	tax = 0.5
 	locations = { land_03235 land_07093 land_08962 land_04172 land_00125 land_03448 land_04468 land_02673 land_02973 land_03467 land_00463 land_02512 land_05484 land_09319 land_08341 land_02536 land_03519 land_05974 land_07460 land_05430 land_04055 land_07410 land_06824 land_04549 land_08490 land_07106 land_04282 land_08606 land_00775 }
 }
 siberia_south_of_the_taiga_3 = {
-	name = "Siberia south of the taiga 3"
+	name = "Siberia South of the Taiga 3"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02072 land_04061 land_08588 land_09631 land_03872 land_02460 land_04149 land_04680 land_03291 land_01962 land_01016 land_04980 land_06046 land_05257 land_01150 land_04971 land_01690 land_08169 land_06014 land_01224 land_02687 land_01418 land_01395 land_07805 land_09471 land_03472 land_01497 land_02157 land_04972 land_07404 land_07501 land_06112 land_08867 land_07326 land_05282 land_09403 land_00326 land_02938 land_05070 land_05693 land_03358 land_01503 land_08725 land_08116 land_03386 land_04106 land_03377 land_03557 land_00133 land_00253 land_08804 land_03751 land_00484 land_09155 land_03419 land_05085 land_06871 land_05039 land_01795 land_05819 land_05496 land_03341 land_06802 }
 }
 siberia_south_of_the_taiga_4 = {
-	name = "Siberia south of the taiga 4"
+	name = "Siberia South of the Taiga 4"
 	manpower = 1
 	tax = 0.6
 	locations = { land_05570 land_08085 land_08422 land_02626 land_07333 land_09405 land_03886 land_04523 land_06129 land_06549 land_07232 land_08861 land_00287 land_01750 land_07343 land_00075 land_04985 land_05179 land_03707 land_08234 land_08571 land_00117 land_17560 land_04441 land_07759 land_04395 land_03306 land_05941 land_02457 land_04746 land_04137 land_04677 land_01756 land_03265 land_08226 land_17561 land_00552 land_08983 land_07654 land_06519 land_00843 land_08042 land_03612 land_07253 land_07313 land_07373 land_05098 land_02440 land_07913 land_09478 land_06354 land_06954 land_05182 land_09183 land_04310 land_03424 }
 }
 siberia_south_of_the_taiga_5 = {
-	name = "Siberia south of the taiga 5"
+	name = "Siberia South of the Taiga 5"
 	manpower = 2
 	tax = 0.6
 	locations = { land_07042 land_00803 land_08288 land_07845 land_06193 land_04361 land_07882 land_07176 land_00351 land_07273 land_06950 land_06101 land_02317 land_04329 land_06401 land_00845 land_06558 land_03674 land_09004 land_03245 land_08898 land_03102 land_03605 land_05917 land_04708 land_04445 land_08829 land_04422 land_01695 land_09097 land_04870 land_08179 land_00048 land_05521 land_08073 land_05798 land_07464 land_00962 land_06735 land_07575 land_05337 land_00464 land_08895 land_09075 land_00884 land_06357 land_03962 land_09052 land_05328 land_05868 land_06431 land_08000 land_08157 land_04996 land_00949 land_02135 land_03035 land_04281 land_00557 land_02666 land_01720 land_05684 land_01471 land_00705 land_08933 land_02491 land_00599 land_03354 land_06169 land_00996 land_00710 land_03525 land_02579 land_08615 land_02436 land_02976 land_03073 land_00678 land_06811 land_00189 land_08057 land_03927 land_08394 }
 }
 siberia_south_of_the_taiga_6 = {
-	name = "Siberia south of the taiga 6"
+	name = "Siberia South of the Taiga 6"
 	manpower = 1
 	tax = 0.6
 	locations = { land_02012 land_02575 land_05510 land_07919 land_08173 land_07227 land_04966 land_00993 land_07306 land_06757 land_00675 land_03430 land_06102 land_02115 land_03278 land_05913 land_07196 land_00837 land_00814 land_01714 land_02794 land_03477 land_05803 land_07409 land_00727 land_02716 land_05531 land_08900 land_04793 land_07991 land_00806 land_06639 land_08771 land_01180 land_03492 land_06630 land_03469 land_03880 land_04923 land_08684 land_04517 land_02399 land_07992 land_00184 land_06400 land_02773 land_05445 land_01541 land_09317 }
 }
 siberia_south_of_the_taiga_7 = {
-	name = "Siberia south of the taiga 7"
+	name = "Siberia South of the Taiga 7"
 	manpower = 1
 	tax = 0.6
 	locations = { land_06124 land_03286 land_04795 land_01491 land_02774 land_05972 land_07481 land_01722 land_03162 land_06337 land_06734 land_00209 land_01132 land_09171 land_02046 land_06707 land_09582 land_00828 land_00948 land_00413 land_06569 land_04917 land_03302 land_07626 land_09472 land_00912 land_01909 land_06150 land_01300 land_04286 land_01185 land_02191 land_02588 land_08241 land_00041 land_08366 land_07540 land_06585 land_03184 land_09663 }
 }
 siberia_south_of_the_taiga_8 = {
-	name = "Siberia south of the taiga 8"
+	name = "Siberia South of the Taiga 8"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08228 land_00983 land_06253 land_04278 land_00291 land_02160 land_06641 land_04786 land_05423 land_05663 land_00047 land_00947 land_09678 land_05451 land_03619 land_05908 land_06328 land_00269 land_07228 land_04247 land_09554 land_02286 land_07164 land_02388 land_00067 land_02642 land_07529 land_00284 land_08129 land_04908 land_00695 land_09689 land_05439 land_05310 land_08268 land_05873 land_07216 land_04955 land_01651 land_09519 land_03940 land_02348 land_09307 land_03788 land_06926 land_04028 land_06340 land_02856 land_06737 land_04845 land_06091 land_05648 land_01758 land_04513 land_02561 land_07568 land_02215 }
@@ -2706,7 +2706,7 @@ eastern_anatolia_and_armenia_4 = {
 	locations = { land_01445 land_03845 land_09729 land_02041 land_08452 land_01738 land_00146 land_04724 land_06487 land_07484 land_05237 land_07240 }
 }
 iranian_plateau_persians_and_medes_1 = {
-	name = "Iranian plateau (Persians and Medes) 1"
+	name = "Iranian Plateau (Persians and Medes) 1"
 	owner = ACH
 	cores = { ACH }
 	manpower = 18
@@ -2714,7 +2714,7 @@ iranian_plateau_persians_and_medes_1 = {
 	locations = { land_17559 land_08520 land_02438 land_07723 land_17548 land_00572 }
 }
 iranian_plateau_persians_and_medes_2 = {
-	name = "Iranian plateau (Persians and Medes) 2"
+	name = "Iranian Plateau (Persians and Medes) 2"
 	owner = ACH
 	cores = { ACH }
 	manpower = 11
@@ -2722,7 +2722,7 @@ iranian_plateau_persians_and_medes_2 = {
 	locations = { land_06540 land_09055 land_07371 land_01402 }
 }
 iranian_plateau_persians_and_medes_3 = {
-	name = "Iranian plateau (Persians and Medes) 3"
+	name = "Iranian Plateau (Persians and Medes) 3"
 	owner = ACH
 	cores = { ACH }
 	manpower = 15
@@ -2733,7 +2733,7 @@ iranian_plateau_persians_and_medes_3 = {
 	}
 }
 iranian_plateau_persians_and_medes_4 = {
-	name = "Iranian plateau (Persians and Medes) 4"
+	name = "Iranian Plateau (Persians and Medes) 4"
 	owner = ACH
 	cores = { ACH }
 	manpower = 9
@@ -2741,7 +2741,7 @@ iranian_plateau_persians_and_medes_4 = {
 	locations = { land_06904 land_05157 }
 }
 iranian_plateau_persians_and_medes_5 = {
-	name = "Iranian plateau (Persians and Medes) 5"
+	name = "Iranian Plateau (Persians and Medes) 5"
 	owner = ACH
 	cores = { ACH }
 	manpower = 22
@@ -2749,7 +2749,7 @@ iranian_plateau_persians_and_medes_5 = {
 	locations = { land_04940 land_02988 land_02730 land_08988 land_06128 }
 }
 iranian_plateau_persians_and_medes_6 = {
-	name = "Iranian plateau (Persians and Medes) 6"
+	name = "Iranian Plateau (Persians and Medes) 6"
 	owner = ACH
 	cores = { ACH }
 	manpower = 8
@@ -2760,7 +2760,7 @@ iranian_plateau_persians_and_medes_6 = {
 	}
 }
 iranian_plateau_persians_and_medes_7 = {
-	name = "Iranian plateau (Persians and Medes) 7"
+	name = "Iranian Plateau (Persians and Medes) 7"
 	owner = ACH
 	cores = { ACH }
 	manpower = 16
@@ -2768,7 +2768,7 @@ iranian_plateau_persians_and_medes_7 = {
 	locations = { land_05150 land_08608 land_03105 land_17558 }
 }
 iranian_plateau_persians_and_medes_8 = {
-	name = "Iranian plateau (Persians and Medes) 8"
+	name = "Iranian Plateau (Persians and Medes) 8"
 	owner = ACH
 	cores = { ACH }
 	manpower = 15
@@ -2779,7 +2779,7 @@ iranian_plateau_persians_and_medes_8 = {
 	}
 }
 iranian_plateau_persians_and_medes_9 = {
-	name = "Iranian plateau (Persians and Medes) 9"
+	name = "Iranian Plateau (Persians and Medes) 9"
 	owner = ACH
 	cores = { ACH }
 	manpower = 14
@@ -2787,7 +2787,7 @@ iranian_plateau_persians_and_medes_9 = {
 	locations = { land_05950 land_08770 land_04244 land_03553 land_17586 }
 }
 iranian_plateau_persians_and_medes_10 = {
-	name = "Iranian plateau (Persians and Medes) 10"
+	name = "Iranian Plateau (Persians and Medes) 10"
 	owner = ACH
 	cores = { ACH }
 	manpower = 18
@@ -2795,7 +2795,7 @@ iranian_plateau_persians_and_medes_10 = {
 	locations = { land_03614 land_01279 land_01141 land_08276 land_05661 land_00152 land_05113 }
 }
 iranian_plateau_persians_and_medes_11 = {
-	name = "Iranian plateau (Persians and Medes) 11"
+	name = "Iranian Plateau (Persians and Medes) 11"
 	owner = ACH
 	cores = { ACH }
 	manpower = 9
@@ -2803,7 +2803,7 @@ iranian_plateau_persians_and_medes_11 = {
 	locations = { land_02144 land_01978 }
 }
 iranian_plateau_persians_and_medes_12 = {
-	name = "Iranian plateau (Persians and Medes) 12"
+	name = "Iranian Plateau (Persians and Medes) 12"
 	owner = ACH
 	cores = { ACH }
 	manpower = 13
@@ -2811,13 +2811,13 @@ iranian_plateau_persians_and_medes_12 = {
 	locations = { land_00891 land_01483 land_09227 }
 }
 iranian_plateau_persians_and_medes_13 = {
-	name = "Iranian plateau (Persians and Medes) 13"
+	name = "Iranian Plateau (Persians and Medes) 13"
 	manpower = 1
 	tax = 0.5
 	locations = { land_03864 land_04686 land_00428 }
 }
 iranian_plateau_persians_and_medes_14 = {
-	name = "Iranian plateau (Persians and Medes) 14"
+	name = "Iranian Plateau (Persians and Medes) 14"
 	owner = ACH
 	cores = { ACH }
 	manpower = 14
@@ -2828,7 +2828,7 @@ iranian_plateau_persians_and_medes_14 = {
 	}
 }
 iranian_plateau_persians_and_medes_15 = {
-	name = "Iranian plateau (Persians and Medes) 15"
+	name = "Iranian Plateau (Persians and Medes) 15"
 	owner = ACH
 	cores = { ACH }
 	manpower = 14
@@ -2839,7 +2839,7 @@ iranian_plateau_persians_and_medes_15 = {
 	}
 }
 iranian_plateau_persians_and_medes_16 = {
-	name = "Iranian plateau (Persians and Medes) 16"
+	name = "Iranian Plateau (Persians and Medes) 16"
 	owner = ACH
 	cores = { ACH }
 	manpower = 8
@@ -2850,7 +2850,7 @@ iranian_plateau_persians_and_medes_16 = {
 	}
 }
 iranian_plateau_persians_and_medes_17 = {
-	name = "Iranian plateau (Persians and Medes) 17"
+	name = "Iranian Plateau (Persians and Medes) 17"
 	owner = ACH
 	cores = { ACH }
 	manpower = 11
@@ -3080,7 +3080,7 @@ syria_7 = {
 	locations = { land_08699 land_07800 land_05142 land_05983 land_00077 land_02117 }
 }
 phoenician_coast_1 = {
-	name = "Phoenician coast"
+	name = "Phoenician Coast"
 	owner = ACH
 	cores = { ACH }
 	manpower = 14
@@ -3129,7 +3129,7 @@ judah_and_israel_4 = {
 	locations = { land_06051 land_06560 land_09375 }
 }
 north_arabian_tribes_1 = {
-	name = "North Arabian tribes 1"
+	name = "North Arabian Tribes 1"
 	manpower = 3
 	tax = 0.7
 	locations = { land_04084 land_07116 land_06890 land_08459 land_05995 land_05326 land_05520 land_06586 land_09521 land_08492 land_00375 land_07311 land_07048 land_00306 land_00860 land_04658 land_06204 land_04755 land_08936 land_07261 land_09370 land_08927 land_01599 land_07492 land_07672 land_01747 land_05951 land_01784 land_00455 land_08600 land_06159 land_00100 land_04775 land_03889 land_00788 land_03423 land_04697 land_03045 land_00327 land_00064 land_08435 land_04199 land_03996 land_03170 }
@@ -3138,7 +3138,7 @@ north_arabian_tribes_1 = {
 	}
 }
 north_arabian_tribes_2 = {
-	name = "North Arabian tribes 2"
+	name = "North Arabian Tribes 2"
 	manpower = 4
 	tax = 0.8
 	locations = { land_09174 land_02769 land_08399 land_03226 land_17591 land_01971 land_00490 land_02313 land_05525 land_17592 land_00140 land_00357 land_03855 land_07653 land_00265 land_03283 land_05715 land_04183 land_06412 land_06426 land_09117 land_02315 land_04807 land_05624 land_03654 land_07655 land_09261 land_04591 land_06497 land_02510 land_02127 land_00692 }
@@ -3147,7 +3147,7 @@ north_arabian_tribes_2 = {
 	}
 }
 arabian_peninsula_m9_1 = {
-	name = "Arabian peninsula 1"
+	name = "Arabian Peninsula 1"
 	manpower = 1
 	tax = 0.6
 	locations = { land_09008 land_02963 land_07407 land_01399 land_04694 land_00790 land_02110 land_08543 land_02521 land_01377 land_03491 land_04617 land_01636 land_01138 land_05942 land_01789 land_03815 land_04738 land_06967 land_02168 land_03811 land_07812 land_04808 land_00078 land_06174 land_09312 land_04259 land_09040 }
@@ -3156,7 +3156,7 @@ arabian_peninsula_m9_1 = {
 	}
 }
 arabian_peninsula_m9_2 = {
-	name = "Arabian peninsula 2"
+	name = "Arabian Peninsula 2"
 	manpower = 2
 	tax = 0.7
 	locations = { land_00060 land_06659 land_04938 land_17568 land_07541 land_02142 land_05377 land_03928 land_03139 land_08788 land_06873 land_09328 land_03089 land_00371 land_00874 land_07833 land_08613 land_00607 land_01664 land_02287 land_04004 land_06376 land_03538 land_04069 land_03100 land_02611 land_05629 land_03511 land_04088 land_17567 land_05957 land_08149 land_05768 land_08463 land_03327 land_08717 land_03221 }
@@ -3165,7 +3165,7 @@ arabian_peninsula_m9_2 = {
 	}
 }
 arabian_peninsula_m9_3 = {
-	name = "Arabian peninsula 3"
+	name = "Arabian Peninsula 3"
 	manpower = 2
 	tax = 0.7
 	locations = { land_09151 land_03775 land_03309 land_02151 land_07052 land_07209 land_01330 land_04911 land_08031 land_07302 land_06490 land_02240 land_01585 land_17593 land_03810 land_04147 land_05610 land_17594 land_01494 land_01388 land_06478 land_08347 land_09344 land_05888 land_04190 land_07448 }
@@ -3174,7 +3174,7 @@ arabian_peninsula_m9_3 = {
 	}
 }
 arabian_peninsula_m9_4 = {
-	name = "Arabian peninsula 4"
+	name = "Arabian Peninsula 4"
 	manpower = 3
 	tax = 0.7
 	locations = { land_05090 land_06110 land_03992 land_07513 land_05358 land_08381 land_04348 land_05571 land_02664 land_05276 land_00163 land_01229 land_01829 land_07925 land_07039 land_00740 land_08668 land_00920 land_04944 land_04598 land_07796 land_09462 land_03117 land_05480 land_04488 land_06962 land_05324 land_05398 land_09542 land_07950 land_02325 land_02658 }
@@ -3183,7 +3183,7 @@ arabian_peninsula_m9_4 = {
 	}
 }
 arabian_peninsula_m167_1 = {
-	name = "Arabian peninsula"
+	name = "Arabian Peninsula"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16060 }
@@ -3330,7 +3330,7 @@ bactria_and_sogdia_10 = {
 	locations = { land_00928 land_03799 land_06859 land_03556 land_04913 land_06316 land_05587 }
 }
 persian_southeast_and_makran_1 = {
-	name = "Persian southeast and Makran 1"
+	name = "Persian Southeast and Makran 1"
 	owner = ACH
 	cores = { ACH }
 	manpower = 13
@@ -3341,7 +3341,7 @@ persian_southeast_and_makran_1 = {
 	}
 }
 persian_southeast_and_makran_2 = {
-	name = "Persian southeast and Makran 2"
+	name = "Persian Southeast and Makran 2"
 	owner = ACH
 	cores = { ACH }
 	manpower = 13
@@ -3731,7 +3731,7 @@ nubia_and_napata_3 = {
 	locations = { land_07139 land_05990 land_04038 land_09225 land_03766 land_00310 land_06259 land_08382 land_05581 land_03288 land_01582 land_01107 land_07960 }
 }
 sahel_and_west_african_farmers_1 = {
-	name = "Sahel and West African farmers 1"
+	name = "Sahel and West African Farmers 1"
 	owner = SAH
 	cores = { SAH }
 	manpower = 11
@@ -3742,7 +3742,7 @@ sahel_and_west_african_farmers_1 = {
 	}
 }
 sahel_and_west_african_farmers_2 = {
-	name = "Sahel and West African farmers 2"
+	name = "Sahel and West African Farmers 2"
 	owner = SAH
 	cores = { SAH }
 	manpower = 11
@@ -3750,7 +3750,7 @@ sahel_and_west_african_farmers_2 = {
 	locations = { land_09022 land_02765 land_03758 land_01806 land_06370 land_07713 land_09536 land_09130 land_05743 land_04742 land_06856 land_08485 land_08342 land_08079 land_03340 land_06012 land_06026 land_08278 land_02210 land_03456 land_03576 }
 }
 sahel_and_west_african_farmers_3 = {
-	name = "Sahel and West African farmers 3"
+	name = "Sahel and West African Farmers 3"
 	owner = SAH
 	cores = { SAH }
 	manpower = 17
@@ -3758,7 +3758,7 @@ sahel_and_west_african_farmers_3 = {
 	locations = { land_02174 land_03074 land_06388 land_09600 land_07325 land_02978 land_04487 land_07459 land_00717 land_01723 land_07136 land_08682 land_08359 land_05258 land_02923 land_07390 land_04732 land_04589 land_04474 land_00404 land_01147 land_08632 land_06740 land_03501 land_04364 land_00137 land_07239 land_04461 land_09288 land_06201 land_04309 land_05112 land_05269 land_00230 land_00867 land_01084 land_09612 land_00535 land_08320 land_03470 land_02584 }
 }
 sahel_and_west_african_farmers_4 = {
-	name = "Sahel and West African farmers 4"
+	name = "Sahel and West African Farmers 4"
 	owner = SAH
 	cores = { SAH }
 	manpower = 13
@@ -3769,7 +3769,7 @@ sahel_and_west_african_farmers_4 = {
 	}
 }
 sahel_and_west_african_farmers_5 = {
-	name = "Sahel and West African farmers 5"
+	name = "Sahel and West African Farmers 5"
 	owner = SAH
 	cores = { SAH }
 	manpower = 12
@@ -3780,7 +3780,7 @@ sahel_and_west_african_farmers_5 = {
 	}
 }
 sahel_and_west_african_farmers_6 = {
-	name = "Sahel and West African farmers 6"
+	name = "Sahel and West African Farmers 6"
 	owner = SAH
 	cores = { SAH }
 	manpower = 12
@@ -3788,7 +3788,7 @@ sahel_and_west_african_farmers_6 = {
 	locations = { land_04375 land_06567 land_06941 land_07061 land_00942 land_03781 land_08442 land_07141 land_00427 land_02107 land_00815 land_09020 land_00206 land_01046 land_02606 land_00105 land_05232 land_01019 land_01370 land_01024 }
 }
 bantu_homeland_m9_1 = {
-	name = "Bantu homeland 1"
+	name = "Bantu Homeland 1"
 	owner = BAN
 	cores = { BAN }
 	manpower = 14
@@ -3799,7 +3799,7 @@ bantu_homeland_m9_1 = {
 	}
 }
 bantu_homeland_m9_2 = {
-	name = "Bantu homeland 2"
+	name = "Bantu Homeland 2"
 	owner = BAN
 	cores = { BAN }
 	manpower = 9
@@ -3807,7 +3807,7 @@ bantu_homeland_m9_2 = {
 	locations = { land_00808 land_09479 land_06701 land_05086 land_08607 land_02368 land_08644 land_05460 land_05963 land_02802 land_07486 land_05308 land_04459 land_03167 land_08557 land_06282 land_03061 land_06476 land_05267 land_01843 land_03652 land_03832 land_01797 land_03274 land_08669 land_02204 land_03515 land_03552 land_00991 land_05615 land_09233 land_07881 land_02422 land_00387 land_06257 land_05874 land_00318 land_03636 land_08140 land_08117 land_03867 }
 }
 bantu_homeland_m213_1 = {
-	name = "Bantu homeland"
+	name = "Bantu Homeland"
 	owner = BAN
 	cores = { BAN }
 	manpower = 1
@@ -3818,7 +3818,7 @@ bantu_homeland_m213_1 = {
 	}
 }
 central_african_forest_m9_1 = {
-	name = "Central African forest 1"
+	name = "Central African Forest 1"
 	manpower = 3
 	tax = 0.8
 	locations = { land_07822 land_08625 land_09248 land_02723 land_01274 land_00508 land_08916 land_05575 land_07901 land_01879 land_00167 land_08838 land_09341 land_05151 land_00301 land_09235 land_02996 land_05511 land_01284 land_01524 land_02590 land_04579 land_05262 land_02364 land_00915 land_03144 land_04270 land_04833 land_08068 land_04284 land_07542 land_09614 land_01543 land_05401 land_02060 land_07773 land_00528 land_06038 land_02051 land_05069 land_00113 land_03025 land_05037 land_03588 land_05600 land_00307 land_05960 land_07160 land_07017 land_03473 land_04216 land_05222 land_01115 land_07091 land_02481 land_04673 land_09597 land_06759 land_01083 land_05670 land_02772 land_04581 land_04138 land_06870 land_02823 land_08236 land_06861 land_05772 land_06395 land_05869 land_07512 land_02279 land_05297 land_00364 land_01670 land_08209 land_07886 land_03147 land_00369 land_04393 land_02178 land_09603 land_07628 land_01892 }
@@ -3827,19 +3827,19 @@ central_african_forest_m9_1 = {
 	}
 }
 central_african_forest_m9_2 = {
-	name = "Central African forest 2"
+	name = "Central African Forest 2"
 	manpower = 3
 	tax = 0.7
 	locations = { land_00277 land_08565 land_05967 land_04195 land_05501 land_02797 land_08750 land_04403 land_09373 land_09087 land_06106 land_01316 land_00430 land_08921 land_04514 land_02216 land_04288 land_06743 land_02876 land_09355 land_05128 land_08446 land_02710 land_09249 land_01035 land_01335 land_08451 land_09314 land_04561 land_06984 land_07621 land_01765 land_07095 land_05540 land_07026 land_06057 land_05471 land_07926 land_04013 land_01023 land_02283 land_00322 land_09256 land_08730 land_07558 land_08624 land_01273 land_01836 land_04102 land_01564 land_01624 land_09492 land_03696 land_07157 land_06008 land_01661 land_04739 land_02141 land_02824 land_03244 land_04047 }
 }
 central_african_forest_m9_3 = {
-	name = "Central African forest 3"
+	name = "Central African Forest 3"
 	manpower = 3
 	tax = 0.8
 	locations = { land_00503 land_03761 land_07785 land_07619 land_07679 land_07596 land_02806 land_02363 land_03923 land_01025 land_00882 land_04583 land_08907 land_01219 land_05866 land_02719 land_04791 land_07989 land_09115 land_02493 land_07906 land_00841 land_07057 land_08040 land_06831 land_02844 land_04893 land_05899 land_03661 land_02775 land_03841 land_07422 land_07219 land_03569 land_06144 land_03966 land_00182 land_00925 land_01793 land_03362 land_01387 land_02896 land_02693 land_07603 land_05928 land_04456 land_04078 land_01097 land_00151 land_03686 land_07627 land_01748 land_06755 land_01439 land_08421 land_06589 land_08661 land_02842 land_09118 land_05777 land_09095 land_07826 land_05611 land_07300 land_04905 land_06151 land_06188 land_02524 }
 }
 central_african_forest_m9_4 = {
-	name = "Central African forest 4"
+	name = "Central African Forest 4"
 	manpower = 3
 	tax = 0.7
 	locations = { land_02252 land_05833 land_07402 land_06073 land_03715 land_06350 land_07153 land_09285 land_01191 land_04832 land_02940 land_03180 land_08593 land_00176 land_06332 land_09401 land_07629 land_09498 land_08349 land_09392 land_07440 land_09572 land_06591 land_07011 land_07108 land_09360 land_01169 land_04630 land_09660 land_05613 land_01949 land_04358 land_02323 land_02886 land_09305 land_03509 land_01128 land_06961 land_05572 land_01908 land_07884 land_09393 land_03154 land_02499 land_06200 land_08332 land_09338 land_05171 land_04345 land_04405 land_07142 land_06090 land_00354 land_00834 land_04835 land_08010 land_03520 land_04623 land_00839 land_09510 land_07392 land_07286 land_07023 land_09718 land_01144 land_06617 land_02833 land_05791 land_02390 land_04139 land_05145 land_07517 land_08260 land_04416 land_04033 land_04130 land_05616 }
@@ -3848,19 +3848,19 @@ central_african_forest_m9_4 = {
 	}
 }
 central_african_forest_m9_5 = {
-	name = "Central African forest 5"
+	name = "Central African Forest 5"
 	manpower = 3
 	tax = 0.8
 	locations = { land_01306 land_09294 land_01463 land_00614 land_02123 land_05261 land_03743 land_05875 land_03194 land_03254 land_06669 land_02133 land_04182 land_01847 land_07034 land_07348 land_08714 land_04367 land_01972 land_01266 land_01100 land_08050 land_02937 land_06758 land_00519 land_05992 land_07118 land_03574 land_01179 land_06689 land_00330 land_08415 land_05697 land_06334 land_08766 land_03090 land_09066 land_06025 land_06888 land_01332 land_04710 land_07945 land_08245 land_07276 land_07133 land_09145 land_07793 land_00728 land_09616 land_07461 land_05689 land_02468 land_05103 land_07175 land_07452 land_09201 land_09621 land_04831 land_00424 land_08412 land_02173 land_08006 land_01384 land_07863 land_06414 land_07277 land_02990 land_04250 }
 }
 central_african_forest_m9_6 = {
-	name = "Central African forest 6"
+	name = "Central African Forest 6"
 	manpower = 3
 	tax = 0.8
 	locations = { land_00743 land_08348 land_06516 land_06636 land_06230 land_08159 land_02700 land_01108 land_06581 land_02271 land_03577 land_01625 land_09161 land_09438 land_07786 land_01427 land_02433 land_03559 land_00158 land_05968 land_02567 land_03250 land_07837 land_02987 land_07251 land_04570 land_01386 land_05410 land_00620 land_07722 land_06573 land_02166 land_01400 land_08036 land_07690 land_07667 land_00362 land_01105 land_00759 land_01096 land_07049 land_06583 land_08572 land_05794 land_09112 land_02310 land_06394 land_09712 land_05988 land_06611 land_03667 land_02338 land_00363 land_01549 land_02675 land_02232 land_08831 land_08845 land_09408 land_09025 land_00774 land_08656 land_06381 land_03986 land_04323 land_01928 land_02934 land_00539 land_02671 land_02528 land_09487 land_01799 land_03308 land_06769 land_07895 land_01776 land_05528 land_01804 land_02607 land_00655 land_01338 land_01195 land_07411 land_01472 land_01029 }
 }
 central_african_forest_m219_1 = {
-	name = "Central African forest"
+	name = "Central African Forest"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16328 }
@@ -3869,7 +3869,7 @@ central_african_forest_m219_1 = {
 	}
 }
 ethiopian_highlands_1 = {
-	name = "Ethiopian highlands 1"
+	name = "Ethiopian Highlands 1"
 	owner = DMT
 	cores = { DMT }
 	manpower = 20
@@ -3877,7 +3877,7 @@ ethiopian_highlands_1 = {
 	locations = { land_08805 land_09165 land_05778 land_04749 land_09553 land_02608 land_00795 land_04256 land_01981 land_03504 land_04801 land_07067 land_04068 land_07820 land_06002 land_06399 land_01231 land_05140 land_04937 land_07849 land_01227 land_04725 }
 }
 ethiopian_highlands_2 = {
-	name = "Ethiopian highlands 2"
+	name = "Ethiopian Highlands 2"
 	owner = DMT
 	cores = { DMT }
 	manpower = 14
@@ -3888,7 +3888,7 @@ ethiopian_highlands_2 = {
 	}
 }
 ethiopian_highlands_3 = {
-	name = "Ethiopian highlands 3"
+	name = "Ethiopian Highlands 3"
 	owner = DMT
 	cores = { DMT }
 	manpower = 12
@@ -3899,7 +3899,7 @@ ethiopian_highlands_3 = {
 	}
 }
 ethiopian_highlands_4 = {
-	name = "Ethiopian highlands 4"
+	name = "Ethiopian Highlands 4"
 	owner = DMT
 	cores = { DMT }
 	manpower = 11
@@ -3907,7 +3907,7 @@ ethiopian_highlands_4 = {
 	locations = { land_00605 land_09701 land_07233 land_00445 land_08055 land_07866 land_03247 land_06321 land_04669 land_07124 land_04674 land_07346 }
 }
 ethiopian_highlands_5 = {
-	name = "Ethiopian highlands 5"
+	name = "Ethiopian Highlands 5"
 	owner = DMT
 	cores = { DMT }
 	manpower = 8
@@ -3915,7 +3915,7 @@ ethiopian_highlands_5 = {
 	locations = { land_01223 land_08925 land_08875 land_07777 land_05442 land_09310 land_07571 land_07830 land_07683 land_04836 land_02621 }
 }
 ethiopian_highlands_6 = {
-	name = "Ethiopian highlands 6"
+	name = "Ethiopian Highlands 6"
 	owner = DMT
 	cores = { DMT }
 	manpower = 13
@@ -3923,7 +3923,7 @@ ethiopian_highlands_6 = {
 	locations = { land_05593 land_09032 land_05392 land_04806 land_09006 land_05702 land_05296 land_07982 land_00668 land_07060 land_09649 land_02261 }
 }
 ethiopian_highlands_7 = {
-	name = "Ethiopian highlands 7"
+	name = "Ethiopian Highlands 7"
 	owner = DMT
 	cores = { DMT }
 	manpower = 9
@@ -3958,25 +3958,25 @@ horn_of_africa_m179_1 = {
 	}
 }
 east_african_pastoralists_m9_1 = {
-	name = "East African pastoralists 1"
+	name = "East African Pastoralists 1"
 	manpower = 5
 	tax = 0.9
 	locations = { land_07762 land_02566 land_09548 land_09299 land_06761 land_04500 land_00610 land_05880 land_00324 land_01187 land_06697 land_04602 land_03075 land_01626 land_06670 land_00311 land_09356 land_03237 land_02568 land_03122 land_03985 land_00312 land_00409 land_08014 land_01512 land_08508 land_00451 land_00571 land_08250 land_05403 land_09704 land_00124 land_01873 land_05814 land_02044 land_00715 land_04176 land_08200 land_04273 land_03890 land_01172 land_06945 }
 }
 east_african_pastoralists_m9_2 = {
-	name = "East African pastoralists 2"
+	name = "East African Pastoralists 2"
 	manpower = 8
 	tax = 1.2
 	locations = { land_08339 land_03932 land_00568 land_01888 land_00919 land_01482 land_05063 land_04620 land_06203 land_17550 land_07832 land_01210 land_07426 land_00181 land_06600 land_04888 land_04362 land_03153 land_08377 land_08437 land_07265 land_05784 land_17551 land_03560 land_01608 land_03417 land_01262 land_01239 land_02319 land_03445 land_01050 land_09495 land_02190 land_09292 land_06671 land_04336 land_09200 land_01009 land_04041 land_03095 land_09574 land_05970 land_06750 land_05721 land_04120 land_00516 land_00073 land_06086 land_06363 land_00987 land_03156 land_03779 land_06105 land_03161 }
 }
 east_african_pastoralists_m9_3 = {
-	name = "East African pastoralists 3"
+	name = "East African Pastoralists 3"
 	manpower = 6
 	tax = 1.0
 	locations = { land_05976 land_08431 land_00434 land_08099 land_09608 land_05058 land_07564 land_02068 land_02128 land_06512 land_06932 land_05100 land_06789 land_01164 land_04339 land_06854 land_04127 land_07662 land_06453 land_06633 land_05687 land_04238 land_03352 land_01068 land_06481 land_05655 land_00602 land_03297 land_08687 land_01230 land_00261 land_06094 land_09029 land_08646 land_06731 land_06408 land_03224 land_00603 land_03418 land_08065 land_03372 land_00954 land_07530 land_02694 land_03677 land_09690 land_04337 land_05966 land_00350 land_06506 land_07009 land_00267 land_03465 land_02076 land_06580 land_01324 land_03959 land_08426 land_05482 land_08274 land_05939 land_08454 }
 }
 east_african_pastoralists_m9_4 = {
-	name = "East African pastoralists 4"
+	name = "East African Pastoralists 4"
 	manpower = 7
 	tax = 1.0
 	locations = { land_04001 land_08948 land_00637 land_04315 land_06447 land_05958 land_07527 land_07264 land_09013 land_02728 land_05746 land_00573 land_07929 land_06554 land_05225 land_01861 land_07874 land_00569 land_00749 land_05433 land_06942 land_07159 land_05064 land_04515 land_04192 land_03403 land_06361 land_01954 land_08830 land_05000 land_05503 land_01133 land_06703 land_07063 land_02490 land_08526 land_07474 land_09606 land_00852 land_05656 land_01872 land_02555 land_06676 land_04341 land_03312 land_09228 land_08153 land_01291 land_00945 land_06349 land_00793 land_02302 land_09584 land_06183 land_08975 land_05491 land_08449 land_09686 land_06682 }
@@ -3985,7 +3985,7 @@ east_african_pastoralists_m9_4 = {
 	}
 }
 east_african_pastoralists_m250_1 = {
-	name = "East African pastoralists"
+	name = "East African Pastoralists"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16541 land_16542 }
@@ -4171,7 +4171,7 @@ eastern_sahel_nilotic_3 = {
 	locations = { land_00563 land_02432 land_07887 land_06152 land_04237 land_04297 land_09304 land_01030 land_01870 land_04376 land_04053 land_07491 land_00869 land_07588 land_02715 land_02406 land_02660 land_01008 land_07787 land_08853 land_06075 land_01645 land_00999 land_02425 land_05900 land_01973 land_02153 land_01507 land_08840 land_01309 land_08231 land_03861 land_07862 land_06413 land_03432 land_03049 land_09445 land_04452 land_09399 land_01988 land_01522 land_01199 land_05583 land_01490 land_09192 land_08800 land_03484 }
 }
 indus_lands_1 = {
-	name = "Indus lands 1"
+	name = "Indus Lands 1"
 	owner = ACH
 	cores = { ACH }
 	manpower = 9
@@ -4179,13 +4179,13 @@ indus_lands_1 = {
 	locations = { land_02982 land_08972 land_06444 land_00436 land_02786 land_07134 }
 }
 indus_lands_2 = {
-	name = "Indus lands 2"
+	name = "Indus Lands 2"
 	manpower = 11
 	tax = 1.4
 	locations = { land_07130 land_04588 land_04691 land_07165 land_09090 land_08740 }
 }
 indus_lands_3 = {
-	name = "Indus lands 3"
+	name = "Indus Lands 3"
 	owner = ACH
 	cores = { ACH }
 	manpower = 9
@@ -4193,7 +4193,7 @@ indus_lands_3 = {
 	locations = { land_03185 land_07726 land_03038 }
 }
 indus_lands_4 = {
-	name = "Indus lands 4"
+	name = "Indus Lands 4"
 	owner = ACH
 	cores = { ACH }
 	manpower = 10
@@ -4201,7 +4201,7 @@ indus_lands_4 = {
 	locations = { land_02679 land_08586 }
 }
 indus_lands_5 = {
-	name = "Indus lands 5"
+	name = "Indus Lands 5"
 	owner = GAN
 	cores = { GAN }
 	manpower = 10
@@ -4209,7 +4209,7 @@ indus_lands_5 = {
 	locations = { land_08671 land_08372 land_01349 land_09089 land_07387 land_01970 }
 }
 indus_lands_6 = {
-	name = "Indus lands 6"
+	name = "Indus Lands 6"
 	owner = ACH
 	cores = { ACH }
 	manpower = 17
@@ -4220,7 +4220,7 @@ indus_lands_6 = {
 	}
 }
 indus_lands_7 = {
-	name = "Indus lands 7"
+	name = "Indus Lands 7"
 	owner = GAN
 	cores = { GAN }
 	manpower = 10
@@ -4228,7 +4228,7 @@ indus_lands_7 = {
 	locations = { land_07476 land_03840 land_01077 land_00851 land_09126 land_04254 land_00129 land_08334 }
 }
 indus_lands_8 = {
-	name = "Indus lands 8"
+	name = "Indus Lands 8"
 	owner = GAN
 	cores = { GAN }
 	manpower = 15
@@ -4236,7 +4236,7 @@ indus_lands_8 = {
 	locations = { land_00157 land_01237 land_03909 land_06032 land_08021 land_00707 land_08575 land_04293 land_01515 land_03712 land_02356 land_06823 land_01430 }
 }
 indus_lands_9 = {
-	name = "Indus lands 9"
+	name = "Indus Lands 9"
 	owner = GAN
 	cores = { GAN }
 	manpower = 18
@@ -4244,13 +4244,13 @@ indus_lands_9 = {
 	locations = { land_07241 land_00984 land_09646 land_02692 land_00297 land_04949 land_07068 land_06662 land_02089 land_01854 land_00756 land_04979 land_01255 }
 }
 indus_lands_10 = {
-	name = "Indus lands 10"
+	name = "Indus Lands 10"
 	manpower = 7
 	tax = 1.0
 	locations = { land_04467 land_07425 land_01823 land_00559 land_04377 land_06449 land_08107 land_01956 land_09441 }
 }
 indus_lands_11 = {
-	name = "Indus lands 11"
+	name = "Indus Lands 11"
 	owner = ACH
 	cores = { ACH }
 	manpower = 16
@@ -4261,7 +4261,7 @@ indus_lands_11 = {
 	}
 }
 indus_lands_12 = {
-	name = "Indus lands 12"
+	name = "Indus Lands 12"
 	owner = ACH
 	cores = { ACH }
 	manpower = 15
@@ -4269,7 +4269,7 @@ indus_lands_12 = {
 	locations = { land_09677 land_00457 land_04081 land_01691 land_08973 land_00662 land_07123 land_08083 land_04816 }
 }
 indus_lands_13 = {
-	name = "Indus lands 13"
+	name = "Indus Lands 13"
 	owner = ACH
 	cores = { ACH }
 	manpower = 14
@@ -4280,7 +4280,7 @@ indus_lands_13 = {
 	}
 }
 indus_lands_14 = {
-	name = "Indus lands 14"
+	name = "Indus Lands 14"
 	owner = ACH
 	cores = { ACH }
 	manpower = 9
@@ -4288,7 +4288,7 @@ indus_lands_14 = {
 	locations = { land_01371 land_01233 land_00556 land_02684 }
 }
 indus_lands_15 = {
-	name = "Indus lands 15"
+	name = "Indus Lands 15"
 	owner = ACH
 	cores = { ACH }
 	manpower = 12
@@ -4296,7 +4296,7 @@ indus_lands_15 = {
 	locations = { land_08164 land_08963 land_03981 land_02957 land_05929 land_01495 }
 }
 indus_lands_16 = {
-	name = "Indus lands 16"
+	name = "Indus Lands 16"
 	owner = GAN
 	cores = { GAN }
 	manpower = 15
@@ -4304,7 +4304,7 @@ indus_lands_16 = {
 	locations = { land_07222 land_05603 land_04228 land_00186 land_08857 land_05821 land_00805 land_09587 land_08189 land_09195 land_08946 land_06925 land_04687 land_01074 land_08989 land_07397 }
 }
 indus_lands_17 = {
-	name = "Indus lands 17"
+	name = "Indus Lands 17"
 	owner = GAN
 	cores = { GAN }
 	manpower = 11
@@ -4312,7 +4312,7 @@ indus_lands_17 = {
 	locations = { land_02428 land_09420 }
 }
 ganges_plain_1 = {
-	name = "Ganges plain 1"
+	name = "Ganges Plain 1"
 	owner = IND
 	cores = { IND }
 	manpower = 8
@@ -4320,19 +4320,19 @@ ganges_plain_1 = {
 	locations = { land_00278 land_00659 }
 }
 ganges_plain_2 = {
-	name = "Ganges plain 2"
+	name = "Ganges Plain 2"
 	manpower = 11
 	tax = 1.4
 	locations = { land_01630 land_01175 }
 }
 ganges_plain_3 = {
-	name = "Ganges plain 3"
+	name = "Ganges Plain 3"
 	manpower = 15
 	tax = 1.7
 	locations = { land_04158 }
 }
 ganges_plain_4 = {
-	name = "Ganges plain 4"
+	name = "Ganges Plain 4"
 	owner = IND
 	cores = { IND }
 	manpower = 29
@@ -4340,7 +4340,7 @@ ganges_plain_4 = {
 	locations = { land_04074 }
 }
 ganges_plain_5 = {
-	name = "Ganges plain 5"
+	name = "Ganges Plain 5"
 	owner = IND
 	cores = { IND }
 	manpower = 30
@@ -4348,7 +4348,7 @@ ganges_plain_5 = {
 	locations = { land_07312 }
 }
 ganges_plain_6 = {
-	name = "Ganges plain 6"
+	name = "Ganges Plain 6"
 	owner = KOS
 	cores = { KOS }
 	manpower = 20
@@ -4356,7 +4356,7 @@ ganges_plain_6 = {
 	locations = { land_01277 land_05809 }
 }
 ganges_plain_7 = {
-	name = "Ganges plain 7"
+	name = "Ganges Plain 7"
 	owner = IND
 	cores = { IND }
 	manpower = 28
@@ -4364,7 +4364,7 @@ ganges_plain_7 = {
 	locations = { land_05303 land_00412 }
 }
 ganges_plain_8 = {
-	name = "Ganges plain 8"
+	name = "Ganges Plain 8"
 	owner = IND
 	cores = { IND }
 	manpower = 17
@@ -4372,7 +4372,7 @@ ganges_plain_8 = {
 	locations = { land_09021 }
 }
 ganges_plain_9 = {
-	name = "Ganges plain 9"
+	name = "Ganges Plain 9"
 	owner = IND
 	cores = { IND }
 	manpower = 22
@@ -4380,7 +4380,7 @@ ganges_plain_9 = {
 	locations = { land_06858 land_03294 }
 }
 ganges_plain_10 = {
-	name = "Ganges plain 10"
+	name = "Ganges Plain 10"
 	owner = IND
 	cores = { IND }
 	manpower = 21
@@ -4388,7 +4388,7 @@ ganges_plain_10 = {
 	locations = { land_08187 land_08709 land_06118 }
 }
 ganges_plain_11 = {
-	name = "Ganges plain 11"
+	name = "Ganges Plain 11"
 	owner = IND
 	cores = { IND }
 	manpower = 18
@@ -4396,7 +4396,7 @@ ganges_plain_11 = {
 	locations = { land_00130 land_05440 }
 }
 ganges_plain_12 = {
-	name = "Ganges plain 12"
+	name = "Ganges Plain 12"
 	owner = IND
 	cores = { IND }
 	manpower = 13
@@ -4404,7 +4404,7 @@ ganges_plain_12 = {
 	locations = { land_09591 }
 }
 ganges_plain_13 = {
-	name = "Ganges plain 13"
+	name = "Ganges Plain 13"
 	owner = KOS
 	cores = { KOS }
 	manpower = 9
@@ -4412,13 +4412,13 @@ ganges_plain_13 = {
 	locations = { land_03670 }
 }
 ganges_plain_14 = {
-	name = "Ganges plain 14"
+	name = "Ganges Plain 14"
 	manpower = 6
 	tax = 1.0
 	locations = { land_06452 }
 }
 ganges_plain_15 = {
-	name = "Ganges plain 15"
+	name = "Ganges Plain 15"
 	owner = IND
 	cores = { IND }
 	manpower = 10
@@ -4426,7 +4426,7 @@ ganges_plain_15 = {
 	locations = { land_05849 land_08089 }
 }
 ganges_plain_16 = {
-	name = "Ganges plain 16"
+	name = "Ganges Plain 16"
 	owner = IND
 	cores = { IND }
 	manpower = 20
@@ -4434,7 +4434,7 @@ ganges_plain_16 = {
 	locations = { land_08533 }
 }
 ganges_plain_17 = {
-	name = "Ganges plain 17"
+	name = "Ganges Plain 17"
 	owner = IND
 	cores = { IND }
 	manpower = 21
@@ -4442,7 +4442,7 @@ ganges_plain_17 = {
 	locations = { land_08284 land_04639 land_08120 }
 }
 ganges_plain_18 = {
-	name = "Ganges plain 18"
+	name = "Ganges Plain 18"
 	owner = IND
 	cores = { IND }
 	manpower = 14
@@ -4450,7 +4450,7 @@ ganges_plain_18 = {
 	locations = { land_00276 land_06935 land_09229 }
 }
 ganges_plain_19 = {
-	name = "Ganges plain 19"
+	name = "Ganges Plain 19"
 	owner = IND
 	cores = { IND }
 	manpower = 21
@@ -4458,19 +4458,19 @@ ganges_plain_19 = {
 	locations = { land_06189 land_05008 }
 }
 ganges_plain_20 = {
-	name = "Ganges plain 20"
+	name = "Ganges Plain 20"
 	manpower = 6
 	tax = 1.0
 	locations = { land_07944 land_06717 }
 }
 ganges_plain_21 = {
-	name = "Ganges plain 21"
+	name = "Ganges Plain 21"
 	manpower = 7
 	tax = 1.1
 	locations = { land_01729 }
 }
 ganges_plain_22 = {
-	name = "Ganges plain 22"
+	name = "Ganges Plain 22"
 	owner = KOS
 	cores = { KOS }
 	manpower = 17
@@ -4478,7 +4478,7 @@ ganges_plain_22 = {
 	locations = { land_02880 land_08870 land_06264 }
 }
 ganges_plain_23 = {
-	name = "Ganges plain 23"
+	name = "Ganges Plain 23"
 	owner = IND
 	cores = { IND }
 	manpower = 13
@@ -4486,7 +4486,7 @@ ganges_plain_23 = {
 	locations = { land_03989 }
 }
 ganges_plain_24 = {
-	name = "Ganges plain 24"
+	name = "Ganges Plain 24"
 	owner = IND
 	cores = { IND }
 	manpower = 11
@@ -4494,7 +4494,7 @@ ganges_plain_24 = {
 	locations = { land_09217 land_03731 }
 }
 ganges_plain_25 = {
-	name = "Ganges plain 25"
+	name = "Ganges Plain 25"
 	owner = IND
 	cores = { IND }
 	manpower = 12
@@ -4502,7 +4502,7 @@ ganges_plain_25 = {
 	locations = { land_06235 land_06210 }
 }
 ganges_plain_26 = {
-	name = "Ganges plain 26"
+	name = "Ganges Plain 26"
 	owner = IND
 	cores = { IND }
 	manpower = 15
@@ -4510,7 +4510,7 @@ ganges_plain_26 = {
 	locations = { land_06173 }
 }
 ganges_plain_27 = {
-	name = "Ganges plain 27"
+	name = "Ganges Plain 27"
 	owner = IND
 	cores = { IND }
 	manpower = 14
@@ -4518,7 +4518,7 @@ ganges_plain_27 = {
 	locations = { land_05492 land_08160 }
 }
 ganges_plain_28 = {
-	name = "Ganges plain 28"
+	name = "Ganges Plain 28"
 	owner = IND
 	cores = { IND }
 	manpower = 13
@@ -4526,13 +4526,13 @@ ganges_plain_28 = {
 	locations = { land_06775 land_08942 }
 }
 ganges_plain_29 = {
-	name = "Ganges plain 29"
+	name = "Ganges Plain 29"
 	manpower = 6
 	tax = 1.0
 	locations = { land_07288 land_03182 }
 }
 ganges_plain_30 = {
-	name = "Ganges plain 30"
+	name = "Ganges Plain 30"
 	owner = KOS
 	cores = { KOS }
 	manpower = 9
@@ -4540,7 +4540,7 @@ ganges_plain_30 = {
 	locations = { land_05738 land_03745 }
 }
 ganges_plain_31 = {
-	name = "Ganges plain 31"
+	name = "Ganges Plain 31"
 	owner = IND
 	cores = { IND }
 	manpower = 13
@@ -4548,7 +4548,7 @@ ganges_plain_31 = {
 	locations = { land_02677 land_06642 land_03487 }
 }
 ganges_plain_32 = {
-	name = "Ganges plain 32"
+	name = "Ganges Plain 32"
 	owner = IND
 	cores = { IND }
 	manpower = 13
@@ -4556,7 +4556,7 @@ ganges_plain_32 = {
 	locations = { land_02377 land_07246 }
 }
 ganges_plain_33 = {
-	name = "Ganges plain 33"
+	name = "Ganges Plain 33"
 	owner = IND
 	cores = { IND }
 	manpower = 11
@@ -4564,7 +4564,7 @@ ganges_plain_33 = {
 	locations = { land_04660 }
 }
 ganges_plain_34 = {
-	name = "Ganges plain 34"
+	name = "Ganges Plain 34"
 	owner = IND
 	cores = { IND }
 	manpower = 23
@@ -4572,7 +4572,7 @@ ganges_plain_34 = {
 	locations = { land_06466 land_02259 land_07382 }
 }
 ganges_plain_35 = {
-	name = "Ganges plain 35"
+	name = "Ganges Plain 35"
 	owner = IND
 	cores = { IND }
 	manpower = 10
@@ -4580,7 +4580,7 @@ ganges_plain_35 = {
 	locations = { land_05519 }
 }
 ganges_plain_36 = {
-	name = "Ganges plain 36"
+	name = "Ganges Plain 36"
 	owner = IND
 	cores = { IND }
 	manpower = 8
@@ -4588,7 +4588,7 @@ ganges_plain_36 = {
 	locations = { land_04947 land_08266 }
 }
 ganges_plain_37 = {
-	name = "Ganges plain 37"
+	name = "Ganges Plain 37"
 	owner = IND
 	cores = { IND }
 	manpower = 7
@@ -4596,7 +4596,7 @@ ganges_plain_37 = {
 	locations = { land_00479 }
 }
 ganges_plain_38 = {
-	name = "Ganges plain 38"
+	name = "Ganges Plain 38"
 	owner = KOS
 	cores = { KOS }
 	manpower = 6
@@ -4604,7 +4604,7 @@ ganges_plain_38 = {
 	locations = { land_03018 }
 }
 ganges_plain_39 = {
-	name = "Ganges plain 39"
+	name = "Ganges Plain 39"
 	owner = IND
 	cores = { IND }
 	manpower = 7
@@ -4612,7 +4612,7 @@ ganges_plain_39 = {
 	locations = { land_04252 }
 }
 ganges_plain_40 = {
-	name = "Ganges plain 40"
+	name = "Ganges Plain 40"
 	owner = IND
 	cores = { IND }
 	manpower = 12
@@ -4620,7 +4620,7 @@ ganges_plain_40 = {
 	locations = { land_07379 land_07062 land_07369 land_06848 }
 }
 ganges_plain_41 = {
-	name = "Ganges plain 41"
+	name = "Ganges Plain 41"
 	owner = IND
 	cores = { IND }
 	manpower = 9
@@ -4628,7 +4628,7 @@ ganges_plain_41 = {
 	locations = { land_00685 land_06898 }
 }
 ganges_plain_42 = {
-	name = "Ganges plain 42"
+	name = "Ganges Plain 42"
 	owner = IND
 	cores = { IND }
 	manpower = 4
@@ -4636,19 +4636,19 @@ ganges_plain_42 = {
 	locations = { land_04174 land_01899 }
 }
 ganges_plain_43 = {
-	name = "Ganges plain 43"
+	name = "Ganges Plain 43"
 	manpower = 5
 	tax = 0.9
 	locations = { land_05017 land_03241 }
 }
 ganges_plain_44 = {
-	name = "Ganges plain 44"
+	name = "Ganges Plain 44"
 	manpower = 3
 	tax = 0.7
 	locations = { land_06192 }
 }
 ganges_plain_45 = {
-	name = "Ganges plain 45"
+	name = "Ganges Plain 45"
 	owner = IND
 	cores = { IND }
 	manpower = 9
@@ -4656,7 +4656,7 @@ ganges_plain_45 = {
 	locations = { land_07307 land_02944 }
 }
 ganges_plain_46 = {
-	name = "Ganges plain 46"
+	name = "Ganges Plain 46"
 	owner = KOS
 	cores = { KOS }
 	manpower = 11
@@ -4664,7 +4664,7 @@ ganges_plain_46 = {
 	locations = { land_05658 land_06521 land_05557 land_09499 }
 }
 ganges_plain_47 = {
-	name = "Ganges plain 47"
+	name = "Ganges Plain 47"
 	owner = IND
 	cores = { IND }
 	manpower = 7
@@ -4672,7 +4672,7 @@ ganges_plain_47 = {
 	locations = { land_03634 land_04622 land_05348 }
 }
 ganges_plain_48 = {
-	name = "Ganges plain 48"
+	name = "Ganges Plain 48"
 	owner = IND
 	cores = { IND }
 	manpower = 4
@@ -4680,7 +4680,7 @@ ganges_plain_48 = {
 	locations = { land_03935 }
 }
 ganges_plain_49 = {
-	name = "Ganges plain 49"
+	name = "Ganges Plain 49"
 	owner = KOS
 	cores = { KOS }
 	manpower = 8
@@ -4688,13 +4688,13 @@ ganges_plain_49 = {
 	locations = { land_02324 }
 }
 ganges_plain_50 = {
-	name = "Ganges plain 50"
+	name = "Ganges Plain 50"
 	manpower = 4
 	tax = 0.8
 	locations = { land_02202 land_06946 }
 }
 ganges_plain_51 = {
-	name = "Ganges plain 51"
+	name = "Ganges Plain 51"
 	owner = IND
 	cores = { IND }
 	manpower = 9
@@ -4702,7 +4702,7 @@ ganges_plain_51 = {
 	locations = { land_04408 land_05018 land_00538 }
 }
 ganges_plain_52 = {
-	name = "Ganges plain 52"
+	name = "Ganges Plain 52"
 	owner = IND
 	cores = { IND }
 	manpower = 9
@@ -5063,31 +5063,31 @@ sri_lanka_1 = {
 	}
 }
 tibetan_plateau_1 = {
-	name = "Tibetan plateau 1"
+	name = "Tibetan Plateau 1"
 	manpower = 4
 	tax = 0.8
 	locations = { land_04144 land_07342 land_00397 land_06373 land_09345 land_04232 land_08999 land_02557 land_01002 land_03485 land_03785 land_07791 land_01935 land_00726 land_03057 land_04437 land_03145 land_02093 land_06214 land_00515 land_00691 land_09270 land_09427 land_07909 land_04582 land_09349 land_08154 land_08897 }
 }
 tibetan_plateau_2 = {
-	name = "Tibetan plateau 2"
+	name = "Tibetan Plateau 2"
 	manpower = 4
 	tax = 0.8
 	locations = { land_02589 land_02146 land_01763 land_05284 land_17614 land_05400 land_09544 land_17564 land_06614 land_09489 land_03693 land_09208 land_04478 land_17611 land_17565 land_01488 land_02448 land_05766 land_17612 land_17566 land_03441 land_05084 land_06921 land_02445 land_17613 land_03396 land_09700 }
 }
 tibetan_plateau_3 = {
-	name = "Tibetan plateau 3"
+	name = "Tibetan Plateau 3"
 	manpower = 6
 	tax = 1.0
 	locations = { land_05104 land_04721 land_04615 land_06161 land_08801 land_04145 land_00338 land_00135 land_05585 land_03790 land_03767 land_07648 land_05253 land_07888 land_03481 land_04021 land_00694 land_00251 land_08516 land_05835 land_07695 land_08438 land_09684 land_00201 land_08923 land_09477 land_05767 land_05241 land_01808 land_08384 land_05071 land_04245 land_05048 land_07697 land_00835 land_05639 }
 }
 himalayan_foothills_1 = {
-	name = "Himalayan foothills 1"
+	name = "Himalayan Foothills 1"
 	manpower = 9
 	tax = 1.2
 	locations = { land_07079 land_02409 land_05081 land_09322 land_02354 land_06475 land_02064 land_06439 land_01769 land_06836 land_04155 land_09679 land_00293 land_05573 land_07119 land_03455 land_01060 land_00391 land_08762 land_01914 land_01005 land_04766 land_01236 land_04471 land_06654 land_06488 }
 }
 himalayan_foothills_2 = {
-	name = "Himalayan foothills 2"
+	name = "Himalayan Foothills 2"
 	manpower = 11
 	tax = 1.4
 	locations = { land_05750 land_00554 land_02063 land_05644 land_01759 land_09424 land_05645 land_07782 land_06010 land_06624 land_00842 land_08447 land_02268 land_09278 land_08069 land_09435 land_00238 land_03450 land_09260 land_02869 land_05864 land_03566 land_00244 land_04568 land_05694 land_03802 land_07614 land_02764 }
@@ -5145,7 +5145,7 @@ irrawaddy_m177_1 = {
 	}
 }
 tai_lands_1 = {
-	name = "Tai lands"
+	name = "Tai Lands"
 	owner = IRR
 	cores = { IRR }
 	manpower = 5
@@ -5156,7 +5156,7 @@ tai_lands_1 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_1 = {
-	name = "Mainland Southeast Asia rice farmers 1"
+	name = "Mainland Southeast Asia Rice Farmers 1"
 	owner = IRR
 	cores = { IRR }
 	manpower = 15
@@ -5167,7 +5167,7 @@ mainland_southeast_asia_rice_farmers_m9_1 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_2 = {
-	name = "Mainland Southeast Asia rice farmers 2"
+	name = "Mainland Southeast Asia Rice Farmers 2"
 	owner = IRR
 	cores = { IRR }
 	manpower = 15
@@ -5178,7 +5178,7 @@ mainland_southeast_asia_rice_farmers_m9_2 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_3 = {
-	name = "Mainland Southeast Asia rice farmers 3"
+	name = "Mainland Southeast Asia Rice Farmers 3"
 	owner = IRR
 	cores = { IRR }
 	manpower = 15
@@ -5186,7 +5186,7 @@ mainland_southeast_asia_rice_farmers_m9_3 = {
 	locations = { land_02635 land_02520 land_05437 land_01026 land_04224 land_07353 land_05512 land_02208 land_00533 land_04031 land_05052 land_09593 land_08121 land_06709 }
 }
 mainland_southeast_asia_rice_farmers_m9_4 = {
-	name = "Mainland Southeast Asia rice farmers 4"
+	name = "Mainland Southeast Asia Rice Farmers 4"
 	owner = IRR
 	cores = { IRR }
 	manpower = 3
@@ -5197,7 +5197,7 @@ mainland_southeast_asia_rice_farmers_m9_4 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_5 = {
-	name = "Mainland Southeast Asia rice farmers 5"
+	name = "Mainland Southeast Asia Rice Farmers 5"
 	owner = IRR
 	cores = { IRR }
 	manpower = 18
@@ -5208,7 +5208,7 @@ mainland_southeast_asia_rice_farmers_m9_5 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_6 = {
-	name = "Mainland Southeast Asia rice farmers 6"
+	name = "Mainland Southeast Asia Rice Farmers 6"
 	owner = IRR
 	cores = { IRR }
 	manpower = 16
@@ -5219,7 +5219,7 @@ mainland_southeast_asia_rice_farmers_m9_6 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_7 = {
-	name = "Mainland Southeast Asia rice farmers 7"
+	name = "Mainland Southeast Asia Rice Farmers 7"
 	owner = IRR
 	cores = { IRR }
 	manpower = 13
@@ -5227,7 +5227,7 @@ mainland_southeast_asia_rice_farmers_m9_7 = {
 	locations = { land_04984 land_06604 land_03203 land_09050 land_03070 land_08100 land_01345 land_07824 land_01382 land_04294 land_02227 land_05619 land_03118 land_05504 land_06543 }
 }
 mainland_southeast_asia_rice_farmers_m9_8 = {
-	name = "Mainland Southeast Asia rice farmers 8"
+	name = "Mainland Southeast Asia Rice Farmers 8"
 	owner = IRR
 	cores = { IRR }
 	manpower = 19
@@ -5238,7 +5238,7 @@ mainland_southeast_asia_rice_farmers_m9_8 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_9 = {
-	name = "Mainland Southeast Asia rice farmers 9"
+	name = "Mainland Southeast Asia Rice Farmers 9"
 	owner = IRR
 	cores = { IRR }
 	manpower = 14
@@ -5249,7 +5249,7 @@ mainland_southeast_asia_rice_farmers_m9_9 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_10 = {
-	name = "Mainland Southeast Asia rice farmers 10"
+	name = "Mainland Southeast Asia Rice Farmers 10"
 	owner = IRR
 	cores = { IRR }
 	manpower = 14
@@ -5257,7 +5257,7 @@ mainland_southeast_asia_rice_farmers_m9_10 = {
 	locations = { land_02192 land_06793 land_00799 land_08035 land_02336 land_02853 land_04736 land_05733 land_05595 land_09550 land_02416 land_09417 land_08905 land_02408 land_01250 land_00221 land_07646 land_01241 land_02718 }
 }
 mainland_southeast_asia_rice_farmers_m9_11 = {
-	name = "Mainland Southeast Asia rice farmers 11"
+	name = "Mainland Southeast Asia Rice Farmers 11"
 	owner = IRR
 	cores = { IRR }
 	manpower = 3
@@ -5268,7 +5268,7 @@ mainland_southeast_asia_rice_farmers_m9_11 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_12 = {
-	name = "Mainland Southeast Asia rice farmers 12"
+	name = "Mainland Southeast Asia Rice Farmers 12"
 	owner = IRR
 	cores = { IRR }
 	manpower = 13
@@ -5279,7 +5279,7 @@ mainland_southeast_asia_rice_farmers_m9_12 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m9_13 = {
-	name = "Mainland Southeast Asia rice farmers 13"
+	name = "Mainland Southeast Asia Rice Farmers 13"
 	owner = IRR
 	cores = { IRR }
 	manpower = 11
@@ -5290,7 +5290,7 @@ mainland_southeast_asia_rice_farmers_m9_13 = {
 	}
 }
 mainland_southeast_asia_rice_farmers_m160_1 = {
-	name = "Mainland Southeast Asia rice farmers"
+	name = "Mainland Southeast Asia Rice Farmers"
 	manpower = 5
 	tax = 0.9
 	locations = { land_15995 land_15991 land_15996 land_15992 land_15997 land_15993 land_15994 }
@@ -5307,7 +5307,7 @@ red_river_van_lang_1 = {
 	locations = { land_08685 land_03900 land_01770 land_02361 land_02939 land_03447 }
 }
 zhou_states_yellow_river_1 = {
-	name = "Zhou states (Yellow River) 1"
+	name = "Zhou States (Yellow River) 1"
 	owner = QIN
 	cores = { QIN }
 	manpower = 6
@@ -5315,7 +5315,7 @@ zhou_states_yellow_river_1 = {
 	locations = { land_08302 land_04809 land_00832 }
 }
 zhou_states_yellow_river_2 = {
-	name = "Zhou states (Yellow River) 2"
+	name = "Zhou States (Yellow River) 2"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 33
@@ -5323,7 +5323,7 @@ zhou_states_yellow_river_2 = {
 	locations = { land_01635 land_00783 }
 }
 zhou_states_yellow_river_3 = {
-	name = "Zhou states (Yellow River) 3"
+	name = "Zhou States (Yellow River) 3"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 25
@@ -5334,7 +5334,7 @@ zhou_states_yellow_river_3 = {
 	}
 }
 zhou_states_yellow_river_4 = {
-	name = "Zhou states (Yellow River) 4"
+	name = "Zhou States (Yellow River) 4"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 5
@@ -5345,7 +5345,7 @@ zhou_states_yellow_river_4 = {
 	}
 }
 zhou_states_yellow_river_5 = {
-	name = "Zhou states (Yellow River) 5"
+	name = "Zhou States (Yellow River) 5"
 	owner = JIN
 	cores = { JIN }
 	manpower = 38
@@ -5353,7 +5353,7 @@ zhou_states_yellow_river_5 = {
 	locations = { land_00829 }
 }
 zhou_states_yellow_river_6 = {
-	name = "Zhou states (Yellow River) 6"
+	name = "Zhou States (Yellow River) 6"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 19
@@ -5361,7 +5361,7 @@ zhou_states_yellow_river_6 = {
 	locations = { land_03190 land_05578 }
 }
 zhou_states_yellow_river_7 = {
-	name = "Zhou states (Yellow River) 7"
+	name = "Zhou States (Yellow River) 7"
 	owner = JIN
 	cores = { JIN }
 	manpower = 29
@@ -5369,7 +5369,7 @@ zhou_states_yellow_river_7 = {
 	locations = { land_06277 land_04520 }
 }
 zhou_states_yellow_river_8 = {
-	name = "Zhou states (Yellow River) 8"
+	name = "Zhou States (Yellow River) 8"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 9
@@ -5380,7 +5380,7 @@ zhou_states_yellow_river_8 = {
 	}
 }
 zhou_states_yellow_river_9 = {
-	name = "Zhou states (Yellow River) 9"
+	name = "Zhou States (Yellow River) 9"
 	owner = QIN
 	cores = { QIN }
 	manpower = 20
@@ -5388,7 +5388,7 @@ zhou_states_yellow_river_9 = {
 	locations = { land_00224 }
 }
 zhou_states_yellow_river_10 = {
-	name = "Zhou states (Yellow River) 10"
+	name = "Zhou States (Yellow River) 10"
 	manpower = 7
 	tax = 1.0
 	locations = { land_01943 }
@@ -5397,7 +5397,7 @@ zhou_states_yellow_river_10 = {
 	}
 }
 zhou_states_yellow_river_11 = {
-	name = "Zhou states (Yellow River) 11"
+	name = "Zhou States (Yellow River) 11"
 	owner = QIN
 	cores = { QIN }
 	manpower = 15
@@ -5405,7 +5405,7 @@ zhou_states_yellow_river_11 = {
 	locations = { land_00258 }
 }
 zhou_states_yellow_river_12 = {
-	name = "Zhou states (Yellow River) 12"
+	name = "Zhou States (Yellow River) 12"
 	owner = JIN
 	cores = { JIN }
 	manpower = 25
@@ -5413,7 +5413,7 @@ zhou_states_yellow_river_12 = {
 	locations = { land_07229 }
 }
 zhou_states_yellow_river_13 = {
-	name = "Zhou states (Yellow River) 13"
+	name = "Zhou States (Yellow River) 13"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 30
@@ -5421,7 +5421,7 @@ zhou_states_yellow_river_13 = {
 	locations = { land_08016 land_05515 land_06850 land_03230 }
 }
 zhou_states_yellow_river_14 = {
-	name = "Zhou states (Yellow River) 14"
+	name = "Zhou States (Yellow River) 14"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 15
@@ -5429,7 +5429,7 @@ zhou_states_yellow_river_14 = {
 	locations = { land_05677 }
 }
 zhou_states_yellow_river_15 = {
-	name = "Zhou states (Yellow River) 15"
+	name = "Zhou States (Yellow River) 15"
 	owner = JIN
 	cores = { JIN }
 	manpower = 22
@@ -5437,7 +5437,7 @@ zhou_states_yellow_river_15 = {
 	locations = { land_01990 land_03721 }
 }
 zhou_states_yellow_river_16 = {
-	name = "Zhou states (Yellow River) 16"
+	name = "Zhou States (Yellow River) 16"
 	owner = QIN
 	cores = { QIN }
 	manpower = 45
@@ -5445,7 +5445,7 @@ zhou_states_yellow_river_16 = {
 	locations = { land_01707 land_02238 }
 }
 zhou_states_yellow_river_17 = {
-	name = "Zhou states (Yellow River) 17"
+	name = "Zhou States (Yellow River) 17"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 12
@@ -5453,7 +5453,7 @@ zhou_states_yellow_river_17 = {
 	locations = { land_05522 }
 }
 zhou_states_yellow_river_18 = {
-	name = "Zhou states (Yellow River) 18"
+	name = "Zhou States (Yellow River) 18"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 15
@@ -5461,7 +5461,7 @@ zhou_states_yellow_river_18 = {
 	locations = { land_06865 }
 }
 zhou_states_yellow_river_19 = {
-	name = "Zhou states (Yellow River) 19"
+	name = "Zhou States (Yellow River) 19"
 	owner = JIN
 	cores = { JIN }
 	manpower = 20
@@ -5469,7 +5469,7 @@ zhou_states_yellow_river_19 = {
 	locations = { land_00914 }
 }
 zhou_states_yellow_river_20 = {
-	name = "Zhou states (Yellow River) 20"
+	name = "Zhou States (Yellow River) 20"
 	owner = QIN
 	cores = { QIN }
 	manpower = 10
@@ -5477,7 +5477,7 @@ zhou_states_yellow_river_20 = {
 	locations = { land_08066 }
 }
 zhou_states_yellow_river_21 = {
-	name = "Zhou states (Yellow River) 21"
+	name = "Zhou States (Yellow River) 21"
 	owner = QIN
 	cores = { QIN }
 	manpower = 9
@@ -5485,7 +5485,7 @@ zhou_states_yellow_river_21 = {
 	locations = { land_08009 }
 }
 zhou_states_yellow_river_22 = {
-	name = "Zhou states (Yellow River) 22"
+	name = "Zhou States (Yellow River) 22"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 19
@@ -5493,7 +5493,7 @@ zhou_states_yellow_river_22 = {
 	locations = { land_09306 land_07946 }
 }
 zhou_states_yellow_river_23 = {
-	name = "Zhou states (Yellow River) 23"
+	name = "Zhou States (Yellow River) 23"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 17
@@ -5501,7 +5501,7 @@ zhou_states_yellow_river_23 = {
 	locations = { land_07699 }
 }
 zhou_states_yellow_river_24 = {
-	name = "Zhou states (Yellow River) 24"
+	name = "Zhou States (Yellow River) 24"
 	owner = JIN
 	cores = { JIN }
 	manpower = 24
@@ -5509,7 +5509,7 @@ zhou_states_yellow_river_24 = {
 	locations = { land_07641 }
 }
 zhou_states_yellow_river_25 = {
-	name = "Zhou states (Yellow River) 25"
+	name = "Zhou States (Yellow River) 25"
 	owner = QIN
 	cores = { QIN }
 	manpower = 14
@@ -5517,7 +5517,7 @@ zhou_states_yellow_river_25 = {
 	locations = { land_06978 }
 }
 zhou_states_yellow_river_26 = {
-	name = "Zhou states (Yellow River) 26"
+	name = "Zhou States (Yellow River) 26"
 	owner = QIN
 	cores = { QIN }
 	manpower = 21
@@ -5525,7 +5525,7 @@ zhou_states_yellow_river_26 = {
 	locations = { land_08917 land_04871 }
 }
 zhou_states_yellow_river_27 = {
-	name = "Zhou states (Yellow River) 27"
+	name = "Zhou States (Yellow River) 27"
 	owner = QIN
 	cores = { QIN }
 	manpower = 7
@@ -5533,7 +5533,7 @@ zhou_states_yellow_river_27 = {
 	locations = { land_09639 }
 }
 zhou_states_yellow_river_28 = {
-	name = "Zhou states (Yellow River) 28"
+	name = "Zhou States (Yellow River) 28"
 	owner = QIN
 	cores = { QIN }
 	manpower = 16
@@ -5541,7 +5541,7 @@ zhou_states_yellow_river_28 = {
 	locations = { land_05818 land_07217 }
 }
 zhou_states_yellow_river_29 = {
-	name = "Zhou states (Yellow River) 29"
+	name = "Zhou States (Yellow River) 29"
 	owner = QIN
 	cores = { QIN }
 	manpower = 13
@@ -5549,7 +5549,7 @@ zhou_states_yellow_river_29 = {
 	locations = { land_00547 }
 }
 zhou_states_yellow_river_30 = {
-	name = "Zhou states (Yellow River) 30"
+	name = "Zhou States (Yellow River) 30"
 	owner = JIN
 	cores = { JIN }
 	manpower = 14
@@ -5557,7 +5557,7 @@ zhou_states_yellow_river_30 = {
 	locations = { land_06733 land_01751 land_04862 land_01794 }
 }
 zhou_states_yellow_river_31 = {
-	name = "Zhou states (Yellow River) 31"
+	name = "Zhou States (Yellow River) 31"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 18
@@ -5565,7 +5565,7 @@ zhou_states_yellow_river_31 = {
 	locations = { land_04086 }
 }
 zhou_states_yellow_river_32 = {
-	name = "Zhou states (Yellow River) 32"
+	name = "Zhou States (Yellow River) 32"
 	manpower = 5
 	tax = 0.9
 	locations = { land_08439 }
@@ -5574,7 +5574,7 @@ zhou_states_yellow_river_32 = {
 	}
 }
 zhou_states_yellow_river_33 = {
-	name = "Zhou states (Yellow River) 33"
+	name = "Zhou States (Yellow River) 33"
 	owner = JIN
 	cores = { JIN }
 	manpower = 12
@@ -5582,7 +5582,7 @@ zhou_states_yellow_river_33 = {
 	locations = { land_05636 land_05387 }
 }
 zhou_states_yellow_river_34 = {
-	name = "Zhou states (Yellow River) 34"
+	name = "Zhou States (Yellow River) 34"
 	owner = QIN
 	cores = { QIN }
 	manpower = 12
@@ -5590,7 +5590,7 @@ zhou_states_yellow_river_34 = {
 	locations = { land_06231 land_04665 }
 }
 zhou_states_yellow_river_35 = {
-	name = "Zhou states (Yellow River) 35"
+	name = "Zhou States (Yellow River) 35"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5598,7 +5598,7 @@ zhou_states_yellow_river_35 = {
 	locations = { land_01247 }
 }
 zhou_states_yellow_river_36 = {
-	name = "Zhou states (Yellow River) 36"
+	name = "Zhou States (Yellow River) 36"
 	owner = JIN
 	cores = { JIN }
 	manpower = 8
@@ -5606,7 +5606,7 @@ zhou_states_yellow_river_36 = {
 	locations = { land_07658 }
 }
 zhou_states_yellow_river_37 = {
-	name = "Zhou states (Yellow River) 37"
+	name = "Zhou States (Yellow River) 37"
 	owner = JIN
 	cores = { JIN }
 	manpower = 11
@@ -5614,7 +5614,7 @@ zhou_states_yellow_river_37 = {
 	locations = { land_01871 land_00076 }
 }
 zhou_states_yellow_river_38 = {
-	name = "Zhou states (Yellow River) 38"
+	name = "Zhou States (Yellow River) 38"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 15
@@ -5622,7 +5622,7 @@ zhou_states_yellow_river_38 = {
 	locations = { land_07741 }
 }
 zhou_states_yellow_river_39 = {
-	name = "Zhou states (Yellow River) 39"
+	name = "Zhou States (Yellow River) 39"
 	owner = JIN
 	cores = { JIN }
 	manpower = 17
@@ -5630,7 +5630,7 @@ zhou_states_yellow_river_39 = {
 	locations = { land_00666 land_07962 }
 }
 zhou_states_yellow_river_40 = {
-	name = "Zhou states (Yellow River) 40"
+	name = "Zhou States (Yellow River) 40"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 7
@@ -5641,7 +5641,7 @@ zhou_states_yellow_river_40 = {
 	}
 }
 zhou_states_yellow_river_41 = {
-	name = "Zhou states (Yellow River) 41"
+	name = "Zhou States (Yellow River) 41"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 9
@@ -5649,7 +5649,7 @@ zhou_states_yellow_river_41 = {
 	locations = { land_03016 land_02407 land_03977 }
 }
 zhou_states_yellow_river_42 = {
-	name = "Zhou states (Yellow River) 42"
+	name = "Zhou States (Yellow River) 42"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 8
@@ -5660,7 +5660,7 @@ zhou_states_yellow_river_42 = {
 	}
 }
 zhou_states_yellow_river_43 = {
-	name = "Zhou states (Yellow River) 43"
+	name = "Zhou States (Yellow River) 43"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 7
@@ -5668,7 +5668,7 @@ zhou_states_yellow_river_43 = {
 	locations = { land_03963 }
 }
 zhou_states_yellow_river_44 = {
-	name = "Zhou states (Yellow River) 44"
+	name = "Zhou States (Yellow River) 44"
 	owner = JIN
 	cores = { JIN }
 	manpower = 7
@@ -5676,7 +5676,7 @@ zhou_states_yellow_river_44 = {
 	locations = { land_05816 land_03998 land_00594 }
 }
 zhou_states_yellow_river_45 = {
-	name = "Zhou states (Yellow River) 45"
+	name = "Zhou States (Yellow River) 45"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 9
@@ -5684,7 +5684,7 @@ zhou_states_yellow_river_45 = {
 	locations = { land_01560 land_02156 land_05744 }
 }
 zhou_states_yellow_river_46 = {
-	name = "Zhou states (Yellow River) 46"
+	name = "Zhou States (Yellow River) 46"
 	owner = JIN
 	cores = { JIN }
 	manpower = 9
@@ -5692,7 +5692,7 @@ zhou_states_yellow_river_46 = {
 	locations = { land_04693 }
 }
 zhou_states_yellow_river_47 = {
-	name = "Zhou states (Yellow River) 47"
+	name = "Zhou States (Yellow River) 47"
 	owner = JIN
 	cores = { JIN }
 	manpower = 13
@@ -5700,7 +5700,7 @@ zhou_states_yellow_river_47 = {
 	locations = { land_09212 land_04750 }
 }
 zhou_states_yellow_river_48 = {
-	name = "Zhou states (Yellow River) 48"
+	name = "Zhou States (Yellow River) 48"
 	owner = QIN
 	cores = { QIN }
 	manpower = 14
@@ -5708,7 +5708,7 @@ zhou_states_yellow_river_48 = {
 	locations = { land_05404 land_02394 land_07305 }
 }
 zhou_states_yellow_river_49 = {
-	name = "Zhou states (Yellow River) 49"
+	name = "Zhou States (Yellow River) 49"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5716,7 +5716,7 @@ zhou_states_yellow_river_49 = {
 	locations = { land_04089 }
 }
 zhou_states_yellow_river_50 = {
-	name = "Zhou states (Yellow River) 50"
+	name = "Zhou States (Yellow River) 50"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5724,7 +5724,7 @@ zhou_states_yellow_river_50 = {
 	locations = { land_02743 land_07729 }
 }
 zhou_states_yellow_river_51 = {
-	name = "Zhou states (Yellow River) 51"
+	name = "Zhou States (Yellow River) 51"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 10
@@ -5732,7 +5732,7 @@ zhou_states_yellow_river_51 = {
 	locations = { land_02482 }
 }
 zhou_states_yellow_river_52 = {
-	name = "Zhou states (Yellow River) 52"
+	name = "Zhou States (Yellow River) 52"
 	owner = QIN
 	cores = { QIN }
 	manpower = 15
@@ -5740,7 +5740,7 @@ zhou_states_yellow_river_52 = {
 	locations = { land_08971 land_09271 land_00833 }
 }
 zhou_states_yellow_river_53 = {
-	name = "Zhou states (Yellow River) 53"
+	name = "Zhou States (Yellow River) 53"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 7
@@ -5751,7 +5751,7 @@ zhou_states_yellow_river_53 = {
 	}
 }
 zhou_states_yellow_river_54 = {
-	name = "Zhou states (Yellow River) 54"
+	name = "Zhou States (Yellow River) 54"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5759,7 +5759,7 @@ zhou_states_yellow_river_54 = {
 	locations = { land_03114 }
 }
 zhou_states_yellow_river_55 = {
-	name = "Zhou states (Yellow River) 55"
+	name = "Zhou States (Yellow River) 55"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5767,7 +5767,7 @@ zhou_states_yellow_river_55 = {
 	locations = { land_09414 land_01336 }
 }
 zhou_states_yellow_river_56 = {
-	name = "Zhou states (Yellow River) 56"
+	name = "Zhou States (Yellow River) 56"
 	owner = JIN
 	cores = { JIN }
 	manpower = 7
@@ -5775,7 +5775,7 @@ zhou_states_yellow_river_56 = {
 	locations = { land_05443 }
 }
 zhou_states_yellow_river_57 = {
-	name = "Zhou states (Yellow River) 57"
+	name = "Zhou States (Yellow River) 57"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 8
@@ -5786,7 +5786,7 @@ zhou_states_yellow_river_57 = {
 	}
 }
 zhou_states_yellow_river_58 = {
-	name = "Zhou states (Yellow River) 58"
+	name = "Zhou States (Yellow River) 58"
 	owner = JIN
 	cores = { JIN }
 	manpower = 5
@@ -5794,7 +5794,7 @@ zhou_states_yellow_river_58 = {
 	locations = { land_03443 land_05736 }
 }
 zhou_states_yellow_river_59 = {
-	name = "Zhou states (Yellow River) 59"
+	name = "Zhou States (Yellow River) 59"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 6
@@ -5805,7 +5805,7 @@ zhou_states_yellow_river_59 = {
 	}
 }
 zhou_states_yellow_river_60 = {
-	name = "Zhou states (Yellow River) 60"
+	name = "Zhou States (Yellow River) 60"
 	owner = JIN
 	cores = { JIN }
 	manpower = 7
@@ -5813,7 +5813,7 @@ zhou_states_yellow_river_60 = {
 	locations = { land_08662 land_03946 }
 }
 zhou_states_yellow_river_61 = {
-	name = "Zhou states (Yellow River) 61"
+	name = "Zhou States (Yellow River) 61"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 4
@@ -5821,7 +5821,7 @@ zhou_states_yellow_river_61 = {
 	locations = { land_08147 land_04351 }
 }
 zhou_states_yellow_river_62 = {
-	name = "Zhou states (Yellow River) 62"
+	name = "Zhou States (Yellow River) 62"
 	owner = JIN
 	cores = { JIN }
 	manpower = 6
@@ -5829,7 +5829,7 @@ zhou_states_yellow_river_62 = {
 	locations = { land_09255 }
 }
 zhou_states_yellow_river_63 = {
-	name = "Zhou states (Yellow River) 63"
+	name = "Zhou States (Yellow River) 63"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 8
@@ -5837,7 +5837,7 @@ zhou_states_yellow_river_63 = {
 	locations = { land_06704 }
 }
 zhou_states_yellow_river_64 = {
-	name = "Zhou states (Yellow River) 64"
+	name = "Zhou States (Yellow River) 64"
 	owner = JIN
 	cores = { JIN }
 	manpower = 8
@@ -5845,7 +5845,7 @@ zhou_states_yellow_river_64 = {
 	locations = { land_01680 land_01830 }
 }
 zhou_states_yellow_river_65 = {
-	name = "Zhou states (Yellow River) 65"
+	name = "Zhou States (Yellow River) 65"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 8
@@ -5853,7 +5853,7 @@ zhou_states_yellow_river_65 = {
 	locations = { land_07591 }
 }
 zhou_states_yellow_river_66 = {
-	name = "Zhou states (Yellow River) 66"
+	name = "Zhou States (Yellow River) 66"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 8
@@ -5864,7 +5864,7 @@ zhou_states_yellow_river_66 = {
 	}
 }
 zhou_states_yellow_river_67 = {
-	name = "Zhou states (Yellow River) 67"
+	name = "Zhou States (Yellow River) 67"
 	owner = QIN
 	cores = { QIN }
 	manpower = 9
@@ -5872,7 +5872,7 @@ zhou_states_yellow_river_67 = {
 	locations = { land_03581 land_02792 }
 }
 zhou_states_yellow_river_68 = {
-	name = "Zhou states (Yellow River) 68"
+	name = "Zhou States (Yellow River) 68"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 5
@@ -5883,7 +5883,7 @@ zhou_states_yellow_river_68 = {
 	}
 }
 zhou_states_yellow_river_69 = {
-	name = "Zhou states (Yellow River) 69"
+	name = "Zhou States (Yellow River) 69"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 3
@@ -5894,7 +5894,7 @@ zhou_states_yellow_river_69 = {
 	}
 }
 zhou_states_yellow_river_70 = {
-	name = "Zhou states (Yellow River) 70"
+	name = "Zhou States (Yellow River) 70"
 	owner = JIN
 	cores = { JIN }
 	manpower = 7
@@ -5902,7 +5902,7 @@ zhou_states_yellow_river_70 = {
 	locations = { land_02015 }
 }
 zhou_states_yellow_river_71 = {
-	name = "Zhou states (Yellow River) 71"
+	name = "Zhou States (Yellow River) 71"
 	owner = QIN
 	cores = { QIN }
 	manpower = 2
@@ -5910,7 +5910,7 @@ zhou_states_yellow_river_71 = {
 	locations = { land_06660 land_04022 }
 }
 zhou_states_north_china_plain_1 = {
-	name = "Zhou states (north China plain) 1"
+	name = "Zhou States (north China Plain) 1"
 	owner = JIN
 	cores = { JIN }
 	manpower = 12
@@ -5918,7 +5918,7 @@ zhou_states_north_china_plain_1 = {
 	locations = { land_03475 land_04518 land_07745 }
 }
 zhou_states_north_china_plain_2 = {
-	name = "Zhou states (north China plain) 2"
+	name = "Zhou States (north China Plain) 2"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 37
@@ -5930,7 +5930,7 @@ zhou_states_north_china_plain_2 = {
 	}
 }
 zhou_states_north_china_plain_3 = {
-	name = "Zhou states (north China plain) 3"
+	name = "Zhou States (north China Plain) 3"
 	owner = JIN
 	cores = { JIN }
 	manpower = 27
@@ -5938,7 +5938,7 @@ zhou_states_north_china_plain_3 = {
 	locations = { land_07003 land_03713 }
 }
 zhou_states_north_china_plain_4 = {
-	name = "Zhou states (north China plain) 4"
+	name = "Zhou States (north China Plain) 4"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 11
@@ -5949,7 +5949,7 @@ zhou_states_north_china_plain_4 = {
 	}
 }
 zhou_states_north_china_plain_5 = {
-	name = "Zhou states (north China plain) 5"
+	name = "Zhou States (north China Plain) 5"
 	owner = JIN
 	cores = { JIN }
 	manpower = 41
@@ -5957,7 +5957,7 @@ zhou_states_north_china_plain_5 = {
 	locations = { land_01407 }
 }
 zhou_states_north_china_plain_6 = {
-	name = "Zhou states (north China plain) 6"
+	name = "Zhou States (north China Plain) 6"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 21
@@ -5965,7 +5965,7 @@ zhou_states_north_china_plain_6 = {
 	locations = { land_08738 }
 }
 zhou_states_north_china_plain_7 = {
-	name = "Zhou states (north China plain) 7"
+	name = "Zhou States (north China Plain) 7"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 24
@@ -5973,7 +5973,7 @@ zhou_states_north_china_plain_7 = {
 	locations = { land_04618 }
 }
 zhou_states_north_china_plain_8 = {
-	name = "Zhou states (north China plain) 8"
+	name = "Zhou States (north China Plain) 8"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 17
@@ -5981,7 +5981,7 @@ zhou_states_north_china_plain_8 = {
 	locations = { land_07210 land_07438 }
 }
 zhou_states_north_china_plain_9 = {
-	name = "Zhou states (north China plain) 9"
+	name = "Zhou States (north China Plain) 9"
 	owner = JIN
 	cores = { JIN }
 	manpower = 35
@@ -5989,7 +5989,7 @@ zhou_states_north_china_plain_9 = {
 	locations = { land_06209 }
 }
 zhou_states_north_china_plain_10 = {
-	name = "Zhou states (north China plain) 10"
+	name = "Zhou States (north China Plain) 10"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 23
@@ -6000,7 +6000,7 @@ zhou_states_north_china_plain_10 = {
 	}
 }
 zhou_states_north_china_plain_11 = {
-	name = "Zhou states (north China plain) 11"
+	name = "Zhou States (north China Plain) 11"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 25
@@ -6008,7 +6008,7 @@ zhou_states_north_china_plain_11 = {
 	locations = { land_06138 }
 }
 zhou_states_north_china_plain_12 = {
-	name = "Zhou states (north China plain) 12"
+	name = "Zhou States (north China Plain) 12"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 12
@@ -6016,7 +6016,7 @@ zhou_states_north_china_plain_12 = {
 	locations = { land_01621 }
 }
 zhou_states_north_china_plain_13 = {
-	name = "Zhou states (north China plain) 13"
+	name = "Zhou States (north China Plain) 13"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 10
@@ -6027,7 +6027,7 @@ zhou_states_north_china_plain_13 = {
 	}
 }
 zhou_states_north_china_plain_14 = {
-	name = "Zhou states (north China plain) 14"
+	name = "Zhou States (north China Plain) 14"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 23
@@ -6035,7 +6035,7 @@ zhou_states_north_china_plain_14 = {
 	locations = { land_02497 }
 }
 zhou_states_north_china_plain_15 = {
-	name = "Zhou states (north China plain) 15"
+	name = "Zhou States (north China Plain) 15"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 11
@@ -6043,7 +6043,7 @@ zhou_states_north_china_plain_15 = {
 	locations = { land_09110 }
 }
 zhou_states_north_china_plain_16 = {
-	name = "Zhou states (north China plain) 16"
+	name = "Zhou States (north China Plain) 16"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 18
@@ -6051,7 +6051,7 @@ zhou_states_north_china_plain_16 = {
 	locations = { land_02820 land_02872 land_00308 }
 }
 zhou_states_north_china_plain_17 = {
-	name = "Zhou states (north China plain) 17"
+	name = "Zhou States (north China Plain) 17"
 	owner = JIN
 	cores = { JIN }
 	manpower = 8
@@ -6059,7 +6059,7 @@ zhou_states_north_china_plain_17 = {
 	locations = { land_01884 }
 }
 zhou_states_north_china_plain_18 = {
-	name = "Zhou states (north China plain) 18"
+	name = "Zhou States (north China Plain) 18"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 8
@@ -6067,7 +6067,7 @@ zhou_states_north_china_plain_18 = {
 	locations = { land_08585 }
 }
 zhou_states_north_china_plain_19 = {
-	name = "Zhou states (north China plain) 19"
+	name = "Zhou States (north China Plain) 19"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 9
@@ -6075,7 +6075,7 @@ zhou_states_north_china_plain_19 = {
 	locations = { land_03592 }
 }
 zhou_states_north_china_plain_20 = {
-	name = "Zhou states (north China plain) 20"
+	name = "Zhou States (north China Plain) 20"
 	owner = JIN
 	cores = { JIN }
 	manpower = 12
@@ -6083,7 +6083,7 @@ zhou_states_north_china_plain_20 = {
 	locations = { land_03682 }
 }
 zhou_states_north_china_plain_21 = {
-	name = "Zhou states (north China plain) 21"
+	name = "Zhou States (north China Plain) 21"
 	owner = JIN
 	cores = { JIN }
 	manpower = 14
@@ -6091,7 +6091,7 @@ zhou_states_north_china_plain_21 = {
 	locations = { land_08304 }
 }
 zhou_states_north_china_plain_22 = {
-	name = "Zhou states (north China plain) 22"
+	name = "Zhou States (north China Plain) 22"
 	owner = JIN
 	cores = { JIN }
 	manpower = 11
@@ -6099,7 +6099,7 @@ zhou_states_north_china_plain_22 = {
 	locations = { land_05825 }
 }
 zhou_states_north_china_plain_23 = {
-	name = "Zhou states (north China plain) 23"
+	name = "Zhou States (north China Plain) 23"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 7
@@ -6107,7 +6107,7 @@ zhou_states_north_china_plain_23 = {
 	locations = { land_05087 }
 }
 zhou_states_north_china_plain_24 = {
-	name = "Zhou states (north China plain) 24"
+	name = "Zhou States (north China Plain) 24"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 9
@@ -6115,7 +6115,7 @@ zhou_states_north_china_plain_24 = {
 	locations = { land_02282 }
 }
 zhou_states_north_china_plain_25 = {
-	name = "Zhou states (north China plain) 25"
+	name = "Zhou States (north China Plain) 25"
 	owner = JIN
 	cores = { JIN }
 	manpower = 11
@@ -6123,7 +6123,7 @@ zhou_states_north_china_plain_25 = {
 	locations = { land_01894 }
 }
 zhou_states_north_china_plain_26 = {
-	name = "Zhou states (north China plain) 26"
+	name = "Zhou States (north China Plain) 26"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 4
@@ -6131,7 +6131,7 @@ zhou_states_north_china_plain_26 = {
 	locations = { land_03804 }
 }
 zhou_states_north_china_plain_27 = {
-	name = "Zhou states (north China plain) 27"
+	name = "Zhou States (north China Plain) 27"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 8
@@ -6142,7 +6142,7 @@ zhou_states_north_china_plain_27 = {
 	}
 }
 zhou_states_north_china_plain_28 = {
-	name = "Zhou states (north China plain) 28"
+	name = "Zhou States (north China Plain) 28"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 9
@@ -6153,7 +6153,7 @@ zhou_states_north_china_plain_28 = {
 	}
 }
 zhou_states_north_china_plain_29 = {
-	name = "Zhou states (north China plain) 29"
+	name = "Zhou States (north China Plain) 29"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 4
@@ -6164,7 +6164,7 @@ zhou_states_north_china_plain_29 = {
 	}
 }
 zhou_states_north_china_plain_30 = {
-	name = "Zhou states (north China plain) 30"
+	name = "Zhou States (north China Plain) 30"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 9
@@ -6172,7 +6172,7 @@ zhou_states_north_china_plain_30 = {
 	locations = { land_04091 }
 }
 zhou_states_north_china_plain_31 = {
-	name = "Zhou states (north China plain) 31"
+	name = "Zhou States (north China Plain) 31"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 5
@@ -6180,7 +6180,7 @@ zhou_states_north_china_plain_31 = {
 	locations = { land_05402 }
 }
 zhou_states_north_china_plain_32 = {
-	name = "Zhou states (north China plain) 32"
+	name = "Zhou States (north China Plain) 32"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 5
@@ -6188,7 +6188,7 @@ zhou_states_north_china_plain_32 = {
 	locations = { land_09138 }
 }
 zhou_states_north_china_plain_33 = {
-	name = "Zhou states (north China plain) 33"
+	name = "Zhou States (north China Plain) 33"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 5
@@ -6196,7 +6196,7 @@ zhou_states_north_china_plain_33 = {
 	locations = { land_06634 }
 }
 zhou_states_north_china_plain_34 = {
-	name = "Zhou states (north China plain) 34"
+	name = "Zhou States (north China Plain) 34"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 5
@@ -6204,7 +6204,7 @@ zhou_states_north_china_plain_34 = {
 	locations = { land_06919 }
 }
 zhou_states_north_china_plain_35 = {
-	name = "Zhou states (north China plain) 35"
+	name = "Zhou States (north China Plain) 35"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 7
@@ -6212,7 +6212,7 @@ zhou_states_north_china_plain_35 = {
 	locations = { land_07319 land_07650 }
 }
 zhou_states_north_china_plain_36 = {
-	name = "Zhou states (north China plain) 36"
+	name = "Zhou States (north China Plain) 36"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 6
@@ -6220,7 +6220,7 @@ zhou_states_north_china_plain_36 = {
 	locations = { land_07637 }
 }
 zhou_states_north_china_plain_37 = {
-	name = "Zhou states (north China plain) 37"
+	name = "Zhou States (north China Plain) 37"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 5
@@ -6228,7 +6228,7 @@ zhou_states_north_china_plain_37 = {
 	locations = { land_09661 }
 }
 zhou_states_north_china_plain_38 = {
-	name = "Zhou states (north China plain) 38"
+	name = "Zhou States (north China Plain) 38"
 	owner = JIN
 	cores = { JIN }
 	manpower = 3
@@ -6236,7 +6236,7 @@ zhou_states_north_china_plain_38 = {
 	locations = { land_03957 }
 }
 zhou_states_north_china_plain_39 = {
-	name = "Zhou states (north China plain) 39"
+	name = "Zhou States (north China Plain) 39"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 11
@@ -6244,7 +6244,7 @@ zhou_states_north_china_plain_39 = {
 	locations = { land_01283 }
 }
 zhou_states_north_china_plain_40 = {
-	name = "Zhou states (north China plain) 40"
+	name = "Zhou States (north China Plain) 40"
 	owner = QIQ
 	cores = { QIQ }
 	manpower = 6
@@ -6252,7 +6252,7 @@ zhou_states_north_china_plain_40 = {
 	locations = { land_04560 land_01825 }
 }
 zhou_states_north_china_plain_41 = {
-	name = "Zhou states (north China plain) 41"
+	name = "Zhou States (north China Plain) 41"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 7
@@ -6260,7 +6260,7 @@ zhou_states_north_china_plain_41 = {
 	locations = { land_06437 }
 }
 zhou_states_north_china_plain_42 = {
-	name = "Zhou states (north China plain) 42"
+	name = "Zhou States (north China Plain) 42"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 2
@@ -6268,7 +6268,7 @@ zhou_states_north_china_plain_42 = {
 	locations = { land_03846 }
 }
 zhou_states_north_china_plain_43 = {
-	name = "Zhou states (north China plain) 43"
+	name = "Zhou States (north China Plain) 43"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 6
@@ -6276,7 +6276,7 @@ zhou_states_north_china_plain_43 = {
 	locations = { land_08710 }
 }
 zhou_states_north_china_plain_44 = {
-	name = "Zhou states (north China plain) 44"
+	name = "Zhou States (north China Plain) 44"
 	owner = ZHO
 	cores = { ZHO }
 	manpower = 5
@@ -6667,25 +6667,25 @@ southern_china_baiyue_6 = {
 	locations = { land_02908 land_04625 land_00583 land_08299 land_00054 land_04152 land_08596 land_03797 land_08947 land_09395 land_00452 land_01315 }
 }
 yunnan_and_guizhou_highlands_1 = {
-	name = "Yunnan and Guizhou highlands 1"
+	name = "Yunnan and Guizhou Highlands 1"
 	manpower = 16
 	tax = 1.7
 	locations = { land_06484 land_03097 land_08247 land_02931 land_09387 land_03462 land_02170 land_03296 land_07920 land_06531 land_01681 land_03490 land_09425 land_08673 land_05489 land_09070 land_01479 land_08401 land_03542 land_02213 land_02430 land_02610 land_08203 land_00068 land_09685 land_04752 land_07424 land_00682 land_06275 land_00396 land_05043 land_03091 land_01527 land_07443 land_02653 land_05468 land_05879 land_03101 land_01652 land_07125 }
 }
 yunnan_and_guizhou_highlands_2 = {
-	name = "Yunnan and Guizhou highlands 2"
+	name = "Yunnan and Guizhou Highlands 2"
 	manpower = 12
 	tax = 1.5
 	locations = { land_07725 land_06336 land_02040 land_09622 land_01528 land_04546 land_02991 land_02885 land_07795 land_01953 land_07237 land_08340 land_07468 land_02632 land_03108 land_08549 land_05056 land_05176 land_00820 land_08522 land_06127 land_06810 land_06367 land_05458 land_03137 land_09044 land_04605 }
 }
 yunnan_and_guizhou_highlands_3 = {
-	name = "Yunnan and Guizhou highlands 3"
+	name = "Yunnan and Guizhou Highlands 3"
 	manpower = 13
 	tax = 1.5
 	locations = { land_05810 land_06590 land_04412 land_04209 land_08233 land_09396 land_08981 land_05299 land_07708 land_03578 land_00417 land_04861 land_08876 land_05535 land_05249 land_05826 land_08858 land_00441 land_04585 land_01581 land_07977 land_09043 land_05033 land_02712 land_06990 land_00248 land_05901 land_04494 land_03548 land_03022 land_04771 land_02224 land_05099 land_04333 }
 }
 yunnan_and_guizhou_highlands_4 = {
-	name = "Yunnan and Guizhou highlands 4"
+	name = "Yunnan and Guizhou Highlands 4"
 	manpower = 13
 	tax = 1.5
 	locations = { land_00660 land_07610 land_06618 land_02045 land_03411 land_03748 land_00587 land_01487 land_02327 land_05059 land_02881 land_02595 land_09028 land_08705 land_03029 land_09245 land_04432 land_05678 land_06809 land_01710 land_02873 land_07645 land_00400 land_06695 land_07738 land_00876 land_03834 land_00733 land_04794 land_02067 land_06211 land_06262 }
@@ -7030,7 +7030,7 @@ philippines_m211_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m9_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 13
 	tax = 1.5
 	locations = { land_04767 land_08768 land_07010 land_04712 land_04066 land_07712 land_06037 land_04390 land_09457 land_05770 land_06550 land_02263 land_04935 land_04995 land_06315 land_05434 land_08854 land_06196 land_05384 land_03054 land_02025 land_01139 land_08181 land_00936 land_01499 land_07069 land_05680 land_08135 land_04965 land_09589 }
@@ -7039,7 +7039,7 @@ malay_peninsula_and_sumatra_m9_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m204_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16120 land_16119 }
@@ -7048,7 +7048,7 @@ malay_peninsula_and_sumatra_m204_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m209_1 = {
-	name = "Malay peninsula and Sumatra 1"
+	name = "Malay Peninsula and Sumatra 1"
 	manpower = 13
 	tax = 1.6
 	locations = { land_00342 land_04989 land_02105 land_05626 land_00693 land_06406 land_05797 land_09632 land_07694 land_08760 land_01958 land_08174 land_04501 land_07496 land_06647 land_04792 land_01548 land_01959 land_01530 land_05711 land_04359 land_01129 land_05213 land_08610 land_02911 land_04397 land_01596 land_01393 land_03585 land_04010 }
@@ -7057,7 +7057,7 @@ malay_peninsula_and_sumatra_m209_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m209_2 = {
-	name = "Malay peninsula and Sumatra 2"
+	name = "Malay Peninsula and Sumatra 2"
 	manpower = 7
 	tax = 1.1
 	locations = { land_07167 land_02331 land_07269 land_09596 land_00316 land_04765 land_03233 land_01609 land_02915 land_08790 }
@@ -7066,7 +7066,7 @@ malay_peninsula_and_sumatra_m209_2 = {
 	}
 }
 malay_peninsula_and_sumatra_m209_3 = {
-	name = "Malay peninsula and Sumatra 3"
+	name = "Malay Peninsula and Sumatra 3"
 	manpower = 13
 	tax = 1.5
 	locations = { land_02492 land_01666 land_01648 land_00619 land_06909 land_07546 land_00218 land_03513 land_07191 land_04413 land_01926 land_09665 land_01977 land_01322 land_08272 land_00215 land_06468 land_02624 land_09357 land_09334 land_01693 land_09243 land_09363 land_06202 }
@@ -7075,7 +7075,7 @@ malay_peninsula_and_sumatra_m209_3 = {
 	}
 }
 malay_peninsula_and_sumatra_m214_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16286 land_16285 }
@@ -7084,7 +7084,7 @@ malay_peninsula_and_sumatra_m214_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m218_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16327 land_16326 }
@@ -7093,7 +7093,7 @@ malay_peninsula_and_sumatra_m218_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m221_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16332 }
@@ -7102,7 +7102,7 @@ malay_peninsula_and_sumatra_m221_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m222_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16333 }
@@ -7111,7 +7111,7 @@ malay_peninsula_and_sumatra_m222_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m223_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07974 }
@@ -7120,7 +7120,7 @@ malay_peninsula_and_sumatra_m223_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m230_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16507 land_16508 }
@@ -7129,7 +7129,7 @@ malay_peninsula_and_sumatra_m230_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m233_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.6
 	locations = { land_08150 land_07192 land_01558 land_03787 }
@@ -7138,7 +7138,7 @@ malay_peninsula_and_sumatra_m233_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m238_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16517 }
@@ -7147,7 +7147,7 @@ malay_peninsula_and_sumatra_m238_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m239_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16520 }
@@ -7156,7 +7156,7 @@ malay_peninsula_and_sumatra_m239_1 = {
 	}
 }
 malay_peninsula_and_sumatra_m241_1 = {
-	name = "Malay peninsula and Sumatra"
+	name = "Malay Peninsula and Sumatra"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16516 }
@@ -7804,7 +7804,7 @@ fiji_tonga_samoa_m308_1 = {
 	}
 }
 fiji_western_m294_1 = {
-	name = "Fiji western"
+	name = "Fiji Western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17412 land_17413 }
@@ -7813,7 +7813,7 @@ fiji_western_m294_1 = {
 	}
 }
 fiji_western_m296_1 = {
-	name = "Fiji western"
+	name = "Fiji Western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17414 }
@@ -7822,7 +7822,7 @@ fiji_western_m296_1 = {
 	}
 }
 fiji_western_m305_1 = {
-	name = "Fiji western"
+	name = "Fiji Western"
 	manpower = 1
 	tax = 0.5
 	locations = { land_17425 }
@@ -8023,7 +8023,7 @@ tasmania_m320_1 = {
 	}
 }
 samoyed_lands_m9_1 = {
-	name = "Samoyed lands 1"
+	name = "Samoyed Lands 1"
 	manpower = 1
 	tax = 0.5
 	locations = { land_03318 land_05187 land_05621 land_03623 land_06498 land_03217 land_03757 land_07135 land_00347 land_04934 land_00804 land_06314 land_08626 land_00223 land_07893 land_00542 land_03814 land_03427 land_03764 land_02172 land_06944 land_04457 land_06386 land_09160 land_05053 }
@@ -8032,13 +8032,13 @@ samoyed_lands_m9_1 = {
 	}
 }
 samoyed_lands_m9_2 = {
-	name = "Samoyed lands 2"
+	name = "Samoyed Lands 2"
 	manpower = 1
 	tax = 0.6
 	locations = { land_09451 land_08930 land_06595 land_07721 land_06023 land_05820 land_04671 land_05977 land_08672 land_07523 land_08506 land_08940 land_07551 land_05959 land_07316 land_08696 land_07367 land_07104 land_01848 land_17602 land_08184 land_09204 land_04594 land_08692 land_09172 land_08406 land_09592 land_02587 land_01438 land_05462 land_09177 land_00903 land_05370 land_06496 land_07682 land_04701 land_00474 land_08462 land_08859 land_00405 land_00908 land_01125 land_03594 land_08675 land_09298 land_06391 land_04919 land_05399 land_00992 land_09483 land_01915 land_07808 }
 }
 samoyed_lands_m9_3 = {
-	name = "Samoyed lands 3"
+	name = "Samoyed Lands 3"
 	manpower = 1
 	tax = 0.5
 	locations = { land_04020 land_00647 land_03019 land_09558 land_05779 land_03195 land_07053 land_05161 land_07990 land_05812 land_07335 land_08078 land_04571 land_05757 land_07506 land_00095 land_07077 land_00755 land_06362 land_04918 land_08379 land_09173 land_07784 land_09353 land_04360 land_04277 land_03442 land_03410 land_00069 land_00752 }
@@ -8047,7 +8047,7 @@ samoyed_lands_m9_3 = {
 	}
 }
 samoyed_lands_m9_4 = {
-	name = "Samoyed lands 4"
+	name = "Samoyed Lands 4"
 	manpower = 1
 	tax = 0.5
 	locations = { land_07522 land_05307 land_09391 land_06267 land_03106 land_06281 land_02437 land_05455 land_07444 land_08510 land_08224 land_01542 land_08081 land_00227 land_09604 land_04168 land_05211 land_00421 land_01104 land_07583 land_08317 land_02295 land_07385 land_08848 land_00657 land_02586 land_01737 land_02637 land_06855 land_00736 land_04257 land_09347 land_01193 land_02799 land_01853 land_04668 land_09578 land_08623 land_09343 land_01429 land_07036 land_07636 land_00331 land_06644 land_01116 land_00590 land_00950 land_05274 land_03613 land_08523 land_08777 land_04107 land_04730 land_05796 land_05856 }
@@ -8106,7 +8106,7 @@ libyans_1 = {
 	}
 }
 mande_lands_1 = {
-	name = "Mande lands 1"
+	name = "Mande Lands 1"
 	owner = SAH
 	cores = { SAH }
 	manpower = 14
@@ -8114,7 +8114,7 @@ mande_lands_1 = {
 	locations = { land_04204 land_08731 land_01403 land_04218 land_09313 land_00236 land_09230 land_01925 land_07435 land_08215 land_05031 land_03116 land_08086 land_05811 land_01801 land_03338 land_01506 land_03818 land_07224 land_01036 land_03228 land_00044 land_09541 land_08512 land_04059 land_01724 land_04659 land_02947 land_02061 land_05144 land_03220 land_04346 land_06455 land_06815 land_09667 land_03368 land_07046 land_09561 land_02053 land_06271 land_01924 land_09063 land_08680 land_07231 land_00872 land_06345 }
 }
 mande_lands_2 = {
-	name = "Mande lands 2"
+	name = "Mande Lands 2"
 	owner = SAH
 	cores = { SAH }
 	manpower = 13
@@ -8122,7 +8122,7 @@ mande_lands_2 = {
 	locations = { land_05127 land_04015 land_07121 land_04957 land_09484 land_02429 land_02102 land_00510 land_00321 land_08969 land_07174 land_08757 land_06422 land_01249 land_03704 land_06939 land_07922 land_01485 land_00650 land_06534 land_03493 land_04619 }
 }
 mande_lands_3 = {
-	name = "Mande lands 3"
+	name = "Mande Lands 3"
 	owner = SAH
 	cores = { SAH }
 	manpower = 11
@@ -8130,7 +8130,7 @@ mande_lands_3 = {
 	locations = { land_09714 land_05367 land_02451 land_01833 land_07740 land_03393 land_00052 land_02424 land_04538 land_06047 land_06924 land_01931 land_06938 land_03597 land_09167 land_01862 land_09680 land_06842 land_06418 land_04706 land_07161 land_06335 land_01093 land_02676 land_04227 }
 }
 mande_lands_4 = {
-	name = "Mande lands 4"
+	name = "Mande Lands 4"
 	owner = SAH
 	cores = { SAH }
 	manpower = 12
@@ -8138,37 +8138,37 @@ mande_lands_4 = {
 	locations = { land_03198 land_05450 land_06816 land_06470 land_08316 land_01145 land_09410 land_02862 land_01570 land_08197 land_04030 land_04695 land_00468 land_01285 land_09707 land_03999 land_03653 land_06348 land_03307 land_02126 land_04872 land_07844 land_07138 land_05246 land_01379 land_09164 land_07752 land_05722 land_01375 land_07891 land_05999 }
 }
 chadian_lands_1 = {
-	name = "Chadian lands 1"
+	name = "Chadian Lands 1"
 	manpower = 13
 	tax = 1.5
 	locations = { land_06419 land_03383 land_06738 land_02188 land_01039 land_05986 land_00933 land_06706 land_05945 land_04856 land_08617 land_02941 land_09374 land_08142 land_07021 land_00930 land_04899 land_02841 land_01526 land_01886 land_03732 land_06187 land_06884 land_00216 land_04577 land_02662 land_03728 land_04854 land_02533 land_08514 }
 }
 chadian_lands_2 = {
-	name = "Chadian lands 2"
+	name = "Chadian Lands 2"
 	manpower = 16
 	tax = 1.7
 	locations = { land_04260 land_01459 land_08469 land_09535 land_01644 land_05022 land_07856 land_03883 land_08027 land_08387 land_04603 land_06302 land_03857 land_05828 land_09026 }
 }
 chadian_lands_3 = {
-	name = "Chadian lands 3"
+	name = "Chadian Lands 3"
 	manpower = 14
 	tax = 1.6
 	locations = { land_00794 land_08556 land_06415 land_07698 land_07112 land_07029 land_04851 land_09295 land_01667 land_09369 land_08834 land_05904 land_07976 land_08539 land_02600 land_00745 land_06966 land_03902 land_02453 land_07211 land_04267 land_03995 land_07516 land_07290 land_00082 land_03077 land_02002 land_04974 land_02819 land_08177 }
 }
 chadian_lands_4 = {
-	name = "Chadian lands 4"
+	name = "Chadian Lands 4"
 	manpower = 11
 	tax = 1.3
 	locations = { land_08648 land_04338 land_03489 land_01897 land_07624 land_07661 land_03051 land_03268 land_03079 land_07223 land_08912 land_04279 land_00555 land_08474 land_08631 land_05221 land_03329 land_00482 land_03094 land_00256 land_07035 land_06006 land_01696 land_02813 land_06791 land_07271 land_09634 land_06270 land_01983 land_06450 land_09602 land_08550 land_00724 land_07937 land_06082 land_08597 }
 }
 chadian_lands_5 = {
-	name = "Chadian lands 5"
+	name = "Chadian Lands 5"
 	manpower = 11
 	tax = 1.4
 	locations = { land_03969 land_05349 land_09290 land_08441 land_07555 land_01196 land_05834 land_04233 land_03901 land_08239 land_00168 land_01857 land_05226 land_01373 land_05914 land_05591 land_07663 land_00861 land_01018 land_00446 land_07428 land_00746 land_07345 land_07742 land_03266 land_02740 land_02537 land_05592 land_03608 land_05860 land_08029 land_03710 land_05842 }
 }
 kwa_coast_1 = {
-	name = "Kwa coast 1"
+	name = "Kwa Coast 1"
 	manpower = 9
 	tax = 1.2
 	locations = { land_07665 land_07790 land_00836 land_08944 land_09706 land_04990 land_01783 land_08922 land_05106 land_03694 land_04700 land_07455 land_07612 land_08369 land_05208 land_06279 land_06113 land_06787 land_05514 land_00766 }
@@ -8177,7 +8177,7 @@ kwa_coast_1 = {
 	}
 }
 kwa_coast_2 = {
-	name = "Kwa coast 2"
+	name = "Kwa Coast 2"
 	manpower = 13
 	tax = 1.5
 	locations = { land_06719 land_09428 land_05238 land_08427 land_07283 land_07966 land_02701 land_08977 land_03583 land_04843 land_02573 land_01041 land_02887 land_02149 land_08808 land_01342 land_06995 land_01573 land_05754 land_03816 land_08943 land_05602 }
@@ -8186,7 +8186,7 @@ kwa_coast_2 = {
 	}
 }
 nok_culture_1 = {
-	name = "Nok culture 1"
+	name = "Nok Culture 1"
 	owner = NOK
 	cores = { NOK }
 	manpower = 12
@@ -8194,7 +8194,7 @@ nok_culture_1 = {
 	locations = { land_06839 land_03055 land_08842 land_07813 land_01985 land_09507 land_06563 land_04745 land_08872 land_05125 land_05725 land_09283 land_08351 land_06792 land_03931 land_08315 land_00383 }
 }
 nok_culture_2 = {
-	name = "Nok culture 2"
+	name = "Nok Culture 2"
 	owner = NOK
 	cores = { NOK }
 	manpower = 12
@@ -8202,7 +8202,7 @@ nok_culture_2 = {
 	locations = { land_05413 land_09594 land_07439 land_07504 land_07634 land_07505 land_05793 land_05886 land_03048 land_01456 land_04322 land_05199 land_05366 }
 }
 west_atlantic_coast_m9_1 = {
-	name = "West Atlantic coast 1"
+	name = "West Atlantic Coast 1"
 	manpower = 11
 	tax = 1.3
 	locations = { land_01320 land_08639 land_04246 land_02022 land_01939 land_03665 land_07117 land_01944 land_02964 land_06605 land_09402 land_08641 land_04848 land_09551 land_06713 land_00202 land_08984 land_05985 }
@@ -8211,7 +8211,7 @@ west_atlantic_coast_m9_1 = {
 	}
 }
 west_atlantic_coast_m9_2 = {
-	name = "West Atlantic coast 2"
+	name = "West Atlantic Coast 2"
 	manpower = 12
 	tax = 1.4
 	locations = { land_00683 land_00531 land_01957 land_08030 land_04920 land_03711 land_03942 land_01787 land_07200 land_07214 land_03601 land_04644 land_03532 land_00131 land_07556 land_01197 land_07953 land_06744 land_07358 land_00353 land_05623 land_05217 land_05568 land_02467 land_03870 land_08074 land_05153 land_03381 land_05993 land_06298 land_04683 land_03765 land_06280 land_03373 }
@@ -8220,13 +8220,13 @@ west_atlantic_coast_m9_2 = {
 	}
 }
 west_atlantic_coast_m9_3 = {
-	name = "West Atlantic coast 3"
+	name = "West Atlantic Coast 3"
 	manpower = 10
 	tax = 1.3
 	locations = { land_04435 land_02691 land_02470 land_09143 land_05982 land_05996 land_04575 land_05078 land_08493 land_01368 land_04566 land_01493 land_06085 land_01272 land_04844 land_04415 land_01517 land_04586 land_01702 land_03714 land_03225 land_00443 }
 }
 west_atlantic_coast_m166_1 = {
-	name = "West Atlantic coast"
+	name = "West Atlantic Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16058 land_16059 }
@@ -8235,7 +8235,7 @@ west_atlantic_coast_m166_1 = {
 	}
 }
 west_atlantic_coast_m172_1 = {
-	name = "West Atlantic coast"
+	name = "West Atlantic Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16064 }
@@ -8244,7 +8244,7 @@ west_atlantic_coast_m172_1 = {
 	}
 }
 west_atlantic_coast_m175_1 = {
-	name = "West Atlantic coast"
+	name = "West Atlantic Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_16065 }
@@ -8253,7 +8253,7 @@ west_atlantic_coast_m175_1 = {
 	}
 }
 west_atlantic_coast_m187_1 = {
-	name = "West Atlantic coast"
+	name = "West Atlantic Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_05994 }
@@ -8268,13 +8268,13 @@ fur_darfur_1 = {
 	locations = { land_04707 land_03812 land_08616 land_00402 land_01727 land_01469 land_06799 land_02143 land_07469 land_05554 land_00381 land_01484 land_03210 land_05758 land_00622 land_07014 land_07088 land_04610 }
 }
 chiang_eastern_tibetan_plateau_1 = {
-	name = "Chiang (eastern Tibetan plateau)"
+	name = "Chiang (eastern Tibetan Plateau)"
 	manpower = 13
 	tax = 1.5
 	locations = { land_03378 land_00337 land_06313 land_06973 land_05584 land_01777 land_04952 land_09516 land_07038 land_06632 land_05183 land_03628 land_06180 land_02756 land_03822 land_08003 land_05788 land_07657 land_05382 land_07431 land_01755 land_02835 land_02669 land_07879 land_07293 land_01617 land_02780 land_08433 land_09439 land_05129 land_04880 land_03611 land_07132 land_04391 land_07086 land_17607 land_03399 land_09315 land_00658 land_06251 land_07257 land_06911 land_03201 land_01369 land_07622 land_05467 land_05947 land_01337 land_03769 land_09159 land_17608 land_00059 land_06095 land_04886 land_05389 land_06312 land_00636 land_09570 land_03405 land_04891 land_02496 land_08809 land_07757 land_04776 land_05076 }
 }
 min_yue_coast_m9_1 = {
-	name = "Min-Yue coast 1"
+	name = "Min-Yue Coast 1"
 	manpower = 15
 	tax = 1.7
 	locations = { land_02912 land_04472 land_01574 land_06055 land_03379 land_06771 land_03135 land_08290 land_08124 land_02454 land_08698 land_09109 land_05422 }
@@ -8283,7 +8283,7 @@ min_yue_coast_m9_1 = {
 	}
 }
 min_yue_coast_m9_2 = {
-	name = "Min-Yue coast 2"
+	name = "Min-Yue Coast 2"
 	manpower = 15
 	tax = 1.7
 	locations = { land_08611 land_04080 land_00896 land_05751 land_02950 land_02217 land_04433 land_07488 land_08310 land_05712 land_05832 land_01153 land_05431 land_07254 land_02501 }
@@ -8292,7 +8292,7 @@ min_yue_coast_m9_2 = {
 	}
 }
 min_yue_coast_m142_1 = {
-	name = "Min-Yue coast"
+	name = "Min-Yue Coast"
 	manpower = 4
 	tax = 0.8
 	locations = { land_15944 land_15951 land_15942 land_15939 }
@@ -8301,7 +8301,7 @@ min_yue_coast_m142_1 = {
 	}
 }
 min_yue_coast_m145_1 = {
-	name = "Min-Yue coast"
+	name = "Min-Yue Coast"
 	manpower = 1
 	tax = 0.5
 	locations = { land_15950 }
@@ -8310,13 +8310,13 @@ min_yue_coast_m145_1 = {
 	}
 }
 man_tribes_middle_han_1 = {
-	name = "Man tribes (middle Han) 1"
+	name = "Man Tribes (middle Han) 1"
 	manpower = 20
 	tax = 2.1
 	locations = { land_03452 land_06207 land_03300 land_01408 land_03596 land_08580 land_00426 land_04824 land_07676 land_03449 land_02254 land_02171 land_00902 land_06103 land_00298 land_05042 land_00192 land_01212 land_08051 land_01203 land_03192 land_00585 land_00299 land_04000 land_03096 land_02644 land_05339 land_03627 land_05376 land_05233 }
 }
 man_tribes_middle_han_2 = {
-	name = "Man tribes (middle Han) 2"
+	name = "Man Tribes (middle Han) 2"
 	manpower = 10
 	tax = 1.3
 	locations = { land_09073 land_03337 land_00329 land_04713 land_02318 land_03315 land_05235 land_08378 land_07331 land_07548 land_04101 land_02209 land_06690 land_01356 land_04993 }

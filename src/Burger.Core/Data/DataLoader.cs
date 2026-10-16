@@ -540,9 +540,12 @@ public static class DataLoader
                 list.Family.AddRange(block.GetList("family"));
                 if (list.Male.Count + list.Female.Count + list.Family.Count == 0) continue;
                 var target = block.GetString("religion") is { } rel && block.GetString("culture") == null ? data.ReligionNames : data.CultureNames;
-                string key = block.GetString("culture") ?? block.GetString("religion") ?? block.Key;
-                if (!target.TryGetValue(key, out var existing)) target[key] = list;
-                else { existing.Male.AddRange(list.Male); existing.Female.AddRange(list.Female); existing.Family.AddRange(list.Family); }
+                // a block serves its own key, its culture/religion, and every culture in a "cultures = { a b c }" list (a shared pool for related peoples)
+                var keys = new List<string> { block.GetString("culture") ?? block.GetString("religion") ?? block.Key };
+                keys.AddRange(block.GetList("cultures"));
+                foreach (var key in keys)
+                    if (!target.TryGetValue(key, out var existing)) target[key] = list;
+                    else { existing.Male.AddRange(list.Male); existing.Female.AddRange(list.Female); existing.Family.AddRange(list.Family); }
             }
         }
         if (data.DefaultNames.Male.Count == 0) data.DefaultNames.Male.AddRange(new[] { "Marcus", "Lucius", "Gaius", "Titus", "Johann", "Friedrich", "Henri", "Louis", "William", "Karl" });

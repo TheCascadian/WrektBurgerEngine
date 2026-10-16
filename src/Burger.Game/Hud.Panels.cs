@@ -61,9 +61,17 @@ public sealed partial class Hud
         var l = Ui.SelectedLocation;
         if (l == null) { Ui.Left = LeftPanel.None; return; }
         var r = FitRect("loc");
-        Gui.Panel(r, l.DisplayName);
+        bool unknown = !G.Exploration.IsCharted(l);
+        Gui.Panel(r, unknown ? "Terra incognita" : l.DisplayName);
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 22 * S, w = r.Width - 24 * S;
+        if (unknown)
+        {
+            Gui.Wrapped(l.IsWater ? "Uncharted waters. No ship of ours has sailed here." : "A land unexplored by your people. Nothing is known of its soil, its peoples or its rulers.", x, y, w, 15, Gui.Text);
+            y += Gui.WrappedHeight(l.IsWater ? "Uncharted waters. No ship of ours has sailed here." : "A land unexplored by your people. Nothing is known of its soil, its peoples or its rulers.", w, 15) + 12 * S;
+            Gui.Wrapped("Send a fleet along the coast or march an army to its edge to chart it.", x, y, w, 14, Gui.TextDim);
+            return;
+        }
         void Row(string k, string v, Color? col = null, string? tip = null)
         {
             Gui.Label(k, x, y, 15, Gui.TextDim);

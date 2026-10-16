@@ -105,7 +105,7 @@ public sealed class MpController
         catch (Exception e)
         {
             // the text of a socket error names the address: keep it off the screen and out of logs
-            Burger.Core.Log.Warn($"Join failed: {e.GetType().Name}" + (e is InvalidDataException or ArgumentException ? ": " + e.Message : e is SocketException se ? " " + se.SocketErrorCode : e.InnerException is SocketException ie ? " " + ie.SocketErrorCode : e is TimeoutException ? " (no answer in time)" : ""), "multiplayer");
+            Burger.Core.Log.Warn($"Join failed: {e.GetType().Name}" + (e is InvalidDataException or ArgumentException ? ": " + e.Message : e is SocketException se ? " " + se.SocketErrorCode : e.InnerException is SocketException ie ? " " + ie.SocketErrorCode : e is TimeoutException ? " (no answer in time)" : e is System.Security.Authentication.AuthenticationException ? ": " + (e.InnerException?.Message ?? e.Message) : ""), "multiplayer");
             Message = e is InvalidDataException or ArgumentException ? "Cannot connect: " + e.Message : "Cannot connect. Check the code and that the host is running.";
             return false;
         }

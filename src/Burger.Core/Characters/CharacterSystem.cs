@@ -109,7 +109,7 @@ public sealed class CharacterSystem
 
         c.Female = n.GetBool("female", false);
         if (!n.Has("female") && n.Has("random_gender")) c.Female = _game.Rngs.Characters.NextDouble() < 0.5;
-        var names = c.Country?.Names ?? _game.Data.DefaultNames;
+        var names = NamesFor(c.Country);
         c.FirstName = n.GetString("first_name") ?? n.GetString("name") ?? RandomName(names, c.Female);
         c.Family = n.GetString("family") ?? n.GetString("dynasty") ?? (n.Has("family") ? "" : RandomFamily(names));
 
@@ -202,6 +202,17 @@ public sealed class CharacterSystem
         if (!p.Children.Contains(c)) p.Children.Add(c);
     }
 
+    /// <summary>The name pool for a country: its own explicit names, else its culture's list (common/name_lists), else the default list.</summary>
+    public NameList NamesFor(Country? country)
+    {
+        var d = _game.Data;
+        if (country == null) return d.DefaultNames;
+        if (country.Names.Male.Count + country.Names.Female.Count + country.Names.Family.Count > 0) return country.Names;
+        string? culture = country.Definition?.GetString("culture");
+        if (culture != null && d.CultureNames.TryGetValue(culture, out var cn)) return cn;
+        return d.DefaultNames;
+    }
+
     public string RandomName(NameList names, bool female)
     {
         var list = female ? names.Female : names.Male;
@@ -241,7 +252,7 @@ public sealed class CharacterSystem
             Country = country,
             Female = female ?? false,
         };
-        var names = country?.Names ?? _game.Data.DefaultNames;
+        var names = NamesFor(country);
         c.FirstName = RandomName(names, c.Female);
         c.Family = family ?? RandomFamily(names);
         int a = age ?? (25 + _game.Rngs.Characters.Next(30));
@@ -359,7 +370,7 @@ public sealed class CharacterSystem
             BirthDate = _game.World.Date,
             Family = father?.Family ?? mother.Family,
         };
-        child.FirstName = RandomName(country?.Names ?? _game.Data.DefaultNames, child.Female);
+        child.FirstName = RandomName(NamesFor(country), child.Female);
         foreach (var stat in _game.Data.Defines.CharacterStats)
         {
             double parentAvg = ((father?.Stats.GetValueOrDefault(stat) ?? 5) + mother.Stats.GetValueOrDefault(stat)) / 2;

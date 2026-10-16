@@ -27,6 +27,8 @@ public static class UserSettings
     /// <summary>Set from the game folder (game.txt <c>globe_mode</c>); false hides the toggle and keeps the map flat.</summary>
     public static bool GlobeAllowed = true;
     public static bool GlobeOn => GlobeMode && GlobeAllowed;
+    /// <summary>Terra incognita for new games: lands your nation has never seen stay an unknown chart until explored (chosen on the Play page).</summary>
+    public static bool TerraIncognita = true;
     /// <summary>The sun circles the map with the game's clock. Off: a fixed sun.</summary>
     public static bool SunCycle = true;
     /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>
@@ -67,6 +69,7 @@ public static class UserSettings
                 else if (parts[0] == "portrait_sound") PortraitSound = v != 0;
                 else if (parts[0] == "globe_mode") GlobeMode = v != 0;
                 else if (parts[0] == "sun_cycle") SunCycle = v != 0;
+                else if (parts[0] == "terra_incognita") TerraIncognita = v != 0;
                 else if (parts[0] == "open_router") OpenRouter = v != 0;
                 else if (parts[0] == "lod_enabled") LodEnabled = v != 0;
                 else if (parts[0] == "lod_water") LodWater = Math.Clamp((int)v, 0, 3);
@@ -91,6 +94,7 @@ public static class UserSettings
                 $"portrait_sound = {(PortraitSound ? 1 : 0)}",
                 $"globe_mode = {(GlobeMode ? 1 : 0)}",
                 $"sun_cycle = {(SunCycle ? 1 : 0)}",
+                $"terra_incognita = {(TerraIncognita ? 1 : 0)}",
                 $"player_name = {PlayerName.Replace('\n', ' ').Replace('\r', ' ')}",
                 $"open_router = {(OpenRouter ? 1 : 0)}",
                 $"lod_enabled = {(LodEnabled ? 1 : 0)}",

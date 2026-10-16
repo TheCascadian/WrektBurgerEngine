@@ -9,20 +9,20 @@ country_event = {
 	is_triggered_only = yes
 	trigger = { holds_elections = yes }
 	option = {
-		name = "Rally the voters across the country"
+		name = "Rally the Voters Across the Country"
 		trigger = { political_power >= 50 }
 		add_political_power = -50
 		add_popularity = { ideology = ruling value = 0.06 }
 		ai_chance = { factor = 1 modifier = { factor = 2 ruling_popularity < 0.4 } }
 	}
 	option = {
-		name = "Promise generous reforms"
+		name = "Promise Generous Reforms"
 		add_popularity = { ideology = ruling value = 0.03 }
 		add_stability = -3
 		ai_chance = { factor = 1 }
 	}
 	option = {
-		name = "Run a quiet campaign"
+		name = "Run a Quiet Campaign"
 		add_political_power = 20
 		ai_chance = { factor = 1 modifier = { factor = 2 ruling_popularity > 0.55 } }
 	}
@@ -35,12 +35,12 @@ country_event = {
 	is_triggered_only = yes
 	trigger = { holds_elections = yes }
 	option = {
-		name = "Deny everything"
+		name = "Deny Everything"
 		add_popularity = { ideology = ruling value = -0.04 }
 		ai_chance = { factor = 1 }
 	}
 	option = {
-		name = "Sack the managers"
+		name = "Sack the Managers"
 		trigger = { political_power >= 30 }
 		add_political_power = -30
 		add_popularity = { ideology = ruling value = -0.01 }

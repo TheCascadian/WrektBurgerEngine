@@ -179,6 +179,8 @@ public sealed class Game
     public event Action? MapChanged;
     /// <summary>The events systems raise about their own changes for the others to react to (see <see cref="GameEvents"/>).</summary>
     public GameEvents Hub { get; } = new();
+    /// <summary>Terra incognita: the lands the player has charted (option chosen at game start).</summary>
+    public Burger.Core.Exploration.ExplorationSystem Exploration { get; }
     public event Action<Notification>? NotificationAdded;
 
     public Game()
@@ -213,6 +215,7 @@ public sealed class Game
         Statistics = new StatisticsSystem(this);
         Memory = new Burger.Core.Memories.MemorySystem(this);
         Figures = new Burger.Core.Figures.FigureSystem(this);
+        Exploration = new Burger.Core.Exploration.ExplorationSystem(this);
         Mods = new ModManager(this);
         ModNet = new Burger.Core.Multiplayer.ModNetworkRegistry(this);
         Ai = new AiSystem(this);
@@ -301,6 +304,7 @@ public sealed class Game
         foreach (var c in World.Countries.Where(c => c.Exists))
             Events.FireOnAction("on_game_start", c);
         Events.FireOnAction("on_game_start_global", null);
+        UpdateVisibility();
         RaiseMapChanged();
     }
 
@@ -455,6 +459,7 @@ public sealed class Game
         World.Date = World.Date.AddHours(1);
         if (Features.Has(F.Military)) P("Warfare.HourlyTick", () => Warfare.HourlyTick());
         if (Features.Has(F.Navy)) P("Navy.HourlyTick", () => Navy.HourlyTick());
+        Exploration.HourlyTick();
         Mods.Invoke(m => m.OnHourlyTick());
         if (World.Date.Hour == 0) DailyTick();
     }
@@ -466,7 +471,13 @@ public sealed class Game
     /// <summary>False if fog of war hides this location from the player (always true without fog or without a player).</summary>
     public bool IsVisible(Location l)
     {
-        if (!FogActive || World.Player == null) return true;
+        if (World.Player == null) return true;
+        if (Exploration.Enabled)
+        {
+            if (!Exploration.Ready) UpdateVisibility();
+            if (!Exploration.IsCharted(l)) return false;
+        }
+        if (!FogActive) return true;
         if (_visible == null || _visibleFor != World.Player) UpdateVisibility();
         return _visible == null || l.Index >= _visible.Length || _visible[l.Index];
     }
@@ -475,7 +486,9 @@ public sealed class Game
     public void UpdateVisibility()
     {
         _visibleFor = World.Player;
-        _visible = World.Player != null && FogActive ? Rules.Vision.Compute(this, World.Player) : null;
+        var vis = World.Player != null && (FogActive || Exploration.Enabled) ? Rules.Vision.Compute(this, World.Player) : null;
+        _visible = FogActive ? vis : null;
+        Exploration.Update(vis);
         VisibilityVersion++;
     }
 

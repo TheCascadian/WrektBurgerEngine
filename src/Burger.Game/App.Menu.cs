@@ -91,7 +91,19 @@ public sealed partial class App
         float s = Gui.Scale;
         Gui.Label($"Start date: {game.World.Date.ToDisplay()}", x, y, 15, Gui.TextDim);
         y += 26 * s;
-        DrawCountryPicker(game, map, cam, x, ref y, w, panel, 160 * s);
+        bool terra = game.Exploration.Allowed;
+        DrawCountryPicker(game, map, cam, x, ref y, w, panel, (terra ? 198 : 160) * s);
+        if (terra)
+        {
+            if (Gui.Button(new Rectangle(x, y, w, 32 * s), UserSettings.TerraIncognita ? "Terra incognita: on" : "Terra incognita: off", true,
+                    "On: the lands your nation has never seen stay an unknown chart. Explore with armies and ships, colonize what you find.\nChosen now; you can switch it off later from the pause menu settings (it asks first).\nRecommended for the intended experience.",
+                    UserSettings.TerraIncognita, 15))
+            {
+                UserSettings.TerraIncognita = !UserSettings.TerraIncognita;
+                UserSettings.Save();
+            }
+            y += 38 * s;
+        }
         float bh = 40 * s;
         if (Gui.Button(new Rectangle(x, y, w, bh), _menuSelection != null ? $"Play as {_menuSelection.Name}" : "Select a country", _menuSelection != null, null, false, 18))
         {

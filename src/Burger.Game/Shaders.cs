@@ -132,6 +132,7 @@ uniform float showProvinceBorders;
 uniform float geoBase;       // 1: draw the start-layout province borders over the map (lut block 3)
 uniform float tintStrength;
 uniform float stripePeriod;  // occupation stripes: width in world units, steps by powers of two with the zoom (never a per pixel value)
+uniform float terraIncognita; // 1: the lands the player has never seen are drawn as an unknown chart (lut block 3, blue = how unknown, 0..1)
 uniform float fogStrength;   // 0 when zoomed far out (strategic view)   // how strongly map mode colors cover the terrain (stronger when zoomed out)
 uniform vec3 viewPos;
 uniform float lodWater;   // detail distance scale per feature (1 = default; larger keeps the detail visible at greater zoom)
@@ -270,6 +271,27 @@ float edgePx(float m0, float m1, float m2, float m3, vec2 f, float texelsPerPixe
 }
 float line(float d, float halfWidth) { return 1.0 - smoothstep(halfWidth - 0.7, halfWidth + 0.7, d); }
 
+// Terra incognita: aged chart paper. Land and sea alike are warm vellum; faint graticule and stains;
+// drifting mist where the known world ends. Cheap on purpose (a few value-noise taps), so unexplored areas cost less than the real map.
+vec3 parchment(vec2 p, vec2 gw, bool sea, float sunUp, float mist, float t)
+{
+    float broad = noise(p * 0.045) * 0.6 + noise(p * 0.13 + 3.1) * 0.4;
+    float fibre = noise(p * vec2(1.2, 7.5)) * 0.5 + noise(p * vec2(6.0, 1.1) + 5.7) * 0.5;
+    float stain = smoothstep(0.58, 0.85, noise(p * 0.08 + 11.3));
+    vec3 c = vec3(0.80, 0.70, 0.52); // sea and land share one vellum
+    c *= 0.88 + 0.22 * broad;
+    c *= 0.94 + 0.10 * fibre;
+    c = mix(c, c * vec3(0.72, 0.62, 0.50), stain * 0.35);
+    // ten-degree graticule, inked thin
+    vec2 g = p / (worldSize.x / 36.0);
+    vec2 gd = abs(fract(g - 0.5) - 0.5) / max(gw, vec2(1e-5));
+    float grid = 1.0 - smoothstep(0.4, 1.3, min(gd.x, gd.y));
+    c = mix(c, vec3(0.28, 0.20, 0.12), grid * 0.20);
+    float cloud = noise(p * 0.22 + vec2(t * 0.015, -t * 0.01)) * 0.65 + noise(p * 0.6 - vec2(t * 0.02, 0.0)) * 0.35;
+    c = mix(c, vec3(0.93, 0.90, 0.82), mist * (0.35 + 0.5 * cloud));
+    return c * (0.42 + 0.58 * sunUp);
+}
+
 void main()
 {
     vec2 pixU = fragPos.xz / worldSize * mapSize;
@@ -369,6 +391,31 @@ void main()
     vec3 viewDir = normalize(viewPos - fragWorld);
     // how far the sun is above this spot's horizon: the unlit half of the world stays dark whatever the camera does
     float sunUp = smoothstep(-0.12, 0.3, globe > 0.5 ? dot(fragU, sunDir) : sunDir.y);
+
+    // terra incognita: how unknown this spot is (0 known .. 1 never seen) and how far the known world's edge is, in screen pixels
+    float tiU = 0.0, dKnown = 1e4;
+    vec2 tiGw = vec2(0.0);
+    if (terraIncognita > 0.5)
+    {
+        tiGw = fwidth(fragPos.xz / (worldSize.x / 36.0));
+        float Uc[4];
+        tiU = lut(loc, 3).b;
+        for (int k = 0; k < 4; k++) Uc[k] = L[k] == loc ? tiU : lut(L[k], 3).b;
+        float mK[4];
+        for (int k = 0; k < 4; k++) mK[k] = (Uc[k] > 0.5) == (tiU > 0.5) ? 1.0 : 0.0;
+        dKnown = edgePx(mK[0], mK[1], mK[2], mK[3], f, tpp);
+        if (tiU > 0.995)
+        {
+            // never seen: skip the whole terrain and water shading, draw the chart
+            float mist = 1.0 - smoothstep(2.0, 46.0, dKnown);
+            vec3 pc = parchment(fragPos.xz, tiGw, water, sunUp, mist, time);
+            pc = mix(pc, vec3(0.20, 0.14, 0.08), line(dKnown, 1.1) * 0.55);
+            if ((flags & 8) != 0) pc = pc * 1.12 + vec3(0.03);
+            if ((flags & 4) != 0) pc = mix(pc * 1.15 + vec3(0.04), vec3(1.0, 0.93, 0.7), line(dProv, 1.4) * 0.6);
+            finalColor = vec4(pc, 1.0) * colDiffuse;
+            return;
+        }
+    }
     vec4 data = texelFetch(texture0, clampPix(ivec2(floor(pix))), 0);
     float detail = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat / lodWater); // fades small water details when zoomed out
     float detailR = 1.0 - smoothstep(0.02, 0.12, fwidth(fragPos.x) * cosLat / lodRiver); // the same for rivers
@@ -650,6 +697,16 @@ void main()
             fogged *= 1.0 - h * 0.10;
         }
         col = mix(col, fogged, fogStrength);
+    }
+
+    // terra incognita, being revealed: the chart burns away to the real map along a glowing edge
+    if (tiU > 0.001)
+    {
+        float nz = (noise(fragPos.xz * 0.35) * 0.6 + noise(fragPos.xz * 1.3 + 4.0) * 0.4) * 0.96;
+        float dd = tiU - nz;
+        vec3 pc = parchment(fragPos.xz, tiGw, water, sunUp, 0.0, time);
+        col = mix(col, pc, smoothstep(0.0, 0.03, dd));
+        col += vec3(1.0, 0.62, 0.20) * (1.0 - smoothstep(0.0, 0.07, abs(dd))) * sin(3.14159 * tiU) * 1.3;
     }
 
     // highlights: the whole location brightens (land and water alike)

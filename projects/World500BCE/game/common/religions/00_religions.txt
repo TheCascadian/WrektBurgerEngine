@@ -8,101 +8,101 @@ iranian = {
 	name = "Iranian"
 	color = { 240 200 90 }
 	mazdayasna = { name = "Mazdayasna (Zoroastrian)" color = { 229 83 138 } }
-	scythian_faith = { name = "Scythian faith" color = { 186 184 131 } }
-	steppe_shamanism = { name = "Steppe shamanism" color = { 212 227 101 } }
+	scythian_faith = { name = "Scythian Faith" color = { 186 184 131 } }
+	steppe_shamanism = { name = "Steppe Shamanism" color = { 212 227 101 } }
 }
 mesopotamian = {
 	name = "Mesopotamian"
 	color = { 190 140 70 }
-	mesopotamian_polytheism = { name = "Mesopotamian polytheism" color = { 214 205 75 } }
+	mesopotamian_polytheism = { name = "Mesopotamian Polytheism" color = { 214 205 75 } }
 }
 egyptian = {
 	name = "Nile"
 	color = { 90 160 200 }
-	egyptian_religion = { name = "Egyptian religion" color = { 222 72 117 } }
-	kushite_religion = { name = "Kushite religion" color = { 110 161 89 } }
+	egyptian_religion = { name = "Egyptian Religion" color = { 222 72 117 } }
+	kushite_religion = { name = "Kushite Religion" color = { 110 161 89 } }
 }
 levantine = {
 	name = "Levantine and Anatolian"
 	color = { 170 90 150 }
-	canaanite_religion = { name = "Canaanite religion" color = { 64 216 126 } }
-	aramaean_religion = { name = "Aramaean religion" color = { 133 193 176 } }
-	anatolian_polytheism = { name = "Anatolian polytheism" color = { 190 153 98 } }
-	armenian_haldi = { name = "Urartian-Armenian cults" color = { 93 175 196 } }
-	south_arabian_polytheism = { name = "South Arabian polytheism" color = { 196 83 64 } }
-	arab_polytheism = { name = "North Arabian polytheism" color = { 61 79 138 } }
+	canaanite_religion = { name = "Canaanite Religion" color = { 64 216 126 } }
+	aramaean_religion = { name = "Aramaean Religion" color = { 133 193 176 } }
+	anatolian_polytheism = { name = "Anatolian Polytheism" color = { 190 153 98 } }
+	armenian_haldi = { name = "Urartian-Armenian Cults" color = { 93 175 196 } }
+	south_arabian_polytheism = { name = "South Arabian Polytheism" color = { 196 83 64 } }
+	arab_polytheism = { name = "North Arabian Polytheism" color = { 61 79 138 } }
 }
 mediterranean = {
 	name = "Mediterranean"
 	color = { 80 130 200 }
-	hellenic_religion = { name = "Hellenic religion" color = { 74 104 133 } }
-	etruscan_religion = { name = "Etruscan religion" color = { 209 78 200 } }
-	italic_religion = { name = "Italic religion" color = { 229 186 126 } }
-	thracian_religion = { name = "Thracian religion" color = { 77 160 73 } }
-	illyrian_religion = { name = "Illyrian religion" color = { 161 226 96 } }
-	iberian_religion = { name = "Iberian religion" color = { 102 73 190 } }
+	hellenic_religion = { name = "Hellenic Religion" color = { 74 104 133 } }
+	etruscan_religion = { name = "Etruscan Religion" color = { 209 78 200 } }
+	italic_religion = { name = "Italic Religion" color = { 229 186 126 } }
+	thracian_religion = { name = "Thracian Religion" color = { 77 160 73 } }
+	illyrian_religion = { name = "Illyrian Religion" color = { 161 226 96 } }
+	iberian_religion = { name = "Iberian Religion" color = { 102 73 190 } }
 }
 northern_european = {
 	name = "Northern European"
 	color = { 90 150 90 }
-	celtic_polytheism = { name = "Celtic polytheism" color = { 110 196 226 } }
-	germanic_paganism = { name = "Germanic paganism" color = { 200 89 137 } }
-	baltic_paganism = { name = "Baltic paganism" color = { 138 94 156 } }
-	slavic_paganism = { name = "Slavic paganism" color = { 227 65 70 } }
-	finnic_animism = { name = "Finnic animism" color = { 176 81 154 } }
-	saami_noaidi = { name = "Saami noaidi religion" color = { 229 63 113 } }
+	celtic_polytheism = { name = "Celtic Polytheism" color = { 110 196 226 } }
+	germanic_paganism = { name = "Germanic Paganism" color = { 200 89 137 } }
+	baltic_paganism = { name = "Baltic Paganism" color = { 138 94 156 } }
+	slavic_paganism = { name = "Slavic Paganism" color = { 227 65 70 } }
+	finnic_animism = { name = "Finnic Animism" color = { 176 81 154 } }
+	saami_noaidi = { name = "Saami Noaidi Religion" color = { 229 63 113 } }
 }
 indic = {
 	name = "Indic"
 	color = { 230 160 60 }
 	vedic_brahmanism = { name = "Vedic Brahmanism" color = { 105 203 108 } }
-	sramana_movements = { name = "Shramana movements" color = { 153 127 138 } }
-	dravidian_folk = { name = "Dravidian folk religion" color = { 100 63 71 } }
-	tibeto_burman_animism = { name = "Tibeto-Burman animism" color = { 79 131 195 } }
-	sinhala_yaksha = { name = "Early Lankan cults" color = { 99 205 108 } }
+	sramana_movements = { name = "Shramana Movements" color = { 153 127 138 } }
+	dravidian_folk = { name = "Dravidian Folk Religion" color = { 100 63 71 } }
+	tibeto_burman_animism = { name = "Tibeto-Burman Animism" color = { 79 131 195 } }
+	sinhala_yaksha = { name = "Early Lankan Cults" color = { 99 205 108 } }
 }
 east_asian = {
 	name = "East Asian"
 	color = { 200 70 70 }
-	zhou_ancestor_cult = { name = "Zhou ancestor cult" color = { 122 94 171 } }
-	chu_shamanism = { name = "Chu shamanism" color = { 221 115 68 } }
-	baiyue_animism = { name = "Baiyue animism" color = { 151 133 218 } }
-	korean_shamanism = { name = "Korean shamanism" color = { 107 63 94 } }
-	jomon_animism = { name = "Jomon animism" color = { 129 193 200 } }
-	ainu_kamuy = { name = "Ainu kamuy faith" color = { 103 136 146 } }
-	tungusic_shamanism = { name = "Tungusic shamanism" color = { 212 190 95 } }
-	siberian_shamanism = { name = "Siberian shamanism" color = { 224 105 196 } }
+	zhou_ancestor_cult = { name = "Zhou Ancestor Cult" color = { 122 94 171 } }
+	chu_shamanism = { name = "Chu Shamanism" color = { 221 115 68 } }
+	baiyue_animism = { name = "Baiyue Animism" color = { 151 133 218 } }
+	korean_shamanism = { name = "Korean Shamanism" color = { 107 63 94 } }
+	jomon_animism = { name = "Jomon Animism" color = { 129 193 200 } }
+	ainu_kamuy = { name = "Ainu Kamuy Faith" color = { 103 136 146 } }
+	tungusic_shamanism = { name = "Tungusic Shamanism" color = { 212 190 95 } }
+	siberian_shamanism = { name = "Siberian Shamanism" color = { 224 105 196 } }
 }
 southeast_asian_pacific = {
 	name = "Southeast Asian and Pacific"
 	color = { 70 170 170 }
-	austroasiatic_animism = { name = "Austroasiatic animism" color = { 173 225 118 } }
-	austronesian_animism = { name = "Austronesian animism" color = { 171 156 79 } }
-	papuan_animism = { name = "Papuan animism" color = { 73 73 85 } }
-	lapita_ancestor_cult = { name = "Lapita ancestor cult" color = { 81 162 84 } }
+	austroasiatic_animism = { name = "Austroasiatic Animism" color = { 173 225 118 } }
+	austronesian_animism = { name = "Austronesian Animism" color = { 171 156 79 } }
+	papuan_animism = { name = "Papuan Animism" color = { 73 73 85 } }
+	lapita_ancestor_cult = { name = "Lapita Ancestor Cult" color = { 81 162 84 } }
 	aboriginal_dreaming = { name = "Aboriginal Dreaming" color = { 226 202 71 } }
 }
 african = {
 	name = "African"
 	color = { 120 170 70 }
-	berber_religion = { name = "Berber religion" color = { 82 72 137 } }
-	west_african_traditional = { name = "West African traditional religion" color = { 176 106 124 } }
-	bantu_traditional = { name = "Bantu traditional religion" color = { 78 155 180 } }
-	cushitic_traditional = { name = "Cushitic traditional religion" color = { 128 87 96 } }
-	nilotic_traditional = { name = "Nilotic traditional religion" color = { 189 60 109 } }
-	khoisan_religion = { name = "Khoisan religion" color = { 137 121 109 } }
-	saharan_pastoral_faith = { name = "Saharan pastoralist faith" color = { 123 127 167 } }
-	forest_forager_faith = { name = "Forest forager faith" color = { 145 103 200 } }
-	ethiopian_highland_cult = { name = "Highland Ethiopian cults" color = { 137 75 98 } }
+	berber_religion = { name = "Berber Religion" color = { 82 72 137 } }
+	west_african_traditional = { name = "West African Traditional Religion" color = { 176 106 124 } }
+	bantu_traditional = { name = "Bantu Traditional Religion" color = { 78 155 180 } }
+	cushitic_traditional = { name = "Cushitic Traditional Religion" color = { 128 87 96 } }
+	nilotic_traditional = { name = "Nilotic Traditional Religion" color = { 189 60 109 } }
+	khoisan_religion = { name = "Khoisan Religion" color = { 137 121 109 } }
+	saharan_pastoral_faith = { name = "Saharan Pastoralist Faith" color = { 123 127 167 } }
+	forest_forager_faith = { name = "Forest Forager Faith" color = { 145 103 200 } }
+	ethiopian_highland_cult = { name = "Highland Ethiopian Cults" color = { 137 75 98 } }
 }
 american = {
 	name = "American"
 	color = { 190 120 70 }
-	mesoamerican_religion = { name = "Mesoamerican religion" color = { 122 221 136 } }
-	andean_religion = { name = "Andean religion" color = { 147 82 81 } }
-	north_american_animism = { name = "North American animism" color = { 77 108 61 } }
-	arctic_shamanism = { name = "Arctic shamanism" color = { 141 188 135 } }
-	amazonian_animism = { name = "Amazonian animism" color = { 145 141 93 } }
-	southern_cone_faith = { name = "Southern Cone faith" color = { 110 173 95 } }
-	caribbean_archaic_faith = { name = "Caribbean Archaic faith" color = { 119 107 88 } }
+	mesoamerican_religion = { name = "Mesoamerican Religion" color = { 122 221 136 } }
+	andean_religion = { name = "Andean Religion" color = { 147 82 81 } }
+	north_american_animism = { name = "North American Animism" color = { 77 108 61 } }
+	arctic_shamanism = { name = "Arctic Shamanism" color = { 141 188 135 } }
+	amazonian_animism = { name = "Amazonian Animism" color = { 145 141 93 } }
+	southern_cone_faith = { name = "Southern Cone Faith" color = { 110 173 95 } }
+	caribbean_archaic_faith = { name = "Caribbean Archaic Faith" color = { 119 107 88 } }
 }

@@ -8,7 +8,7 @@ mediterranean = {
 	countries = { ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT ION MAC CAR ETR ROM THR }
 }
 european_tribes = {
-	name = "European tribes"
+	name = "European Tribes"
 	countries = { CEL IBE CIB }
 }
 africa = {
@@ -16,7 +16,7 @@ africa = {
 	countries = { LIB GAR NOK BAN SAH DMT }
 }
 china = {
-	name = "Chinese states"
+	name = "Chinese States"
 	countries = { ZHO QIQ JIN QIN CHU WUU YUE SHU }
 }
 india = {

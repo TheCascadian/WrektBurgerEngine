@@ -16,7 +16,7 @@ improve_relations = {
 	potential = { NOT = { is_at_war_with = scope:recipient } }
 	allow = { OR = { NOT = { has_feature = economy } gold >= 10 } }
 	on_accept = {
-		reverse_add_opinion = { target = scope:recipient value = 25 name = "Improved relations" }
+		reverse_add_opinion = { target = scope:recipient value = 25 name = "Improved Relations" }
 	}
 	ai_will_do = {
 		base = 0
@@ -76,7 +76,7 @@ offer_alliance = {
 		reverse_add_opinion = { target = scope:recipient value = 20 name = "Alliance" }
 	}
 	on_decline = {
-		reverse_add_opinion = { target = scope:recipient value = -5 name = "Rejected alliance" }
+		reverse_add_opinion = { target = scope:recipient value = -5 name = "Rejected Alliance" }
 	}
 	ai_will_do = {
 		base = 0
@@ -103,7 +103,7 @@ break_alliance = {
 	}
 	on_accept = {
 		break_alliance = scope:recipient
-		reverse_add_opinion = { target = scope:recipient value = -50 name = "Broke alliance" }
+		reverse_add_opinion = { target = scope:recipient value = -50 name = "Broke Alliance" }
 	}
 }
 
@@ -135,7 +135,7 @@ guarantee_independence = {
 	allow = { free_relations >= 1 }
 	on_accept = {
 		guarantee = scope:recipient
-		reverse_add_opinion = { target = scope:recipient value = 30 name = "Guaranteed us" }
+		reverse_add_opinion = { target = scope:recipient value = 30 name = "Guaranteed Us" }
 	}
 }
 
@@ -151,7 +151,7 @@ fabricate_claim = {
 	allow = { OR = { NOT = { has_feature = economy } gold >= 30 } }
 	on_accept = {
 		fabricate_claim = { target = scope:recipient }
-		reverse_add_opinion = { target = scope:recipient value = -25 name = "Fabricated claims" }
+		reverse_add_opinion = { target = scope:recipient value = -25 name = "Fabricated Claims" }
 	}
 	ai_will_do = {
 		base = 0
@@ -223,7 +223,7 @@ demand_state = {
 	}
 	on_accept = {
 		cede_claimed_state = scope:recipient
-		reverse_add_opinion = { target = scope:recipient value = -40 name = "Forced to cede land" }
+		reverse_add_opinion = { target = scope:recipient value = -40 name = "Forced to Cede Land" }
 	}
 	on_decline = {
 		declare_war = scope:recipient
@@ -254,7 +254,7 @@ offer_non_aggression_pact = {
 	}
 	on_accept = {
 		create_non_aggression_pact = { target = scope:recipient years = 10 }
-		reverse_add_opinion = { target = scope:recipient value = 15 name = "Non-aggression pact" }
+		reverse_add_opinion = { target = scope:recipient value = 15 name = "Non-aggression Pact" }
 	}
 	ai_will_do = {
 		base = 0
@@ -295,7 +295,7 @@ demand_subjugation = {
 		make_subject = { target = scope:recipient type = client_state }
 	}
 	on_decline = {
-		reverse_add_opinion = { target = scope:recipient value = -30 name = "Demanded our submission" }
+		reverse_add_opinion = { target = scope:recipient value = -30 name = "Demanded Our Submission" }
 	}
 }
 
@@ -304,7 +304,7 @@ release_subject = {
 	potential = { is_overlord_of = scope:recipient }
 	on_accept = {
 		release_subject = scope:recipient
-		reverse_add_opinion = { target = scope:recipient value = 50 name = "Released us" }
+		reverse_add_opinion = { target = scope:recipient value = 50 name = "Released Us" }
 	}
 	# a subject that wants out and could win is better let go in peace
 	ai_will_do = {

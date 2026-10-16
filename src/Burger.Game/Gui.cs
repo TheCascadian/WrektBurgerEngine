@@ -467,7 +467,7 @@ public static class Gui
             Raylib.DrawRectangleLinesEx(r, 1, focused ? Gold : hover ? Lighter(ButtonBorder, 0.3f) : ButtonBorder);
         }
         string shown = value.Length == 0 && !focused ? hint : value;
-        var m = Measure(shown, 16);
+        var m = Measure(shown.Length > 0 ? shown : "Ag", 16); m.Y = Math.Max(m.Y, Measure("Ag", 16).Y);
         float tx = r.X + 6 * Scale, ty = r.Y + (r.Height - m.Y) / 2;
         Raylib.BeginScissorMode((int)r.X, (int)r.Y, (int)r.Width, (int)r.Height);
         Label(shown, tx, ty, 16, value.Length == 0 && !focused ? TextDim : Text);

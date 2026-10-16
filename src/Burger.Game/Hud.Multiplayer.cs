@@ -56,7 +56,7 @@ public sealed partial class Hud
         var chat = _app.MpChat;
         // chat is wrapped at a readable size; show the newest lines that fit in a fixed height
         const float ChatSize = 15;
-        float chatW = w - 20 * s, chatMax = 150 * s, chatH = 0;
+        float chatW = w - 20 * s, chatMax = 240 * s, chatH = 0;
         int lines = 0;
         for (int i = chat.Count - 1; i >= 0; i--)
         {

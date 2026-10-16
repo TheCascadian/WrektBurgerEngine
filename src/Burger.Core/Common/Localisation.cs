@@ -59,6 +59,17 @@ public static class Localisation
     {
         if (string.IsNullOrEmpty(key)) return key;
         var s = key.Replace('_', ' ').Trim();
-        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(s);
+        var words = s.Split(' ');
+        for (int i = 0; i < words.Length; i++)
+        {
+            var w = words[i];
+            if (w.Length == 0 || (i > 0 && SmallWords.Contains(w))) continue;
+            if (w.Any(char.IsUpper)) continue; // already cased (acronyms, names)
+            words[i] = char.ToUpperInvariant(w[0]) + w[1..];
+        }
+        return string.Join(' ', words);
     }
+
+    private static readonly HashSet<string> SmallWords = new(StringComparer.Ordinal)
+        { "a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "nor", "of", "on", "or", "the", "to", "with" };
 }

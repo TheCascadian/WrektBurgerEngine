@@ -9,7 +9,7 @@ claim_fellow_believers = {
 	cooldown_days = 365
 	on_accept = {
 		add_religious_claims = scope:recipient
-		reverse_add_opinion = { target = scope:recipient value = -25 name = "Claimed our land" }
+		reverse_add_opinion = { target = scope:recipient value = -25 name = "Claimed Our Land" }
 	}
 	ai_will_do = { base = 0.3 modifier = { add = 1 stronger_than = { target = scope:recipient ratio = 1.5 } } }
 }

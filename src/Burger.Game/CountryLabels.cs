@@ -53,6 +53,7 @@ public sealed class CountryLabels
     private readonly List<Label> _labels = new();
     private bool _dirty = true;
     private int _version;
+    private int _tiSeen;
     private long _firstDirtyTicks = Stopwatch.GetTimestamp();
     private long _lastInvalidationTicks = Stopwatch.GetTimestamp();
     private double _lastBuildStartedAt = double.NegativeInfinity;
@@ -84,7 +85,7 @@ public sealed class CountryLabels
             // Adjacency and province geometry do not change after map load; only owner/name/capital
             // state is copied here. PixelLocation is likewise immutable after MapLoader finishes.
             int[] landNeighbors = l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray();
-            locations[l.Index] = new LocationInput(l.Index, l.Owner?.Index ?? -1, l.IsWater,
+            locations[l.Index] = new LocationInput(l.Index, (_game.Exploration.IsCharted(l) ? l.Owner?.Index : null) ?? -1, l.IsWater,
                 l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, landNeighbors);
         }
         var countries = world.Countries.Where(c => c.Exists)
@@ -119,6 +120,7 @@ public sealed class CountryLabels
             }
         }
 
+        if (_tiSeen != _game.Exploration.Version) { _tiSeen = _game.Exploration.Version; MarkDirty(); }
         if (!_dirty || _buildTask != null) return;
         double now = Raylib.GetTime();
         if (now - _lastBuildStartedAt < MinBuildIntervalSeconds ||

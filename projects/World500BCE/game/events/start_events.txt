@@ -7,5 +7,5 @@ country_event = {
 	desc = "This game starts as a blank slate. Add mechanics in Burger Studio with Project > Features."
 	is_triggered_only = yes
 	trigger = { is_player = yes }
-	option = { name = "Let us begin!" }
+	option = { name = "Let Us Begin!" }
 }

@@ -59,6 +59,10 @@ public sealed unsafe class MapRenderer : IDisposable
     private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
         _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun, _locLodWater, _locLodRiver, _locLodTerrain;
     private int _visibilityVersion = -1;
+    // terra incognita: locations being charted right now (index -> progress, negative = still waiting its turn), and the shader switch
+    private int _tiVersion = -1, _locTi;
+    private readonly Dictionary<int, float> _revealing = new();
+    private const float RevealSeconds = 2.4f;
 
     /// <summary>Draw the map on a globe instead of the flat, east-west wrapping map. Set through <see cref="CameraController.SetGlobe"/>.</summary>
     public bool Globe { get; internal set; }
@@ -584,6 +588,7 @@ public sealed unsafe class MapRenderer : IDisposable
         _locTint = Raylib.GetShaderLocation(_shader, "tintStrength");
         _locViewPos = Raylib.GetShaderLocation(_shader, "viewPos");
         _locFog = Raylib.GetShaderLocation(_shader, "fogStrength");
+        _locTi = Raylib.GetShaderLocation(_shader, "terraIncognita");
         _locGlobe = Raylib.GetShaderLocation(_shader, "globe");
         _locLodWater = Raylib.GetShaderLocation(_shader, "lodWater");
         _locLodRiver = Raylib.GetShaderLocation(_shader, "lodRiver");
@@ -1018,6 +1023,8 @@ public sealed unsafe class MapRenderer : IDisposable
         var player = DiplomacyFocus ?? w.Player;
         int block = LutWidth * _blockRows;
         _visibilityVersion = _game.VisibilityVersion;
+        var explore = _game.Exploration;
+        bool ti = explore.Enabled && w.Player != null;
         Array.Clear(_lut);
         // historical provinces (opt-in layer): the province covering each location on the shown date, numbered for border drawing
         Dictionary<string, int>? geoIndex = null;
@@ -1141,13 +1148,17 @@ public sealed unsafe class MapRenderer : IDisposable
                     }
                     break;
             }
+            // terra incognita: nothing of an unknown land leaks into the map (no map color, owner, state or borders)
+            bool charted = !ti || explore.IsCharted(l);
+            if (!charted) col = new Color(0, 0, 0, 0);
             _lut[i] = col;
 
-            int ownerId = owner != null ? owner.Index + 1 : 0;
-            int stateId = l.State != null ? l.State.Index + 1 : 0;
+            int ownerId = charted && owner != null ? owner.Index + 1 : 0;
+            int stateId = charted && l.State != null ? l.State.Index + 1 : 0;
             // the air map mode draws region borders instead of state borders
             if (Mode == MapMode.Air && CustomMode == null && _game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && _game.Air.RegionOf(l) is { } ar) stateId = ar.Index + 1;
             if (geoIndex != null && l.IsLand) stateId = _game.Geo.ProvinceOfAtom(l.Key, geoDay) is { } gp3 && geoIndex.TryGetValue(gp3.Id, out int gi) ? gi : 0; // province borders instead of state borders
+            if (!charted) stateId = 0;
             _lut[block + i] = new Color(ownerId & 0xFF, (ownerId >> 8) & 0xFF, stateId & 0xFF, (stateId >> 8) & 0xFF);
 
             int flags = 0;
@@ -1160,13 +1171,14 @@ public sealed unsafe class MapRenderer : IDisposable
             if (!_game.IsVisible(l)) flags |= 32;
             if (HighlightState != null && l.State == HighlightState) flags |= 64;
             if (l.State?.Demilitarized == true && !l.IsWater) flags |= 128; // demilitarized zone: hatched
+            if (!charted) flags &= 1 | 4 | 8 | 16 | 32;
             var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
             _lut[block * 2 + i] = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
-            if (GeoBase && geoIndex != null && l.IsLand)
-            {
-                int bid = _game.GeoDynamics.BaselineIdOf(l.Key);
-                _lut[block * 3 + i] = new Color(bid & 0xFF, (bid >> 8) & 0xFF, 0, 255);
-            }
+            // lut block 3: start-layout province id (red, green) and how unknown the location is (blue: 255 never seen .. 0 known)
+            int bid = GeoBase && geoIndex != null && l.IsLand ? _game.GeoDynamics.BaselineIdOf(l.Key) : 0;
+            byte unknown = TiByte(i, charted);
+            if (bid != 0 || unknown != 0 || (GeoBase && geoIndex != null && l.IsLand))
+                _lut[block * 3 + i] = new Color(bid & 0xFF, (bid >> 8) & 0xFF, (int)unknown, 255);
         }
         Raylib.UpdateTexture(_lutTex, _lut);
         Dirty = false;
@@ -1245,8 +1257,22 @@ public sealed unsafe class MapRenderer : IDisposable
     public void Draw(Camera3D cam, float time)
     {
         if (_game.VisibilityVersion != _visibilityVersion) Dirty = true;
+        var explore = _game.Exploration;
+        if (explore.Version != _tiVersion)
+        {
+            _tiVersion = explore.Version;
+            var fresh = explore.DrainRevealed();
+            _revealing.Clear();
+            // newly charted lands burn off the chart one after another (a staggered start up to 0.8 s); a huge batch (a loaded game) just appears
+            if (explore.Enabled && fresh.Count <= 700)
+                foreach (int idx in fresh)
+                    _revealing[idx] = -(unchecked((uint)idx * 2654435761u) % 1000u / 1000f) * 0.8f / RevealSeconds;
+            Dirty = true;
+        }
         if (Mode == MapMode.Provinces && _game.Geo.Enabled && _game.Geo.Version != _geoVersion) { _geoVersion = _game.Geo.Version; Dirty = true; }
         if (Dirty) UpdateLut();
+        AdvanceReveal();
+        Raylib.SetShaderValue(_shader, _locTi, explore.Enabled && _game.World.Player != null ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locTime, time, ShaderUniformDataType.Float);
         if (Globe) DrawSpace(cam);
         Raylib.SetShaderValue(_shader, _locSun, SunDirection(), ShaderUniformDataType.Vec3);
@@ -1347,6 +1373,7 @@ public sealed unsafe class MapRenderer : IDisposable
         if (l.IsLake) flags |= 16;
         if (!_game.IsVisible(l)) flags |= 32;
         if (HighlightState != null && l.State == HighlightState) flags |= 64;
+        if (_game.Exploration.Enabled && !_game.Exploration.IsCharted(l)) flags &= 1 | 4 | 8 | 16 | 32;
         var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
         var cell = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
         _lut[LutWidth * _blockRows * 2 + index] = cell;
@@ -1359,6 +1386,41 @@ public sealed unsafe class MapRenderer : IDisposable
         int lutX = index % LutWidth;
         int lutY = _blockRows * 2 + index / LutWidth;
         Raylib.UpdateTextureRec(_lutTex, new Rectangle(lutX, lutY, 1, 1), src);
+    }
+
+    /// <summary>The lut value for how unknown a location is: 255 never seen, 0 known, in between while the chart burns away.</summary>
+    private byte TiByte(int index, bool charted)
+    {
+        if (!charted) return 255;
+        if (!_revealing.TryGetValue(index, out float p)) return 0;
+        return p <= 0f ? (byte)255 : (byte)((1f - p) * 255f);
+    }
+
+    /// <summary>Moves the reveal of newly charted lands forward and patches just those lut texels.</summary>
+    private unsafe void AdvanceReveal()
+    {
+        if (_revealing.Count == 0) return;
+        float step = Math.Min(Raylib.GetFrameTime(), 0.1f) / RevealSeconds;
+        int block3 = LutWidth * _blockRows * 3;
+        var indices = _revealing.Keys.ToArray();
+        var changed = new List<int>(indices.Length);
+        foreach (int i in indices)
+        {
+            float p = _revealing[i] + step;
+            if (p >= 1f) _revealing.Remove(i); else _revealing[i] = p;
+            byte b = p <= 0f ? (byte)255 : p >= 1f ? (byte)0 : (byte)((1f - p) * 255f);
+            var c = _lut[block3 + i];
+            if (c.B == b && c.A == 255) continue;
+            _lut[block3 + i] = new Color((int)c.R, (int)c.G, (int)b, 255);
+            changed.Add(i);
+        }
+        if (changed.Count > 250) { Raylib.UpdateTexture(_lutTex, _lut); return; }
+        var src = stackalloc Color[1];
+        foreach (int i in changed)
+        {
+            src[0] = _lut[block3 + i];
+            Raylib.UpdateTextureRec(_lutTex, new Rectangle(i % LutWidth, _blockRows * 3 + i / LutWidth, 1, 1), src);
+        }
     }
 
     public void Dispose()

@@ -243,7 +243,7 @@ SHU = {
 	manpower = 10000
 }
 LIB = {
-	name = "Libyan and Berber tribes"
+	name = "Libyan and Berber Tribes"
 	color = { 173 90 122 }
 	capital = land_02972
 	culture = berber
@@ -252,7 +252,7 @@ LIB = {
 	manpower = 10000
 }
 BAN = {
-	name = "Bantu homeland peoples"
+	name = "Bantu Homeland Peoples"
 	color = { 150 163 39 }
 	capital = land_00623
 	culture = bantu
@@ -270,7 +270,7 @@ NOK = {
 	manpower = 10000
 }
 THR = {
-	name = "Thracian tribes"
+	name = "Thracian Tribes"
 	color = { 224 109 113 }
 	capital = land_02349
 	culture = thracian
@@ -279,7 +279,7 @@ THR = {
 	manpower = 10000
 }
 ION = {
-	name = "Ionian Greek cities"
+	name = "Ionian Greek Cities"
 	color = { 74 219 108 }
 	capital = land_08787
 	culture = anatolian
@@ -324,7 +324,7 @@ CEL = {
 	manpower = 10000
 }
 MAY = {
-	name = "Maya lowlands"
+	name = "Maya Lowlands"
 	color = { 150 92 54 }
 	capital = land_13895
 	culture = maya
@@ -495,7 +495,7 @@ GAR = {
 	manpower = 10000
 }
 SAH = {
-	name = "Sahel and Mande lands"
+	name = "Sahel and Mande Lands"
 	color = { 150 33 150 }
 	capital = land_02174
 	culture = west_african
@@ -504,7 +504,7 @@ SAH = {
 	manpower = 10000
 }
 TML = {
-	name = "Tamil south"
+	name = "Tamil South"
 	color = { 163 75 85 }
 	capital = land_07873
 	culture = dravidian
@@ -513,7 +513,7 @@ TML = {
 	manpower = 10000
 }
 IRR = {
-	name = "Irrawaddy and mainland Southeast Asia"
+	name = "Irrawaddy and Mainland Southeast Asia"
 	color = { 83 128 163 }
 	capital = land_07633
 	culture = austroasiatic
