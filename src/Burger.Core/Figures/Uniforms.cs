@@ -90,10 +90,21 @@ public static class Uniforms
         // Olmec: undyed quilted cotton armor, red breechcloth, sandals, padded cotton cap (no metal; gfx/models carries gear_*_olm.glb for each piece)
         ["OLM"] = new(new(0.80f, 0.74f, 0.60f), new(0.52f, 0.20f, 0.13f), new(0.40f, 0.28f, 0.16f), new(0.50f, 0.22f, 0.14f),
             new(0.80f, 0.74f, 0.60f), HeadgearStyle.SoftCap, new(0.36f, 0.35f, 0.24f), new(0.40f, 0.36f, 0.25f), Rifle: SoldierGear.None, BootKind: BootKind.Cloth, ShirtKind: ShirtKind.Cotton),
+        // Greek city-states and Macedon: linen or wool chiton and linothorax, bronze helmet and greaves (gfx/models carries gear_*_<tag>.glb, built by tools/assets/models/gear_greek_roman.py)
+        ["ATH"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["SPA"] = Hoplite(new(0.59f, 0.14f, 0.16f)), ["COR"] = Hoplite(new(0.84f, 0.80f, 0.68f)),
+        ["ARG"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["THB"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["THS"] = Hoplite(new(0.59f, 0.47f, 0.31f)),
+        ["CRT"] = Hoplite(new(0.67f, 0.59f, 0.43f)), ["NAX"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["CRO"] = Hoplite(new(0.84f, 0.80f, 0.68f)),
+        ["SYR"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["PNT"] = Hoplite(new(0.59f, 0.53f, 0.39f)), ["MAC"] = Hoplite(new(0.47f, 0.27f, 0.20f)),
+        // Rome: red wool tunic, bronze breastplate and helmet (same generator)
+        ["ROM"] = Hoplite(new(0.55f, 0.16f, 0.13f)),
         // green-olive, crested helmet
         ["BRA"] = new(new(0.40f, 0.43f, 0.25f), new(0.36f, 0.40f, 0.24f), new(0.24f, 0.15f, 0.09f), new(0.32f, 0.31f, 0.20f),
             new(0.32f, 0.38f, 0.24f), HeadgearStyle.Adrian, new(0.34f, 0.37f, 0.22f), new(0.40f, 0.38f, 0.26f)),
     };
+
+    /// <summary>A bronze-armed spearman with no firearm: the cloth color, bronze headgear and leather greaves (the pieces come from gear_*_&lt;tag&gt;.glb).</summary>
+    private static Uniform Hoplite(Vector3 cloth) => new(cloth, cloth, new(0.38f, 0.24f, 0.13f), new(0.24f, 0.15f, 0.09f),
+        new(0.66f, 0.48f, 0.20f), HeadgearStyle.SoftCap, new(0.36f, 0.35f, 0.24f), new(0.40f, 0.36f, 0.25f), Rifle: SoldierGear.None, BootKind: BootKind.Soft);
 
     /// <summary>The tags that have a uniform of their own.</summary>
     public static IEnumerable<string> Tags => _byTag.Keys;

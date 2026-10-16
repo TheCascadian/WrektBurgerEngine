@@ -21,8 +21,8 @@ The game files hold no named rulers, no named factions, no rituals and no war do
 | Tag | Country | Culture | Religion | Capital location | States | Population | Manpower (state sum) | Start armies | Gear models |
 |---|---|---|---|---|---|---|---|---|---|
 | ACH | Achaemenid Empire | persian | mazdayasna | land_07110 (Mesopotamia) | 103 | 25,269,541 | 1,265 | 24 infantry divisions | Own set (`gear_*_ach.glb`) |
-| ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 10 (before the split) | 1,071,654 | 54 | 12 divisions in all | Generic soldier |
-| MAC | Macedon | greek | hellenic_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Generic soldier |
+| ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 10 (before the split) | 1,071,654 | 54 | 12 divisions in all | Own set (`gear_*_<tag>.glb`) |
+| MAC | Macedon | greek | hellenic_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Own set (`gear_*_mac.glb`) |
 | CAR | Carthage | punic | canaanite_religion | land_09105 (Carthage and Tunisia) | 6 | 1,039,904 | 52 | 2 | Generic soldier |
 | NUB | Kush | kushite | kushite_religion | land_08279 (Nubia and Napata) | 3 | 633,812 | 32 | 2 | Generic soldier |
 | SAB | South Arabia | south_arabian | south_arabian_polytheism | land_09216 (South Arabia) | 6 | 1,583,519 | 80 | 2 | Generic soldier |
@@ -145,6 +145,14 @@ The old single country GRK ("Greek Poleis") no longer exists. Its 10 states were
 | PNT | Pontic Greek Cities | land_07007 | Black Sea Greek coast | 17,591 | 1 | pontic_greek | neutrality (neu 44, dem 26, com 16, fas 14) | restricted | 120/145/95 |
 
 All popularity values are placeholders to be revisited when the political workings are authored. Class mix follows the old GRK ratios (about 40% farmers, 22% artisans, 5% nobles, 3% clergy, 30% slaves) except Sparta.
+
+### Soldier equipment, Greek and Roman (GAME and OPEN)
+
+Worn in the game for ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT MAC and ROM (`gear_<piece>_<tag>.glb`, one file per tag, built by `tools/assets/models/gear_greek_roman.py`; needs numpy and pygltflib; preview with `--figure-variants <dir>`). Pieces:
+- **Greek hoplite:** linen linothorax with two layers of pteryges (hanging strips) and shoulder flaps; short chiton skirt; Corinthian-type bronze helmet with cheek guards, nasal bar and a horsehair crest; bronze greaves over sandals; xiphos in a scabbard on the left hip; dory spear (bronze butt spike, leaf head) held in the right hand; aspis (large round shield, bronze rim, boss) on the left forearm. No firearm.
+- **Roman (ROM), early Republic Italic hoplite:** red wool tunic, bronze breastplate with three round plates, lower helmet with a short red crest comb, bronze greaves over closed leather shoes, short sword on the right hip, hasta (shorter spear), clipeus (smaller round shield).
+- Colors: shield faces use each country's map color; chiton colors vary (Sparta crimson, Athens and most others undyed linen, Thessaly and Crete wool tones). OPEN: these are design choices. Real polis shield devices were painted; none are modeled. Sparta's crimson is historical, the rest are not sourced. The Roman set follows the Etruscan and Greek-influenced "hoplite phase" of the Roman army; I did not look up a source for it (OPEN).
+- Not modeled: the engine's slots hold one spear and one shield, so no cloak, no javelin, no bow, no sling. The sword is attached to the belt piece and stays sheathed. ETR (Etruscan) has no set yet.
 
 ### Common to all Greek cities (HIST)
 
