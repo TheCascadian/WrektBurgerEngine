@@ -48,7 +48,7 @@ For each: purpose, data it owns, events it emits and listens to, what it must ne
 7. AI (scorecard first, per the historical AI plan)
 
 ## 4. Collapse (hardest open problem)
-Source: `docs/recs/EMPIRE_COLLAPSE_MODEL.md` and its flowchart. Collapse changes the player's challenge, not just their strength.
+Source: `docs/plans/EMPIRE_COLLAPSE_MODEL.md` and its flowchart. Collapse changes the player's challenge, not just their strength.
 
 Loop: inputs (war, succession, inequality, repression) -> pressure (trust falls in regions, elites, army) -> warning (who is angry, why, what is at risk) -> action (reform, bargain, share power, crack down) -> player chooses a cost -> concede (state survives changed) or refuse/fail (breakaway blocs shaped by past choices) -> conflict (fight, negotiate, seek allies) -> state holds (rebuild with new laws, debts, grudges) or breaks (play on as rump, breakaway, claimant) -> new goal (reunite, survive, reform, retaliate) -> crisis leaves marks (loyalty, legitimacy, diplomacy, memory) -> back into pressure.
 

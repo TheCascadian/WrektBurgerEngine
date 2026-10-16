@@ -1,6 +1,6 @@
 # Multiplayer channel specification (protocol 2, channel version 3)
 
-> **Status: UNREVIEWED.** The key confirmation below is custom and has not been reviewed by a cryptographer. It is item 1 of `docs/external-review-plan.md`. Do not rely on it beyond the threat model in `docs/multiplayer-security.md` until that review is done. Checked 2026-10-15: `SslStream` exposes no TLS-PSK and no keying-material exporter in the target .NET version, so the standard bindings are not available (OPEN for later .NET releases; if one appears, replace the confirmation with it; a vetted Noise library is the other candidate).
+> **Status: UNREVIEWED.** The key confirmation below is custom and has not been reviewed by a cryptographer. It is item 1 of `docs/multiplayer/external-review-plan.md`. Do not rely on it beyond the threat model in `docs/multiplayer/multiplayer-security.md` until that review is done. Checked 2026-10-15: `SslStream` exposes no TLS-PSK and no keying-material exporter in the target .NET version, so the standard bindings are not available (OPEN for later .NET releases; if one appears, replace the confirmation with it; a vetted Noise library is the other candidate).
 
 Code: `src/Burger.Core/Multiplayer/Net.cs` (`SecureChannel`, `TcpTransport`, `TcpHostListener`, `JoinCode`). Tests: `burger sec-test <project>`, sections "Encrypted channel", "Channel attacks" and "Per-peer tokens".
 
@@ -51,5 +51,5 @@ Properties and how each is met:
 ## Not covered
 
 - The host IP is in the join code. Anyone who has a code is a peer until it is rotated or revoked; a leaked per-player token reveals one identity only.
-- Binding uses the certificate hash, not a TLS exporter secret (the .NET API does not offer one). Equivalent for this threat model, but it is the part that deserves a cryptographer's look (see `docs/external-review-plan.md`).
+- Binding uses the certificate hash, not a TLS exporter secret (the .NET API does not offer one). Equivalent for this threat model, but it is the part that deserves a cryptographer's look (see `docs/multiplayer/external-review-plan.md`).
 - Traffic analysis, a malicious host's own behavior (handled by client-side checks, not by the channel), and denial of service by a host's network provider.

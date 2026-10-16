@@ -12,5 +12,6 @@ deleted: every page keeps its `_files` folder beside it. Files were only moved i
 | `gazetteers-and-names/` | Syriaca.org, Getty vocabularies |
 | `reference-papers/` | Standalone PDFs (Scientific Data article 41597_2020_552) |
 | `maps-500bce/` | Reference maps for the 500 BCE scenario (peoples and polities), with sources and licenses |
+| `technology/` | Technology papers; `pre-columbian-mesoamerica/` holds Lechtman 1985 on metals in Andean culture (weapons and clothing design reference) |
 | `screenshots/` | Screenshots |
 | `doc.md` | Working source notes |

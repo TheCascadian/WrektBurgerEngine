@@ -11,7 +11,7 @@
 - Totals and densities are my own design estimates in people per km2, not sourced census data.
 - Region shapes are my own lon/lat geometry. Reference maps (see `docs/SOURCES/maps-500bce/`) supplied facts only; no geometry was copied.
 - Land outside a painted region takes the nearest region's people at 60% density, within 25 degrees.
-- One country stands for each large power; the Greek poleis are one country each (see docs/countries-500bce.md).
+- One country stands for each large power; the Greek poleis are one country each (see docs/game/countries-500bce.md).
 - The political map and Reddit screenshots are not stored; the licenses of several references are unverified.
 
 ## The `World500BCE` project: no south pole

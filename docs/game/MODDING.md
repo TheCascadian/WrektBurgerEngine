@@ -1033,6 +1033,6 @@ panel = { id = court disable = yes }
 
 Files load using the normal interface data convention: `interface.txt` first, then `interface/` files in case-insensitive filename order. Later definitions win. Theme properties/colors already merge field-by-field. Asset paths are relative to the `game/` folder; absent icons fall back to text initials, absent theme textures fall back to drawn UI, and fonts have engine/system fallback.
 
-This format covers themes, custom panels, and map modes; it does not yet redefine built-in HUD screen layouts, individual built-in widgets, or engine hotkeys. See [the runtime UI audit](UI_MODDING_AUDIT.md) for the complete screen/input map, current boundaries, examples, validation behavior, and verification status. The [partial override example](../../examples/ui-partial-override/game/interface/10_court_patch.txt) targets SampleGame's `court` panel.
+This format covers themes, custom panels, and map modes; it does not yet redefine built-in HUD screen layouts, individual built-in widgets, or engine hotkeys. See [the runtime UI audit](../audits/UI_MODDING_AUDIT.md) for the complete screen/input map, current boundaries, examples, validation behavior, and verification status. The [partial override example](../../examples/ui-partial-override/game/interface/10_court_patch.txt) targets SampleGame's `court` panel.
 
 - Historical geography (opt-in): see [GEOGRAPHY.md](GEOGRAPHY.md).

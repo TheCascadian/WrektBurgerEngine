@@ -26,7 +26,7 @@ The game files hold no named rulers, no named factions, no rituals and no war do
 | CAR | Carthage | punic | canaanite_religion | land_09105 (Carthage and Tunisia) | 6 | 1,039,904 | 52 | 2 | Generic soldier |
 | NUB | Kush | kushite | kushite_religion | land_08279 (Nubia and Napata) | 3 | 633,812 | 32 | 2 | Generic soldier |
 | SAB | South Arabia | south_arabian | south_arabian_polytheism | land_09216 (South Arabia) | 6 | 1,583,519 | 80 | 2 | Generic soldier |
-| OLM | Olmec | maya | mesoamerican_religion | land_15261 (Olmec Gulf Coast) | 9 | 2,217,462 | 112 | 3 | Generic soldier |
+| OLM | Olmec | maya | mesoamerican_religion | land_15261 (Olmec Gulf Coast) | 9 | 2,217,462 | 112 | 3 | Own set (`gear_*_olm.glb`) |
 | CHV | Chavin | chavin | andean_religion | land_11805 (Chavin Peru) | 5 | 1,361,269 | 68 | 2 | Generic soldier |
 | IND | Magadha and Ganges | indo_aryan | vedic_brahmanism | land_03808 (Magadha) | 66 | 17,570,032 | 879 | 22 | Generic soldier |
 | ZHO | Zhou | huaxia | zhou_ancestor_cult | land_01707 (Zhou states, Yellow River) | 146 | 36,723,283 | 1,842 | 24 | Generic soldier |
@@ -495,7 +495,7 @@ Wrapped kilts or loincloths, daggers on belts, bows and spears, small shields. O
 - Politics: ruling party neutrality. Popularity neutrality 38, **fascist 34**, communist 16, democratic 12. Law: restricted_parties.
 - No AI profile of its own.
 - Army: 3 infantry divisions. Fleet at land_12632.
-- **Allied with CHV.** Generic soldier.
+- **Allied with CHV.** Own soldier set (see Equipment).
 
 ### Rulers (HIST)
 
@@ -519,9 +519,22 @@ A "were-jaguar" motif and other composite creatures, a maize god, a rain or eart
 
 Little is known. Warfare is inferred from art and fortified sites. Do not invent a doctrine without a source. Treat as OPEN.
 
-### Equipment (HIST/OPEN)
+### Equipment (GAME and HIST/OPEN)
 
-Likely wooden clubs, spears and stone-tipped weapons, padded cotton protection, shields. All of this is inference.
+![Olmec soldiers in the game](img/olmec-soldiers-500bce.png)
+
+Sources: Hassig (via a forum summary, not read directly) says organized warfare in Mesoamerica begins with the Olmec, that they may have used bow and spear, had no defensive armor and were defensive more than expansionist (trade routes). Lechtman 1985 (`docs/SOURCES/technology/pre-columbian-mesoamerica/`) covers the **Andes**, not Mesoamerica; it is used here by analogy only (HIST/OPEN). Its points: weapons that work by impact (clubs, slings, spears with fire-hardened wood tips) gained little from metal; soldiers wore quilted cotton tunics, quilted or wooden helmets, round slat-and-cotton shields, and wrapped cloth on the arm; cloth carried rank and magical force. Metal weapons and armor are therefore NOT used for the Olmec, which fits Mesoamerica, where metallurgy comes much later (HIST, not looked up).
+
+Worn in the game (GAME, `gear_*_olm.glb`, built by `tools/assets/models/gear_*_olmec.py`):
+- Tunic: sleeveless, hip-length quilted cotton in undyed cream, quilting bands in two tones.
+- Breechcloth (maxtlatl): front and back flaps in red and cream, on a red woven waist sash. Bare legs.
+- Sandals: leather sole with an ankle strap and instep strap; the foot is bare.
+- Cap: padded quilted cotton dome with a red headband, a jade bead on the brow and jade ear spools (jade is the Olmec signature material).
+- Spear: hardwood shaft with a cord grip, a lashed point and an obsidian blade. Carried upright, with the two spear attacks (thrust and deep lunge) picked at random in battle.
+- Shield: round, hardwood slats bound with cotton cord, cotton-wrapped rim, carried on the left forearm.
+- No firearm, no metal.
+
+OPEN: the colors, the quilting, the shield and the obsidian blade are inferred, not Olmec finds. The macuahuitl (wooden sword set with obsidian chips) is a Mesoamerican weapon whose date I did not look up, and is not modeled; the engine's gear slots hold one spear and one shield. The bow is not modeled. **Conflict**: the Hassig summary says the Olmec had no defensive armor, so the quilted tunic and cap come from the Lechtman analogy and the general Mesoamerican trait list (cotton-pad armor), not from Olmec evidence. Kept as a design choice; decide whether to strip them.
 
 ### OPEN
 
@@ -738,7 +751,7 @@ Oldest first, as one plain list. Each date is the founding of the national entit
 1. **AI profile "china"** was fixed (see CHV).
 2. **OLM culture is `maya`**, not `olmec` (a separate culture exists).
 3. **Anachronistic fleets and artillery** in every starting file.
-4. **Only ACH has its own gear.** Nine countries wear the generic soldier.
+4. **Only ACH and OLM have their own gear.** The other countries wear the generic soldier.
 5. **NUB (client) and SAB (tributary) of ACH** are design choices; the history for 500 BCE is unclear.
 6. **No named leaders exist in the game data.** The `characters` feature is on, but there are no authored characters in this scenario folder.
 7. **MAC is a one-state country** and the only one with no slave class.

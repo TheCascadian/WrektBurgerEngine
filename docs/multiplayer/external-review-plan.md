@@ -4,13 +4,13 @@ Goal: independent eyes on the two parts where a mistake means remote code execut
 
 ## Scope (in priority order)
 
-1. **Key confirmation and channel, first.** The channel is marked UNREVIEWED until this is done. (`docs/channel-spec.md`, `Net.cs`): the key confirmation bound to the certificate hash; listener limits; token handling (`Issue`, `Revoke`, `Claim`); the use of `SslStream` options (TLS 1.3 only, accept-any-certificate callback, why it is safe here).
+1. **Key confirmation and channel, first.** The channel is marked UNREVIEWED until this is done. (`docs/multiplayer/channel-spec.md`, `Net.cs`): the key confirmation bound to the certificate hash; listener limits; token handling (`Issue`, `Revoke`, `Claim`); the use of `SslStream` options (TLS 1.3 only, accept-any-certificate callback, why it is safe here).
 2. **Sandbox** (`ModSandbox.cs`, `ModApi.cs`, `ModManager.cs`, `FuelRewriter.cs`, `Fuel.cs`): the step meter (completeness of the instrumentation, the uncatchable stop), the allow-lists (assemblies, namespaces, denied types and members), the array-init and `MemberInfo` special cases, verifier coverage of method bodies (IL, not only references), cached image path, `IModNetwork` and `IModContent`.
 3. **Parsers on the host and client**: `Wire`, `GameCommand.Decode`, `SaveGuard`, `ScriptParser.ParseStrict`.
 
 ## Material to hand over
 
-This branch at a tagged commit; the four documents `docs/multiplayer-security.md`, `docs/channel-spec.md`, `docs/os-sandbox-evaluation.md`, `SECURITY_MODDING_TRADEOFFS.md`; `burger sec-test` output; list of known gaps (the "Remaining risks" section).
+This branch at a tagged commit; the four documents `docs/multiplayer/multiplayer-security.md`, `docs/multiplayer/channel-spec.md`, `docs/multiplayer/os-sandbox-evaluation.md`, `SECURITY_MODDING_TRADEOFFS.md`; `burger sec-test` output; list of known gaps (the "Remaining risks" section).
 
 ## Questions to put to the reviewers
 

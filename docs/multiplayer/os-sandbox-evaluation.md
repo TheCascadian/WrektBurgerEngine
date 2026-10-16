@@ -27,7 +27,7 @@ Verdict: not feasible as a hardening step without breaking the Principled Moddin
 - Audit of the allowed surface, with tests (`sec-test`, "Sandbox escapes": about 70 escape attempts, plus a positive control that ordinary mod code still compiles).
 - Mods get no files, network or engine internals without a permission in `mod.json` (`network`, `content`), and even then only through typed engine APIs.
 - Code never travels over the network; mods are installed by hand and compared by hash at join. A hostile peer cannot get code run on another machine; only a mod the player chose to install runs.
-- Host-side `validate` has a 100 ms deadline and a circuit breaker (see `docs/multiplayer-security.md`).
+- Host-side `validate` has a 100 ms deadline and a circuit breaker (see `docs/multiplayer/multiplayer-security.md`).
 - Saves from a host go through a strict, limited parser before any state is touched.
 - Recommended for players: run the game as a normal user, not an administrator; on Linux, optional wrapper `bwrap` or `firejail` around the game process works without code changes (no network except the game port, read-only home).
 

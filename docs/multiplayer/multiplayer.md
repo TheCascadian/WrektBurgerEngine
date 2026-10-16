@@ -26,7 +26,7 @@ Code: `src/Burger.Core/Multiplayer/`. Test: `burger mp-test <project> [--days N]
 ## Not done
 - Still direct (they change only the local sim and the monthly checksum will revert them): navy and air orders and lines, declare war from the Hud (needs a casus belli in the command), sending peace offers from the Hud (`white_peace` exists, terms do not), decisions, focus, research, laws, designer, production changes of existing lines, recruiting.
 - `World.Player` and fog of war are per machine; `Clock.Paused` set by events (pause on event) is local and the session ignores it.
-- Join codes carry an IPv4 address, a port and a 77-bit session secret (25 characters): LAN or a forwarded port. No relay, no NAT punch. The secret keys the encrypted channel; share the code only with the people who should join. See docs/multiplayer-security.md.
+- Join codes carry an IPv4 address, a port and a 77-bit session secret (25 characters): LAN or a forwarded port. No relay, no NAT punch. The secret keys the encrypted channel; share the code only with the people who should join. See docs/multiplayer/multiplayer-security.md.
 - Resync sends one base64 line; the reader has no line limit so it works, but there is no progress display.
 - Mid-game player takeover of a country with a pending human proposal is untested.
 - Host-side `Notify` and AI notifications are per machine and not part of the checksum.
