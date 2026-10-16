@@ -7,57 +7,81 @@ namespace Burger.Runtime;
 
 public sealed partial class Hud
 {
-    /// <summary>Development, literacy, urbanization and institutions of a state, for the location panel. Returns the new y.</summary>
+    /// <summary>Development level with its raise button, then a "Society" fold (literacy, urbanization, institutions) for the location panel. Returns the new y.</summary>
     private float DrawStateDevelopment(State st, float x, float y, float w)
     {
         var D = G.Development;
-        float lh = 20 * S;
+        float lh = 24 * S;
         int level = D.Level(st);
         var player = G.World.Player;
         string why = player != null ? D.CannotDevelop(player, st) ?? "" : "Choose a country first";
         double cost = player != null ? D.Cost(player, st) : 0;
         string cur = player != null ? D.Currency(player)?.Name.ToLowerInvariant() ?? "gold" : "";
 
-        Gui.Label("Development", x, y, 15, Gui.TextDim);
-        var bar = new Rectangle(x + 100 * S, y + 5 * S, 90 * S, 10 * S);
-        Raylib.DrawRectangleRec(bar, new Color(30, 34, 42, 255));
-        float fill = Math.Clamp(level / 20f, 0, 1);
-        Raylib.DrawRectangleRec(new Rectangle(bar.X, bar.Y, bar.Width * fill, bar.Height), new Color(220, 180, 70, 255));
-        Raylib.DrawRectangleLinesEx(bar, 1, new Color(90, 96, 110, 255));
-        Gui.Label(level.ToString(), bar.X + bar.Width + 8 * S, y, 15, Gui.Text, FontKind.Bold);
-        if (player != null && st.Owner == player)
+        // one row: label, a bar of 20 steps, the level, the raise button
+        Gui.Label("Development", x, y + 2 * S, 15, Gui.TextDim);
+        bool mine = player != null && st.Owner == player;
+        float btnW = mine ? 92 * S : 0, barX = x + 100 * S, barW = w - 100 * S - btnW - 40 * S;
+        const int steps = 20;
+        float seg = (barW - (steps - 1) * 2 * S) / steps;
+        for (int i = 0; i < steps; i++)
         {
-            var btn = new Rectangle(x + w - 96 * S, y - 2 * S, 90 * S, lh);
+            var c = i < level ? new Color(220, 180, 70, 255) : new Color(36, 40, 50, 255);
+            Raylib.DrawRectangleRec(new Rectangle(barX + i * (seg + 2 * S), y + 6 * S, seg, 12 * S), c);
+        }
+        Gui.Label(level.ToString(), barX + barW + 8 * S, y + 2 * S, 16, Gui.Text, FontKind.Bold);
+        if (mine)
+        {
+            var btn = new Rectangle(x + w - btnW, y, btnW, lh - 2 * S);
             string tip = why.Length == 0 ? $"Raise development to {level + 1}\nCost {cost:0} {cur}" : why;
             if (Gui.Button(btn, $"+1  ({cost:0})", why.Length == 0, tip + $"\nEach level gained: +{G.Rules.Development.TaxPerLevel(G):P0} tax, +{G.Rules.Development.ManpowerPerLevel(G):P0} manpower, +{G.Rules.Development.RoomPerLevel(G):0} rooms", false, 13))
             {
                 if (Mp != null) Mp.Submit(GameCommand.Develop, st.Key);
-                else D.Develop(player, st);
+                else D.Develop(player!, st);
             }
         }
-        if (Gui.Hover(new Rectangle(x, y, 190 * S, lh)))
+        if (Gui.Hover(new Rectangle(x, y, w - btnW - 4 * S, lh)))
             Gui.Tooltip($"Development {level} (started at {D.StartLevel(st)}, {D.Gained(st)} gained)\nEach level gained adds {G.Rules.Development.TaxPerLevel(G):P0} tax, {G.Rules.Development.ManpowerPerLevel(G):P0} manpower and {G.Rules.Development.RoomPerLevel(G):0} rooms (building slots).");
-        y += lh;
-        Gui.Label("Literacy", x, y, 15, Gui.TextDim);
-        Gui.Label($"{D.Literacy(st):P1}", x + 100 * S, y, 15, Gui.Text, FontKind.Bold);
-        if (Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip("Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
-        y += lh;
-        Gui.Label("Urbanization", x, y, 15, Gui.TextDim);
-        Gui.Label($"{D.Urbanization(st):P1}", x + 100 * S, y, 15, Gui.Text, FontKind.Bold);
-        if (Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip("Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
-        y += lh;
+        y += lh + 2 * S;
+
         var have = D.Institutions.Where(i => D.HasAppeared(i)).ToList();
+        var adopted = have.Where(i => D.Adopted(i, st)).ToList();
+        string summary = $"Literacy {D.Literacy(st):P0}  ·  Urban {D.Urbanization(st):P0}" + (have.Count > 0 ? $"  ·  {adopted.Count}/{have.Count} institutions" : "");
+        bool open = Collapse("society", "Society", summary, Gui.TextDim, x, y, w);
+        y += 26 * S;
+        if (!open) return y;
+
+        float Meter(string k, double v, string tip)
+        {
+            Gui.Label(k, x + 8 * S, y, 15, Gui.TextDim);
+            var bar = new Rectangle(x + 108 * S, y + 6 * S, w - 108 * S - 64 * S, 8 * S);
+            Raylib.DrawRectangleRec(bar, new Color(30, 34, 42, 255));
+            Raylib.DrawRectangleRec(new Rectangle(bar.X, bar.Y, bar.Width * (float)Math.Clamp(v, 0, 1), bar.Height), new Color(110, 170, 210, 255));
+            Gui.Label($"{v:P1}", bar.X + bar.Width + 8 * S, y, 15, Gui.Text, FontKind.Bold);
+            if (Gui.Hover(new Rectangle(x, y, w, 20 * S))) Gui.Tooltip(tip);
+            return 22 * S;
+        }
+        y += Meter("Literacy", D.Literacy(st), "Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
+        y += Meter("Urbanization", D.Urbanization(st), "Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
         if (have.Count > 0)
         {
-            Gui.Label("Institutions", x, y, 15, Gui.TextDim);
-            var adopted = have.Where(i => D.Adopted(i, st)).Select(i => i.Name).ToList();
-            string text = adopted.Count > 0 ? string.Join(", ", adopted) : "none";
-            Gui.Label(Gui.Fit(text, w - 100 * S, 14), x + 100 * S, y + 1 * S, 14, adopted.Count > 0 ? Gui.Good : Gui.TextDim);
-            if (Gui.Hover(new Rectangle(x, y, w, lh)))
-                Gui.Tooltip(string.Join("\n", have.Select(i => $"{i.Name}: {D.Presence(i, st):P0}" + (D.Adopted(i, st) ? " (adopted)" : ""))));
-            y += lh;
+            y += 4 * S;
+            float cx = x + 8 * S;
+            foreach (var i in have)
+            {
+                bool got = D.Adopted(i, st);
+                var m = Gui.Measure(i.Name, 13);
+                float cw = m.X + 14 * S;
+                if (cx + cw > x + w) { cx = x + 8 * S; y += 24 * S; }
+                var chip = new Rectangle(cx, y, cw, 20 * S);
+                Raylib.DrawRectangleRounded(chip, 0.4f, 4, got ? new Color(40, 90, 60, 255) : new Color(40, 44, 54, 255));
+                Gui.Label(i.Name, cx + 7 * S, y + 2 * S, 13, got ? Gui.Text : Gui.TextDim);
+                if (Gui.Hover(chip)) Gui.Tooltip($"{i.Name}: {D.Presence(i, st):P0}" + (got ? " (adopted)" : " (not adopted)"));
+                cx += cw + 4 * S;
+            }
+            y += 26 * S;
         }
-        return y + 4 * S;
+        return y + 2 * S;
     }
 
     /// <summary>Cycles the institution the Institutions map mode shows.</summary>

@@ -34,6 +34,8 @@ public sealed partial class Hud
     private static bool BuildingIcon(string key, Rectangle dst, bool locked)
         => (locked && Gui.Icon($"bld_{key}_locked", dst)) || Gui.Icon($"bld_{key}", dst, locked ? new Color(150, 150, 150, 255) : null);
 
+    public void UnfoldLocation(string key) => _locOpen.Add(key);
+
     private bool Collapse(string key, string title, string summary, Color summaryCol, float x, float y, float w)
     {
         bool open = _locOpen.Contains(key);
@@ -80,8 +82,7 @@ public sealed partial class Hud
             }
             y += lh;
         }
-        Row("Terrain", l.Terrain.Name + (l.IsCoastal ? " (coastal)" : ""));
-        if (l.Continent != null) Row(l.Continent.IsOcean ? "Ocean" : "Continent", l.Continent.DisplayName);
+        Row("Terrain", l.Terrain.Name + (l.IsCoastal ? " (coastal)" : "") + (l.Continent != null ? "  ·  " + l.Continent.DisplayName : ""));
         if (l.IsWater) { Row("Type", l.IsLake ? "Lake" : "Sea"); FitEnd("loc", r, y); return; }
         var st = l.State;
         if (st != null) Row("State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
@@ -104,7 +105,7 @@ public sealed partial class Hud
             }
             Stat2("Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
             Stat2("Manpower", st.Manpower, avgMan, Num(st.Manpower));
-            y += 4 * S;
+            y += 2 * S;
             if (G.Development.Enabled) y = DrawStateDevelopment(st, x, y, w);
             if (G.Population.Enabled)
             {

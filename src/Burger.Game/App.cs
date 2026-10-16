@@ -402,6 +402,7 @@ public sealed partial class App
                     Ui.SelectedLocation = l;
                     Renderer!.Selected = l;
                     Ui.Left = LeftPanel.Location;
+                    foreach (var f in (parts.ElementAtOrDefault(2) ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries)) _hud!.UnfoldLocation(f);   // location:<key>:fold,fold
                     break;
                 case "peace":
                     var p = game.World.Player;

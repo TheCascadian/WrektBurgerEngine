@@ -39,7 +39,7 @@ public static class UserSettings
     public static readonly string[] LodNames = { "Low", "Default", "High", "Max" };
     private static readonly float[] LodScales = { 0.5f, 1f, 2.5f, 8f };
     /// <summary>The shader's distance scale for a level; with LOD off, every feature keeps its full detail.</summary>
-    public static float LodScale(int level) => LodEnabled ? LodScales[Math.Clamp(level, 0, 3)] : LodScales[3];
+    public static float LodScale(int level) => LodEnabled ? LodScales[Math.Clamp(level, 0, 3)] : 1000f;
 
     /// <summary>The name other players see in multiplayer.</summary>
     public static string PlayerName = "";

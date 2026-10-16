@@ -1308,7 +1308,7 @@ public sealed unsafe class MapRenderer : IDisposable
         float tanY = MathF.Tan(cam.FovY * MathF.PI / 360f) * 1.08f, tanX = tanY * Viewport.W / Math.Max(1f, Viewport.H);
         bool trees = !Globe && _hasTrees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
         // far out a map pixel is smaller than a screen pixel: the coarse mesh looks the same and costs a sixteenth of the triangles
-        bool lod = camH > LodHeight;
+        bool lod = UserSettings.LodEnabled && camH > LodHeight;
         GlMultisample.Set(!lod); // adaptive MSAA: smooth edges up close, none where triangles are sub-pixel anyway
         for (int c = 0; c < copies; c++)
         {
