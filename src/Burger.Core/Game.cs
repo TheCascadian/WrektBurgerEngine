@@ -119,6 +119,8 @@ public sealed class Game
     /// <summary>Technologies and research (technology feature).</summary>
     public Burger.Core.Technology.TechSystem Tech { get; }
     public Burger.Core.Development.DevelopmentSystem Development { get; }
+    /// <summary>The 3D models of the largest places (common/sites).</summary>
+    public Burger.Core.Sites.SiteSystem Sites { get; }
     /// <summary>Strategic commodities: deposits, shortages and trade (commodities feature).</summary>
     public Burger.Core.Production.CommoditySystem Commodities { get; }
     /// <summary>National focus trees (focus feature).</summary>
@@ -200,6 +202,7 @@ public sealed class Game
         GeoDynamics = new Burger.Core.Geography.GeoDynamics(this);
         Tech = new Burger.Core.Technology.TechSystem(this);
         Development = new Burger.Core.Development.DevelopmentSystem(this);
+        Sites = new Burger.Core.Sites.SiteSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
         AiProfiles = new Burger.Core.AI.AiProfileSystem(this);
@@ -264,6 +267,7 @@ public sealed class Game
         if (compileScripts) game.Mods.CompileAndLoad();
         WorldLoader.LoadWorld(game);
         game.Commodities.LoadWorld();
+        game.Sites.Load(game.Data.Root);
         game.Diplomacy.LoadDemilitarized();
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);

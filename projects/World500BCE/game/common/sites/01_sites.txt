@@ -1,0 +1,5 @@
+# Places with a 3D model. score = urbanization of the state x weight picks the tier of the kit of the state's culture group.
+sites = {
+	rome = { name = "Rome" location = land_04924 weight = 1.4 }
+	latium_town = { name = "Latium" location = land_00219 weight = 0.6 }
+}

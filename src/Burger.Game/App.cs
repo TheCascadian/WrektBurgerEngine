@@ -19,6 +19,7 @@ public sealed partial class App
     public CameraController? Camera { get; private set; }
     public MapOverlay? Overlay { get; private set; }
     public MapFigures? Figures { get; private set; }
+    public MapSites? Sites { get; private set; }
     public MapParticles? Particles { get; private set; }
     public UiState Ui { get; private set; } = new();
     private Hud? _hud;
@@ -106,6 +107,7 @@ public sealed partial class App
             }
         }
         Renderer?.Dispose();
+        Sites?.Dispose();
         Figures?.Dispose();
         Particles?.Dispose();
         Media.Shutdown();
@@ -164,6 +166,8 @@ public sealed partial class App
         var keptRenderer = keepMap ? Renderer : null;
         if (keptRenderer == null) Renderer?.Dispose();
         Renderer = null;
+        Sites?.Dispose();
+        Sites = null;
         Figures?.Dispose();
         Figures = null;
         Particles?.Dispose();
@@ -208,6 +212,7 @@ public sealed partial class App
             Overlay = new MapOverlay(game, Renderer);
             Particles = new MapParticles(game, Renderer);
             Figures = new MapFigures(game, Renderer) { Particles = Particles };
+            Sites = new MapSites(game, Renderer);
             game.Commands.Register("geodate", "geodate <date|clear> - date shown by the Provinces map mode, e.g. geodate 1CE.1.1 or 300BCE.6.1", args =>
             {
                 if (!game.Geo.Enabled) return "This project has no history/geography";
@@ -342,7 +347,9 @@ public sealed partial class App
         }
         _opt.Exec.Clear();
         if (_opt.MapMode != null && Enum.TryParse<MapMode>(_opt.MapMode, true, out var mode)) { Renderer!.Mode = mode; Renderer.Dirty = true; }
-        if (_opt.LookAt != null && Renderer != null)
+        if (_opt.LookAt != null && Renderer != null && !_opt.LookAt.Contains(',') && game.World.GetLocation(_opt.LookAt) is { } lookLoc)
+            Camera!.LookAt(Renderer.LocationPos(lookLoc), _opt.Zoom ?? 40f);
+        else if (_opt.LookAt != null && Renderer != null)
         {
             var ll = _opt.LookAt.Split(',');
             double lon = double.Parse(ll[0], System.Globalization.CultureInfo.InvariantCulture), lat = double.Parse(ll[1], System.Globalization.CultureInfo.InvariantCulture);
@@ -505,6 +512,7 @@ public sealed partial class App
         Raylib.ClearBackground(Renderer != null && Renderer.Globe ? new Color(2, 3, 9, 255) : new Color(12, 22, 38, 255)); // space behind the globe
         Raylib.BeginMode3D(cam);
         if (!Bench.Skip.Contains("map")) Renderer!.Draw(cam, (float)Raylib.GetTime());
+        if (_screen == AppScreen.Playing && Sites != null) Sites.Draw(cam);
         if (_screen == AppScreen.Playing && Figures != null)
         {
             Overlay!.CounterBelowFigure = Figures.Visible(cam);

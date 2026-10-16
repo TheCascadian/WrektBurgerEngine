@@ -39,7 +39,8 @@ public sealed class AppOptions
     /// <summary>Render the contact sheet of a figure to this file and quit.</summary>
     public string? FigureSheet;
     /// <summary>Render every clip of a figure as numbered frames on a rotating platform into this folder and quit (tools/figure-gifs.sh turns them into .gif files).</summary>
-    public string? FigureFrames, FigureGifs, FigureGear, FigurePeople, FigureVariants;
+    public string? FigureFrames, FigureGifs, FigureGear, FigurePeople, FigureVariants, SiteSheets, SiteKit;
+    public double? SiteScore;
     public int FigureSize = 480;
     public bool FigureForce;
     public string[]? FigureClips;
@@ -63,6 +64,7 @@ public static class Program
   --figure-gear <file.png>                          contact sheet of every piece of kit of every soldier variation
   --figure-gear <file.png>                          contact sheet of every kit piece for every soldier variation
   --figure-variants <dir>                           one contact sheet per country: its historical peoples, men and women, bare and in uniform
+  --site-sheets <dir> [--site-kit KEY] [--site-score S]  one picture per tier of the 3D site kits (common/sites), laid out at a score
   --figure-people <file.png>                        contact sheet of every people's look, bare and as a soldier
   --figure-gif <folder> --figure KEY[,KEY...|all] [--figure-clip a,b] [--figure-size 480] [--figure-force]  .gif per animation, straight to ffmpeg; unchanged ones are skipped";
 
@@ -93,6 +95,9 @@ public static class Program
                     case "--figure-frames": opt.FigureFrames = Path.GetFullPath(Next()); break;
                     case "--figure-gif": opt.FigureGifs = Path.GetFullPath(Next()); break;
                     case "--figure-variants": opt.FigureVariants = Path.GetFullPath(Next()); break;
+                    case "--site-sheets": opt.SiteSheets = Path.GetFullPath(Next()); break;
+                    case "--site-kit": opt.SiteKit = Next(); break;
+                    case "--site-score": opt.SiteScore = double.Parse(Next(), System.Globalization.CultureInfo.InvariantCulture); break;
                     case "--figure-people": opt.FigurePeople = Path.GetFullPath(Next()); break;
                     case "--figure-gear": opt.FigureGear = Path.GetFullPath(Next()); break;
                     case "--figure-size": opt.FigureSize = int.Parse(Next()); break;
@@ -126,11 +131,16 @@ public static class Program
                 }
             }
             opt.GameRoot = FindGameRoot(opt.GameRoot);
-            if (opt.FigureSheet != null || opt.FigureFrames != null || opt.FigureGifs != null || opt.FigureGear != null || opt.FigurePeople != null || opt.FigureVariants != null)
+            if (opt.FigureSheet != null || opt.FigureFrames != null || opt.FigureGifs != null || opt.FigureGear != null || opt.FigurePeople != null || opt.FigureVariants != null || opt.SiteSheets != null)
             {
                 // the figures of the game folder (its gfx/models/ over the built-in body), without loading the game itself
                 var figures = new Burger.Core.Game().Figures;
                 figures.Load(opt.GameRoot);
+                if (opt.SiteSheets != null)
+                {
+                    FigureRenderer.RenderSiteSheets(figures, Burger.Core.Sites.SiteSystem.Read(opt.GameRoot).Kits, opt.SiteSheets, opt.SiteScore, opt.SiteKit);
+                    return 0;
+                }
                 if (opt.FigureVariants != null)
                 {
                     Directory.CreateDirectory(opt.FigureVariants);

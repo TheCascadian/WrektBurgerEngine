@@ -162,6 +162,12 @@ void main()
         return mesh;
     }
 
+    /// <summary>Frees the uploaded mesh of one model (a baked model that was replaced).</summary>
+    public void Forget(FigureModel model)
+    {
+        if (_meshes.Remove(model, out var mesh)) Raylib.UnloadMesh(mesh);
+    }
+
     /// <summary>Forgets what was uploaded (after models were replaced).</summary>
     public void Clear()
     {
@@ -385,6 +391,49 @@ void main()
         Raylib.ImageFlipVertical(ref image);
         Raylib.ExportImage(image, path);
         Raylib.UnloadImage(image);
+        Raylib.UnloadRenderTexture(target);
+        renderer.Dispose();
+        Raylib.CloseWindow();
+    }
+
+    // ===============================================================================================
+    // Site sheets (Game.exe --site-sheets dir): one picture per tier of every site kit, laid out at a score, seen from the south over flat ground.
+    // ===============================================================================================
+    public static void RenderSiteSheets(FigureSystem figures, IReadOnlyDictionary<string, Burger.Core.Sites.SiteKit> kits, string dir, double? scoreOverride = null, string? onlyKit = null, int width = 1400, int height = 900)
+    {
+        Directory.CreateDirectory(dir);
+        Raylib.SetConfigFlags(ConfigFlags.HiddenWindow);
+        Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
+        Raylib.InitWindow(320, 200, "site sheet");
+        var renderer = new FigureRenderer();
+        var target = Raylib.LoadRenderTexture(width, height);
+        foreach (var kit in kits.Values.Where(k => onlyKit == null || k.Key.Equals(onlyKit, StringComparison.OrdinalIgnoreCase)))
+            foreach (var tier in kit.Tiers)
+            {
+                double score = scoreOverride ?? tier.MinScore + 0.03;
+                var placements = Burger.Core.Sites.SiteLayout.Build(kit, tier, score, Burger.Core.Sites.SiteSystem.Seed(kit.Key + "/" + tier.Key),
+                    k => figures.Find(k) is { } m ? Burger.Core.Sites.SiteLayout.RadiusOf(m) : 0);
+                if (placements.Count == 0) continue;
+                var model = Burger.Core.Sites.SiteLayout.Bake($"sheet:{kit.Key}/{tier.Key}", placements, k => figures.Find(kit.ModelKey(k)));
+                float extent = Math.Max(30f, placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z)) + 14f);
+                var cam = new Camera3D(new Vector3(extent * 0.35f, extent * 1.05f, extent * 1.45f), new Vector3(0, 0, extent * 0.02f), Vector3.UnitY, 32f, CameraProjection.Perspective);
+                var skin = new Matrix4x4[model.Rig.Count];
+                Array.Fill(skin, Matrix4x4.Identity);
+                Raylib.BeginTextureMode(target);
+                Raylib.ClearBackground(new Color(120, 150, 175, 255));
+                Raylib.BeginMode3D(cam);
+                Raylib.DrawCube(new Vector3(0, -0.4f, 0), extent * 3.2f, 0.7f, extent * 3.2f, new Color(104, 118, 66, 255));
+                renderer.Begin(cam);
+                renderer.Draw(model, skin, Matrix4x4.Identity, Color.White);
+                Raylib.EndMode3D();
+                Raylib.DrawText($"{kit.Name}: {tier.Key} (score {score:F2}, {placements.Count} pieces, {model.Mesh.TriangleCount} triangles)", 14, 10, 26, Color.White);
+                Raylib.EndTextureMode();
+                var image = Raylib.LoadImageFromTexture(target.Texture);
+                Raylib.ImageFlipVertical(ref image);
+                Raylib.ExportImage(image, Path.Combine(dir, $"site_{kit.Key}_{tier.Key}.png"));
+                Raylib.UnloadImage(image);
+                renderer.Forget(model);
+            }
         Raylib.UnloadRenderTexture(target);
         renderer.Dispose();
         Raylib.CloseWindow();

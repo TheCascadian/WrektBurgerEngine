@@ -1,0 +1,35 @@
+# Latin site kit: the buildings of Rome and Latium around 500 BCE. Pieces are gfx/models/site_<piece>_latin.glb (tools/assets/models/site_latin.py).
+# Layer kinds: place, ring (a wall with gates), street (paths from the center to the gates), scatter (pieces dropped without overlap).
+# Distances in metres from the center of the site. Heading in degrees (0 = +Z, turning towards +X). Documented in docs/game/SITES.md.
+kits = {
+	latin = {
+		name = "Latin"
+		source = "Design from general knowledge, not a looked-up source (OPEN): Iron Age Latin huts, mud-brick and timber houses with terracotta roofs from the later 6th century, the Tuscan temple of Jupiter Optimus Maximus (509 BCE), the round Temple of Vesta, an earthen rampart with a palisade."
+		culture_groups = { italic }
+		tiers = {
+			# a hill town: a palisaded village of huts and timber houses round a small market, a shrine and a granary
+			town = {
+				min_score = 0
+				layer = { kind = ring piece = rampart gate = gate_tower gates = 2 gate_angle = 0 radius = 32 spacing = 8 }
+				layer = { kind = street piece = path inner = 8 outer = 28 spacing = 8 }
+				layer = { kind = place piece = plaza x = 0 z = 0 }
+				layer = { kind = place piece = shrine x = 0 z = -15 yaw = 0 }
+				layer = { kind = scatter pieces = { hut_round = 4 hut_oval = 3 house_timber = 3 granary = 1 } count = 6 count_per_score = 90 inner = 12 outer = 26 face = center }
+				layer = { kind = scatter piece = tree count = 10 inner = 38 outer = 52 face = random }
+			}
+			# a city: a deeper ring, a forum with a hall and a round temple, the Tuscan temple on its hill, tiled courtyard houses over older huts
+			city = {
+				min_score = 0.10
+				layer = { kind = ring piece = rampart gate = gate_tower gates = 3 gate_angle = 30 radius = 68 spacing = 8 }
+				layer = { kind = street piece = path inner = 10 outer = 64 spacing = 8 }
+				layer = { kind = place piece = plaza x = 0 z = 0 }
+				layer = { kind = place piece = hall x = 0 z = -19 yaw = 0 }
+				layer = { kind = place piece = temple_round x = 19 z = -13 yaw = 0 }
+				layer = { kind = place piece = temple_tuscan x = -40 z = -40 yaw = 45 }
+				layer = { kind = place piece = shrine x = 34 z = 20 yaw = 250 }
+				layer = { kind = scatter pieces = { courtyard_house = 3 house_tile = 4 house_timber = 3 hut_oval = 1 hut_round = 1 granary = 1 } count = 14 count_per_score = 130 inner = 14 outer = 60 face = center }
+				layer = { kind = scatter piece = tree count = 20 inner = 74 outer = 95 face = random }
+			}
+		}
+	}
+}
