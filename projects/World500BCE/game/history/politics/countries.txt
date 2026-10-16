@@ -102,3 +102,193 @@ ZHO = {
 	popularity = { neutrality = 43 fascist = 27 communist = 18 democratic = 12 }
 	laws = { political_parties = restricted_parties }
 }
+QIQ = {
+	ruling_party = neutrality
+	popularity = { neutrality = 40 fascist = 26 communist = 23 democratic = 11 }
+	laws = { political_parties = restricted_parties }
+}
+JIN = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 18 communist = 35 democratic = 9 }
+	laws = { political_parties = restricted_parties }
+}
+QIN = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 36 communist = 16 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+CHU = {
+	ruling_party = neutrality
+	popularity = { neutrality = 46 fascist = 27 communist = 17 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+WUU = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 22 communist = 24 democratic = 16 }
+	laws = { political_parties = restricted_parties }
+}
+YUE = {
+	ruling_party = neutrality
+	popularity = { neutrality = 43 fascist = 29 communist = 13 democratic = 15 }
+	laws = { political_parties = restricted_parties }
+}
+SHU = {
+	ruling_party = neutrality
+	popularity = { neutrality = 45 fascist = 30 communist = 12 democratic = 13 }
+	laws = { political_parties = restricted_parties }
+}
+LIB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 36 fascist = 20 communist = 33 democratic = 11 }
+	laws = { political_parties = restricted_parties }
+}
+BAN = {
+	ruling_party = neutrality
+	popularity = { neutrality = 45 fascist = 24 communist = 19 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+NOK = {
+	ruling_party = neutrality
+	popularity = { neutrality = 45 fascist = 20 communist = 26 democratic = 9 }
+	laws = { political_parties = restricted_parties }
+}
+THR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 27 communist = 20 democratic = 15 }
+	laws = { political_parties = restricted_parties }
+}
+ION = {
+	ruling_party = neutrality
+	popularity = { neutrality = 47 fascist = 28 communist = 16 democratic = 9 }
+	laws = { political_parties = restricted_parties }
+}
+YAY = {
+	ruling_party = neutrality
+	popularity = { neutrality = 42 fascist = 21 communist = 21 democratic = 16 }
+	laws = { political_parties = restricted_parties }
+}
+YAO = {
+	ruling_party = neutrality
+	popularity = { neutrality = 39 fascist = 23 communist = 21 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+ETR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 41 fascist = 25 communist = 17 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+CEL = {
+	ruling_party = neutrality
+	popularity = { neutrality = 39 fascist = 26 communist = 23 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+MAY = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 22 communist = 30 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+PAR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 42 fascist = 28 communist = 16 democratic = 14 }
+	laws = { political_parties = restricted_parties }
+}
+ROM = {
+	ruling_party = democratic
+	popularity = { democratic = 38 neutrality = 30 fascist = 22 communist = 10 }
+	laws = { political_parties = multi_party }
+}
+SCY = {
+	ruling_party = fascist
+	popularity = { fascist = 40 neutrality = 32 communist = 16 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+SAK = {
+	ruling_party = fascist
+	popularity = { fascist = 40 neutrality = 32 communist = 16 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+KOS = {
+	ruling_party = neutrality
+	popularity = { neutrality = 44 fascist = 26 communist = 14 democratic = 16 }
+	laws = { political_parties = restricted_parties }
+}
+KOR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 39 fascist = 29 communist = 20 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+DMT = {
+	ruling_party = neutrality
+	popularity = { neutrality = 47 fascist = 21 communist = 19 democratic = 13 }
+	laws = { political_parties = restricted_parties }
+}
+VAN = {
+	ruling_party = neutrality
+	popularity = { neutrality = 38 fascist = 21 communist = 33 democratic = 8 }
+	laws = { political_parties = restricted_parties }
+}
+EGY = {
+	ruling_party = neutrality
+	popularity = { neutrality = 41 fascist = 18 communist = 29 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+BAB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 37 fascist = 26 communist = 29 democratic = 8 }
+	laws = { political_parties = restricted_parties }
+}
+IBE = {
+	ruling_party = neutrality
+	popularity = { neutrality = 45 fascist = 19 communist = 24 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+CIB = {
+	ruling_party = neutrality
+	popularity = { neutrality = 39 fascist = 19 communist = 34 democratic = 8 }
+	laws = { political_parties = restricted_parties }
+}
+SAR = {
+	ruling_party = fascist
+	popularity = { fascist = 40 neutrality = 32 communist = 16 democratic = 12 }
+	laws = { political_parties = restricted_parties }
+}
+GAN = {
+	ruling_party = neutrality
+	popularity = { neutrality = 43 fascist = 21 communist = 28 democratic = 8 }
+	laws = { political_parties = restricted_parties }
+}
+DEC = {
+	ruling_party = neutrality
+	popularity = { neutrality = 43 fascist = 30 communist = 17 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+JDH = {
+	ruling_party = neutrality
+	popularity = { neutrality = 47 fascist = 21 communist = 22 democratic = 10 }
+	laws = { political_parties = restricted_parties }
+}
+ZAP = {
+	ruling_party = neutrality
+	popularity = { neutrality = 42 fascist = 27 communist = 14 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+GAR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 46 fascist = 23 communist = 14 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+SAH = {
+	ruling_party = neutrality
+	popularity = { neutrality = 40 fascist = 23 communist = 20 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+TML = {
+	ruling_party = neutrality
+	popularity = { neutrality = 47 fascist = 28 communist = 8 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}
+IRR = {
+	ruling_party = neutrality
+	popularity = { neutrality = 39 fascist = 31 communist = 13 democratic = 17 }
+	laws = { political_parties = restricted_parties }
+}

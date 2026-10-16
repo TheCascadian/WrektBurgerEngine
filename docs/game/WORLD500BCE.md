@@ -3,7 +3,7 @@
 `projects/WrektMap` is the REAL 500 BCE scenario, copied from `World500Test` (which stays unchanged).
 
 - 965 states: clusters of land locations per people and landmass. Names are placeholders. Some land is left without a state; an owner is not required.
-- 20 countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the Greek city-states ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT). Other states are unowned (tribal peoples). `default_country = ACH`.
+- 58 countries: 20 original (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the Greek city-states ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT) plus 38 added (see docs/game/countries-500bce.md). Other states are unowned (tribal peoples). `default_country = ACH`.
 - 113 cultures, 59 religions, 7 social classes. Starting people: 149.2M.
 - Features: `population`, `religion`, `social_classes`, `cores_claims`.
 

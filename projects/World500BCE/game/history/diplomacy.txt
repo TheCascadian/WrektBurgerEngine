@@ -5,3 +5,9 @@ subject = { overlord = ACH subject = NUB type = client_state }
 alliance = { first = SPA second = COR }
 alliance = { first = MAC second = THS }
 alliance = { first = CHV second = OLM }
+subject = { overlord = ACH subject = THR type = tributary }
+subject = { overlord = ACH subject = ION type = tributary }
+subject = { overlord = ACH subject = EGY type = tributary }
+subject = { overlord = ACH subject = BAB type = tributary }
+subject = { overlord = ACH subject = GAN type = tributary }
+subject = { overlord = ACH subject = JDH type = tributary }

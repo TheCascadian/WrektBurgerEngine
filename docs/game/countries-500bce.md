@@ -685,66 +685,66 @@ Bronze weapons: dagger-axe (ge), halberd (ji), spear, jian sword, composite bow,
 
 ## All countries by founding or latest revival (HIST)
 
-Oldest first, as one plain list. Each date is the founding of the national entity, or its most recent revival where one is named. All dates are approximate (BCE), written from memory, and many are tentative or traditional rather than archaeological. Entries with the same date are in no particular order. "In game" means the country exists in `countries.txt`; "proposed" means it is not built yet and is only on the candidate list.
+Oldest first, as one plain list. Each date is the founding of the national entity, or its most recent revival where one is named. All dates are approximate (BCE), written from memory, and many are tentative or traditional rather than archaeological. Entries with the same date are in no particular order. "In game" means the country exists in `countries.txt`; "proposed" would mean not built yet; all entries are now built (58 countries).
 
 - c. 1200: Olmec (OLM), in game. San Lorenzo, the first Olmec center.
-- c. 1046: Qi, proposed. Founded as a Zhou fief.
-- c. 1033: Jin, proposed. Founded as a Zhou fief.
-- c. 1000: Libyan and Berber tribes, proposed. Tribal peoples of the Maghreb.
-- c. 1000: Bantu homeland peoples, proposed. Start of the Bantu expansion.
-- c. 1000: Nok culture, proposed.
-- c. 1000: Thracian tribes, proposed. The Odrysian kingdom comes later, c. 480.
-- c. 1000: Ionian Greek cities, proposed (only if they are not already inside ACH). Ionian migration.
-- c. 1000: Yaya-Mama peoples of Titicaca, proposed.
+- c. 1046: Qi, in game. Founded as a Zhou fief.
+- c. 1033: Jin, in game. Founded as a Zhou fief.
+- c. 1000: Libyan and Berber tribes, in game. Tribal peoples of the Maghreb.
+- c. 1000: Bantu homeland peoples, in game. Start of the Bantu expansion.
+- c. 1000: Nok culture, in game.
+- c. 1000: Thracian tribes, in game. The Odrysian kingdom comes later, c. 480.
+- c. 1000: Ionian Greek cities, in game (only if they are not already inside ACH). Ionian migration.
+- c. 1000: Yaya-Mama peoples of Titicaca, in game.
 - c. 900: Chavin (CHV), in game. Chavin de Huantar rises.
 - c. 900: Corinth (COR), in game. Dorian city.
 - c. 900: Argos (ARG), in game. Dorian city.
 - c. 900: Naxos and the Cyclades (NAX), in game. Ionian settlement.
-- c. 900: Yayoi and Jomon Japan, proposed.
+- c. 900: Yayoi and Jomon Japan, in game.
 - c. 814: Carthage (CAR), in game. Traditional founding from Tyre.
 - c. 800: Sparta (SPA), in game. Dorian settlement and the Lycurgan order.
-- c. 800: Etruscan League, proposed. Etruscan city-states form from the Villanovan culture.
+- c. 800: Etruscan League, in game. Etruscan city-states form from the Villanovan culture.
 - c. 800: South Arabia (SAB), in game. Saba and its neighbors.
 - c. 800: Crete (CRT), in game. Iron Age city-states.
-- c. 800: Hallstatt Gaul and the Celts, proposed.
-- c. 800: Maya lowlands, proposed.
-- c. 800: Paracas, proposed.
+- c. 800: Hallstatt Gaul and the Celts, in game.
+- c. 800: Maya lowlands, in game.
+- c. 800: Paracas, in game.
 - c. 770: Zhou (ZHO), in game. Eastern Zhou, after the court moved east.
-- c. 770: Qin, proposed. Recognized as a state.
-- c. 753: Rome and Latium, proposed. Traditional founding; the Republic dates from 509.
+- c. 770: Qin, in game. Recognized as a state.
+- c. 753: Rome and Latium, in game. Traditional founding; the Republic dates from 509.
 - c. 750: Kush (NUB), in game. Unified Napatan kingdom, the 25th dynasty of Egypt.
-- c. 750: Scythians, proposed. Settle the Pontic steppe.
+- c. 750: Scythians, in game. Settle the Pontic steppe.
 - c. 733: Syracuse and Eastern Sicily (SYR), in game. Founded from Corinth.
 - c. 710: Croton and Italiote Greeks (CRO), in game. Croton founded by Achaeans.
-- c. 704: Chu, proposed. The ruler takes the title of king.
+- c. 704: Chu, in game. The ruler takes the title of king.
 - c. 700: Athens (ATH), in game. Attica united; democracy from 508.
 - c. 700: Thebes and the Boeotian League (THB), in game.
 - c. 700: Macedon (MAC), in game. The Argead kingdom.
-- c. 700: Saka and Massagetae, proposed.
-- c. 700: Kosala and the Ganges plain, proposed.
-- c. 700: Korea (Gojoseon), proposed. Very uncertain.
-- c. 700: Ethiopian highlands (D'mt), proposed.
-- c. 700: Van Lang and the Dong Son culture, proposed.
-- c. 666: Shu and Ba, proposed. The Kaiming dynasty of Shu, traditional date.
-- c. 664: Egypt, proposed. Saite revival of the 26th dynasty; Persian satrapy since 525.
+- c. 700: Saka and Massagetae, in game.
+- c. 700: Kosala and the Ganges plain, in game.
+- c. 700: Korea (Gojoseon), in game. Very uncertain.
+- c. 700: Ethiopian highlands (D'mt), in game.
+- c. 700: Van Lang and the Dong Son culture, in game.
+- c. 666: Shu and Ba, in game. The Kaiming dynasty of Shu, traditional date.
+- c. 664: Egypt, in game. Saite revival of the 26th dynasty; Persian satrapy since 525.
 - c. 650: Pontic Greek Cities (PNT), in game. Milesian colonies such as Istros.
-- c. 626: Babylon, proposed. Neo-Babylonian revival; Persian since 539.
+- c. 626: Babylon, in game. Neo-Babylonian revival; Persian since 539.
 - c. 600: Thessaly (THS), in game. The Thessalian League.
-- c. 600: Iberians, proposed.
-- c. 600: Celtiberians, proposed.
-- c. 600: Sarmatians, proposed.
-- c. 600: Gandhara and the Indus lands, proposed. Persian satrapy since about 518.
-- c. 600: Deccan (Assaka and neighbors), proposed.
-- c. 585: Wu, proposed. Its ruler takes the title of king.
+- c. 600: Iberians, in game.
+- c. 600: Celtiberians, in game.
+- c. 600: Sarmatians, in game.
+- c. 600: Gandhara and the Indus lands, in game. Persian satrapy since about 518.
+- c. 600: Deccan (Assaka and neighbors), in game.
+- c. 585: Wu, in game. Its ruler takes the title of king.
 - c. 550: Achaemenid Empire (ACH), in game. Cyrus; Darius reorganized it in 522.
 - c. 544: Magadha and Ganges (IND), in game. The Haryanka dynasty under Bimbisara.
-- c. 538: Judah and Yehud, proposed. Revived as a Persian province after the Babylonian exile.
-- c. 510: Yue, proposed. Rises under its new rulers.
-- c. 500: Zapotec, proposed. Monte Alban founded.
-- c. 500: Garamantes, proposed. Garama.
-- c. 500: Sahel and Mande lands, proposed. Very uncertain.
-- c. 500: Tamil south, proposed. Very uncertain.
-- c. 500: Irrawaddy and mainland Southeast Asia, proposed. Very uncertain.
+- c. 538: Judah and Yehud, in game. Revived as a Persian province after the Babylonian exile.
+- c. 510: Yue, in game. Rises under its new rulers.
+- c. 500: Zapotec, in game. Monte Alban founded.
+- c. 500: Garamantes, in game. Garama.
+- c. 500: Sahel and Mande lands, in game. Very uncertain.
+- c. 500: Tamil south, in game. Very uncertain.
+- c. 500: Irrawaddy and mainland Southeast Asia, in game. Very uncertain.
 
 ## Findings to decide (not changed)
 
@@ -756,3 +756,48 @@ Oldest first, as one plain list. Each date is the founding of the national entit
 6. **No named leaders exist in the game data.** The `characters` feature is on, but there are no authored characters in this scenario folder.
 7. **MAC is a one-state country** and the only one with no slave class.
 8. **No country has its own casus belli, events, or traditions.** The only events are election events and a welcome event.
+
+### Added countries (38)
+
+Built by assigning owner and cores on existing states, so each keeps the culture, religion and pop classes already authored for them. Capital, culture and religion come from the capital state. Colors are generated. Armies are about one division per 1.2 million people at the capital. Fleets: none. The Persian-held regions (EGY, BAB, JDH, GAN, ION, THR) start as ACH tributary subjects. ACH, ZHO, IND, OLM and CHV lost states and their starting armies were cut in proportion. OLM culture is now olmec (closes the earlier OPEN culture mismatch). ACH and ZHO capitals moved to a state they still own (land_17558, land_05578). Political parties: ROM democratic; SCY, SAK and SAR fascist-ruled; all others neutrality-ruled with per-country popularity values. OPEN: province granularity, and no historical basis for the OLM and CHV alliance.
+
+| Tag | Country | Pop | Culture | Religion | Subject of |
+|---|---|---|---|---|---|
+| QIQ | Qi | 6,151,928 | huaxia | zhou_ancestor_cult | - |
+| JIN | Jin | 9,736,975 | huaxia | zhou_ancestor_cult | - |
+| QIN | Qin | 4,531,948 | huaxia | zhou_ancestor_cult | - |
+| CHU | Chu | 4,761,183 | chu | chu_shamanism | - |
+| WUU | Wu | 1,751,670 | wu_yue | baiyue_animism | - |
+| YUE | Yue | 1,711,693 | wu_yue | baiyue_animism | - |
+| SHU | Shu and Ba | 1,814,122 | shu_ba | chu_shamanism | - |
+| LIB | Libyan and Berber tribes | 1,919,622 | berber | berber_religion | - |
+| BAN | Bantu homeland peoples | 465,276 | bantu | bantu_traditional | - |
+| NOK | Nok | 470,400 | nok | west_african_traditional | - |
+| THR | Thracian tribes | 475,777 | thracian | thracian_religion | ACH |
+| ION | Ionian Greek cities | 44,432 | anatolian | anatolian_polytheism | ACH |
+| YAY | Yaya-Mama | 309,270 | yaya_mama | andean_religion | - |
+| YAO | Yayoi and Jomon Japan | 386,125 | jomon | jomon_animism | - |
+| ETR | Etruscan League | 229,342 | etruscan | etruscan_religion | - |
+| CEL | Hallstatt Celts | 1,746,207 | hallstatt_celt | celtic_polytheism | - |
+| MAY | Maya lowlands | 1,283,101 | maya | mesoamerican_religion | - |
+| PAR | Paracas | 169,901 | paracas | andean_religion | - |
+| ROM | Rome and Latium | 84,071 | italic | italic_religion | - |
+| SCY | Scythians | 378,778 | scythian | scythian_faith | - |
+| SAK | Saka and Massagetae | 567,175 | sakae | scythian_faith | - |
+| KOS | Kosala | 1,607,563 | indo_aryan | vedic_brahmanism | - |
+| KOR | Gojoseon | 790,592 | korean | korean_shamanism | - |
+| DMT | D'mt | 1,722,253 | ethiopian_highland | ethiopian_highland_cult | - |
+| VAN | Van Lang | 216,979 | van_lang | austroasiatic_animism | - |
+| EGY | Egypt | 3,001,569 | egyptian | egyptian_religion | ACH |
+| BAB | Babylon | 4,371,816 | babylonian | mesopotamian_polytheism | ACH |
+| IBE | Iberians | 669,770 | iberian | iberian_religion | - |
+| CIB | Celtiberians | 679,491 | celtiberian | celtic_polytheism | - |
+| SAR | Sarmatians | 361,370 | sarmatian | scythian_faith | - |
+| GAN | Gandhara | 1,577,892 | indo_aryan | vedic_brahmanism | ACH |
+| DEC | Deccan | 2,196,015 | dravidian | dravidian_folk | - |
+| JDH | Judah and Yehud | 1,044,829 | judean | yahwism | ACH |
+| ZAP | Zapotec | 234,390 | zapotec | mesoamerican_religion | - |
+| GAR | Garamantes | 286,743 | garamantes | saharan_pastoral_faith | - |
+| SAH | Sahel and Mande lands | 2,527,983 | west_african | west_african_traditional | - |
+| TML | Tamil south | 1,245,693 | dravidian | dravidian_folk | - |
+| IRR | Irrawaddy and mainland Southeast Asia | 4,490,485 | austroasiatic | austroasiatic_animism | - |

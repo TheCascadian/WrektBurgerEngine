@@ -52,3 +52,25 @@ china = {
 	parent = aggressive
 	desc = "Warring states of the east."
 }
+warring_states = {
+	countries = { QIQ JIN QIN CHU WUU YUE SHU }
+	parent = expansionist
+	desc = "Rival states of the Chinese plain and Yangtze that fight for the old Zhou order."
+	rivals = { ZHO = 0.5 }
+}
+persian_subjects = {
+	countries = { EGY BAB JDH GAN ION THR }
+	parent = defensive
+	desc = "Provinces of the Great King that pay tribute and wait for a chance to break away."
+	rivals = { ACH = 1 }
+}
+steppe_riders = {
+	countries = { SCY SAK SAR KOS }
+	parent = expansionist
+	desc = "Mounted peoples of the steppe who raid their neighbors."
+}
+western_tribes = {
+	countries = { CEL IBE CIB LIB ETR ROM DEC }
+	parent = status_quo
+	desc = "Italic, Celtic and Iberian peoples and the Libyan fringe of the Mediterranean world."
+}

@@ -4,7 +4,7 @@
 ACH = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_07110 count = 24 }
+		division = { template = infantry_division location = land_17558 count = 16 }
 	}
 }
 ATH = {
@@ -101,7 +101,7 @@ SAB = {
 OLM = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_15261 count = 3 }
+		division = { template = infantry_division location = land_15261 count = 1 }
 	}
 }
 CHV = {
@@ -113,12 +113,240 @@ CHV = {
 IND = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_03808 count = 22 }
+		division = { template = infantry_division location = land_03808 count = 20 }
 	}
 }
 ZHO = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_01707 count = 24 }
+		division = { template = infantry_division location = land_05578 count = 5 }
+	}
+}
+QIQ = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_03741 count = 5 }
+	}
+}
+JIN = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01407 count = 8 }
+	}
+}
+QIN = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01707 count = 4 }
+	}
+}
+CHU = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_09419 count = 4 }
+	}
+}
+WUU = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_03924 count = 1 }
+	}
+}
+YUE = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_04427 count = 1 }
+	}
+}
+SHU = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_05853 count = 2 }
+	}
+}
+LIB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_02972 count = 2 }
+	}
+}
+BAN = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_00623 count = 1 }
+	}
+}
+NOK = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_06839 count = 1 }
+	}
+}
+THR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_02349 count = 1 }
+	}
+}
+ION = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08787 count = 1 }
+	}
+}
+YAY = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_09811 count = 1 }
+	}
+}
+YAO = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_15870 count = 1 }
+	}
+}
+ETR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08505 count = 1 }
+	}
+}
+CEL = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07102 count = 1 }
+	}
+}
+MAY = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_13895 count = 1 }
+	}
+}
+PAR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_13222 count = 1 }
+	}
+}
+ROM = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_04924 count = 1 }
+	}
+}
+SCY = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01809 count = 1 }
+	}
+}
+SAK = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_04112 count = 1 }
+	}
+}
+KOS = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01277 count = 1 }
+	}
+}
+KOR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_02285 count = 1 }
+	}
+}
+DMT = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08805 count = 1 }
+	}
+}
+VAN = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_08685 count = 1 }
+	}
+}
+EGY = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_05690 count = 3 }
+	}
+}
+BAB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07110 count = 4 }
+	}
+}
+IBE = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_04181 count = 1 }
+	}
+}
+CIB = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_06479 count = 1 }
+	}
+}
+SAR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01486 count = 1 }
+	}
+}
+GAN = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07241 count = 1 }
+	}
+}
+DEC = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_06779 count = 2 }
+	}
+}
+JDH = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_02221 count = 1 }
+	}
+}
+ZAP = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_13277 count = 1 }
+	}
+}
+GAR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_01020 count = 1 }
+	}
+}
+SAH = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_02174 count = 2 }
+	}
+}
+TML = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07873 count = 1 }
+	}
+}
+IRR = {
+	army = {
+		name = "1st Army"
+		division = { template = infantry_division location = land_07633 count = 4 }
 	}
 }

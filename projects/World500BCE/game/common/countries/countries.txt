@@ -2,7 +2,7 @@
 ACH = {
 	name = "Achaemenid Empire"
 	color = { 120 60 150 }
-	capital = land_07110
+	capital = land_17558
 	culture = persian
 	religion = mazdayasna
 	gold = 100
@@ -147,7 +147,7 @@ OLM = {
 	name = "Olmec"
 	color = { 80 170 160 }
 	capital = land_15261
-	culture = maya
+	culture = olmec
 	religion = mesoamerican_religion
 	gold = 100
 	manpower = 10000
@@ -173,9 +173,351 @@ IND = {
 ZHO = {
 	name = "Zhou"
 	color = { 200 50 50 }
+	capital = land_05578
+	culture = huaxia
+	religion = zhou_ancestor_cult
+	gold = 100
+	manpower = 10000
+}
+QIQ = {
+	name = "Qi"
+	color = { 148 221 64 }
+	capital = land_03741
+	culture = huaxia
+	religion = zhou_ancestor_cult
+	gold = 100
+	manpower = 10000
+}
+JIN = {
+	name = "Jin"
+	color = { 99 57 214 }
+	capital = land_01407
+	culture = huaxia
+	religion = zhou_ancestor_cult
+	gold = 100
+	manpower = 10000
+}
+QIN = {
+	name = "Qin"
+	color = { 196 221 104 }
 	capital = land_01707
 	culture = huaxia
 	religion = zhou_ancestor_cult
+	gold = 100
+	manpower = 10000
+}
+CHU = {
+	name = "Chu"
+	color = { 226 111 180 }
+	capital = land_09419
+	culture = chu
+	religion = chu_shamanism
+	gold = 100
+	manpower = 10000
+}
+WUU = {
+	name = "Wu"
+	color = { 41 196 54 }
+	capital = land_03924
+	culture = wu_yue
+	religion = baiyue_animism
+	gold = 100
+	manpower = 10000
+}
+YUE = {
+	name = "Yue"
+	color = { 32 142 36 }
+	capital = land_04427
+	culture = wu_yue
+	religion = baiyue_animism
+	gold = 100
+	manpower = 10000
+}
+SHU = {
+	name = "Shu and Ba"
+	color = { 186 65 168 }
+	capital = land_05853
+	culture = shu_ba
+	religion = chu_shamanism
+	gold = 100
+	manpower = 10000
+}
+LIB = {
+	name = "Libyan and Berber tribes"
+	color = { 173 90 122 }
+	capital = land_02972
+	culture = berber
+	religion = berber_religion
+	gold = 100
+	manpower = 10000
+}
+BAN = {
+	name = "Bantu homeland peoples"
+	color = { 150 163 39 }
+	capital = land_00623
+	culture = bantu
+	religion = bantu_traditional
+	gold = 100
+	manpower = 10000
+}
+NOK = {
+	name = "Nok"
+	color = { 35 141 160 }
+	capital = land_06839
+	culture = nok
+	religion = west_african_traditional
+	gold = 100
+	manpower = 10000
+}
+THR = {
+	name = "Thracian tribes"
+	color = { 224 109 113 }
+	capital = land_02349
+	culture = thracian
+	religion = thracian_religion
+	gold = 100
+	manpower = 10000
+}
+ION = {
+	name = "Ionian Greek cities"
+	color = { 74 219 108 }
+	capital = land_08787
+	culture = anatolian
+	religion = anatolian_polytheism
+	gold = 100
+	manpower = 10000
+}
+YAY = {
+	name = "Yaya-Mama"
+	color = { 44 211 161 }
+	capital = land_09811
+	culture = yaya_mama
+	religion = andean_religion
+	gold = 100
+	manpower = 10000
+}
+YAO = {
+	name = "Yayoi and Jomon Japan"
+	color = { 160 163 83 }
+	capital = land_15870
+	culture = jomon
+	religion = jomon_animism
+	gold = 100
+	manpower = 10000
+}
+ETR = {
+	name = "Etruscan League"
+	color = { 216 54 216 }
+	capital = land_08505
+	culture = etruscan
+	religion = etruscan_religion
+	gold = 100
+	manpower = 10000
+}
+CEL = {
+	name = "Hallstatt Celts"
+	color = { 137 226 115 }
+	capital = land_07102
+	culture = hallstatt_celt
+	religion = celtic_polytheism
+	gold = 100
+	manpower = 10000
+}
+MAY = {
+	name = "Maya lowlands"
+	color = { 150 92 54 }
+	capital = land_13895
+	culture = maya
+	religion = mesoamerican_religion
+	gold = 100
+	manpower = 10000
+}
+PAR = {
+	name = "Paracas"
+	color = { 219 59 125 }
+	capital = land_13222
+	culture = paracas
+	religion = andean_religion
+	gold = 100
+	manpower = 10000
+}
+ROM = {
+	name = "Rome and Latium"
+	color = { 95 140 32 }
+	capital = land_04924
+	culture = italic
+	religion = italic_religion
+	gold = 100
+	manpower = 10000
+}
+SCY = {
+	name = "Scythians"
+	color = { 61 206 204 }
+	capital = land_01809
+	culture = scythian
+	religion = scythian_faith
+	gold = 100
+	manpower = 10000
+}
+SAK = {
+	name = "Saka and Massagetae"
+	color = { 57 40 186 }
+	capital = land_04112
+	culture = sakae
+	religion = scythian_faith
+	gold = 100
+	manpower = 10000
+}
+KOS = {
+	name = "Kosala"
+	color = { 108 201 68 }
+	capital = land_01277
+	culture = indo_aryan
+	religion = vedic_brahmanism
+	gold = 100
+	manpower = 10000
+}
+KOR = {
+	name = "Gojoseon"
+	color = { 138 62 193 }
+	capital = land_02285
+	culture = korean
+	religion = korean_shamanism
+	gold = 100
+	manpower = 10000
+}
+DMT = {
+	name = "D'mt"
+	color = { 181 39 122 }
+	capital = land_08805
+	culture = ethiopian_highland
+	religion = ethiopian_highland_cult
+	gold = 100
+	manpower = 10000
+}
+VAN = {
+	name = "Van Lang"
+	color = { 73 47 145 }
+	capital = land_08685
+	culture = van_lang
+	religion = austroasiatic_animism
+	gold = 100
+	manpower = 10000
+}
+EGY = {
+	name = "Egypt"
+	color = { 98 188 126 }
+	capital = land_05690
+	culture = egyptian
+	religion = egyptian_religion
+	gold = 100
+	manpower = 10000
+}
+BAB = {
+	name = "Babylon"
+	color = { 41 173 131 }
+	capital = land_07110
+	culture = babylonian
+	religion = mesopotamian_polytheism
+	gold = 100
+	manpower = 10000
+}
+IBE = {
+	name = "Iberians"
+	color = { 226 52 78 }
+	capital = land_04181
+	culture = iberian
+	religion = iberian_religion
+	gold = 100
+	manpower = 10000
+}
+CIB = {
+	name = "Celtiberians"
+	color = { 180 68 214 }
+	capital = land_06479
+	culture = celtiberian
+	religion = celtic_polytheism
+	gold = 100
+	manpower = 10000
+}
+SAR = {
+	name = "Sarmatians"
+	color = { 107 219 206 }
+	capital = land_01486
+	culture = sarmatian
+	religion = scythian_faith
+	gold = 100
+	manpower = 10000
+}
+GAN = {
+	name = "Gandhara"
+	color = { 211 159 110 }
+	capital = land_07241
+	culture = indo_aryan
+	religion = vedic_brahmanism
+	gold = 100
+	manpower = 10000
+}
+DEC = {
+	name = "Deccan"
+	color = { 100 105 224 }
+	capital = land_06779
+	culture = dravidian
+	religion = dravidian_folk
+	gold = 100
+	manpower = 10000
+}
+JDH = {
+	name = "Judah and Yehud"
+	color = { 213 111 219 }
+	capital = land_02221
+	culture = judean
+	religion = yahwism
+	gold = 100
+	manpower = 10000
+}
+ZAP = {
+	name = "Zapotec"
+	color = { 185 98 188 }
+	capital = land_13277
+	culture = zapotec
+	religion = mesoamerican_religion
+	gold = 100
+	manpower = 10000
+}
+GAR = {
+	name = "Garamantes"
+	color = { 56 73 201 }
+	capital = land_01020
+	culture = garamantes
+	religion = saharan_pastoral_faith
+	gold = 100
+	manpower = 10000
+}
+SAH = {
+	name = "Sahel and Mande lands"
+	color = { 150 33 150 }
+	capital = land_02174
+	culture = west_african
+	religion = west_african_traditional
+	gold = 100
+	manpower = 10000
+}
+TML = {
+	name = "Tamil south"
+	color = { 163 75 85 }
+	capital = land_07873
+	culture = dravidian
+	religion = dravidian_folk
+	gold = 100
+	manpower = 10000
+}
+IRR = {
+	name = "Irrawaddy and mainland Southeast Asia"
+	color = { 83 128 163 }
+	capital = land_07633
+	culture = austroasiatic
+	religion = austroasiatic_animism
 	gold = 100
 	manpower = 10000
 }
