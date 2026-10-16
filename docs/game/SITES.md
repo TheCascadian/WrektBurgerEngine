@@ -20,7 +20,9 @@ Large locations get a 3D settlement built from kit pieces. First kit: `latin` (R
 - `street`: paths from center to each gate.
 - `scatter`: weighted pieces, no overlap, count = `count + count_per_score x score`, between inner and outer radius, face center / random / radial.
 
-Yaw 0 = +Z, turning towards +X. Footprint radius = max horizontal reach x 0.8. Pieces follow terrain per placement.
+Yaw 0 = +Z, turning towards +X. Footprint radius = max horizontal reach x 0.8. Terrain: pieces named in `SiteLayout.HugsGround` (`path`, `plaza`, `rampart`) follow the ground at every vertex, so the generator cuts them into 1-2 m cells. All other pieces follow it at their feet (first 1.2 m) and sink 0.12 m. Each placement gets a stable slight tint.
+
+Fit: after layout, `SiteSystem.Fit` shrinks the whole site (down to 0.7) and shifts it (up to 4 steps) until 85% of the placements stand on the site's own location pixels; placements outside are dropped. If that fails, it may use land neighbors of the same state, down to scale 0.3 (Rome's location is only 44 pixels). Startup log shows pixel counts.
 
 ## Commands
 
@@ -46,6 +48,6 @@ Add entry to `01_sites.txt`: `key = { name = "X" location = land_NNNNN weight = 
 ## OPEN
 
 - Latin kit design (hut shapes, wall style, temple layout) is not sourced against archaeology. Unverified.
-- Location point sits on the coast for Rome: part of the ring lies over water. Placement offset not implemented.
+- Rome's own location is 44 pixels, so Rome uses neighbor locations of its state. A per-site territory list is not implemented.
 - `ShowBelow`, `MetresToWorld` untuned. No instancing: one baked mesh per site.
 - Globe mode shows no sites.

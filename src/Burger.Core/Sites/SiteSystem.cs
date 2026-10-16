@@ -68,7 +68,7 @@ public sealed class SiteSystem
             var loc = _game.World.GetLocation(d.LocationKey);
             if (loc == null) { Log.Warn($"Site '{d.Key}': unknown location '{d.LocationKey}'"); continue; }
             Sites.Add(new Site { Def = d, Location = loc });
-            Log.Info($"Site '{d.Key}': {loc.Key} at map pixel {loc.CenterX:F0},{loc.CenterY:F0} (state {loc.State?.Key})");
+            Log.Info($"Site '{d.Key}': {loc.Key} at map pixel {loc.CenterX:F0},{loc.CenterY:F0}, {loc.PixelCount} px, box {loc.MinX},{loc.MinY}..{loc.MaxX},{loc.MaxY} (state {loc.State?.Key})");
         }
     }
 
@@ -103,12 +103,45 @@ public sealed class SiteSystem
             string signature = $"{kit.Key}/{tier.Key}/{score:F2}/{_figureVersion}";
             if (signature == site.Signature && site.Model != null) continue;
             site.Kit = kit; site.Tier = tier; site.Score = score; site.Signature = signature;
-            site.Placements = SiteLayout.Build(kit, tier, score, Seed(site.Def.Key), RadiusOf);
             var loc = site.Location;
+            var placements = SiteLayout.Build(kit, tier, score, Seed(site.Def.Key), RadiusOf);
+            var (scale, ox, oz, wide) = Fit(loc, placements);
+            site.Placements = placements.Where(p => Inside(loc, p.X * scale + ox, p.Z * scale + oz, wide)).Select(p => p with { X = p.X + ox / scale, Z = p.Z + oz / scale }).ToList();
             site.Model = site.Placements.Count == 0 ? null
-                : SiteLayout.Bake("site:" + site.Def.Key, site.Placements, k => _game.Figures.Find(kit.ModelKey(k)), ground == null ? null : (x, z) => ground(loc, x, z));
-            site.Extent = site.Placements.Count == 0 ? 0 : site.Placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z));
+                : SiteLayout.Bake("site:" + site.Def.Key, site.Placements, k => _game.Figures.Find(kit.ModelKey(k)), ground == null ? null : (x, z) => ground(loc, x, z), scale);
+            site.Extent = site.Placements.Count == 0 ? 0 : site.Placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z)) * scale;
         }
+    }
+
+    /// <summary>World units per metre of a site model (a soldier is drawn up to 2 units tall, so sites are small beside them on purpose: they stand for a whole town).</summary>
+    public const float MetresToWorld = 0.05f;
+
+    /// <summary>Whether a point (metres from the location's center) lies on the location's own pixels, or with <paramref name="wide"/> on a land neighbor of the same state.</summary>
+    private bool Inside(Location loc, float x, float z, bool wide)
+    {
+        float ppm = MetresToWorld * _game.World.Map.Settings.PixelsPerUnit;
+        var at = _game.World.LocationAtPixel((int)MathF.Floor(loc.CenterX + x * ppm), (int)MathF.Floor(loc.CenterY + z * ppm));
+        if (at == loc) return true;
+        return wide && at != null && at.State == loc.State && loc.Neighbors.Any(n => n.To == at);
+    }
+
+    /// <summary>The largest scale (down from 1) and the nearest-to-center offset (metres, after scaling) at which at least 85% of the placements stand on the
+    /// site's own location: a site never spills over its borders, and a thin coastal location moves it inland. A location too small for 70% scale
+    /// (Rome is 44 pixels) may use its land neighbors of the same state: <c>Wide</c>.</summary>
+    private (float Scale, float X, float Z, bool Wide) Fit(Location loc, List<SitePlacement> placements)
+    {
+        if (placements.Count == 0) return (1, 0, 0, false);
+        float reach = placements.Max(p => MathF.Sqrt(p.X * p.X + p.Z * p.Z));
+        foreach (bool wide in new[] { false, true })
+            for (float s = 1f; s >= (wide ? 0.3f : 0.7f); s -= 0.05f)
+            {
+                float step = Math.Max(1f, reach * s / 4f);
+                var offsets = new List<(float X, float Z)>();
+                for (int i = -4; i <= 4; i++) for (int j = -4; j <= 4; j++) offsets.Add((i * step, j * step));
+                foreach (var o in offsets.OrderBy(o => o.X * o.X + o.Z * o.Z))
+                    if (placements.Count(p => Inside(loc, p.X * s + o.X, p.Z * s + o.Z, wide)) >= placements.Count * 0.85f) return (s, o.X, o.Z, wide);
+            }
+        return (0.3f, 0, 0, true);
     }
 
     private float RadiusOf(string modelKey)

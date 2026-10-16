@@ -14,8 +14,7 @@ public sealed class MapSites : IDisposable
 {
     public static bool Show = true;
 
-    /// <summary>World units per metre of a site model (a soldier is drawn up to 2 units tall, so sites are small beside them on purpose: they stand for a whole town).</summary>
-    public const float MetresToWorld = 0.05f;
+    public const float MetresToWorld = SiteSystem.MetresToWorld;
 
     /// <summary>Sites appear when the camera is lower than this (the same measure as <see cref="Viewport.HeightOf"/>).</summary>
     public const float ShowBelow = 90f;

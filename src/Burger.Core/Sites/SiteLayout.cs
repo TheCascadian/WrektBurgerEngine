@@ -103,29 +103,56 @@ public static class SiteLayout
         return r * 0.8f;
     }
 
-    /// <summary>One model of all the placements. <paramref name="ground"/> gives the height in metres of the terrain at an offset from the center (null: flat).</summary>
-    public static FigureModel Bake(string key, IReadOnlyList<SitePlacement> placements, Func<string, FigureModel?> piece, Func<float, float, float>? ground = null)
+    /// <summary>Pieces that lie on the ground and follow it vertex by vertex (the generator cuts them into small cells); all others keep their shape and only their foot follows.</summary>
+    public static bool HugsGround(string piece) => piece is "path" or "plaza" or "rampart";
+
+    /// <summary>One model of all the placements, every position multiplied by <paramref name="scale"/> first (a site shrunk to fit its location).
+    /// <paramref name="ground"/> gives the height in metres of the terrain at an offset from the center (null: flat). Ground pieces follow it at every vertex;
+    /// other pieces follow it at their feet (the first 1.2 m of height) and sink a little, so none floats on a slope. Each house gets its own slight tint.</summary>
+    public static FigureModel Bake(string key, IReadOnlyList<SitePlacement> placements, Func<string, FigureModel?> piece, Func<float, float, float>? ground = null, float scale = 1f)
     {
         var parts = new List<FigureMesh>();
         Rig? rig = null;
-        int vertices = 0;
+        int vertices = 0, n = 0;
         foreach (var p in placements)
         {
+            n++;
             var model = piece(p.Piece);
             if (model == null) continue;
             if (vertices + model.Mesh.VertexCount > MaxVertices) break;
             rig ??= model.Rig;
             var m = model.Mesh;
-            float lift = ground?.Invoke(p.X, p.Z) ?? 0;
-            var xf = Matrix4x4.CreateRotationY(p.Yaw) * Matrix4x4.CreateTranslation(p.X, lift, p.Z);
+            float cx = p.X * scale, cz = p.Z * scale;
+            float centerLift = ground?.Invoke(cx, cz) ?? 0;
+            bool hug = HugsGround(p.Piece);
+            var xf = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateRotationY(p.Yaw) * Matrix4x4.CreateTranslation(cx, 0, cz);
+            // a stable tint per placement: brightness and a warm or cool lean
+            int h = Seed(p.Piece, n) & 0xffff;
+            float bright = hug ? 1f : 0.88f + (h % 100) / 100f * 0.22f, warm = hug ? 0f : ((h / 100) % 21 - 10) / 10f * 0.05f;
+            var colors = (byte[])m.Colors.Clone();
+            if (!hug)
+                for (int c = 0; c < colors.Length; c += 4)
+                {
+                    colors[c] = (byte)Math.Clamp(colors[c] * (bright + warm), 0, 255);
+                    colors[c + 1] = (byte)Math.Clamp(colors[c + 1] * bright, 0, 255);
+                    colors[c + 2] = (byte)Math.Clamp(colors[c + 2] * (bright - warm), 0, 255);
+                }
             var baked = new FigureMesh
             {
-                Positions = new Vector3[m.VertexCount], Normals = new Vector3[m.VertexCount], Colors = m.Colors, Weights = m.Weights,
+                Positions = new Vector3[m.VertexCount], Normals = new Vector3[m.VertexCount], Colors = colors, Weights = m.Weights,
                 Joints = m.Joints, Indices = m.Indices,
             };
             for (int i = 0; i < m.VertexCount; i++)
             {
-                baked.Positions[i] = Vector3.Transform(m.Positions[i], xf);
+                var v = Vector3.Transform(m.Positions[i], xf);
+                float lift = 0;
+                if (ground != null)
+                {
+                    float own = ground(v.X, v.Z);
+                    float w = hug ? 1f : Math.Clamp(1f - m.Positions[i].Y / 1.2f, 0f, 1f);
+                    lift = centerLift + (own - centerLift) * w - (hug ? 0f : 0.12f);
+                }
+                baked.Positions[i] = new Vector3(v.X, v.Y + lift, v.Z);
                 baked.Normals[i] = Vector3.TransformNormal(m.Normals[i], xf);
             }
             parts.Add(baked);
@@ -134,4 +161,6 @@ public static class SiteLayout
         if (rig == null) throw new InvalidOperationException("No site pieces to bake.");
         return new FigureModel(key, rig, FigureMesh.Merge(parts));
     }
+
+    private static int Seed(string piece, int n) => (int)(SiteSystem.Seed(piece) * 31u + (uint)n * 2654435761u);
 }

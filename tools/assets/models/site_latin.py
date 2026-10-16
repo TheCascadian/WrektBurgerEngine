@@ -10,9 +10,10 @@ import math
 from gear_lib import *
 
 W = [("root", 1.0)]
-THATCH = (.62, .50, .28, 1); THATCH_D = (.50, .40, .22, 1); DAUB = (.78, .70, .55, 1); DAUB_D = (.66, .58, .44, 1); TIMBER = (.40, .28, .16, 1)
-TILE = (.70, .35, .22, 1); TILE_D = (.58, .28, .18, 1); TUFF = (.62, .58, .50, 1); TUFF_D = (.50, .46, .40, 1); EARTH = (.40, .34, .21, 1); EARTH_D = (.30, .27, .17, 1)
-PLASTER = (.86, .82, .72, 1); RED = (.62, .20, .14, 1); STRAW = (.74, .64, .38, 1); GRASS = (.40, .46, .24, 1); DARK = (.16, .11, .07, 1)
+THATCH = (.38, .32, .21, 1); THATCH_D = (.29, .24, .16, 1); DAUB = (.62, .52, .38, 1); DAUB_D = (.50, .42, .31, 1); TIMBER = (.27, .17, .09, 1)
+TILE = (.62, .27, .19, 1); TILE_D = (.48, .21, .15, 1); TUFF = (.56, .58, .60, 1); TUFF_D = (.42, .44, .47, 1); EARTH = (.33, .38, .19, 1); EARTH_D = (.24, .20, .12, 1)
+PLASTER = (.80, .77, .68, 1); RED = (.66, .14, .10, 1); STRAW = (.78, .66, .36, 1); GRASS = (.40, .46, .24, 1); DARK = (.10, .07, .05, 1)
+HALL_WALL = (.60, .25, .17, 1)
 V = lambda x, y, z: np.array((x, y, z), float)
 
 
@@ -162,7 +163,7 @@ def hall():
     """Long hall (the Regia): a tiled gabled house on a stone base with a porch."""
     m = Mesh(); X, Z = 6.0, 3.6
     m.box((-X, 0, -Z), (X, .5, Z), TUFF, W)
-    m.box((-X + .1, .5, -Z + .1), (X - .1, 3.0, Z - .1), PLASTER, W)
+    m.box((-X + .1, .5, -Z + .1), (X - .1, 3.0, Z - .1), HALL_WALL, W)
     for x in (-X + .4, -X / 2, 0, X / 2, X - .4): m.box((x - .13, .5, Z - .1), (x + .13, 3.0, Z + .35), TIMBER, W)
     gable(m, -X, X, -Z, Z, 3.0, 5.6, .6, TILE, TILE_D, RED)
     m.box((-X - .6, 5.55, -.08), (X + .6, 5.65, .08), TILE_D, W)
@@ -171,35 +172,42 @@ def hall():
 
 # ------------------------------------------------------------------------------------------ ground and defense
 def path():
-    """A strip of packed earth, 8 m long, 3 m wide, along x."""
+    """A strip of packed earth, 8 m long, 3 m wide, along x, cut every metre so it follows the terrain."""
     m = Mesh()
-    m.box((-4, 0, -1.5), (4, .05, 1.5), (.46, .40, .28, 1), W)
+    for i in range(8):
+        x0 = -4 + i
+        for z0 in (-1.5, 0):
+            m.quad(V(x0, .06, z0), V(x0 + 1, .06, z0), V(x0 + 1, .06, z0 + 1.5), V(x0, .06, z0 + 1.5), V(0, 1, 0), (.40, .32, .20, 1) if (i + (z0 < 0)) % 2 else (.35, .28, .18, 1), W)
     return m
 
 
 def plaza():
-    """Beaten-earth open ground, 18 m square (a forum or market)."""
+    """Beaten-earth open ground, 18 m square (a forum or market), 2 m paving cells in two tones so it follows the terrain."""
     m = Mesh()
-    m.box((-9, 0, -9), (9, .06, 9), (.50, .44, .32, 1), W)
-    m.box((-9, 0, -9), (9, .09, -8.6), TUFF_D, W); m.box((-9, 0, 8.6), (9, .09, 9), TUFF_D, W)
-    m.box((-9, 0, -9), (-8.6, .09, 9), TUFF_D, W); m.box((8.6, 0, -9), (9, .09, 9), TUFF_D, W)
+    for i in range(9):
+        for j in range(9):
+            x0, z0 = -9 + 2 * i, -9 + 2 * j
+            edge = i in (0, 8) or j in (0, 8)
+            col = TUFF_D if edge else ((.42, .34, .21, 1) if (i + j) % 2 else (.37, .30, .19, 1))
+            m.quad(V(x0, .07, z0), V(x0 + 2, .07, z0), V(x0 + 2, .07, z0 + 2), V(x0, .07, z0 + 2), V(0, 1, 0), col, W)
     return m
 
 
 def rampart(palisade=True):
-    """8 m of earthen bank (agger) with a ditch in front and a timber palisade on top, along x, outside toward +Z."""
+    """8 m of grassed earthen bank (agger) with a ditch in front and a timber palisade on top, along x, outside toward +Z. Cut into 2 m slices so it follows the terrain."""
     m = Mesh()
-    for x0, x1 in ((-4, 4),):
-        prof = [(-3.6, 0), (-2.4, 1.2), (-1.2, 3.0), (.2, 3.0), (1.6, 1.0), (2.6, -.4), (3.8, -.3)]
+    prof = [(-3.6, 0), (-2.4, 1.2), (-1.2, 3.0), (.2, 3.0), (1.6, 1.0), (2.6, -.4), (3.8, -.3)]
+    for x0 in (-4, -2, 0, 2):
+        x1 = x0 + 2
         for (z0, y0), (z1, y1) in zip(prof, prof[1:]):
             col = EARTH if y1 >= y0 else EARTH_D
-            m.quad(V(x0, y0, z0), V(x1, y0, z0), V(x1, y1, z1), V(x0, y1, z1), V(0, 1, 0) + V(0, 0, z1 - z0) * 0, col, W)
-        m.box((x0, -.5, -3.6), (x1, .01, 3.8), EARTH_D, W) if False else None
+            m.quad(V(x0, y0, z0), V(x1, y0, z0), V(x1, y1, z1), V(x0, y1, z1), V(0, 1, 0), col, W)
+        if palisade:
+            m.box((x0, 3.9, -.2), (x1, 4.0, .26), (.22, .14, .08, 1), W)
     if palisade:
         for i in range(17):
             x = -4 + i * .5
             m.box((x - .13, 3.0, -.1), (x + .13, 5.0 - .25 * (i % 3), .16), TIMBER, W)
-        m.box((-4, 3.9, -.2), (4, 4.0, .26), (.30, .20, .11, 1), W)
     return m
 
 
@@ -227,7 +235,7 @@ def tree():
 
 PIECES = [("hut_round", hut_round, 220), ("hut_oval", hut_oval, 220), ("house_timber", house_timber, 300), ("house_tile", house_tile, 300),
           ("courtyard_house", courtyard_house, 400), ("granary", granary, 200), ("shrine", shrine, 300), ("temple_tuscan", temple_tuscan, 700),
-          ("temple_round", temple_round, 250), ("hall", hall, 300), ("path", path, 40), ("plaza", plaza, 100), ("rampart", rampart, 300),
+          ("temple_round", temple_round, 250), ("hall", hall, 300), ("path", path, 100), ("plaza", plaza, 400), ("rampart", rampart, 600),
           ("gate_tower", gate_tower, 300), ("tree", tree, 250)]
 
 if __name__ == "__main__":
