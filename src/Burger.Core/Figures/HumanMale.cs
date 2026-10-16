@@ -56,7 +56,7 @@ public static partial class HumanMale
         var model = new FigureModel(Key, rig, BuildMesh(rig, Ancestry.Default));
         var solver = new Solver(rig);
         foreach (var clip in new[] { solver.Idle(), solver.Locomotion(Walk, WalkGait), solver.Locomotion(Run, RunGait),
-            solver.Gag(Scratch, 8f, 0.15f, 0.33f, 0, 0), solver.Gag(PickNose, 8f, 0, 0, 0.12f, 0.64f), solver.Gag(ScratchThenPick, 16f, 0.06f, 0.20f, 0.20f, 0.80f) }.Concat(FireStyles.Select(solver.FireClip)).Concat(solver.Combat()).Append(solver.SpearAttackClip()).Concat(solver.CarryClips()))
+            solver.Gag(Scratch, 8f, 0.15f, 0.33f, 0, 0), solver.Gag(PickNose, 8f, 0, 0, 0.12f, 0.64f), solver.Gag(ScratchThenPick, 16f, 0.06f, 0.20f, 0.20f, 0.80f) }.Concat(FireStyles.Select(solver.FireClip)).Concat(solver.Combat()).Append(solver.SpearAttackClip()).Append(solver.SpearLungeClip()).Concat(solver.CarryClips()))
             model.Clips[clip.Name] = clip;
         return model;
     }
