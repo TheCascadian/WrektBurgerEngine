@@ -36,6 +36,8 @@ public sealed class DivisionTemplate
     public int BuildDays;
     /// <summary>Optional: only this country (tag) may build it. Empty = everyone.</summary>
     public string OwnerTag = "";
+    /// <summary>Optional gear kit shown on the map (<c>kit = heavy</c>): the figure wears the owner's <c>TAG_KIT</c> uniform if there is one.</summary>
+    public string Kit = "";
     /// <summary>Equipment the whole division needs (production feature).</summary>
     public Dictionary<string, double> Equipment = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>Made in the division designer during the game (stored in the save, not in the game files).</summary>

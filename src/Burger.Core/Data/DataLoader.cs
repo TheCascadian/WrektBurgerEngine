@@ -205,6 +205,7 @@ public static class DataLoader
                 Key = n.Key,
                 Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key),
                 OwnerTag = n.GetString("owner", "")!,
+                Kit = n.GetString("kit", "")!,
             };
             var units = n.Get("units") ?? n.Get("regiments") ?? n.Get("battalions");
             if (units == null)

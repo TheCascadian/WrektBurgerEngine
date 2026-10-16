@@ -108,6 +108,10 @@ Worship of Ahuramazda, named in Darius's inscriptions (whether this is the same 
 
 Common Persian infantry: soft felt cap (tiara), tunic with sleeves, trousers, soft shoes, wicker shield, short spear, bow and quiver, akinakes (short dagger). Elite: scale or quilted body armor under the tunic, more ornament. Median and Persian cavalry: javelins, bow, spear. Game version (GAME): saffron tunic, leather, soft cap, soft boots, spear and wicker-style shield.
 
+**Heavy infantry kit (GAME and OPEN):** the template `heavy_infantry_division` (`kit = heavy`, ACH only, unit type `heavy_infantry`: more organization, defense, shock and morale, slower) is drawn in its own gear next to the standard divisions; ACH starts with 10 standard and 6 heavy divisions. Gear (`gear_*_ach_heavy.glb`, `tools/assets/models/gear_persian_heavy.py`): saffron coat under iron scale with shoulder caps and a gold boss, a scale skirt, pointed iron cap with neck and ear flaps, akinakes in a gold-banded sheath on the right hip; spear, wicker shield and soft boots as the standard kit. OPEN: scale-armored Persian infantry is attested, but this cut, the iron cap and the colors are design choices; the heavy stats are not sourced.
+
+![ACH heavy infantry, male and female](img/soldiers-ach_heavy.png)
+
 ### OPEN
 
 - The country name "Achaemenid Empire" is a placeholder; the game could instead use "Persia" or "Parsa".
@@ -154,6 +158,13 @@ Worn in the game for ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT MAC and ROM (`g
 - Colors: shield faces use each country's map color; chiton colors vary (Sparta crimson, Athens and most others undyed linen, Thessaly and Crete wool tones). OPEN: these are design choices. Real polis shield devices were painted; none are modeled. Sparta's crimson is historical, the rest are not sourced. The Roman set follows the Etruscan and Greek-influenced "hoplite phase" of the Roman army; I did not look up a source for it (OPEN).
 - **Sparta (SPA) differs** (`tools/assets/models/gear_spartan_egyptian.py`): crimson tunic with a crimson cloak down the back, no body armor, bronze pilos cap, bare feet with ankle cords; sword, dory and aspis as the other Greeks. OPEN: the Spartan outfit is the classic image; whether Spartans went unarmored in 500 BCE is not sourced here.
 - Not modeled: the engine's slots hold one spear and one shield, so no separate cloak, no javelin, no bow, no sling. The sword is attached to the belt piece and stays sheathed. ETR (Etruscan) has no set yet.
+
+Renders (male and female, from `--figure-variants`):
+
+![Athens, Greek hoplite](img/soldiers-ath.png)
+![Macedon](img/soldiers-mac.png)
+![Rome, early Republic](img/soldiers-rom.png)
+![Sparta](img/soldiers-spa.png)
 
 ### Common to all Greek cities (HIST)
 
@@ -817,3 +828,5 @@ Built by assigning owner and cores on existing states, so each keeps the culture
 Worn in the game (`gear_*_egy.glb`, built by `tools/assets/models/gear_spartan_egyptian.py`): linen corselet with shoulder straps and a broad collar in blue, gold and turquoise; pleated linen kilt with a stiff front apron and gold hem; broad belt with a gold plate and a curved khopesh in a sheath on the left hip; striped blue and linen headcloth with gold brow band and short lappets; papyrus sandals; spear with a bronze leaf head; tall arch-topped hide shield with a wooden rim. No firearm.
 
 OPEN: colors, the hide patches and the corselet are design choices, inferred from general Saite-period (Late Period) soldier images and the Herodotus linen corselet tradition; no source was looked up. Greek mercenaries in Egyptian service are not modeled. The sword stays sheathed.
+
+![Egyptian soldiers](img/soldiers-egy.png)

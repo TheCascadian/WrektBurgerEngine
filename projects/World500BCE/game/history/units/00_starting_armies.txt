@@ -4,7 +4,8 @@
 ACH = {
 	army = {
 		name = "1st Army"
-		division = { template = infantry_division location = land_17558 count = 16 }
+		division = { template = infantry_division location = land_17558 count = 10 }
+		division = { template = heavy_infantry_division location = land_17558 count = 6 }
 	}
 }
 ATH = {

@@ -57,6 +57,7 @@ public sealed class FigureSystem
     public FigureModel SoldierFor(Division d)
     {
         var tag = d.Owner.Tag;
+        if (d.Template.Kit.Length > 0 && Uniforms.Find(tag + "_" + d.Template.Kit) != null) tag += "_" + d.Template.Kit;
         var u = Uniforms.Find(tag);
         string? key = u?.Look;
         if (key == null)
