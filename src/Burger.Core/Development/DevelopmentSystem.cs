@@ -354,7 +354,9 @@ public sealed class DevelopmentSystem
             foreach (var o in links[s.Index]) if (p[o.Index] > best) best = p[o.Index];
             if (best <= 0) continue;
             if (_literacy[s.Index] < i.MinLiteracy || _urban[s.Index] < i.MinUrbanization || _level[s.Index] < i.MinDevelopment) continue;
-            delta[s.Index] = (float)(i.SpreadPerMonth * best);
+            // receptivity: towns and schooled societies adopt far faster than scattered tribes
+            double receptive = Math.Clamp(Math.Max(_urban[s.Index] / 0.08, _level[s.Index] / 8.0), 0.1, 1.0);
+            delta[s.Index] = (float)(i.SpreadPerMonth * best * Math.Max(0.03, receptive));
         }
         for (int k = 0; k < p.Length; k++) if (delta[k] > 0) p[k] = Math.Min(1f, p[k] + delta[k]);
     }
