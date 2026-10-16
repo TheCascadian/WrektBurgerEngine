@@ -97,6 +97,8 @@ public static class Uniforms
         ["SYR"] = Hoplite(new(0.84f, 0.80f, 0.68f)), ["PNT"] = Hoplite(new(0.59f, 0.53f, 0.39f)), ["MAC"] = Hoplite(new(0.47f, 0.27f, 0.20f)),
         // Rome: red wool tunic, bronze breastplate and helmet (same generator)
         ["ROM"] = Hoplite(new(0.55f, 0.16f, 0.13f)),
+        // Egypt: linen corselet and kilt, striped headcloth (gear_*_egy.glb, tools/assets/models/gear_spartan_egyptian.py)
+        ["EGY"] = Hoplite(new(0.88f, 0.85f, 0.74f)),
         // green-olive, crested helmet
         ["BRA"] = new(new(0.40f, 0.43f, 0.25f), new(0.36f, 0.40f, 0.24f), new(0.24f, 0.15f, 0.09f), new(0.32f, 0.31f, 0.20f),
             new(0.32f, 0.38f, 0.24f), HeadgearStyle.Adrian, new(0.34f, 0.37f, 0.22f), new(0.40f, 0.38f, 0.26f)),

@@ -152,7 +152,8 @@ Worn in the game for ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT MAC and ROM (`g
 - **Greek hoplite:** linen linothorax with two layers of pteryges (hanging strips) and shoulder flaps; short chiton skirt; Corinthian-type bronze helmet with cheek guards, nasal bar and a horsehair crest; bronze greaves over sandals; xiphos in a scabbard on the left hip; dory spear (bronze butt spike, leaf head) held in the right hand; aspis (large round shield, bronze rim, boss) on the left forearm. No firearm.
 - **Roman (ROM), early Republic Italic hoplite:** red wool tunic, bronze breastplate with three round plates, lower helmet with a short red crest comb, bronze greaves over closed leather shoes, short sword on the right hip, hasta (shorter spear), clipeus (smaller round shield).
 - Colors: shield faces use each country's map color; chiton colors vary (Sparta crimson, Athens and most others undyed linen, Thessaly and Crete wool tones). OPEN: these are design choices. Real polis shield devices were painted; none are modeled. Sparta's crimson is historical, the rest are not sourced. The Roman set follows the Etruscan and Greek-influenced "hoplite phase" of the Roman army; I did not look up a source for it (OPEN).
-- Not modeled: the engine's slots hold one spear and one shield, so no cloak, no javelin, no bow, no sling. The sword is attached to the belt piece and stays sheathed. ETR (Etruscan) has no set yet.
+- **Sparta (SPA) differs** (`tools/assets/models/gear_spartan_egyptian.py`): crimson tunic with a crimson cloak down the back, no body armor, bronze pilos cap, bare feet with ankle cords; sword, dory and aspis as the other Greeks. OPEN: the Spartan outfit is the classic image; whether Spartans went unarmored in 500 BCE is not sourced here.
+- Not modeled: the engine's slots hold one spear and one shield, so no separate cloak, no javelin, no bow, no sling. The sword is attached to the belt piece and stays sheathed. ETR (Etruscan) has no set yet.
 
 ### Common to all Greek cities (HIST)
 
@@ -809,3 +810,10 @@ Built by assigning owner and cores on existing states, so each keeps the culture
 | SAH | Sahel and Mande lands | 2,527,983 | west_african | west_african_traditional | - |
 | TML | Tamil south | 1,245,693 | dravidian | dravidian_folk | - |
 | IRR | Irrawaddy and mainland Southeast Asia | 4,490,485 | austroasiatic | austroasiatic_animism | - |
+
+
+## EGY equipment (GAME and OPEN)
+
+Worn in the game (`gear_*_egy.glb`, built by `tools/assets/models/gear_spartan_egyptian.py`): linen corselet with shoulder straps and a broad collar in blue, gold and turquoise; pleated linen kilt with a stiff front apron and gold hem; broad belt with a gold plate and a curved khopesh in a sheath on the left hip; striped blue and linen headcloth with gold brow band and short lappets; papyrus sandals; spear with a bronze leaf head; tall arch-topped hide shield with a wooden rim. No firearm.
+
+OPEN: colors, the hide patches and the corselet are design choices, inferred from general Saite-period (Late Period) soldier images and the Herodotus linen corselet tradition; no source was looked up. Greek mercenaries in Egyptian service are not modeled. The sword stays sheathed.
