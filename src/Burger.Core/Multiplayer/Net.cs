@@ -243,10 +243,20 @@ public sealed class TcpTransport : ITransport
         catch { try { client.Close(); } catch { } throw; }
     }
 
+    /// <summary>Joins through the relay: its room is in the join code, and the TLS channel and key confirmation still run end to end with the host.</summary>
+    public static TcpTransport ConnectRelay(string relayHost, int relayPort, long room, byte[] joinSecret, int timeoutMs = 5000)
+    {
+        var c = new TcpClient();
+        if (!c.ConnectAsync(relayHost, relayPort).Wait(timeoutMs)) { c.Dispose(); throw new IOException("Could not reach the relay"); }
+        var hello = Encoding.ASCII.GetBytes($"J {room}\n");
+        c.GetStream().Write(hello, 0, hello.Length);
+        return Secure(c, false, null, joinSecret);
+    }
+
     public static TcpTransport Connect(string host, int port, byte[] joinSecret, int timeoutMs = 5000)
     {
         var c = new TcpClient();
-        if (!c.ConnectAsync(host, port).Wait(timeoutMs)) { c.Dispose(); throw new IOException($"Could not reach {host}:{port}"); }
+        if (!c.ConnectAsync(host, port).Wait(timeoutMs)) { c.Dispose(); throw new IOException("Could not reach the host"); }
         return Secure(c, false, null, joinSecret);
     }
 
@@ -276,7 +286,7 @@ public sealed class TcpHostListener : IDisposable
     private readonly TcpListener _listener;
     private readonly ConcurrentQueue<ITransport> _accepted = new();
     private readonly X509Certificate2 _cert = SecureChannel.NewCertificate();
-    private readonly Dictionary<IPAddress, (int Active, List<DateTime> Failures)> _ips = new();
+    private readonly Dictionary<string, (int Active, List<DateTime> Failures)> _ips = new();
     private volatile bool _run = true;
     private int _pending;
     public const int MaxPending = 16, MaxPerAddress = 3, MaxFailures = 5;
@@ -302,23 +312,30 @@ public sealed class TcpHostListener : IDisposable
                 try
                 {
                     var c = _listener.AcceptTcpClient();
-                    var ip = ((IPEndPoint)c.Client.RemoteEndPoint!).Address;
-                    if (!Admit(ip)) { Refused++; c.Close(); continue; }
-                    new Thread(() =>
-                    {
-                        try
-                        {
-                            var t = TcpTransport.Secure(c, true, Candidates, null, _cert);
-                            if (!Claim(t)) { t.Close(); throw new InvalidDataException("token already in use or revoked"); }
-                            _accepted.Enqueue(t); Done(ip, false);
-                        }
-                        catch { Done(ip, true); }
-                    }) { IsBackground = true, Name = "mp-handshake" }.Start();
+                    Handshake(c, ((IPEndPoint)c.Client.RemoteEndPoint!).Address.ToString());
                 }
                 catch { if (!_run) break; }
             }
         }) { IsBackground = true, Name = "mp-accept" }.Start();
     }
+
+    private void Handshake(TcpClient c, string ip)
+    {
+        if (!Admit(ip)) { Refused++; c.Close(); return; }
+        new Thread(() =>
+        {
+            try
+            {
+                var t = TcpTransport.Secure(c, true, Candidates, null, _cert);
+                if (!Claim(t)) { t.Close(); throw new InvalidDataException("token already in use or revoked"); }
+                _accepted.Enqueue(t); Done(ip, false);
+            }
+            catch { Done(ip, true); }
+        }) { IsBackground = true, Name = "mp-handshake" }.Start();
+    }
+
+    /// <summary>A connection that came through the relay. <paramref name="key"/> is the relay's opaque stand-in for the joiner's address (flood limits count per key).</summary>
+    public void AdmitRelayed(TcpClient c, string key) => Handshake(c, "relay:" + key);
 
     private IReadOnlyList<(string Label, byte[] Psk)> Candidates()
     {
@@ -368,7 +385,7 @@ public sealed class TcpHostListener : IDisposable
     /// <summary>Replaces the session secret (old join codes stop working; connected players stay).</summary>
     public byte[] RotateSessionSecret() { lock (_tokens) Secret = JoinCode.NewSecret(); return Secret; }
 
-    private bool Admit(IPAddress ip)
+    private bool Admit(string ip)
     {
         lock (_ips)
         {
@@ -383,7 +400,7 @@ public sealed class TcpHostListener : IDisposable
         }
     }
 
-    private void Done(IPAddress ip, bool failed)
+    private void Done(string ip, bool failed)
     {
         lock (_ips)
         {
@@ -436,6 +453,27 @@ public static class JoinCode
             if (i > 0 && i % 5 == 0) sb.Append('-');
         }
         return sb.ToString();
+    }
+
+    /// <summary>A code that names a relay room (40 bits) instead of an address: the first address byte is 0, which no real host has. Holds no IP at all.</summary>
+    public static string MakeRelay(long room, byte[] secret)
+    {
+        int ip = (int)(room >> 16) & 0xFFFFFF; // first byte zero
+        return Make(new IPAddress(new[] { (byte)0, (byte)(ip >> 16), (byte)(ip >> 8), (byte)ip }), (int)(room & 0xFFFF), secret);
+    }
+
+    /// <summary>Parses either kind of code. <paramref name="room"/> is non-zero for a relay code (host and port are then empty).</summary>
+    public static bool TryParseAny(string code, out string host, out int port, out long room, out byte[] secret)
+    {
+        room = 0;
+        if (!TryParse(code, out host, out port, out secret)) { host = ""; return false; }
+        if (host.StartsWith("0."))
+        {
+            var o = host.Split('.');
+            room = ((long)int.Parse(o[1]) << 32) | ((long)int.Parse(o[2]) << 24) | ((long)int.Parse(o[3]) << 16) | (uint)port;
+            host = ""; port = 0;
+        }
+        return true;
     }
 
     public static bool TryParse(string code, out string host, out int port, out byte[] secret)
