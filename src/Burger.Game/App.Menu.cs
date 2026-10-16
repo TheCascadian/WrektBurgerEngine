@@ -14,6 +14,7 @@ public sealed partial class App
 {
     private MenuPage _menuPage = MenuPage.Home;
     private bool _menuSettings;
+    private bool _steamLogOpen;
 
     private void DrawMenuPages(Game game, MapRenderer map, CameraController cam)
     {
@@ -150,6 +151,32 @@ public sealed partial class App
         if (Big(x, ref y, w, "Join a game", "Paste a code from the host")) _menuPage = MenuPage.Join;
         if (_mpMessage.Length > 0) y += Gui.Wrapped(_mpMessage, x, y, w, 15, Gui.Gold) + 10 * s;
         if (Back(x, y, w, "main menu")) { _menuPage = MenuPage.Home; _mpMessage = ""; }
+        y += 44 * s;
+        DrawSteamStatus(x, ref y, w);
+    }
+
+    /// <summary>One line on whether Steam is connected, with a collapsible log that explains failures.</summary>
+    private void DrawSteamStatus(float x, ref float y, float w)
+    {
+        float s = Gui.Scale;
+        bool ok = SteamService.Init() && SteamService.Available;
+        string relay = SteamService.RelayState(out bool relayOk);
+        var color = !ok ? Gui.Bad : relayOk ? Gui.Good : Gui.Gold;
+        string head = !ok ? "Steam: not connected" : relayOk ? $"Steam: connected as {SteamService.PersonaName}" : $"Steam: connected, {relay}";
+        Gui.Label(head, x, y + 4 * s, 15, color, FontKind.Bold);
+        float bw = 84 * s;
+        if (!_menuSettings && Gui.Button(new Rectangle(x + w - bw, y, bw, 26 * s), _steamLogOpen ? "Hide log" : "Show log", true, "Steam connection details, for troubleshooting", false, 14)) _steamLogOpen = !_steamLogOpen;
+        y += 30 * s;
+        if (!ok) y += Gui.Wrapped(SteamService.Problem, x, y, w, 13, Gui.TextDim) + 4 * s;
+        if (!_steamLogOpen) return;
+        float bh = 26 * s, half = (w - 6 * s) / 2;
+        if (!_menuSettings && Gui.Button(new Rectangle(x, y, half, bh), "Retry", !ok, ok ? "Steam is already connected" : "Check again after starting Steam", false, 14)) SteamService.Retry();
+        if (!_menuSettings && Gui.Button(new Rectangle(x + half + 6 * s, y, half, bh), "Copy log", true, "Copy the log to send to the developer", false, 14))
+            Raylib.SetClipboardText(string.Join("\n", SteamService.LogLines));
+        y += bh + 6 * s;
+        var lines = SteamService.LogLines;
+        foreach (var line in lines.Skip(Math.Max(0, lines.Length - 12)))
+            y += Gui.Wrapped(line, x, y, w, 12, line.Contains("refused") || line.Contains("failed") || line.Contains("not load") || line.Contains("unavailable") ? Gui.Bad : Gui.TextDim) + 2 * s;
     }
 
     private void DrawPageHost(Game game, MapRenderer map, CameraController cam, float x, float y, float w, Rectangle panel)

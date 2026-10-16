@@ -21,6 +21,15 @@ public static class SteamService
     public static string PersonaName { get; private set; } = "";
     private static bool _tried;
 
+    private static readonly List<string> _log = new();
+    /// <summary>Timestamped diagnostics for the multiplayer screen, newest last.</summary>
+    public static string[] LogLines { get { lock (_log) return _log.ToArray(); } }
+    public static void Note(string text)
+    {
+        lock (_log) { _log.Add(DateTime.Now.ToString("HH:mm:ss ") + text); if (_log.Count > 80) _log.RemoveAt(0); }
+    }
+    public static string AppIdUsed { get; private set; } = "";
+
     public static bool Init()
     {
         if (_tried) return Available;
@@ -28,24 +37,66 @@ public static class SteamService
         try
         {
             string idFile = Path.Combine(AppContext.BaseDirectory, "steam_appid.txt");
-            if (!File.Exists(idFile) && Environment.GetEnvironmentVariable("SteamAppId") == null) Environment.SetEnvironmentVariable("SteamAppId", TestAppId.ToString());
-            if (!SteamAPI.Init()) { Problem = "Steam is not running or you are not signed in. Start Steam to play over the internet."; return false; }
+            string env = Environment.GetEnvironmentVariable("SteamAppId") ?? "";
+            if (File.Exists(idFile)) { AppIdUsed = File.ReadAllText(idFile).Trim(); Note($"App ID {AppIdUsed} (from steam_appid.txt)"); }
+            else if (env.Length > 0) { AppIdUsed = env; Note($"App ID {env} (from SteamAppId)"); }
+            else { AppIdUsed = TestAppId.ToString(); Environment.SetEnvironmentVariable("SteamAppId", AppIdUsed); Note($"App ID {AppIdUsed} (built-in test app; no steam_appid.txt next to the game)"); }
+            Note("Starting Steam API");
+            var r = SteamAPI.InitEx(out string msg);
+            if (r != ESteamAPIInitResult.k_ESteamAPIInitResult_OK)
+            {
+                Note($"Steam API refused: {r}" + (string.IsNullOrWhiteSpace(msg) ? "" : " - " + msg));
+                Problem = r == ESteamAPIInitResult.k_ESteamAPIInitResult_NoSteamClient
+                    ? "Steam is not running or you are not signed in. Start Steam, then press Retry."
+                    : "Steam would not start (" + r.ToString().Replace("k_ESteamAPIInitResult_", "") + "). See the log.";
+                return false;
+            }
+            Note("Steam API started");
             SteamNetworkingUtils.InitRelayNetworkAccess();
             MyId = SteamUser.GetSteamID().m_SteamID;
             PersonaName = SteamFriends.GetPersonaName() ?? "";
+            Note($"Signed in as {PersonaName} (account {MyId})");
             Available = true;
             Problem = "";
         }
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
-            Problem = "The Steam library is missing from this copy of the game."; Burger.Core.Log.Warn($"Steam library load: {e.Message}", "multiplayer");
+            Problem = "The Steam library is missing from this copy of the game.";
+            Note($"Steam library did not load ({e.GetType().Name}): " + (e.Message.Split('\n')[0]));
+            Note("Expected steam_api64.dll (Windows), libsteam_api.so (Linux) or libsteam_api.dylib (macOS) next to the game");
         }
         catch (Exception e)
         {
             Burger.Core.Log.Warn($"Steam could not start ({e.GetType().Name})", "multiplayer");
             Problem = "Steam could not be started.";
+            Note($"Unexpected Steam error: {e.GetType().Name}");
         }
         return Available;
+    }
+
+    /// <summary>Try again after the player started Steam.</summary>
+    public static void Retry() { if (Available) return; _tried = false; Note("Retrying"); Init(); }
+
+    private static ESteamNetworkingAvailability _lastRelay = (ESteamNetworkingAvailability)999;
+    /// <summary>State of Steam's relay network (what carries the game): ok is true when ready.</summary>
+    public static string RelayState(out bool ok)
+    {
+        ok = false;
+        if (!Available) return "not checked";
+        var a = SteamNetworkingUtils.GetRelayNetworkStatus(out var st);
+        string text;
+        switch (a)
+        {
+            case ESteamNetworkingAvailability.k_ESteamNetworkingAvailability_Current: ok = true; text = "relay network ready"; break;
+            case ESteamNetworkingAvailability.k_ESteamNetworkingAvailability_Attempting:
+            case ESteamNetworkingAvailability.k_ESteamNetworkingAvailability_Waiting:
+            case ESteamNetworkingAvailability.k_ESteamNetworkingAvailability_NeverTried:
+            case ESteamNetworkingAvailability.k_ESteamNetworkingAvailability_Previously:
+                text = "relay network starting"; break;
+            default: text = "relay network unavailable (" + a.ToString().Replace("k_ESteamNetworkingAvailability_", "") + ")"; break;
+        }
+        if (a != _lastRelay) { _lastRelay = a; Note("Steam " + text + (string.IsNullOrWhiteSpace(st.m_debugMsg) ? "" : ": " + st.m_debugMsg)); }
+        return text;
     }
 
     /// <summary>Once per frame.</summary>
@@ -115,6 +166,7 @@ public sealed class SteamHost : IAcceptSource
         Secret = JoinCode.NewSecret();
         _acceptor = new LinkAcceptor(Secret);
         _socket = SteamNetworkingSockets.CreateListenSocketP2P(0, 0, null);
+        SteamService.Note("Host: listening for players (Steam relay)");
         _status = Callback<SteamNetConnectionStatusChangedCallback_t>.Create(OnStatus);
         Code = SteamCode.Make(SteamService.MyId, Secret);
     }
@@ -123,6 +175,7 @@ public sealed class SteamHost : IAcceptSource
     {
         if (c.m_info.m_hListenSocket != _socket) return;
         uint id = c.m_hConn.m_HSteamNetConnection;
+        SteamService.Note($"Host: connection {c.m_info.m_identityRemote.GetSteamID64()} is now {c.m_info.m_eState.ToString().Replace("k_ESteamNetworkingConnectionState_", "")}" + (c.m_info.m_eEndReason != 0 ? $" (reason {c.m_info.m_eEndReason}: {c.m_info.m_szEndDebug})" : ""));
         switch (c.m_info.m_eState)
         {
             case ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connecting:
@@ -157,23 +210,27 @@ public static class SteamJoin
     /// <summary>Connects to the host named in the code and passes the session-secret check. Blocks up to about 15 s while pumping Steam; throws a message safe to show.</summary>
     public static ITransport Connect(ulong hostId, byte[] secret)
     {
+        SteamService.Note($"Joining host account {hostId}");
         var id = new SteamNetworkingIdentity();
         id.SetSteamID64(hostId);
         var conn = SteamNetworkingSockets.ConnectP2P(ref id, 0, 0, null);
         if (conn == HSteamNetConnection.Invalid) throw new InvalidDataException("Steam could not start the connection");
         var link = new SteamLink(conn);
         var end = DateTime.UtcNow.AddSeconds(15);
+        var last = ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_None;
         while (DateTime.UtcNow < end)
         {
             SteamService.Pump();
             if (SteamNetworkingSockets.GetConnectionInfo(conn, out var info))
             {
+                if (info.m_eState != last) { last = info.m_eState; SteamService.Note("Join: " + last.ToString().Replace("k_ESteamNetworkingConnectionState_", "") + (info.m_eEndReason != 0 ? $" (reason {info.m_eEndReason}: {info.m_szEndDebug})" : "")); }
                 if (info.m_eState == ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_Connected) return LinkAcceptor.Join(link, secret, SteamService.Pump);
                 if (info.m_eState is ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ClosedByPeer or ESteamNetworkingConnectionState.k_ESteamNetworkingConnectionState_ProblemDetectedLocally)
                     break;
             }
             Thread.Sleep(10);
         }
+        SteamService.Note("Join failed: no connection within 15 s");
         link.Close();
         throw new InvalidDataException("Could not reach the host through Steam. Check the code and that the host is playing.");
     }
