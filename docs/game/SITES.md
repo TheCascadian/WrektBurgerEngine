@@ -1,6 +1,6 @@
 # Sites: procedural location models
 
-Large locations get a 3D settlement built from kit pieces. First kit: `latin` (Rome = city tier, Latium = town tier).
+Large locations get a 3D settlement built from kit pieces. First kit: `latin` (Rome = city tier; the town tier exists in the kit and shows in `--site-sheets`, but no site uses it now: Latium was removed because its model overlapped Rome).
 
 ![town](img/site-latin-town.png)
 ![city](img/site-latin-city.png)
