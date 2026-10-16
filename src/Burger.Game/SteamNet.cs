@@ -38,7 +38,7 @@ public static class SteamService
         }
         catch (Exception e) when (e is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
-            Problem = "The Steam library is missing from this copy of the game.";
+            Problem = "The Steam library is missing from this copy of the game."; Burger.Core.Log.Warn($"Steam library load: {e.Message}", "multiplayer");
         }
         catch (Exception e)
         {

@@ -17,4 +17,12 @@
     <!-- the project's locked game code, only when exporting (burger export passes BackendDir) -->
     <ProjectReference Include="..\Burger.Backend\Burger.Backend.csproj" Condition="'$(BackendDir)' != ''" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/win-x64/steam_api64.dll" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/win-x64/steam_api64.dll') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win')))" Link="steam_api64.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/win-x64/steam_api64.dll" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/win-x64/steam_api64.dll') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win')))" Link="runtimes/win-x64/native/steam_api64.dll" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/linux-x64/libsteam_api.so" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/linux-x64/libsteam_api.so') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('linux')))" Link="libsteam_api.so" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/linux-x64/libsteam_api.so" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/linux-x64/libsteam_api.so') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('linux')))" Link="runtimes/linux-x64/native/libsteam_api.so" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/osx/libsteam_api.dylib" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/osx/libsteam_api.dylib') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('osx')))" Link="libsteam_api.dylib" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(MSBuildThisFileDirectory)../../native/steam/osx/libsteam_api.dylib" Condition="Exists('$(MSBuildThisFileDirectory)../../native/steam/osx/libsteam_api.dylib') And ('$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('osx')))" Link="runtimes/osx-x64/native/libsteam_api.dylib" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

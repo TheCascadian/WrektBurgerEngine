@@ -42,3 +42,6 @@ projects/World500BCE_PTest/
 projects/World500BCE_GeoTest/
 projects/World500BCE_Maxi_*/
 releases/
+
+# Steam native libraries (see native/steam/README.md)
+native/steam/*/*
