@@ -453,6 +453,10 @@ public sealed partial class PoliticsSystem
         var popMult = PopVoteMultipliers(c, votes.Keys);
         foreach (var kv in popMult) if (votes.ContainsKey(kv.Key)) votes[kv.Key] *= kv.Value;
         double voteSum = votes.Values.Sum();
+        // the governing parties keep a small lead (incumbency), so near-ties do not flip the government back and forth
+        double incumbent = Def("incumbent_bonus", 1.08);
+        foreach (var k in p.GovernmentOrganizations) if (votes.ContainsKey(k)) votes[k] *= incumbent;
+        voteSum = votes.Values.Sum();
         if (voteSum > 0) foreach (var k in votes.Keys.ToList()) votes[k] /= voteSum;
         p.PartySeats = PartySeatsFrom(c, p, votes);
         p.Seats = AggregatePartySeats(c, p.PartySeats);
@@ -503,11 +507,15 @@ public sealed partial class PoliticsSystem
         if (!Enabled || rel.SubjectTypeOf(subject) is not { } type) return;
         var policy = Rules.SubjectGovernment(_game, subject, overlord, type);
         if (policy == SubjectControl.Free) return;
+        if (InRegimeLock(subject) && Of(subject).Ruling.Length > 0) { if (popularity > 0) AddPopularity(subject, Of(overlord).Ruling, popularity); return; }
         string want = Of(overlord).Ruling;
         if (string.IsNullOrEmpty(want) || string.Equals(Of(subject).Ruling, want, StringComparison.OrdinalIgnoreCase)) return;
         if (policy == SubjectControl.Imposed) SetRulingParty(subject, want, "overlord");
         if (popularity > 0) AddPopularity(subject, want, popularity);
     }
+
+    /// <summary>Did the ruling ideology change less than regime_lock_months ago? Snap elections and an overlord's pressure wait it out.</summary>
+    public bool InRegimeLock(Country c) => _game.World.Date.TotalDays - Of(c).RegimeChangedDay < Def("regime_lock_months", 24) * 30;
 
     public void SetRulingParty(Country c, string ideology, string reason = "")
     {
@@ -547,7 +555,7 @@ public sealed partial class PoliticsSystem
             || !oldOrganizations.SequenceEqual(p.GovernmentOrganizations, StringComparer.OrdinalIgnoreCase);
         if (!ideologyChanged && !organizationChanged) return;
         if (Environment.GetEnvironmentVariable("BURGER_GOV_LOG") is { } gl && gl.Equals(c.Tag, StringComparison.OrdinalIgnoreCase)) Console.WriteLine($"GOV {_game.World.Date.ToDisplay()} {c.Tag}: {old} -> {p.Ruling} ({reason}) stab {Rules.StabilityOf(_game, c):0} pop {string.Join("/", p.Popularity.Select(kv => $"{kv.Value:P0}"))}");
-        if (ideologyChanged) GovernmentChanges++;
+        if (ideologyChanged) { GovernmentChanges++; p.RegimeChangedDay = _game.World.Date.TotalDays; }
         if (organizationChanged) _game.Hub.RaiseRulingPartyChanged(c, oldOrganization, p.RulingOrganization, reason);
         // the new ruling party's leader takes over as the country's ruler
         if (organizationChanged && _game.World.GetGenericScope(p.RulingOrganization) is { } rulingScope
@@ -708,9 +716,9 @@ public sealed partial class PoliticsSystem
             SyncPartyPopularityToIdeologies(c, p);
             FactionMonthly(c);
             // a government whose party has torn itself apart goes back to the voters (after the usual snap-election interval)
-            bool collapsed = GovernmentCollapsed(c) && (p.LastElection is not { } lastVote
+            bool collapsed = GovernmentCollapsed(c) && !InRegimeLock(c) && (p.LastElection is not { } lastVote
                 || _game.World.Date.TotalDays - lastVote.TotalDays >= Def("snap_election_months", 12) * 30);
-            if (HoldsElections(c, p) && !InCivilWar(c) && (collapsed || Rules.CallsSnapElection(_game, c))) HoldElection(c);
+            if (HoldsElections(c, p) && !InCivilWar(c) && (collapsed || (!InRegimeLock(c) && Rules.CallsSnapElection(_game, c)))) HoldElection(c);
             PopReactionMonthly(c);
             ParliamentMonthly(c);
             // ministers who died or left the country leave the cabinet

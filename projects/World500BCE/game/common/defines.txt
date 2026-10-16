@@ -14,3 +14,15 @@ development_cost_per_level = 10
 development_tax_per_level = 0.05
 development_manpower_per_level = 0.03
 development_room_per_level = 2
+
+# colonization feature (Greek and Phoenician cities settled most of the Mediterranean; others send fewer)
+colonists = 2                   # colonies a country can settle at once
+colonists_seafaring = 2         # extra slots for Hellenic and Phoenician cultures
+colonize_cost = 50
+colony_range_km = 1500
+colony_speed = 4
+colony_coast_weight = 1         # AI: how strongly it prefers coastal land
+
+# politics: stop the government flipping back and forth
+regime_lock_months = 24         # no snap election or overlord pressure this long after the ruling ideology changed
+incumbent_bonus = 1.08          # vote multiplier of the parties in government

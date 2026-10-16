@@ -261,7 +261,11 @@ public class GamePopulationRules : PopulationRules
 
     /// <summary>How many colonies the country can settle at once (define colonists, modifier colonists).</summary>
     public override int MaxColonies(Game game, Country c)
-        => Math.Max(0, (int)Math.Round(game.Data.Defines.Get("colonists", 1) + game.Modifiers.Sum(c, "colonists")));
+        => Math.Max(0, (int)Math.Round(game.Data.Defines.Get("colonists", 2) + game.Modifiers.Sum(c, "colonists") + SeafaringBonus(game, c)));
+
+    /// <summary>Greek and Phoenician cities sent out most of the colonists of the age: one more colonist slot for them (colonists_seafaring).</summary>
+    private static int SeafaringBonus(Game game, Country c)
+        => game.Population.Of(c).Culture is { } cul && (game.Population.Culture(cul)?.Group.Key == "hellenic" || cul == "phoenician") ? (int)game.Data.Defines.Get("colonists_seafaring", 2) : 0;
 
     /// <summary>Gold for sending colonists (colonize_cost; free without the economy).</summary>
     public override double ColonizeCost(Game game)
@@ -287,7 +291,13 @@ public class GamePopulationRules : PopulationRules
         => (game.Data.Defines.Get("colony_tax", 1), game.Data.Defines.Get("colony_manpower", 20));
 
     /// <summary>AI: how much the country wants to settle a state it can colonize (the highest wins): by default the nearest.</summary>
-    public override double AiColonyScore(Game game, Country c, State s) => -game.Population.DistanceKm(c, s);
+    public override double AiColonyScore(Game game, Country c, State s)
+    {
+        // near, on the coast (ships carried the colonists), and with people already living there to trade with or rule
+        int land = s.Locations.Count(l => l.IsLand), coast = s.Locations.Count(l => l.IsLand && l.IsCoastal);
+        double coastal = land > 0 ? (double)coast / land : 0;
+        return -game.Population.DistanceKm(c, s) + 400 * coastal * game.Data.Defines.Get("colony_coast_weight", 1);
+    }
 
     // =============================================================================================
     // Independence (independence feature)

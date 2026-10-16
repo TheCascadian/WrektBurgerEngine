@@ -127,6 +127,8 @@ public sealed class CountryPolitics
     public List<string> GovernmentOrganizations = new();
     public int TotalSeats = 100;
     public GameDate? LastElection;
+    /// <summary>Day the ruling ideology last changed (not saved: a loaded game starts without a lock).</summary>
+    public int RegimeChangedDay = int.MinValue / 2;
     public GameDate? NextElection;
     /// <summary>Law in force per law group.</summary>
     public Dictionary<string, string> Laws = new(StringComparer.OrdinalIgnoreCase);

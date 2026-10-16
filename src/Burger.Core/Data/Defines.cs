@@ -160,6 +160,8 @@ public sealed class Defines
         ("underground_support_weight", "0.6", "Pops: weight of people whose preferred party is banned in the support of its movement"),
         ("election_threshold", "0.05", "Politics: share of the vote a party needs for seats"),
         ("election_noise", "0.03", "Politics: how far votes can differ from popularity"),
+        ("regime_lock_months", "24", "Politics: months after the ruling ideology changes during which snap elections and an overlord's pressure cannot change it again"),
+        ("incumbent_bonus", "1.08", "Politics: vote multiplier of the parties in government (keeps close elections from flipping the government)"),
         ("ruling_party_drift", "0.4", "Politics: monthly popularity points for a ruling party that holds no elections"),
         ("war_loss_drift", "1", "Politics: monthly popularity points the ruling party loses per badly lost war"),
         ("neighbour_drift", "0.1", "Politics: monthly popularity points from each neighbour ruled by another ideology"),
