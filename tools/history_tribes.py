@@ -140,3 +140,14 @@ MASK_LATER.insert(0, ((92.0, 5.0, 110.0, 24.0), BLOCK_SEEDS['IRR']))
 
 # unowned lands of antiquity cut into tribes of about TRIBE_SIZE states by position: (box, the family whose names the tribes take)
 MASK_CLUSTER = [((95.0, -11.0, 141.0, 6.0), 'Austronesians'), ((117.0, 5.0, 127.0, 27.0), 'Austronesians'), ((-17.0, 14.0, 35.0, 31.0), 'Saharan pastoral nomads')]
+
+YEAR_SEEDS.extend([
+    (185, 225, r'^han$|^han empire', [('han', 'Han Empire', 114.5, 34.5), ('han', 'Han Empire', 117.5, 36.3), ('han', 'Han Empire', 113.5, 32.5), ('yuan_shao', 'Yuan Shao', 116.0, 39.0), ('sun', 'Sun Quan', 119.8, 31.5), ('liu_biao', 'Liu Biao', 112.5, 30.8),
+                                      ('liu_zhang', 'Liu Zhang', 104.2, 30.7), ('ma_teng', 'Ma Teng', 105.5, 36.0), ('gongsun', 'Gongsun Du', 122.0, 41.5), ('shi_xie', 'Shi Xie', 106.5, 21.5), ('sun', 'Sun Quan', 113.5, 23.5), ('sun', 'Sun Quan', 118.0, 27.0),
+                                      ('zhang_lu', 'Zhang Lu', 107.0, 33.0), ('dong_zhuo', 'Dong Zhuo', 109.0, 34.3), ('tao_qian', 'Tao Qian', 118.0, 34.5)]),
+    (140, 250, r'^magadha', [('ind', 'Magadha', 85.0, 25.5), ('kushan', 'Kushan Empire', 77.0, 29.0), ('nagas', 'Nagas of Padmavati', 78.5, 26.5)]),
+])
+
+# lands left empty by the dataset in certain years: (from year, to year, box, seeds)
+MASK_YEAR = [(30, 250, (62.0, 32.0, 80.0, 41.0), [('kushan', 'Kushan Empire', 68.0, 36.0)]),
+             (-130, 250, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamatai', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)])]
