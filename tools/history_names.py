@@ -3,7 +3,7 @@ import re, hashlib
 
 POOLS = [
     (r'khoisan', 'tribe', ['Khoikhoi', 'San', 'Nama', 'Korana', 'Griqua', 'Hei//om', 'Kung', 'Naro', 'Cape Khoi', 'Gonaqua', 'Gora', 'Cochoqua', 'Chainouqua', 'Hessequa', 'Attaqua', 'Damaqua', 'Inqua', 'Gamtoos', 'Einiqua', 'Hurutshe', 'Tswana', 'Kalahari San', 'Khomani', 'Taa', 'Ju', 'Hadza', 'Sandawe', 'Kwadi', 'Heikum', 'Kxoe', 'Nharo', 'Gui', 'Gana', 'Tsumkwe', 'Ovambo', 'Herero', 'Damara', 'Topnaar', 'Bergdama', 'Hai', 'Okavango', 'Mbukushu', 'Kwangali', 'Subia', 'Totela', 'Lozi', 'Tonga']),
-    (r'bantu', 'people', ['Kongo', 'Luba', 'Lunda', 'Zulu', 'Xhosa', 'Shona', 'Bemba', 'Chewa', 'Yao', 'Makua', 'Swazi', 'Sotho', 'Tswana', 'Venda', 'Tsonga', 'Ndebele', 'Ovimbundu', 'Mbundu', 'Tio', 'Teke', 'Kuba', 'Songye', 'Tetela', 'Mongo', 'Ngala', 'Fang', 'Duala', 'Bamileke', 'Tikar', 'Mbuti', 'Kikuyu', 'Kamba', 'Meru', 'Chagga', 'Haya', 'Ganda', 'Nyoro', 'Soga', 'Gusii', 'Luhya', 'Zigua', 'Swahili', 'Makonde', 'Ngoni', 'Tumbuka', 'Lala', 'Ila', 'Tonga', 'Kaonde', 'Lamba', 'Sena', 'Nyanja', 'Mbunda', 'Chokwe', 'Pende', 'Yaka', 'Bakongo', 'Mpongwe', 'Punu', 'Kota', 'Tanga']),
+    (r'bantu', 'people', ['Kongo', 'Luba', 'Lunda', 'Zulu', 'Xhosa', 'Shona', 'Bemba', 'Chewa', 'Yao', 'Makua', 'Swazi', 'Sotho', 'Tswana', 'Venda', 'Tsonga', 'Ndebele', 'Ovimbundu', 'Mbundu', 'Tio', 'Teke', 'Kuba', 'Songye', 'Tetela', 'Mongo', 'Ngala', 'Fang', 'Duala', 'Bamileke', 'Tikar', 'Mbuti', 'Kikuyu', 'Kamba', 'Meru', 'Chagga', 'Haya', 'Ganda', 'Nyoro', 'Soga', 'Gusii', 'Luhya', 'Zigua', 'Swahili', 'Makonde', 'Ngoni', 'Tumbuka', 'Lala', 'Ila', 'Kaonde', 'Lamba', 'Sena', 'Nyanja', 'Mbunda', 'Chokwe', 'Pende', 'Yaka', 'Bakongo', 'Mpongwe', 'Punu', 'Kota', 'Tanga']),
     (r'west african cereal', 'people', ['Mande', 'Soninke', 'Bambara', 'Malinke', 'Dogon', 'Mossi', 'Gurma', 'Senufo', 'Songhai', 'Fulani', 'Wolof', 'Serer', 'Tukulor', 'Susu', 'Mende', 'Temne', 'Kissi', 'Lobi', 'Bobo', 'Gur', 'Dagomba', 'Gonja', 'Akan', 'Ewe', 'Fon', 'Yoruba', 'Igbo', 'Nupe', 'Tiv', 'Jukun', 'Hausa', 'Kanuri', 'Bariba', 'Busa', 'Dendi', 'Zarma', 'Gurunsi', 'Kasena', 'Birifor', 'Wala', 'Sisala', 'Tallensi', 'Konkomba', 'Bassari', 'Diola', 'Balanta', 'Bijago', 'Manjak']),
     (r'manioc|maize|pampas|tupi|guarani|arawak', 'people', ['Tupinamba', 'Guarani', 'Kaingang', 'Xavante', 'Bororo', 'Kayapo', 'Munduruku', 'Tapajo', 'Omagua', 'Arawak', 'Carib', 'Wayana', 'Tukano', 'Baniwa', 'Yanomami', 'Shuar', 'Achuar', 'Kokama', 'Tembe', 'Mura', 'Pano', 'Shipibo', 'Machiguenga', 'Ashaninka', 'Chiquitano', 'Mojo', 'Baure', 'Guarayo', 'Chane', 'Charrua', 'Querandi', 'Tehuelche', 'Puelche', 'Huarpe', 'Diaguita', 'Calchaqui', 'Mapuche', 'Pehuenche', 'Wichi', 'Toba', 'Mocovi', 'Pilaga', 'Guaycuru', 'Payagua', 'Mbaya', 'Terena', 'Karaja', 'Tapuya', 'Aimore', 'Goitaca', 'Potiguar', 'Caete', 'Tabajara', 'Timbira', 'Xingu', 'Waura', 'Kuikuro', 'Palikur', 'Galibi', 'Taino', 'Warao']),
     (r'austro-asiatic|austronesian|malay|proto-thai|burmese|shan|thai', 'people', ['Khmer', 'Mon', 'Cham', 'Viet', 'Muong', 'Katu', 'Bahnar', 'Jarai', 'Rade', 'Stieng', 'Lawa', 'Wa', 'Palaung', 'Khasi', 'Munda', 'Santal', 'Ho', 'Nicobarese', 'Pyu', 'Karen', 'Kayah', 'Tai Dam', 'Lao', 'Ahom', 'Lue', 'Khun', 'Yuan', 'Shan', 'Chin', 'Kachin', 'Naga', 'Bunun', 'Atayal', 'Paiwan', 'Ami', 'Tagalog', 'Visayan', 'Ilocano', 'Bicolano', 'Pampangan', 'Cebuano', 'Ifugao', 'Tausug', 'Maranao', 'Bugis', 'Makassar', 'Minangkabau', 'Batak', 'Acehnese', 'Dayak', 'Iban', 'Kadazan', 'Sasak', 'Sundanese', 'Javanese', 'Balinese', 'Madurese', 'Toraja', 'Ambonese', 'Ternate', 'Tidore', 'Malagasy', 'Merina', 'Betsileo', 'Sakalava']),
@@ -31,6 +31,7 @@ RENAME = {'Eastern Masurian': 'Masurians', 'Western Masurian': 'Pomesanians', 'T
 ANCIENT = [
     (r'hindu|rajput|mahratta|indian|minor states|islamic', 'state', ['Kosala', 'Kuru', 'Panchala', 'Vatsa', 'Avanti', 'Gandhara', 'Kamboja', 'Assaka', 'Chedi', 'Matsya', 'Surasena', 'Kalinga', 'Anga', 'Vanga', 'Pandya', 'Chera', 'Chola', 'Malla', 'Vajji', 'Kasi', 'Videha', 'Sibi', 'Ambashtha', 'Kshudraka', 'Malava', 'Sauvira', 'Madra', 'Yaudheya', 'Andhaka', 'Vidarbha', 'Mulaka', 'Utkala', 'Kekaya', 'Trigarta', 'Kuninda', 'Abhira', 'Satiyaputra', 'Ay', 'Ezhimala', 'Tamraparni', 'Pulinda', 'Ujjayini', 'Dasarna', 'Ikshvaku', 'Pundra', 'Suhma', 'Magadha']),
     (r'mesoamerican|city-states|chiefdom|maya|andean|aymara|tamaulipeco', 'people', ['Zapotec', 'Mixtec', 'Totonac', 'Huastec', 'Olmec', 'Mixe', 'Zoque', 'Otomi', 'Tarascan', 'Mazahua', 'Nahua', 'Chontal', 'Tlapanec', 'Popoluca', 'Chichimec', 'Cuicatec', 'Chinantec', 'Mazatec', 'Triqui', 'Amuzgo', 'Pame', 'Tepehua', 'Yucatec', 'Lacandon', 'Chol', 'Tzeltal', 'Tzotzil', 'Quiche', 'Mam', 'Itza', 'Pipil', 'Lenca', 'Paracas', 'Chavin', 'Cupisnique', 'Salinar', 'Vicus', 'Pukara', 'Chiripa', 'Tiwanaku', 'Puquina', 'Uru', 'Chanca', 'Cañari']),
+    (r'arabs', 'tribe', ['Qedar', 'Nabataeans', 'Thamud', 'Lihyan', 'Minaeans', 'Sabaeans', 'Awsan', 'Himyar', 'Dedan', 'Midian', 'Amalekites', 'Tayma', 'Gerrha', 'Katabania', 'Hadramis', 'Dilmun', 'Magan', 'Omanis', 'Yamama', 'Najd', 'Hijaz', 'Asir', 'Najran', 'Ausan', 'Kinda', 'Hadhramaut', 'Mahra', 'Sheba', 'Dumah']),
     (r'saharan|tuareg|berber|libyan|nomad', 'tribe', ['Garamantes', 'Gaetuli', 'Nasamones', 'Mauri', 'Mazices', 'Libu', 'Maxyes', 'Psylli', 'Augilae', 'Lotophagi', 'Atarantes', 'Atlantes', 'Troglodytes', 'Macae', 'Gindanes', 'Machlyes', 'Auses', 'Zaueces', 'Gyzantes', 'Adyrmachidae', 'Giligammae', 'Asbystae', 'Auschisae', 'Cabales', 'Bacales', 'Maces', 'Pharusii', 'Nigretes', 'Perorsi', 'Musulamii', 'Nubae', 'Masaesyli', 'Massyli', 'Mazyes', 'Zeugitani', 'Byzacenes', 'Macurebi', 'Garamantian clans']),
     (r'turcik|turkic|cuman|kipchak|khanate|altaic|steppe|central asian|tibetan|siberian', 'khanate', ['Dingling', 'Jie', 'Qiang', 'Wusun', 'Yuezhi', 'Lin Hu', 'Loufan', 'Dahae', 'Massagetae', 'Issedones', 'Sauromatae', 'Agathyrsi', 'Aorsi', 'Siraces', 'Tochari', 'Sogdians', 'Chorasmians', 'Derbices', 'Apasiacae', 'Tapuri', 'Saka Tigraxauda', 'Saka Haumavarga', 'Argippaei', 'Tyrcae', 'Iyrcae', 'Hunnic clans', 'Sai', 'Yuban', 'Rong', 'Di', 'Gedrosians', 'Paricanii', 'Arimaspi', 'Kangju', 'Yancai', 'Xianbei', 'Wuhuan', 'Shiwei', 'Mohe', 'Jushi', 'Wensu', 'Kucha', 'Yutian', 'Loulan', 'Shule', 'Dayuan', 'Daxia', 'Saka Paradraya', 'Amyrgians', 'Pazyryk', 'Tagar', 'Sargat', 'Gorokhovo', 'Kulai', 'Itkul', 'Baitovo', 'Ust-Polui', 'Karasuk', 'Andronovo', 'Alakul', 'Tashtyk', 'Okunevo', 'Karakol', 'Sintashta', 'Yamnaya', 'Srubna', 'Catacomb', 'Kobyakovo', 'Taksai', 'Zhuwei', 'Gushi', 'Lüfan', 'Linhu']),
     (r'slav|rus |baltic|germanic|finno|finnic|ugric', 'people', ['Neuri', 'Budini', 'Venedi', 'Androphagi', 'Melanchlaeni', 'Callipidae', 'Alazones', 'Gelonians', 'Thyssagetae', 'Iyrcae', 'Argippaei', 'Boruski', 'Aestii', 'Galindians', 'Sudovians', 'Yotvingians', 'Curonians', 'Semigallians', 'Selonians', 'Bastarnae', 'Peucini', 'Sciri', 'Rugii', 'Gutones', 'Lemovii', 'Burgundiones', 'Silingi', 'Hasdingi', 'Kotini', 'Osi', 'Anartes', 'Arsietae', 'Harii', 'Helveconae', 'Manimi', 'Nahanarvali', 'Elisii', 'Buri']),
@@ -40,13 +41,29 @@ VOWEL = ['a', 'e', 'i', 'o', 'u']
 CODA = ['', '', 'n', 'r', 's', 'l', 'm', 'k']
 
 
-def invented(seed):
+STYLES = [
+    (r'bantu|west african|ethiopian', ['Ba', 'Wa', 'Ma', 'Aba', 'Ama', 'Va', 'Ba', 'Ova'], ['k', 'l', 'm', 'n', 'ng', 'nd', 'mb', 'nk', 't', 'z', 'ch', 'w', 'b', 's', 'r'], ['a', 'e', 'i', 'o', 'u'], ['', 'a', 'e', 'u', 'o'], 2),
+    (r'khoisan', ['', '', 'K', 'G', 'N'], ['k', 'g', 'n', 'x', 'd', 't', 'h', 'm', 'b', 'r', 'l'], ['a', 'e', 'o', 'u', 'i'], ['', '', 'n', 'qua', 'ra', 'm', 'xa'], 2),
+    (r'manioc|maize|pampas|tupi|guarani|arawak|andean|aymara', ['', '', '', 'Ta', 'Ya', 'Ka'], ['k', 'p', 't', 'm', 'n', 'r', 'y', 'w', 'ch', 'qu', 'g', 'b', 'c'], ['a', 'i', 'u', 'o', 'e'], ['ua', 'ay', 'ara', 'ano', 'i', 'e', 'o', 'ana'], 2),
+    (r'siberian|steppe|turcik|turkic|khanate|altaic|tibetan|slavonic|slavic', ['', '', ''], ['k', 'ch', 't', 'b', 'd', 'g', 'y', 'n', 'm', 'r', 's', 'l', 'z'], ['a', 'o', 'u', 'i', 'e'], ['ak', 'ur', 'an', 'ay', 'ir', 'ut', 'ar', 'ich'], 2),
+    (r'hindu|rajput|mahratta|islamic|indian|emirate|minor|kingdom|state', ['', '', ''], ['k', 'v', 'm', 'p', 'd', 'g', 'n', 'r', 's', 't', 'b', 'j', 'sh', 'ch'], ['a', 'i', 'u', 'e', 'o'], ['a', 'ika', 'ana', 'ya', 'ra', 'ala', 'eya', 'ika'], 2),
+    (r'sahar|berber|tuareg|nomad', ['', '', ''], ['g', 'm', 'z', 'k', 'n', 't', 'r', 'l', 's', 'b', 'h', 'w'], ['a', 'i', 'u', 'e'], ['ae', 'i', 'es', 'ae', 'ii', 'an', 'in'], 2),
+]
+DEFAULT_STYLE = ([''], ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'z', 'h', 'p', 'f', 'y'], ['a', 'e', 'i', 'o', 'u'], ['', 'n', 'r', 's', 'l', 'm', 'k', 'a'], 2)
+
+
+def invented(seed, family=''):
     h = int(hashlib.sha1(seed.encode()).hexdigest(), 16)
-    out = ''
-    for _ in range(2 + h % 2):
-        out += ONSET[h % len(ONSET)] + VOWEL[(h // 17) % len(VOWEL)]
-        h //= 83
-    return (out + CODA[h % len(CODA)]).capitalize()
+    low = family.lower()
+    st = next(((p, o, v, e, n) for rx, p, o, v, e, n in STYLES if re.search(rx, low)), DEFAULT_STYLE)
+    pre, ons, vow, end, syl = st
+    out = pre[h % len(pre)]
+    h //= 31
+    for _ in range(syl + h % 2):
+        out += ons[h % len(ons)] + vow[(h // 17) % len(vow)]
+        h //= 97
+    out += end[h % len(end)]
+    return out[:1].upper() + out[1:]
 
 
 def pool_for(family, year=9999):
@@ -62,6 +79,7 @@ def pool_for(family, year=9999):
 
 
 ALL_USED = set()
+INVENTED = {}
 MEMO = {}
 
 
@@ -79,10 +97,12 @@ def cluster_name(family, ikey, year=9999):
             break
     n = 0
     while pick is None:
-        c = invented(family + ikey + str(n))
+        c = invented(family + ikey + str(n), family)
         n += 1
         if c not in ALL_USED:
             pick = c
+    if pick not in names:
+        INVENTED[family] = INVENTED.get(family, 0) + 1
     ALL_USED.add(pick)
     MEMO[ikey] = pick
     return pick

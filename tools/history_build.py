@@ -93,12 +93,15 @@ def resolve(m, states, raw, year):
         if T.IGNORE.search(norm) or T.IGNORE.search(name.lower()):
             continue
         seeds = next((v for rx, v in T.SEED_NAMES if re.search(rx, norm)), None)
+        if seeds is None and norm == 'scythians' and len(idx) >= 20:
+            import history_tribes as TR1
+            seeds = TR1.BLOCK_SEEDS['SCY'] + TR1.BLOCK_SEEDS['SAR'] + TR1.BLOCK_SEEDS['SAK']
         if seeds is None and re.match(r'^(hallstatt|celts$|germanic tribes$)', norm):
             import history_tribes as TR0
             seeds = TR0.hallstatt_seeds()
         if seeds and len(idx) >= 2:
             live = list(seeds)
-            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$)', norm) is not None
+            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$|scythians)', norm) is not None
             def nearest(i, pool):
                 lon, lat = states[i][1], states[i][2]
                 return min(pool, key=lambda sd: ((lon - sd[2]) * math.cos(math.radians(lat))) ** 2 + (lat - sd[3]) ** 2)
@@ -213,13 +216,12 @@ def build(m):
         T.EXISTING[seeds[0][0]] = tag
     feats0 = m.load_snapshot('bc500')
     import history_names as N
-    for y0 in ['bc500'] + list(m.YEARS):
-        f0 = m.load_snapshot(y0)
-        for s0 in states:
-            nm = m.owner_of(f0, s0[1], s0[2])
-            if nm:
-                N.ALL_USED.add(N.clean(nm))
-    N.ALL_USED.update(oname.values())
+    active = {o for o in orig.values() if o}
+    N.ALL_USED.update(oname[t] for t in active if t in oname)
+    oname_rev = {}
+    for t, nme in oname.items():
+        if t not in active:
+            oname_rev.setdefault(nme, t)
     for fn in ('history_tags.py', 'history_tribes.py'):
         N.ALL_USED.update(N.tidy(x) for x in re.findall(r"'([A-Z][^'0-9]{2,40})'", open(os.path.join(REPO, 'tools', fn), encoding='utf-8').read()))
     raw0 = [None if orig[s[0]] else m.owner_of(feats0, s[1], s[2]) for s in states]
@@ -301,6 +303,12 @@ def build(m):
                 first_name[key] = disp; first_year[key] = ay
             if ay == first_year[key]:
                 first_states[key].append(i)
+    reused = set(T.EXISTING.values())
+    for key in sorted(first_name, key=lambda k: (first_year[k], first_name[k])):
+        t0 = oname_rev.get(first_name[key])
+        if key not in T.EXISTING and t0 and t0 not in reused:
+            T.EXISTING[key] = t0       # a country of the project that stands idle at the first start date takes the people of that name
+            reused.add(t0)
     for key in sorted(first_name, key=lambda k: (first_year[k], first_name[k])):
         if key in T.EXISTING:
             tag_of[key] = T.EXISTING[key]
@@ -308,6 +316,7 @@ def build(m):
             code = gen_code(first_name[key], used_codes)
             used_codes.add(code)
             tag_of[key] = code
+    print('invented names:', N.INVENTED, file=sys.stderr)
     print(len(tag_of), 'tags;', sum(1 for k in tag_of if k not in T.EXISTING), 'new', file=sys.stderr)
 
     # country definitions
