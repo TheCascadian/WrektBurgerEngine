@@ -283,7 +283,7 @@ def build(m):
                         nm2 = N.cluster_name('steppe tribes' if states[members[0]][1] > 28 and states[members[0]][2] > 38 else 'celts', ikey, N.year_of(y))
                         for it in part:
                             res[it[0]] = (ikey, nm2)
-        if -130 <= m.astronomical(y) <= -70:
+        if -130 <= m.astronomical(y) <= 200:
             # Greece and Macedon are Roman provinces
             for i, o in enumerate(res):
                 if o and o[0] in ('ath', 'thb', 'spa', 'cor', 'arg', 'ths', 'macedon', 'epirus', 'aetolia', 'achaea', 'elis', 'phocis') and 19 <= states[i][1] <= 28:
