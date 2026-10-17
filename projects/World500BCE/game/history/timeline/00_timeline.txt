@@ -1,0 +1,72 @@
+# The history between the first start date (500 BCE) and the latest one (common/defines.txt: latest_start_date).
+#
+# The map of every date comes from snapshots.txt (generated: tools/import-history.py, from the polygons of the historical-basemaps dataset); a game started on a date
+# gets the snapshot nearest to it. This file holds the tabs and the dates of the start screen, and any events that should happen between two snapshots:
+#   era = { name = "..." from = Y.M.D to = Y.M.D desc = "..." suggested = { Y.M.D ... } }   a tab of the start screen; suggested dates should be bookmarks
+#   bookmark = { date = Y.M.D name = "..." desc = "..." }                                   a date to pick (make it the date of a snapshot)
+#   event = { date = Y.M.D name = "..." <operations> }                                      applied after the snapshot before it
+#     transfer = { from = TAG to = TAG regions = { a b } areas = { x } count = N }   what 'from' owns; regions (state key without its number), areas (areas*.txt) and count are optional
+#     give     = { to = TAG regions = { a } areas = { x } count = N [from = TAG] }   the states of these regions or areas, whoever owns them
+#     settle   = { to = TAG regions = { a } areas = { x } count = N }                states nobody owns
+#     annex    = { from = TAG to = TAG }                                              every state, army and fleet of 'from'
+#     rename   = { tag = TAG name = "..." }
+# Years are astronomical (year 0 is 1 BCE, -499 is 500 BCE).
+
+era = { name = "Classical Antiquity" from = -499.1.1 to = -100.12.31 suggested = { -499.1.1 -399.1.1 -322.1.1 -299.1.1 -199.1.1 }
+	desc = "Persia and the Greek cities, the Warring States, Alexander and his Successors, Maurya, Rome against Carthage." }
+era = { name = "Rome and Han" from = -99.1.1 to = 475.12.31 suggested = { -99.1.1 100.1.1 200.1.1 300.1.1 400.1.1 }
+	desc = "Two great empires at either end of Eurasia, the Parthians and Kushans between them, and the end of the Roman West." }
+era = { name = "The Early Middle Ages" from = 476.1.1 to = 999.12.31 suggested = { 500.1.1 600.1.1 700.1.1 800.1.1 900.1.1 }
+	desc = "Germanic kingdoms, Justinian, the Arab conquests, the Carolingians, Tang China and the steppe empires." }
+era = { name = "The High Middle Ages" from = 1000.1.1 to = 1452.12.31 suggested = { 1000.1.1 1100.1.1 1200.1.1 1279.1.1 1400.1.1 }
+	desc = "The Crusades, the Mongols, the Delhi Sultanate, the rise of the Ottomans, the Ming." }
+era = { name = "The Early Modern World" from = 1453.1.1 to = 1788.12.31 suggested = { 1492.1.1 1530.1.1 1600.1.1 1650.1.1 1783.1.1 }
+	desc = "Constantinople falls, Spain and Portugal cross the oceans, Qing, Mughals and Safavids, Russia and Britain rise." }
+era = { name = "Revolutions and Empires" from = 1789.1.1 to = 1913.12.31 suggested = { 1800.1.1 1815.1.1 1880.1.1 1900.1.1 }
+	desc = "Napoleon, independence in the Americas, the British Raj, national unification and the scramble for Africa." }
+era = { name = "The Modern World" from = 1914.1.1 to = 2020.12.31 suggested = { 1914.1.1 1938.1.1 1945.1.1 1960.1.1 2010.1.1 }
+	desc = "Two world wars, decolonization, the Cold War and the world of today." }
+
+bookmark = { date = -499.1.1 name = "500 BCE" desc = "The Achaemenid Empire at its height, the Greek cities, Rome a young republic, the Zhou states." }
+bookmark = { date = -399.1.1 name = "Warring States" desc = "Persia rules the Near East; the Chinese states fight; Rome is a small republic." }
+bookmark = { date = -322.1.1 name = "Alexander" desc = "The Empire of Alexander reaches the Indus; Qin rises in China." }
+bookmark = { date = -299.1.1 name = "The Successors" desc = "Ptolemies, Seleucids and Antigonids divide the empire; Maurya rules India." }
+bookmark = { date = -199.1.1 name = "Rome and Carthage" desc = "Rome has beaten Hannibal; the Han rule China; Maurya has fallen." }
+bookmark = { date = -99.1.1 name = "Rome and Han expand" desc = "Rome rules the Mediterranean; Han China reaches the Tarim; Parthia holds Persia." }
+bookmark = { date = 0.1.1 name = "Augustus" desc = "The Roman Empire from Spain to Syria; the Han dynasty; Parthia in between." }
+bookmark = { date = 100.1.1 name = "Trajan" desc = "The Roman Empire at its greatest; the Kushans rule the Indus." }
+bookmark = { date = 200.1.1 name = "The end of the Han" desc = "The Han Empire is failing; Rome under the Severans; Sasanian Persia is about to rise." }
+bookmark = { date = 300.1.1 name = "Tetrarchy and Jin" desc = "Diocletian's Rome, the Jin dynasty, the Gupta Empire is about to begin." }
+bookmark = { date = 400.1.1 name = "Rome divides" desc = "The Roman Empire is split in East and West; Gupta India; the Sixteen Kingdoms." }
+bookmark = { date = 500.1.1 name = "The Germanic kingdoms" desc = "Goths, Vandals and Franks rule the old provinces of the West." }
+bookmark = { date = 600.1.1 name = "Heraclius and Sui" desc = "The Byzantines and Sasanians at war; China reunited under the Sui." }
+bookmark = { date = 700.1.1 name = "The Umayyads" desc = "A caliphate from Spain to the Indus; Tang China; the Tibetan Empire." }
+bookmark = { date = 800.1.1 name = "Charlemagne" desc = "The Franks rule western Europe; the Abbasids; the Vikings begin to raid." }
+bookmark = { date = 900.1.1 name = "The Abbasid twilight" desc = "The caliphate is breaking up; Wessex, the Rus and the Magyars." }
+bookmark = { date = 1000.1.1 name = "1000 CE" desc = "Song China, the Holy Roman Empire, Kievan Rus, the Chola." }
+bookmark = { date = 1100.1.1 name = "The Crusades" desc = "The Seljuks, the Crusader states, the Normans, Song and Liao." }
+bookmark = { date = 1200.1.1 name = "Genghis Khan" desc = "The Mongols rise; the Delhi Sultanate; the Angevin Empire." }
+bookmark = { date = 1279.1.1 name = "The Yuan" desc = "The Mongols rule China and most of Asia." }
+bookmark = { date = 1300.1.1 name = "The four khanates" desc = "The Mongol Empire divided: Yuan, Golden Horde, Ilkhanate, Chagatai." }
+bookmark = { date = 1400.1.1 name = "Timur" desc = "The Ming have thrown out the Mongols; the Timurids; the Ottomans rise." }
+bookmark = { date = 1492.1.1 name = "Columbus" desc = "Spain is one kingdom; the Ottomans hold the Balkans; the Inca and the Aztecs." }
+bookmark = { date = 1500.1.1 name = "1500" desc = "The age of discovery begins." }
+bookmark = { date = 1530.1.1 name = "Suleiman and Charles V" desc = "Habsburg Spain, the Ottoman Empire at its height, the Mughals, the Safavids." }
+bookmark = { date = 1600.1.1 name = "The Spanish Empire" desc = "Spain and Portugal across the world; Muscovy; the Qing are about to rise." }
+bookmark = { date = 1650.1.1 name = "Westphalia" desc = "The Thirty Years War is over; the Qing take China; Dutch and English colonies." }
+bookmark = { date = 1700.1.1 name = "1700" desc = "The Ottomans before their decline; Russia under Peter; Mughal India at its height." }
+bookmark = { date = 1715.1.1 name = "The Spanish succession" desc = "The Peace of Utrecht; Britain rises." }
+bookmark = { date = 1783.1.1 name = "The American Revolution" desc = "The United States; Britain holds Bengal; Spain still rules the Americas." }
+bookmark = { date = 1800.1.1 name = "Napoleon" desc = "France dominates Europe; the Russian and British empires grow." }
+bookmark = { date = 1815.1.1 name = "Waterloo" desc = "The Napoleonic Wars end; the Latin American revolutions begin." }
+bookmark = { date = 1880.1.1 name = "High imperialism" desc = "The British Raj, German unification, the scramble for Africa begins." }
+bookmark = { date = 1900.1.1 name = "1900" desc = "European empires and the United States at their height." }
+bookmark = { date = 1914.1.1 name = "The Great War" desc = "Empires on the eve of the war." }
+bookmark = { date = 1920.1.1 name = "Versailles" desc = "The empires of Germany, Austria-Hungary and the Ottomans are gone; the Soviet Union forms." }
+bookmark = { date = 1930.1.1 name = "The interwar years" desc = "The Great Depression; China divided by warlords; the colonial empires intact." }
+bookmark = { date = 1938.1.1 name = "On the eve of the war" desc = "Nazi Germany, Imperial Japan and the Soviet Union." }
+bookmark = { date = 1945.1.1 name = "1945" desc = "The Second World War ends." }
+bookmark = { date = 1960.1.1 name = "Decolonization" desc = "Africa and Asia become independent; the Cold War." }
+bookmark = { date = 1994.1.1 name = "After the Cold War" desc = "The Soviet Union and Yugoslavia are gone." }
+bookmark = { date = 2000.1.1 name = "2000" desc = "The turn of the century." }
+bookmark = { date = 2010.1.1 name = "2010" desc = "The world today (the latest map of the data)." }

@@ -1,6 +1,7 @@
 # Game rules. Every value has a default in the engine; delete a line to use the default.
 # Features add their own rules here when they are installed (combat_model, fog_of_war...).
 start_date = -499.1.1
+latest_start_date = 2020.1.1
 end_date = 2020.1.1
 pause_on_event = yes            # events can override this with pause = yes/no/{ trigger }
 fog_of_war = yes                # hide enemy armies and grey out land you cannot see (C#: Game.Rules.Vision)

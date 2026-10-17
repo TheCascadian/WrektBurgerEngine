@@ -21,6 +21,8 @@ public sealed class AppOptions
     public int TicksBeforeScreenshot;
     /// <summary>Start unpaused at this speed (1-5).</summary>
     public int Speed;
+    /// <summary>Start on this date instead of the first one (--start-date; needs history/timeline).</summary>
+    public Burger.Core.GameDate? StartDate;
     /// <summary>Write frame and simulation timings to the log every few seconds.</summary>
     public bool Perf;
     /// <summary>Scripted render benchmark: vsync and frame cap off, camera flies fixed phases, results go to the log, then quits.</summary>
@@ -113,6 +115,7 @@ public static class Program
                     case "--lookat": opt.LookAt = Next(); break;
                     case "--open": opt.Open = Next(); break;
                     case "--speed": opt.Speed = int.Parse(Next()); break;
+                    case "--start-date": opt.StartDate = Burger.Core.GameDate.Parse(Next(), default); break;
                     case "--perf": opt.Perf = true; break;
                     case "--bench": opt.Bench = true; break;
                     case "--size":
