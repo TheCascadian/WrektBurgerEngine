@@ -49,7 +49,7 @@ def cluster(items, k):
     return [(seeds[i], groups[i]) for i in sorted(groups, key=lambda i: (seeds[i][1], seeds[i][2]))]
 
 
-def result_tribes(result, states, idx, name, norm):
+def result_tribes(result, states, idx, name, norm, year='bc500'):
     """A region of tribes: seeds when there are some, else clusters of about TRIBE_SIZE states named by compass point."""
     import history_tribes as TR
     import history_names as N
@@ -74,8 +74,8 @@ def result_tribes(result, states, idx, name, norm):
         slot = 8 if abs(mx) < 0.28 * span and abs(my) < 0.28 * span else int((math.degrees(math.atan2(my, mx)) % 360 + 22.5) // 45) % 8
         seen[slot] += 1
         ikey = f'{norm}#{slot}.{seen[slot]}'
-        pick = N.cluster_name(pretty, ikey)
-        label = pick + (' Khanate' if N.pool_for(pretty)[0] == 'khanate' else '')
+        pick = N.cluster_name(pretty, ikey, N.year_of(year))
+        label = pick
         for it in members:
             result[it[0]] = (ikey, label)
 
@@ -93,14 +93,27 @@ def resolve(m, states, raw, year):
         if T.IGNORE.search(norm) or T.IGNORE.search(name.lower()):
             continue
         seeds = next((v for rx, v in T.SEED_NAMES if re.search(rx, norm)), None)
+        if seeds is None and re.match(r'^(hallstatt|celts$|germanic tribes$)', norm):
+            import history_tribes as TR0
+            seeds = TR0.hallstatt_seeds()
         if seeds and len(idx) >= 2:
-            for i in idx:
+            live = list(seeds)
+            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$)', norm) is not None
+            def nearest(i, pool):
                 lon, lat = states[i][1], states[i][2]
-                k, disp, _, _ = min(seeds, key=lambda s: ((lon - s[2]) * math.cos(math.radians(lat))) ** 2 + (lat - s[3]) ** 2)
+                return min(pool, key=lambda sd: ((lon - sd[2]) * math.cos(math.radians(lat))) ** 2 + (lat - sd[3]) ** 2)
+            while merge_small and len(live) > 1:
+                cnt = collections.Counter(nearest(i, live)[0] for i in idx)
+                small = [sd for sd in live if cnt[sd[0]] < 3]
+                if not small:
+                    break
+                live.remove(min(small, key=lambda sd: cnt[sd[0]]))
+            for i in idx:
+                k, disp, _, _ = nearest(i, live)
                 result[i] = (k, N.tidy(disp))
             continue
         if T.TRIBAL.search(norm) or N.COLLECTIVE.search(norm) and not T.NOT_UMBRELLA.search(norm):
-            result_tribes(result, states, idx, name, norm)
+            result_tribes(result, states, idx, name, norm, year)
             continue
         key, norm = family_key(name)
         base = re.sub(r' and republics$', '', norm)
@@ -119,8 +132,8 @@ def resolve(m, states, raw, year):
                 slot = 8 if abs(mx) < 0.28 * span and abs(my) < 0.28 * span else int((math.degrees(math.atan2(my, mx)) % 360 + 22.5) // 45) % 8
                 seen[slot] += 1
                 ikey = f'{base}#{slot}.{seen[slot]}'
-                pick = N.cluster_name(pretty, ikey)
-                label = pick + (' Khanate' if N.pool_for(pretty)[0] == 'khanate' else '')
+                pick = N.cluster_name(pretty, ikey, N.year_of(year))
+                label = pick
                 for it in members:
                     result[it[0]] = (ikey, label)
             continue
@@ -232,7 +245,17 @@ def build(m):
     for y in m.YEARS:
         feats = m.load_snapshot(y)
         raw = [m.owner_of(feats, s[1], s[2]) for s in states]
-        snaps.append((y, m.astronomical(y), resolve(m, states, raw, y)))
+        res = resolve(m, states, raw, y)
+        if m.astronomical(y) <= 200:
+            # the lands the dataset leaves empty keep the peoples of the first start date
+            for i, st in enumerate(states):
+                if res[i] is None and not raw[i]:
+                    for (w, so, e, no), seeds in TR.MASK_SEEDS:
+                        if w <= st[1] <= e and so <= st[2] <= no:
+                            k, disp, _, _ = min(seeds, key=lambda sd: ((st[1] - sd[2]) * math.cos(math.radians(st[2]))) ** 2 + (st[2] - sd[3]) ** 2)
+                            res[i] = (k, N.tidy(disp))
+                            break
+        snaps.append((y, m.astronomical(y), res))
         print(y, 'done', file=sys.stderr)
 
     # polities that never hold more than a couple of states (small tribes, single towns) are not countries: their land has no owner
@@ -242,7 +265,8 @@ def build(m):
         for k, n in c.items():
             peak[k] = max(peak[k], n)
     MIN_STATES = 3
-    snaps = [(y, ay, owners if y == 'bc500' else [o if (o and (o[0] in T.EXISTING or peak[o[0]] >= MIN_STATES)) else None for o in owners]) for y, ay, owners in snaps]
+    first_keys = {o[0] for o in snaps[0][2] if o}
+    snaps = [(y, ay, owners if y == 'bc500' else [o if (o and (o[0] in T.EXISTING or o[0] in first_keys or peak[o[0]] >= MIN_STATES)) else None for o in owners]) for y, ay, owners in snaps]
 
     # tags: the existing ones keep theirs, the others get a code from the name they first appear with
     tag_of, first_name, first_year, first_states = {}, {}, {}, collections.defaultdict(list)

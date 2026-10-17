@@ -96,3 +96,26 @@ MASK_SEEDS = [
     ((22.0, 54.0, 60.0, 70.0), [('finnic_n', 'Perm and the Finnic tribes', 50.0, 60.5), ('merya', 'Merya', 40.0, 57.0), ('volga_finns', 'Volga Finns', 46.0, 56.0), ('ananyino', 'Ananyino tribes', 52.0, 57.0),
                                 ('dyakovo', 'Dyakovo tribes', 38.0, 55.5), ('onega', 'White Sea tribes', 36.0, 63.0)]),
 ]
+
+# the lands of the 'Hallstatt culture', 'Celts' and 'Germanic tribes' polygons of the dataset, cut by the peoples that lived there (the keys of the blocks of the first start date, so a tribe keeps its tag)
+EXTRA_SEEDS = [('etruscans', 'Etruscans', 11.4, 43.2), ('umbri', 'Umbrians', 12.5, 43.1), ('ligures', 'Ligurians', 8.8, 44.4), ('veneti', 'Veneti', 12.0, 45.6), ('insubres', 'Insubres and Golaseccans', 9.0, 45.6),
+               ('lucani', 'Lucanians', 15.8, 40.3), ('apuli', 'Apulians', 16.2, 41.1), ('bruttii', 'Bruttians', 16.3, 39.2), ('piceni', 'Picenes', 13.5, 43.3), ('latini', 'Latins', 12.8, 41.6),
+               ('sicani', 'Sicels and Sicani', 14.0, 37.5), ('sardi', 'Sardinians', 9.0, 40.0), ('corsi', 'Corsi', 9.1, 42.1), ('macedon', 'Macedon', 22.2, 40.6), ('epirus', 'Epirotes', 20.8, 39.6),
+               ('aetolia', 'Aetolians', 21.6, 38.6), ('achaea', 'Achaeans', 21.9, 38.1), ('elis', 'Elis', 21.6, 37.8), ('phocis', 'Phocians and Locrians', 22.4, 38.6),
+               ('ath', 'Athens', 23.7, 38.0), ('thb', 'Thebes', 23.3, 38.4), ('spa', 'Sparta', 22.4, 37.1), ('cor', 'Corinth', 22.9, 37.9), ('arg', 'Argos', 22.7, 37.6), ('ths', 'Thessaly', 22.4, 39.5),
+               ('cherusci_h', 'Cherusci', 9.8, 52.3), ('chatti_h', 'Chatti', 9.3, 51.2), ('suebi_h', 'Suebi', 13.0, 52.5), ('marcomanni_h', 'Marcomanni', 12.5, 50.3), ('helvecones', 'Lugii', 17.5, 51.2),
+               ('rugii_h', 'Rugii', 15.5, 54.0), ('gutones_h', 'Gutones', 19.5, 54.0), ('chauci_h', 'Chauci', 8.2, 53.3), ('frisii_h', 'Frisii', 5.8, 53.0), ('jutes_h', 'Jutes', 9.0, 56.4)]
+
+
+def hallstatt_seeds():
+    import re
+    seeds = {}
+    for blk in ('CEL', 'IBE', 'CIB', 'THR'):
+        for s in BLOCK_SEEDS[blk]:
+            seeds[s[0]] = s
+    for s in EXTRA_SEEDS + CULTURE_SEEDS['illyrians']:
+        seeds.setdefault(s[0], s)
+    return list(seeds.values())
+
+
+MASK_SEEDS.append(((6.0, 35.0, 29.0, 47.5), EXTRA_SEEDS + CULTURE_SEEDS['illyrians'] + BLOCK_SEEDS['THR']))

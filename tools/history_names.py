@@ -17,7 +17,8 @@ POOLS = [
     (r'sixteen', 'state', ['Han Zhao', 'Cheng Han', 'Dai', 'Yan', 'Liang', 'Qin', 'Xia', 'Zhao', 'Wei', 'Ran Wei', 'Murong', 'Tuoba', 'Duan', 'Yuwen', 'Chouchi', 'Juqu', 'Tufa', 'Qifu', 'Helian', 'Feng', 'Di', 'Qiang', 'Xianbei']),
     (r'timurid|emirate|buwayhid', 'state', ['Hamdanid', 'Mirdasid', 'Uqaylid', 'Marwanid', 'Shaddadid', 'Ziyarid', 'Sallarid', 'Rawadid', 'Kakuyid', 'Bavandid', 'Musafirid', 'Ilyasid', 'Saffarid', 'Samanid', 'Banijurid', 'Farighunid', 'Muhtajid', 'Hasanwayhid', 'Annazid', 'Mazyadid', 'Numayrid', 'Mahdid', 'Najahid', 'Sulayhid', 'Zurayid', 'Rassid', 'Yufirid']),
     (r'austro-hungarian', 'state', ['Bohemia', 'Moravia', 'Galicia', 'Carniola', 'Styria', 'Tyrol', 'Carinthia', 'Slovakia', 'Transylvania', 'Croatia', 'Dalmatia', 'Bukovina', 'Silesia', 'Bosnia']),
-    (r'hindu|rajput|mahratta|islamic|indian|minor states|mesoamerican|city-states|chiefdom', 'state', ['Anga', 'Vanga', 'Kalinga', 'Utkala', 'Chedi', 'Vatsa', 'Kuru', 'Panchala', 'Malla', 'Vriji', 'Kasi', 'Matsya', 'Surasena', 'Assaka', 'Avanti', 'Gandhara', 'Kamboja', 'Pandya', 'Chera', 'Kadamba', 'Ganga', 'Hoysala', 'Yadava', 'Kakatiya', 'Paramara', 'Chauhan', 'Solanki', 'Gahadavala', 'Chandela', 'Kalachuri', 'Sena', 'Pala', 'Varman', 'Maitraka', 'Gurjara', 'Rashtrakuta', 'Pratihara', 'Sisodia', 'Rathore', 'Kachwaha', 'Bhati', 'Tomara', 'Bundela', 'Holkar', 'Scindia', 'Gaekwad', 'Bhonsle', 'Peshwa', 'Zapotec', 'Mixtec', 'Totonac', 'Huastec', 'Tarascan', 'Otomi', 'Mazahua', 'Tlaxcala', 'Cholula', 'Texcoco', 'Tlacopan', 'Xochimilco', 'Chalco', 'Cuauhnahuac']),
+    (r'mesoamerican|city-states|chiefdom|maya', 'people', ['Zapotec', 'Mixtec', 'Totonac', 'Huastec', 'Tarascan', 'Otomi', 'Mazahua', 'Tlaxcala', 'Cholula', 'Texcoco', 'Tlacopan', 'Xochimilco', 'Chalco', 'Cuauhnahuac', 'Itza', 'Quiche', 'Kaqchikel', 'Mam']),
+    (r'hindu|rajput|mahratta|islamic|indian|minor states|mesoamerican|city-states|chiefdom', 'state', ['Anga', 'Vanga', 'Kalinga', 'Utkala', 'Chedi', 'Vatsa', 'Kuru', 'Panchala', 'Malla', 'Vriji', 'Kasi', 'Matsya', 'Surasena', 'Assaka', 'Avanti', 'Gandhara', 'Kamboja', 'Pandya', 'Chera', 'Kadamba', 'Ganga', 'Hoysala', 'Yadava', 'Kakatiya', 'Paramara', 'Chauhan', 'Solanki', 'Gahadavala', 'Chandela', 'Kalachuri', 'Sena', 'Pala', 'Varman', 'Maitraka', 'Gurjara', 'Rashtrakuta', 'Pratihara', 'Sisodia', 'Rathore', 'Kachwaha', 'Bhati', 'Tomara', 'Bundela', 'Holkar', 'Scindia', 'Gaekwad', 'Bhonsle', 'Peshwa']),
     (r'beja|gur|mel|benue|hausa|mossi|borgu|narmada|rift|bantu homeland', 'people', ['Beja', 'Blemmyes', 'Bisharin', 'Hadendoa', 'Amarar', 'Beni Amer', 'Nuba', 'Funj', 'Dinka', 'Nuer', 'Shilluk', 'Anuak', 'Luo', 'Maasai', 'Turkana', 'Pokot', 'Kalenjin', 'Sidamo', 'Oromo', 'Somali', 'Afar', 'Hadiya', 'Gurage', 'Kafa', 'Wolayta', 'Tiv', 'Idoma', 'Igala', 'Jukun', 'Bura', 'Kanuri', 'Mandara', 'Gbaya', 'Banda', 'Zande', 'Mangbetu', 'Alur', 'Lugbara', 'Acholi', 'Lango', 'Teso', 'Karamojong', 'Rendille', 'Gabbra', 'Samburu', 'Dorobo']),
     (r'khmer|cham|lao|tai|lavo|champa|mon|laotian', 'people', ['Khmer', 'Cham', 'Lao', 'Mon', 'Lawa', 'Tai Dam', 'Tai Lue', 'Tai Yuan', 'Phuan', 'Khun', 'Kuy', 'Bru', 'Pacoh', 'Katu', 'Bahnar', 'Jarai', 'Rade', 'Koho', 'Mnong', 'Stieng', 'Chrau', 'Lavo', 'Dvaravati', 'Haripunjaya', 'Sukhothai', 'Phayao', 'Nan', 'Phrae', 'Chiang Saen', 'Lanna', 'Lan Xang', 'Champasak', 'Xieng Khouang', 'Vientiane', 'Luang Prabang']),
     (r'baltic|germanic|thracian|libyan|finnic|tamaulipeco|andean|aymara|maya|mesoamerican|lombard|croatian|sinhalese|kushan|perm|white sea|elbe|ananyino|dyakovo|milograd', 'people', ['Prussians', 'Lithuanians', 'Samogitians', 'Curonians', 'Semigallians', 'Selonians', 'Latgalians', 'Yotvingians', 'Skalvians', 'Nadruvians', 'Sudovians', 'Galindians', 'Goths', 'Vandals', 'Burgundians', 'Lombards', 'Gepids', 'Heruls', 'Suebi', 'Alamanni', 'Thuringii', 'Angles', 'Saxons', 'Frisians', 'Franks', 'Hermunduri', 'Quadi', 'Marsi', 'Bructeri', 'Tencteri', 'Ampsivarii', 'Getae', 'Dacians', 'Triballi', 'Odrysae', 'Bessi', 'Dentheletae', 'Paeonians', 'Agrianes', 'Maedi', 'Thyni', 'Nasamones', 'Psylli', 'Maces', 'Auschisae', 'Cabales', 'Asbystae', 'Giligammae', 'Komi', 'Udmurts', 'Mari', 'Mordvins', 'Sami', 'Veps', 'Votes', 'Izhorians', 'Livonians', 'Quechua', 'Aymara', 'Puquina', 'Uru', 'Colla', 'Lupaca', 'Chanca', 'Huanca', 'Cañari', 'Chimu', 'Moche', 'Nazca', 'Wari', 'Tiwanaku', 'Mixe', 'Zoque', 'Chol', 'Tzeltal', 'Tzotzil', 'Quiche', 'Kaqchikel', 'Mam', 'Itza', 'Yucatec', 'Lacandon', 'Pipil', 'Lenca', 'Huaxtec', 'Sinhala', 'Rohana', 'Ruhuna', 'Pihiti']),
@@ -27,22 +28,33 @@ POOLS = [
 COLLECTIVE = re.compile(r'(tribes|nomads|peoples?|farmers|pastoralists|states|kingdoms|city-states|chiefdoms|principalities|clans|republics|confederation)')
 SNAP_USED = set()
 RENAME = {'Eastern Masurian': 'Masurians', 'Western Masurian': 'Pomesanians', 'Tamil South': 'Tamilakam', 'Northmen': 'Norse', 'Irrawaddy and Mainland Southeast Asia': 'Irrawaddy peoples', 'Syracuse and Eastern Sicily': 'Syracuse'}
-ONSET = ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'z', 'h', 'th', 'kr', 'br', 'dr', 'sh']
-VOWEL = ['a', 'e', 'i', 'o', 'u', 'ai', 'ou']
-CODA = ['', '', 'n', 'r', 's', 'l', 'th', 'k']
+ANCIENT = [
+    (r'hindu|rajput|mahratta|indian|minor states|islamic', 'state', ['Kosala', 'Kuru', 'Panchala', 'Vatsa', 'Avanti', 'Gandhara', 'Kamboja', 'Assaka', 'Chedi', 'Matsya', 'Surasena', 'Kalinga', 'Anga', 'Vanga', 'Pandya', 'Chera', 'Chola', 'Malla', 'Vajji', 'Kasi', 'Videha', 'Sibi', 'Ambashtha', 'Kshudraka', 'Malava', 'Sauvira', 'Madra', 'Yaudheya', 'Andhaka', 'Vidarbha', 'Mulaka', 'Utkala', 'Kekaya', 'Trigarta', 'Kuninda', 'Abhira', 'Satiyaputra', 'Ay', 'Ezhimala', 'Tamraparni', 'Pulinda', 'Ujjayini', 'Dasarna', 'Ikshvaku', 'Pundra', 'Suhma', 'Magadha']),
+    (r'mesoamerican|city-states|chiefdom|maya|andean|aymara|tamaulipeco', 'people', ['Zapotec', 'Mixtec', 'Totonac', 'Huastec', 'Olmec', 'Mixe', 'Zoque', 'Otomi', 'Tarascan', 'Mazahua', 'Nahua', 'Chontal', 'Tlapanec', 'Popoluca', 'Chichimec', 'Cuicatec', 'Chinantec', 'Mazatec', 'Triqui', 'Amuzgo', 'Pame', 'Tepehua', 'Yucatec', 'Lacandon', 'Chol', 'Tzeltal', 'Tzotzil', 'Quiche', 'Mam', 'Itza', 'Pipil', 'Lenca', 'Paracas', 'Chavin', 'Cupisnique', 'Salinar', 'Vicus', 'Pukara', 'Chiripa', 'Tiwanaku', 'Puquina', 'Uru', 'Chanca', 'Cañari']),
+    (r'saharan|tuareg|berber|libyan|nomad', 'tribe', ['Garamantes', 'Gaetuli', 'Nasamones', 'Mauri', 'Mazices', 'Libu', 'Maxyes', 'Psylli', 'Augilae', 'Lotophagi', 'Atarantes', 'Atlantes', 'Troglodytes', 'Macae', 'Gindanes', 'Machlyes', 'Auses', 'Zaueces', 'Gyzantes', 'Adyrmachidae', 'Giligammae', 'Asbystae', 'Auschisae', 'Cabales', 'Bacales', 'Maces', 'Pharusii', 'Nigretes', 'Perorsi', 'Musulamii', 'Nubae', 'Masaesyli', 'Massyli', 'Mazyes', 'Zeugitani', 'Byzacenes', 'Macurebi', 'Garamantian clans']),
+    (r'turcik|turkic|cuman|kipchak|khanate|altaic|steppe|central asian|tibetan|siberian', 'khanate', ['Dingling', 'Jie', 'Qiang', 'Wusun', 'Yuezhi', 'Lin Hu', 'Loufan', 'Dahae', 'Massagetae', 'Issedones', 'Sauromatae', 'Agathyrsi', 'Aorsi', 'Siraces', 'Tochari', 'Sogdians', 'Chorasmians', 'Derbices', 'Apasiacae', 'Tapuri', 'Saka Tigraxauda', 'Saka Haumavarga', 'Argippaei', 'Tyrcae', 'Iyrcae', 'Hunnic clans', 'Sai', 'Yuban', 'Rong', 'Di', 'Gedrosians', 'Paricanii', 'Arimaspi']),
+    (r'slav|rus |baltic|germanic|finno|finnic|ugric', 'people', ['Neuri', 'Budini', 'Venedi', 'Androphagi', 'Melanchlaeni', 'Callipidae', 'Alazones', 'Gelonians', 'Thyssagetae', 'Iyrcae', 'Argippaei', 'Boruski', 'Aestii', 'Galindians', 'Sudovians', 'Yotvingians', 'Curonians', 'Semigallians', 'Selonians', 'Bastarnae', 'Peucini', 'Sciri', 'Rugii', 'Gutones', 'Lemovii', 'Burgundiones', 'Silingi', 'Hasdingi', 'Kotini', 'Osi', 'Anartes', 'Arsietae', 'Harii', 'Helveconae', 'Manimi', 'Nahanarvali', 'Elisii', 'Buri']),
+]
+ONSET = ['b', 'd', 'g', 'k', 'l', 'm', 'n', 'r', 's', 't', 'v', 'z', 'h', 'p', 'f', 'y']
+VOWEL = ['a', 'e', 'i', 'o', 'u']
+CODA = ['', '', 'n', 'r', 's', 'l', 'm', 'k']
 
 
 def invented(seed):
     h = int(hashlib.sha1(seed.encode()).hexdigest(), 16)
     out = ''
-    for _ in range(3):
-        out += ONSET[h % len(ONSET)] + VOWEL[(h // 7) % len(VOWEL)]
-        h //= 53
+    for _ in range(2 + h % 2):
+        out += ONSET[h % len(ONSET)] + VOWEL[(h // 17) % len(VOWEL)]
+        h //= 83
     return (out + CODA[h % len(CODA)]).capitalize()
 
 
-def pool_for(family):
+def pool_for(family, year=9999):
     low = family.lower()
+    if year < 500:
+        for rx, kind, names in ANCIENT:
+            if re.search(rx, low):
+                return kind, names
     for rx, kind, names in POOLS:
         if re.search(rx, low):
             return kind, names
@@ -53,11 +65,11 @@ ALL_USED = set()
 MEMO = {}
 
 
-def cluster_name(family, ikey):
+def cluster_name(family, ikey, year=9999):
     """A people's name for a cluster; the same cluster key always gets the same name and no two clusters share one."""
     if ikey in MEMO:
         return MEMO[ikey]
-    kind, names = pool_for(family)
+    kind, names = pool_for(family, year)
     h = int(hashlib.sha1((family + ikey).encode()).hexdigest(), 16)
     pick = None
     for t in range(len(names)):
@@ -90,3 +102,13 @@ def clean(name):
     n = re.sub(r'\s+\d+$', '', n)
     n = n.strip() or name
     return RENAME.get(n, n)
+
+
+def year_of(y):
+    """'bc400' -> -400, '1200' -> 1200."""
+    y = str(y)
+    return -int(y[2:]) if y.startswith('bc') else int(y)
+
+
+import history_names_extra
+history_names_extra.merge(POOLS)
