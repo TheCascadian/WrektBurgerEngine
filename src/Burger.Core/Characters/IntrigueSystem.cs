@@ -305,7 +305,7 @@ public sealed class IntrigueSystem
         foreach (var p in Plots.ToList()) RunPlot(p);
         // the discontented join or start plots against their ruler
         double joinChance = _game.Data.Defines.Get("plot_join_chance", 0.1);
-        foreach (var grp in alive.Where(c => !c.IsRuler && c.Loyalty < _game.Data.Defines.Get("plot_loyalty", 35) && Ambition(c) > _game.Data.Defines.Get("plot_ambition", 50)).GroupBy(c => c.Country!))
+        foreach (var grp in alive.Where(c => c.Alive && c.Country is { Exists: true } && !c.IsRuler && c.Loyalty < _game.Data.Defines.Get("plot_loyalty", 35) && Ambition(c) > _game.Data.Defines.Get("plot_ambition", 50)).GroupBy(c => c.Country!))
         {
             var country = grp.Key;
             if (country.Ruler == null) continue;
