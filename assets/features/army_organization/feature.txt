@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Army organization"
+category = "Military"
+order = 83
+description = "Armies are stacks of regiments by arm (infantry, cavalry, support). An army where a second or third arm makes up a tenth gets combined arms: +6% for each, at most +12% (defines combined_arms_min_share, combined_arms_bonus). Armies join army groups under a field marshal who adds 0.5% a point of martial (define marshal_bonus) to all of them; orders (front, mode) and the theatre (the stretch of border the armies hold) are given once for the group."
+requires = { military }

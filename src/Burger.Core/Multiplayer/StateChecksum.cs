@@ -45,6 +45,7 @@ public static class StateChecksum
         }
         U((ulong)game.Development.Checksum());
         U((ulong)game.CultureLife.Checksum()); U((ulong)game.Reforms.Checksum()); U((ulong)game.Succession.Checksum()); U((ulong)game.Dynasties.Checksum());
+        U((ulong)game.Reputation.Checksum()); U((ulong)game.GreatPowers.Checksum()); U((ulong)game.Envoys.Checksum()); U((ulong)game.Conferences.Checksum()); U((ulong)game.Factions.Checksum()); U((ulong)game.Marriages.Checksum()); U((ulong)game.Intrigue.Checksum()); U((ulong)game.Titles.Checksum()); U((ulong)game.Raising.Checksum()); U((ulong)game.ArmyOrg.Checksum()); U((ulong)game.Logistics.Crossings);
         foreach (var (name, st) in game.Rngs.Snapshot()) { S(name); U(st); }
         return h;
     }

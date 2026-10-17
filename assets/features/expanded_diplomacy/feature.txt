@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Envoys, conferences, factions & marriages"
+category = "Diplomacy"
+order = 35
+description = "Each diplomatic action ties up an envoy for 30 days (3 envoys, one more for every two great-power ranks and at 25%, 50% and 75% of the technologies, at most 8). When a big war ends the leaders' peace opens an armistice and a conference: after 7 days every other winner, the largest first, takes a 3-day turn to demand with its share of the war score. The leader of a faction (an alliance bloc) sets one war goal; members not at war with its target after 30 days lose 25 opinion with the leader and may leave. Royal marriages give +50 opinion; a house left without an heir may be claimed (20%) or, if its people accept the other house, joined in a personal union."
+requires = { diplomacy characters }

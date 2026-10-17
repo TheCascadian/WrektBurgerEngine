@@ -107,12 +107,37 @@ public class DiplomacyRules
         return false;
     }
 
+    /// <summary>How strong a country is for rankings and rivalries: its score in the great-power ranking, else its military strength.</summary>
+    public virtual double PowerScore(Game game, Country c) => game.GreatPowers.Enabled ? game.GreatPowers.Score(c) : game.Diplomacy.Strength(c);
+
+    /// <summary>
+    /// Envoys a country has: envoy_base (3), one more for every two great-power ranks above the bottom of the table, one more at 25%, 50% and 75% of the
+    /// technologies, at most envoy_max (8).
+    /// </summary>
+    public virtual int EnvoyLimit(Game game, Country c)
+    {
+        var d = game.Data.Defines;
+        int n = (int)d.Get("envoy_base", 3);
+        if (game.GreatPowers.Enabled)
+        {
+            if (game.GreatPowers.IsGreat(c)) n += (int)d.Get("great_power_count", 8) / 2 - (game.GreatPowers.RankOf(c) - 1) / 2;
+        }
+        else if (IsGreatPower(game, c)) n += 1;
+        if (game.Tech.Enabled && game.Tech.Defs.Count > 0)
+        {
+            double share = game.Tech.Count(c) / (double)game.Tech.Defs.Count;
+            n += (share >= 0.25 ? 1 : 0) + (share >= 0.5 ? 1 : 0) + (share >= 0.75 ? 1 : 0);
+        }
+        return Math.Clamp(n, 1, (int)d.Get("envoy_max", 8));
+    }
+
     private int _powersMonth = -1;
     private HashSet<Country> _powers = new();
 
     /// <summary>One of the war_reach_powers (8) strongest countries (recomputed monthly).</summary>
     public virtual bool IsGreatPower(Game game, Country c)
     {
+        if (game.GreatPowers.Enabled) return game.GreatPowers.IsGreat(c);
         int month = game.World.Date.Year * 12 + game.World.Date.Month;
         if (month != _powersMonth)
         {

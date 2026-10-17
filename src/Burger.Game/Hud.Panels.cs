@@ -123,6 +123,7 @@ public sealed partial class Hud
         Cell(0, split ? 2 : 1, "Owner", l.Owner?.Name ?? "-", null, null, l.Owner);
         if (split) Cell(1, 2, "Controller", l.Controller?.Name ?? "-", Gui.Bad, null, l.Controller);
         CellsEnd();
+        if (st != null && l.Owner != null) y += DrawStateRulers(st, x, y, w);
         if (st != null)
         {
             // tax and manpower against the average state of the owner: above is green, below is red
@@ -262,6 +263,7 @@ public sealed partial class Hud
         if (Gui.Hover(new Rectangle(x, y, 84 * S, 56 * S))) Gui.Tooltip($"{c.Name} ({c.Tag})");
         y += 64 * S;
         y = DrawCountryTabs(c, x, y, r.Width - 24 * S);
+        if (ScRelationsOn && _countryTab == (G.Politics.Enabled ? 3 : 2)) { DrawCountryRelations(c, r, x, y, r.Width - 24 * S); return; }
         if (_countryTab == 1) { DrawCountryPeople(c, r, x, y, r.Width - 24 * S); return; }
         if (_countryTab == 2) { DrawCountryFactions(c, r, x, y, r.Width - 24 * S); return; }
 
@@ -359,7 +361,7 @@ public sealed partial class Hud
                 OpenPeace(war, war.EnemyLeaderOf(player));
             y += 32 * S;
         }
-        var actions = G.Diplomacy.ActionsFor(ActionTarget.Country).Where(a => G.Diplomacy.IsVisible(a, player, c)).ToList();
+        var actions = G.Diplomacy.ActionsFor(ActionTarget.Country).Where(a => a.Menu && G.Diplomacy.IsVisible(a, player, c)).ToList();
         float listH = r.Y + r.Height - y - 8 * S;
         float rowH = 30 * S;
         float top = Gui.BeginScroll("diplo", new Rectangle(x, y, r.Width - 20 * S, listH), actions.Count * rowH);

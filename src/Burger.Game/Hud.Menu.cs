@@ -358,6 +358,23 @@ public sealed partial class Hud
             .OrderByDescending(c => c.OwnedStates.Sum(s => s.Locations.Count)).ToList();
         Gui.Label($"{countries.Count} countries, {G.World.Wars.Count} war(s)", x, y, 14, Gui.TextDim);
         y += 24 * S;
+        if (G.GreatPowers.Enabled)
+        {
+            var wtabs = new[] { "Countries", "Great powers", "Leagues" };
+            float tw = (w - 2 * 4 * S) / 3;
+            for (int i = 0; i < 3; i++)
+                if (Gui.Button(new Rectangle(x + i * (tw + 4 * S), y, tw, 26 * S), wtabs[i], true, i == 1 ? "The rank list, spheres of influence and crises" : i == 2 ? "Leagues, their members and sanctions" : null, _worldTab == i, 13)) { _worldTab = i; Gui.ResetScroll("world_sc"); }
+            y += 32 * S;
+            if (_worldTab > 0)
+            {
+                float stop = Gui.BeginScroll("world_sc", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), _worldScH);
+                float send = _worldTab == 1 ? ScPowers(player, x, stop, w - 10 * S) : ScLeagues(player, x, stop, w - 10 * S);
+                _worldScH = send - stop + 12 * S;
+                Gui.EndScroll();
+                return;
+            }
+        }
+        else _worldTab = 0;
         float rowH = 44 * S;
         float top = Gui.BeginScroll("world", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), countries.Count * (rowH + 4 * S));
         float cy = top;

@@ -2,6 +2,7 @@
 # texture: tiled image drawn on the map. movement_cost multiplies travel time.
 # combat_width / attack_modifier / defense_modifier are used by the combat models.
 # Any other number (e.g. supply = 2) is stored and readable from C# scripts.
+# attrition = 0.005: share of strength a division outside friendly land loses a day (logistics feature).
 
 plains = {
 	color = { 86 124 27 }
@@ -37,7 +38,8 @@ mountains = {
 	movement_cost = 2.0
 	combat_width = 50
 	attack_modifier = -0.3
-	defense_modifier = 0.5
+	defense_modifier = 0.5
+	attrition = 0.005
 }
 desert = {
 	color = { 206 169 99 }
@@ -46,7 +48,8 @@ desert = {
 	movement_cost = 1.2
 	combat_width = 90
 	attack_modifier = 0.0
-	defense_modifier = 0.0
+	defense_modifier = 0.0
+	attrition = 0.005
 }
 marsh = {
 	color = { 75 147 174 }

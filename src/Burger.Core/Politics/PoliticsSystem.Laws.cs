@@ -173,6 +173,13 @@ public sealed partial class PoliticsSystem
         var busy = p.Ministers.Values.ToHashSet();
         bool Usable(Character ch) => ch.Alive && ch.Country == c && !ch.IsRuler && ch.Age(now) >= _game.Data.Defines.AdultAge && !busy.Contains(ch)
                                      && _game.World.Armies.All(a => a.General != ch);
+        if (pos.Council)
+        {
+            // a ruler's council: any adult of the country will do, and a few are always at court
+            var court = _game.World.CharactersOf(c).Where(Usable).ToList();
+            for (int i = court.Count; i < 5; i++) court.Add(_game.Characters.Generate(c, null, 35 + _game.Rngs.Politics.Next(30)));
+            return court.OrderByDescending(ch => pos.Stat.Length > 0 ? ch.GetStat(pos.Stat) : 0).ToList();
+        }
         var list = _game.World.CharactersOf(c).Where(ch => Usable(ch) && PartyInGovernmentOf(c, ch)).ToList();
         // every governing organization offers a few candidates; generated ones are spread over its factions by influence
         var organizations = p.GovernmentOrganizations.Count > 0 ? p.GovernmentOrganizations : p.Government;
@@ -197,7 +204,7 @@ public sealed partial class PoliticsSystem
         if (!CabinetEnabled) return "No cabinet in this game";
         if (!ch.Alive || ch.Country != c) return "Not one of our characters";
         if (MinisterOf(c, pos) == ch) return "Already holds this post";
-        if (!PartyInGovernmentOf(c, ch)) return "Their party is not in government";
+        if (!pos.Council && !PartyInGovernmentOf(c, ch)) return "Their party is not in government";
         if (!CanAfford(c, pos.Cost)) return $"Needs {pos.Cost:0} {PowerName}";
         return null;
     }

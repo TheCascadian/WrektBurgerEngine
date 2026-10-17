@@ -26,7 +26,7 @@ public class EconomyRules
         double cost = 0;
         foreach (var d in game.World.Divisions)
             if (d.Owner == c) cost += d.Template.Cost * game.Data.Defines.DivisionUpkeepFactor;
-        return cost * (1 + c.Vars.Get("upkeep_modifier") + game.Modifiers.Sum(c, "upkeep"));
+        return cost * (1 + c.Vars.Get("upkeep_modifier") + game.Modifiers.Sum(c, "upkeep")) + game.Raising.MercenaryUpkeep(c);
     }
 
     public virtual double MonthlyManpower(Game game, Country c)

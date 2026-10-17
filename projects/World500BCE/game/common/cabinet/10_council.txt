@@ -1,0 +1,37 @@
+# The ruler's council (titles feature): cabinet posts with council = yes. Any adult of the country may hold one, whatever party they belong to;
+# the bonus is per_point times the character's stat (2% a point). stat = the character stat that makes a good councillor.
+steward = {
+	name = "Steward"
+	desc = "Keeps the accounts of the realm."
+	council = yes
+	stat = finesse
+	per_point = { income = 0.02 }
+}
+marshal = {
+	name = "Marshal"
+	desc = "Drills the army and trains its captains."
+	council = yes
+	stat = martial
+	per_point = { org_recovery = 0.02 attack = 0.01 defense = 0.01 }
+}
+chancellor = {
+	name = "Chancellor"
+	desc = "Speaks for the ruler to other courts and to the assembly."
+	council = yes
+	stat = charisma
+	per_point = { political_power_gain = 0.02 opinion = 0.5 }
+}
+spymaster = {
+	name = "Spymaster"
+	desc = "Watches for schemes and plots."
+	council = yes
+	stat = finesse
+	per_point = { scheme_defense = 0.02 }
+}
+chaplain = {
+	name = "Chaplain"
+	desc = "Keeps the faith and the peace of the people."
+	council = yes
+	stat = zeal
+	per_point = { stability_target = 0.3 conversion = 0.02 }
+}

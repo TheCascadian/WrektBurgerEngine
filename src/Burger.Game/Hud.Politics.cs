@@ -79,9 +79,11 @@ public sealed partial class Hud
         var tabs = new List<(string Name, string Label, int Id, string Icon)> { ("Overview", "Overview", 0, "ui_overview") };
         if (assembly) tabs.Add(("Parties", "Parties", 4, "politics_organization"));
         if (P.LawsEnabled || own && G.Reforms.Enabled) tabs.Add((own && G.Reforms.Enabled ? "Laws, reforms, national ideas and corruption" : "Laws", "Laws", 1, "ui_laws"));
-        if (P.CabinetEnabled) tabs.Add(("Cabinet", "Cabinet", 2, "ui_cabinet"));
+        if (G.Titles.Enabled && own) tabs.Add(("Court: titles, vassals and governors", "Court", 9, "ui_cabinet"));
+        if (P.CabinetEnabled && P.Positions.Any(q => !q.Council)) tabs.Add(("Cabinet", "Cabinet", 2, "ui_cabinet"));
         if (P.CivilWarsEnabled && (PoliticsTab == 3 || P.MovementsOf(player).Any())) tabs.Add(("Movements", "Movements", 3, "ui_movements"));
-        if (own && (G.Succession.Enabled || G.Dynasties.Enabled)) tabs.Add(("Succession law, heirs and the dynasty", "Heirs", 8, "ui_cabinet"));
+        // the heirs page is opened from a character with a title; its tab shows only while it is open
+        if (own && (G.Succession.Enabled || G.Dynasties.Enabled) && PoliticsTab == 8) tabs.Add(("Succession law, heirs and the dynasty", "Heirs", 8, "ui_cabinet"));
         tabs.Add(("Effects", "Effects", 6, "ui_effects"));
         // tabs keep their icon and full label: when they do not fit one row they wrap onto another
         float tabGap = 4 * S, tabH = 32 * S;
@@ -147,6 +149,7 @@ public sealed partial class Hud
             case 4: DrawPartiesTab(player, r, x, y, w); break;
             case 6: DrawEffectsTab(player, r, x, y, w); break;
             case 8: DrawSuccessionPage(player, r, x, y, w); break;
+            case 9: DrawCourtTab(player, r, x, y, w); break;
             default: DrawGovernmentTab(player, r, x, y, w); break;
         }
     }
@@ -159,6 +162,7 @@ public sealed partial class Hud
         {
             0 when !G.Politics.HasAssembly(c) => 420 * S,
             8 => 3000 * S,
+            9 => 3000 * S,
             0 => 31 * S + (_overviewSub == 2 ? PeopleBodyHeight() : _overviewSub == 1 ? 29 * S + ParliamentPageSize * 30 * S + 40 * S : PoliticsOverviewContentHeight(c, w)),
             1 => 29 * S + Math.Max(24 * S, G.Politics.LawGroups.Where(g => G.Politics.IsGroupVisible(c, g)).Sum(g => LawGroupHeight(c, g, w))) + 12 * S + ReformsHeightIn(c),
             2 => CabinetPanelBodyHeight(c),
@@ -179,7 +183,7 @@ public sealed partial class Hud
     private float CabinetPanelBodyHeight(Country c)
     {
         var P = G.Politics;
-        float rows = P.Positions.Count * 74 * S;
+        float rows = P.Positions.Count(q => !q.Council) * 74 * S;
         if (_cabinetPick is { } pick && P.Positions.FirstOrDefault(p => p.Key == pick) is { } position)
             rows += P.Candidates(c, position).Take(5).Count() * 36 * S + 8 * S;
         return 29 * S + rows + 12 * S;
@@ -1295,12 +1299,12 @@ public sealed partial class Hud
         double power = P.PowerOf(c);
         Gui.Label($"{P.PowerName}: {(double.IsFinite(power) ? power.ToString("0.#") : "not configured")}", x, y, 15, Gui.Gold, FontKind.Bold);
         y += 29 * S;
-        float contentH = P.Positions.Count * 74 * S;
+        float contentH = P.Positions.Count(q => !q.Council) * 74 * S;
         if (_cabinetPick is { } pickForHeight && P.Positions.FirstOrDefault(p => p.Key == pickForHeight) is { } selectedPosition)
             contentH += P.Candidates(c, selectedPosition).Take(5).Count() * 36 * S + 8 * S;
         var area = new Rectangle(x, y, w, Math.Max(70 * S, r.Bottom() - y - 9 * S));
         float cy = Gui.BeginScroll($"politics-cabinet-{c.Tag}", area, contentH);
-        foreach (var pos in P.Positions)
+        foreach (var pos in P.Positions.Where(q => !q.Council))
         {
             var box = new Rectangle(x, cy, w, 68 * S);
             Card(box, new Color(36, 38, 44, 255), _cabinetPick == pos.Key);

@@ -104,6 +104,25 @@ public sealed class SupportSystem
         return null;
     }
 
+    /// <summary>
+    /// A subject's division is attached to its overlord for a war (raising_troops: call to arms): like a volunteer but without the rules of volunteers.
+    /// It comes home through <see cref="Recall"/> when the overlord is at peace.
+    /// </summary>
+    public bool Attach(Country from, Country to, Division d)
+    {
+        if (d.Owner != from || d.VolunteerFrom != null || d.InBattle || to.Capital == null || to.Capital.Controller != to) return false;
+        var wf = _game.Warfare;
+        wf.StopDivision(d);
+        wf.AssignToArmy(d, null);
+        d.FrontPost = null;
+        d.Retreating = false;
+        d.Owner = to;
+        d.VolunteerFrom = from;
+        d.Raised = Burger.Core.Economy.RaisingSystem.Attached;
+        wf.Teleport(d, to.Capital);
+        return true;
+    }
+
     /// <summary>Sends up to <paramref name="count"/> of the sender's idle divisions (not in battle, not in an army first).</summary>
     public int SendVolunteers(Country from, Country to, int count)
     {
@@ -138,6 +157,7 @@ public sealed class SupportSystem
         var at = home.Capital != null && home.Capital.Controller == home ? home.Capital : wf.NearestOwnLocation(home, d.Location);
         if (!home.Exists || at == null) { wf.DestroyDivision(d); return; }
         d.Owner = home;
+        if (d.Raised == Burger.Core.Economy.RaisingSystem.Attached) d.Raised = null;
         wf.Teleport(d, at);
         _game.NotifyPlayer($"{d.Name} has come home.", NotificationKind.Good, home);
     }

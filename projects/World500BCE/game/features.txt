@@ -25,4 +25,13 @@ features = {
 	government_reforms
 	succession
 	dynasties
+	reputation
+	great_powers
+	expanded_diplomacy
+	intrigue
+	cabinet
+	titles
+	raising_troops
+	logistics
+	army_organization
 }

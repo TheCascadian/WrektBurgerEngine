@@ -1,0 +1,19 @@
+# Resources of the reputation feature (a game's own file with the same keys replaces these).
+# aggressive_expansion is raised by land taken in wars and falls by itself; scripts read it as the value 'aggressive_expansion'.
+aggressive_expansion = {
+	name = "Aggressive Expansion"
+	desc = "How alarming the country's conquests are. From 10 neighbours lose opinion (2 a point) and fabricating claims costs 50% more; at 20 a coalition can form against it, until it falls under 10. Falls 0.1 a month."
+	start = 0
+	min = 0
+	max = 100
+	color = { 220 120 60 }
+	decimals = 1
+}
+prestige = {
+	name = "Prestige"
+	desc = "Standing among the nations. Grows from the strength of the country's rivals."
+	start = 0
+	min = 0
+	color = { 230 200 110 }
+	decimals = 0
+}

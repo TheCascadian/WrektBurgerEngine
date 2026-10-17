@@ -129,6 +129,26 @@ public sealed class Game
     public Burger.Core.Society.SuccessionSystem Succession { get; }
     /// <summary>Dynasty prestige, bastards, concubines and illness (dynasties feature).</summary>
     public Burger.Core.Society.DynastySystem Dynasties { get; }
+    /// <summary>Aggressive expansion, coalitions and rivals (reputation feature).</summary>
+    public Burger.Core.Diplomacy.ReputationSystem Reputation { get; }
+    /// <summary>The ranking of countries, spheres of influence and leagues (great_powers feature).</summary>
+    public Burger.Core.Diplomacy.GreatPowerSystem GreatPowers { get; }
+    /// <summary>Envoys that diplomatic actions tie up (expanded_diplomacy feature).</summary>
+    public Burger.Core.Diplomacy.EnvoySystem Envoys { get; }
+    /// <summary>Peace conferences after big wars (expanded_diplomacy feature).</summary>
+    public Burger.Core.Diplomacy.ConferenceSystem Conferences { get; }
+    /// <summary>Faction war goals (expanded_diplomacy feature).</summary>
+    public Burger.Core.Diplomacy.FactionSystem Factions { get; }
+    /// <summary>Royal marriages and personal unions (expanded_diplomacy feature).</summary>
+    public Burger.Core.Diplomacy.MarriageSystem Marriages { get; }
+    /// <summary>Schemes, stress, loyalty and plots against rulers (intrigue feature).</summary>
+    public Burger.Core.Characters.IntrigueSystem Intrigue { get; }
+    /// <summary>Titles, vassals, governors and the council (titles feature).</summary>
+    public Burger.Core.Characters.TitleSystem Titles { get; }
+    /// <summary>Mobilisation, levies, mercenaries, calls to arms and the foreign legion (raising_troops feature).</summary>
+    public Burger.Core.Economy.RaisingSystem Raising { get; }
+    public Burger.Core.Supply.LogisticsSystem Logistics { get; }
+    public Burger.Core.Warfare.ArmyOrganizationSystem ArmyOrg { get; }
     /// <summary>The 3D models of the largest places (common/sites).</summary>
     public Burger.Core.Sites.SiteSystem Sites { get; }
     /// <summary>Strategic commodities: deposits, shortages and trade (commodities feature).</summary>
@@ -218,6 +238,18 @@ public sealed class Game
         Reforms = new Burger.Core.Society.GovernmentSystem(this);
         Succession = new Burger.Core.Society.SuccessionSystem(this);
         Dynasties = new Burger.Core.Society.DynastySystem(this);
+        Reputation = new Burger.Core.Diplomacy.ReputationSystem(this);
+        GreatPowers = new Burger.Core.Diplomacy.GreatPowerSystem(this);
+        Envoys = new Burger.Core.Diplomacy.EnvoySystem(this);
+        Conferences = new Burger.Core.Diplomacy.ConferenceSystem(this);
+        Factions = new Burger.Core.Diplomacy.FactionSystem(this);
+        Marriages = new Burger.Core.Diplomacy.MarriageSystem(this);
+        Intrigue = new Burger.Core.Characters.IntrigueSystem(this);
+        Titles = new Burger.Core.Characters.TitleSystem(this);
+        Raising = new Burger.Core.Economy.RaisingSystem(this);
+        Logistics = new Burger.Core.Supply.LogisticsSystem(this);
+        ArmyOrg = new Burger.Core.Warfare.ArmyOrganizationSystem(this);
+        Intrigue.PlotSucceeded += Titles.OnPlotSucceeded;
         Sites = new Burger.Core.Sites.SiteSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
@@ -237,6 +269,8 @@ public sealed class Game
         Memory.Subscribe(Hub);
         Dynasties.Subscribe(Hub);
         Succession.Subscribe(Hub);
+        Reputation.Subscribe(Hub);
+        Marriages.Subscribe(Hub);
         Hub.SubjectMade += Politics.FollowOverlord;
         Hub.SubjectMonthly += (s, o) => Politics.FollowOverlord(s, o, 0.05);
         Hub.SubjectMade += (s, _, _) => RefreshName(s);
@@ -255,9 +289,22 @@ public sealed class Game
         Modifiers.Providers.Add((scope, key) => CultureLife.ModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Reforms.ModifierValue(scope, key));
         Modifiers.Providers.Add((scope, key) => Succession.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => GreatPowers.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => Titles.ModifierValue(scope, key));
+        Modifiers.Providers.Add((scope, key) => Raising.ModifierValue(scope, key));
         Diplomacy.RegisterScript();
         Memory.RegisterScript();
         Reforms.RegisterScript();
+        Reputation.RegisterScript();
+        GreatPowers.RegisterScript();
+        Envoys.RegisterScript();
+        Factions.RegisterScript();
+        Marriages.RegisterScript();
+        Intrigue.RegisterScript();
+        Titles.RegisterScript();
+        Raising.RegisterScript();
+        Logistics.RegisterScript();
+        ArmyOrg.RegisterScript();
         Succession.RegisterScript();
         Politics.RegisterCommands(Commands);
     }
@@ -288,6 +335,10 @@ public sealed class Game
         game.Reforms.LoadDefinitions(game.Data);
         game.Succession.LoadDefinitions(game.Data);
         game.Dynasties.LoadDefinitions(game.Data);
+        game.GreatPowers.LoadDefinitions(game.Data);
+        game.Intrigue.LoadDefinitions(game.Data);
+        game.Titles.LoadDefinitions(game.Data);
+        game.Raising.LoadDefinitions(game.Data);
         game.Focus.Load(game.Data);
         game.Commodities.LoadDefinitions(game.Data);
         game.AiProfiles.LoadDefinitions(game.Data);
@@ -296,6 +347,7 @@ public sealed class Game
         WorldLoader.LoadWorld(game);
         game.Commodities.LoadWorld();
         game.Sites.Load(game.Data.Root);
+        game.Titles.Build();
         game.Diplomacy.LoadDemilitarized();
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);
@@ -317,10 +369,13 @@ public sealed class Game
             Economy.UpdateEstimates(c);
         }
         if (Features.Has(F.Characters)) Characters.GenerateFamilies();
+        if (Features.Has(F.Titles)) Titles.OnGameStart();
         if (Features.Has(F.Military)) Warfare.DailyTick();
         if (Features.Has(F.Navy)) Navy.OnGameStart();
         if (Features.Has(F.Air)) Air.OnGameStart();
         Development.OnGameStart();
+        GreatPowers.OnGameStart();
+        Reputation.OnGameStart();
         Tech.OnGameStart(); // before production sets up its lines: what a country can build depends on what it knows
         if (Features.Has(F.Production)) Production.OnGameStart();
         if (Features.Has(F.Diplomacy)) Diplomacy.UpdateWarScores();
@@ -532,10 +587,13 @@ public sealed class Game
         if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTick());
         if (Features.Has(F.Navy)) P("Navy.DailyTick", () => Navy.DailyTick());
         if (Features.Has(F.Air)) P("Air.DailyTick", () => Air.DailyTick());
-        if (Features.Has(F.LendLease) && Features.Has(F.Military)) P("Support.DailyTick", () => Support.DailyTick());
+        if ((Features.Has(F.LendLease) || Features.Has(F.RaisingTroops)) && Features.Has(F.Military)) P("Support.DailyTick", () => Support.DailyTick());
+        if (Features.Has(F.RaisingTroops)) P("Raising.DailyTick", () => Raising.DailyTick());
+        if (Features.Has(F.Logistics)) P("Logistics.DailyTick", () => Logistics.DailyTick());
         P("Modifiers.DailyTick", () => Modifiers.DailyTick());
         if (Features.Has(F.Military)) P("Economy.DailyTick", () => Economy.DailyTick()); // training and reinforcing divisions
         if (Features.Has(F.Diplomacy)) P("Diplomacy.DailyTick", () => Diplomacy.DailyTick());
+        if (Features.Has(F.ExpandedDiplomacy)) P("Conferences.DailyTick", () => Conferences.DailyTick());
         if (Features.Has(F.Politics)) P("Politics.DailyTick", () => Politics.DailyTick());
         if (Features.Has(F.Ai)) P("Ai.DailyTick", () => Ai.DailyTick());
         P("Events.DailyTick", () => Events.DailyTick());
@@ -563,7 +621,14 @@ public sealed class Game
         if (Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
         if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick());
         if (Features.Has(F.Diplomacy)) P("Diplomacy.MonthlyTick", () => Diplomacy.MonthlyTick());
+        if (Features.Has(F.GreatPowers)) P("GreatPowers.MonthlyTick", () => GreatPowers.MonthlyTick());
+        if (Features.Has(F.Reputation)) P("Reputation.MonthlyTick", () => Reputation.MonthlyTick());
+        if (Features.Has(F.ExpandedDiplomacy)) { P("Factions.MonthlyTick", () => Factions.MonthlyTick()); P("Marriages.MonthlyTick", () => Marriages.MonthlyTick()); }
         if (Features.Has(F.Characters)) P("Characters.MonthlyTick", () => Characters.MonthlyTick());
+        if (Features.Has(F.Intrigue)) P("Intrigue.MonthlyTick", () => Intrigue.MonthlyTick());
+        if (Features.Has(F.Titles)) P("Titles.MonthlyTick", () => Titles.MonthlyTick());
+        if (Features.Has(F.RaisingTroops)) P("Raising.MonthlyTick", () => Raising.MonthlyTick());
+        if (Features.Has(F.ArmyOrganization)) P("ArmyOrg.MonthlyTick", () => ArmyOrg.MonthlyTick());
         if (Features.Has(F.Succession)) P("Succession.MonthlyTick", () => Succession.MonthlyTick());
         if (Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());
         if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTick());

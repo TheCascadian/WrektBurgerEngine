@@ -94,6 +94,9 @@ public sealed class War : IScope
     public double WarScore;
     public VarStore Vars { get; } = new();
 
+    /// <summary>The leaders have made peace and a conference still has to share out the spoils: nobody fights (expanded_diplomacy feature).</summary>
+    public bool Armistice => Vars.Flags.Count > 0 && Vars.Flags.Contains("armistice");
+
     public bool IsAttacker(Country c) => Attackers.Contains(c);
     public bool IsDefender(Country c) => Defenders.Contains(c);
     public bool Involves(Country c) => IsAttacker(c) || IsDefender(c);

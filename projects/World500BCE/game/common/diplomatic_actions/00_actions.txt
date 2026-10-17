@@ -1,4 +1,6 @@
 # Diplomatic actions (Imperator: Rome style) - shown in the country panel.
+#   envoy = no   the action does not tie up an envoy (expanded_diplomacy feature; the default is yes)
+#   tags = { fabricate }   labels other systems look for (reputation: fabricating claims costs more under aggressive expansion)
 # Scopes:  ROOT / scope:actor = the country doing the action,  scope:recipient = the target country.
 #   potential        shown only if true
 #   allow            clickable only if true (each condition is listed in the tooltip)
@@ -86,6 +88,7 @@ offer_alliance = {
 }
 
 break_alliance = {
+	envoy = no
 	name = "Break Alliance"
 	potential = { is_allied_with = scope:recipient }
 	ai_will_do = {
@@ -140,6 +143,7 @@ guarantee_independence = {
 }
 
 fabricate_claim = {
+	tags = { fabricate }
 	name = "Fabricate Claim"
 	desc = "Forge documents proving one of their states is rightfully ours. Claims give a cheaper casus belli."
 	cost = 30
@@ -161,6 +165,7 @@ fabricate_claim = {
 }
 
 declare_war = {
+	envoy = no
 	name = "Declare War"
 	desc = "Choose a casus belli: it decides what the war is about, which demands are cheap and how much the world dislikes it."
 	dialog = declare_war
@@ -263,6 +268,7 @@ offer_non_aggression_pact = {
 }
 
 break_non_aggression_pact = {
+	envoy = no
 	name = "Break Non-Aggression Pact"
 	desc = "End the pact now (they and everyone else will think less of us)."
 	potential = { has_non_aggression_pact = scope:recipient }
@@ -300,6 +306,7 @@ demand_subjugation = {
 }
 
 release_subject = {
+	envoy = no
 	name = "Release Subject"
 	potential = { is_overlord_of = scope:recipient }
 	on_accept = {

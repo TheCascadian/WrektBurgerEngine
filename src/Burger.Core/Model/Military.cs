@@ -80,6 +80,14 @@ public sealed class Division
     public double CombatFactor = 1;
     /// <summary>Set while the division fights for another country as a volunteer (lend_lease feature): its home country.</summary>
     public Country? VolunteerFrom;
+    /// <summary>How the division came to be when it was not recruited: mobilised, levy, mercenary, legion or attached (raising_troops feature).</summary>
+    public string? Raised;
+    /// <summary>Which mercenary company a mercenary division belongs to (the day it was hired).</summary>
+    public int RaisedMark;
+    /// <summary>Strength lost to the land and the sea a day, as a share of the maximum (logistics feature; not saved).</summary>
+    public double Attrition;
+    /// <summary>Why: shown in the tooltip (not saved).</summary>
+    public string AttritionWhy = "";
     /// <summary>First day the fronts may re-plan this division's path (not saved).</summary>
     public int PathRetryDay;
 

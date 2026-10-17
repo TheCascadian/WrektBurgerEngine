@@ -128,6 +128,7 @@ public sealed partial class Hud
         var tabs = new List<(string Label, string Icon, string Tip)> { ("Overview", "information", "Government, economy and relations") };
         tabs.Add(("People", "characters", "Rulers, ministers, generals and everyone else of this country"));
         if (G.Politics.Enabled) tabs.Add(("Factions", "politics", "Parties and their factions as a flowchart"));
+        if (ScRelationsOn) tabs.Add(("Standing", "diplomacy", "Power rank, reputation, rivals, influence, leagues and the alliance faction"));
         float bw = (w - (tabs.Count - 1) * 4 * S) / tabs.Count;
         for (int i = 0; i < tabs.Count; i++)
         {

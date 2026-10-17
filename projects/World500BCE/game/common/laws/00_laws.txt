@@ -7,6 +7,7 @@
 #                    unlock = { }  only by script (unlock_law = key), checked with law_unlocked = key.
 #                    A locked group keeps its default law, so give it a default that does nothing.
 #   modifier         modifiers while in force   on_enact effects when enacted
+#                    (military service laws: recruitable = 0.015 raises the share of the people that can be called up, 3% + this, 1-5%: raising_troops feature)
 #   bans             parties of these ideologies get no seats and cannot govern
 #   single_party     only the ruling party is allowed (and there are no elections)
 #   suspends_elections  no elections while in force
@@ -21,7 +22,7 @@ conscription = {
 		name = "Hired Retinues"
 		desc = "Only those who are paid or sworn to the lord fight."
 		cost = 50
-		modifier = { manpower = -0.5 stability_target = 3 }
+		modifier = { manpower = -0.5 stability_target = 3 recruitable = -0.02 }
 		ai_will_do = { base = 0.5 modifier = { add = 1 ruling_ideology = democratic NOT = { is_at_war = yes } } }
 	}
 	limited_conscription = {
@@ -34,7 +35,7 @@ conscription = {
 		name = "Levy of All Men"
 		desc = "Every man able to carry a spear serves for the campaign."
 		allow = { OR = { is_at_war = yes ruling_ideology = fascist ruling_ideology = communist } }
-		modifier = { manpower = 0.5 production = -0.03 stability_target = -3 }
+		modifier = { manpower = 0.5 production = -0.03 stability_target = -3 recruitable = 0.015 }
 		ai_will_do = { base = 0 modifier = { add = 2 is_at_war = yes } modifier = { add = 1.5 OR = { ruling_ideology = fascist ruling_ideology = communist } } }
 	}
 	service_by_requirement = {
@@ -42,7 +43,7 @@ conscription = {
 		desc = "Everyone who can fight, fights."
 		cost = 150
 		allow = { is_at_war = yes }
-		modifier = { manpower = 1.0 production = -0.1 stability_target = -8 }
+		modifier = { manpower = 1.0 production = -0.1 stability_target = -8 recruitable = 0.02 }
 		ai_will_do = { base = 0 modifier = { add = 2.6 is_at_war = yes manpower < 2000 } }
 	}
 	standing_army = {
@@ -50,7 +51,7 @@ conscription = {
 		desc = "Paid soldiers are kept under arms all year."
 		cost = 100
 		unlock = { year = -221 }
-		modifier = { manpower = -0.2 org_recovery = 0.1 upkeep = 0.1 stability_target = 1 }
+		modifier = { manpower = -0.2 org_recovery = 0.1 upkeep = 0.1 stability_target = 1 recruitable = -0.01 }
 		ai_will_do = { base = 0.2 modifier = { add = 0.8 OR = { ruling_ideology = neutrality ruling_ideology = imperial } } }
 	}
 	national_conscription = {
@@ -58,7 +59,7 @@ conscription = {
 		desc = "Every citizen owes years of service, by law."
 		cost = 150
 		unlock = { year = 1800 }
-		modifier = { manpower = 0.8 upkeep = 0.05 stability_target = -3 }
+		modifier = { manpower = 0.8 upkeep = 0.05 stability_target = -3 recruitable = 0.02 }
 		ai_will_do = { base = 0.2 modifier = { add = 1 is_at_war = yes } }
 	}
 }

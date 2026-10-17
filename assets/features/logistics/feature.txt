@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Army and fleet logistics"
+category = "Military"
+order = 82
+description = "Armies and fleets lose strength to the land and the sea. A place feeds 6 divisions (+4 for a port or the capital, + its infrastructure); each division above that loses 0.3% a day, at most 3%. Outside friendly land divisions lose 0.5% a day in hostile terrain (terrain 'attrition = 0.005': desert, jungle, tundra, mountains) and another 0.5% in winter. Ships more than 30 days from a friendly port lose 0.2% of their hit points a day. Attacking over a river costs 20% (35% over a large river), half of that when the attackers have engineers (unit stat 'engineers'). The rules are in WarfareRules (SupplyLimit, OverLimitAttrition, TerrainAttrition, WinterAttrition, NavalAttrition); defines: supply_limit_base, supply_limit_hub, supply_attrition, supply_attrition_max, winter_attrition, naval_attrition, fleet_away_days, river_attack_penalty, large_river_penalty, large_river_pixels."
+requires = { military }

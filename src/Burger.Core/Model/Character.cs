@@ -39,7 +39,9 @@ public sealed class Character : IScope
     public Country? Country;
     public List<Trait> Traits = new();
     public Dictionary<string, double> Stats = new(StringComparer.OrdinalIgnoreCase);
-    public double Loyalty = 50;
+    private double _loyalty = 50;
+    /// <summary>How loyal they are to their ruler, 0-100. A ruler is always wholly loyal to themselves.</summary>
+    public double Loyalty { get => IsRuler ? 100 : _loyalty; set => _loyalty = value; }
     public double Health = 100;
     public Character? Father, Mother, Spouse;
     public List<Character> Children = new();

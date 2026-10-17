@@ -126,6 +126,8 @@ public sealed class CabinetPosition
     public Dictionary<string, double> Modifier = new(StringComparer.OrdinalIgnoreCase);
     public double Cost;
     public int Order;
+    /// <summary>A post of the ruler's council (titles feature): any adult of the country may hold it, whatever party they belong to.</summary>
+    public bool Council;
 }
 
 /// <summary>The political state of one country.</summary>

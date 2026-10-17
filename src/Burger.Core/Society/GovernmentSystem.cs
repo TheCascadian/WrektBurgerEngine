@@ -308,6 +308,7 @@ public sealed class GovernmentSystem
         double people = 0;
         foreach (var s in c.OwnedStates)
         {
+            if (_game.Titles.Enabled && _game.Titles.IsVassalHeld(s)) continue; // a vassal governs on the spot
             var (x, y) = CentreOf(s);
             double dx = x - c.Capital.CenterX, dy = y - c.Capital.CenterY;
             if (Math.Sqrt(dx * dx + dy * dy) * km > range) people += _game.Population.TotalOf(s);

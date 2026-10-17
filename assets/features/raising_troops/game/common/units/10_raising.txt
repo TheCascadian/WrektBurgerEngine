@@ -1,0 +1,7 @@
+# The division of the foreign legion (raising_troops feature): recruited from foreigners, a thousandth of the owner's people a month.
+division_templates = {
+	foreign_legion = {
+		name = "Foreign Legion"
+		units = { infantry = 3 }
+	}
+}

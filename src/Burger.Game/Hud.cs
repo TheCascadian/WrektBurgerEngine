@@ -125,6 +125,8 @@ public sealed partial class Hud
         if (Map.Mode is MapMode.Population or MapMode.Culture && !G.Population.Enabled) Map.Mode = MapMode.Political;
         if (Map.Mode == MapMode.Religion && !G.Population.ReligionEnabled) Map.Mode = MapMode.Political;
         if (Map.Mode is MapMode.Development or MapMode.Institution && !G.Development.Enabled) Map.Mode = MapMode.Political;
+        if (Map.Mode == MapMode.Spheres && !G.GreatPowers.Enabled) Map.Mode = (MapMode)(((int)Map.Mode + 1) % Enum.GetValues<MapMode>().Length);
+        if (Map.Mode == MapMode.Titles && !G.Titles.Enabled) Map.Mode = MapMode.Political;
         if (Map.Mode == MapMode.Institution && Map.InstitutionKey.Length == 0) NextInstitution();
         if (Map.Mode == MapMode.Provinces && !G.Geo.Enabled) Map.Mode = MapMode.Continents;
         if (Map.Mode == MapMode.Continents && G.World.Continents.Count == 0) Map.Mode = MapMode.Political;
@@ -284,7 +286,7 @@ public sealed partial class Hud
             Map.Dirty = true;
         }
         // map modes that change every day (supply) refresh daily
-        if (G.World.Date.TotalDays != _lastDay) { _lastDay = G.World.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (G.World.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Institution)) Map.Dirty = true; }
+        if (G.World.Date.TotalDays != _lastDay) { _lastDay = G.World.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (G.World.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Institution or MapMode.Spheres or MapMode.Titles)) Map.Dirty = true; }
         DrawTopBar();
         if (Ui.EditorActive) DrawEditor();
         else
@@ -318,6 +320,7 @@ public sealed partial class Hud
             case RightPanel.Ledger: DrawLedgerPanel(); break;
         }
         DrawMapModes();
+        DrawStatecraftBanners();
         DrawSelectedDivisions();
         DrawMultiplayer();
         DrawNotifications();
@@ -325,6 +328,7 @@ public sealed partial class Hud
         if (Ui.ErrorsOpen) DrawErrorLog();
         DrawProposals();
         DrawCharacterSheet();
+        DrawConferenceWindow();
         DrawConfirmDialog();
         DrawEvents();
         if (Ui.ConsoleOpen) DrawConsole();
@@ -374,6 +378,12 @@ public sealed partial class Hud
                 int divs = G.World.Divisions.Count(d => d.Owner == player);
                 Stat(ref x, "Divisions", divs.ToString(), player.Recruitment.Count > 0 ? $"+{player.Recruitment.Count}" : "",
                     $"{divs} divisions, {player.Recruitment.Count} in training\nMilitary menu: F1, recruit: R", Gui.TextDim);
+            }
+            if (G.Envoys.Enabled)
+            {
+                var E = G.Envoys;
+                Stat(ref x, "Envoys", $"{E.Free(player)}/{E.Total(player)}", E.Busy(player) > 0 ? $"back in {E.NextBackIn(player)}d" : "",
+                    $"Envoys: {E.Free(player)} free of {E.Total(player)}\nEach diplomatic action sends one away for 30 days.\n3 to start, +1 for every 2 ranks among the great powers, +1 at 25%, 50% and 75% of the technologies, at most 8.", E.Free(player) == 0 ? Gui.Bad : Gui.TextDim);
             }
             DrawResources(ref x, player);
         }
@@ -511,6 +521,8 @@ public sealed partial class Hud
         if (G.Population.Enabled) { modes.Add(("People", MapMode.Population)); modes.Add(("Culture", MapMode.Culture)); }
         if (G.Population.ReligionEnabled) modes.Add(("Religion", MapMode.Religion));
         if (G.Development.Enabled) modes.Add(("Development", MapMode.Development));
+        if (G.GreatPowers.Enabled) modes.Add(("Spheres", MapMode.Spheres));
+        if (G.Titles.Enabled) modes.Add(("Titles", MapMode.Titles));
         if (G.World.Continents.Count > 0) modes.Add(("Continents", MapMode.Continents));
         modes.Add(("Locations", MapMode.Locations));
         if (G.Geo.Enabled) modes.Add(("Provinces", MapMode.Provinces));
@@ -602,6 +614,8 @@ public sealed partial class Hud
         MapMode.Political => "Political: territory color shows its country; stripes mark occupied provinces. Tab cycles modes.",
         MapMode.Terrain => "Terrain: terrain textures and relief; province colors are hidden. Tab cycles modes.",
         MapMode.States => "States: each state gets a distinct color; dark lines show province boundaries. Tab cycles modes.",
+        MapMode.Spheres => "Spheres: great powers in their own color, the countries in their spheres of influence in a paler shade of it. Tab cycles modes.",
+        MapMode.Titles => "Titles: land held by vassals in a color for each vassal, land the ruler holds directly in the pale color of the country. Tab cycles modes.",
         MapMode.Diplomacy => "Diplomacy: shows relations to the focused country; hover a province for details. Tab cycles modes.",
         MapMode.Locations => "Locations: each province uses its configured map color. Tab cycles modes.",
         MapMode.Continents => "Continents: each continent has its own color and each ocean its own blue; hover a province for its continent. Tab cycles modes.",
@@ -701,12 +715,43 @@ public sealed partial class Hud
             Ui.SetStatus($"Created {army.Name}");
         }
         bx += 156 * S;
+        if (G.ArmyOrg.Enabled)
+        {
+            if (Gui.Button(new Rectangle(bx, by, 130 * S, 28 * S), "Army group", true, "Put the selected divisions into a new army group under a field marshal"))
+                CreateGroupFromSelection();
+            bx += 134 * S;
+        }
         var armies = G.World.ArmiesOf(G.World.Player!).ToList();
-        foreach (var a in armies.Take(3))
+        foreach (var a in armies.Take(G.ArmyOrg.Enabled ? 2 : 3))
         {
             if (Gui.Button(new Rectangle(bx, by, 130 * S, 28 * S), "To " + (a.Name.Length > 11 ? a.Name[..10] + "." : a.Name), true, $"Add to {a.Name}"))
                 foreach (var d in Ui.SelectedDivisions) G.Warfare.AssignToArmy(d, a);
             bx += 134 * S;
         }
+    }
+
+    /// <summary>Armies of the selected divisions (the loose ones in a new army) into a new army group; the Army panel opens on the groups.</summary>
+    private void CreateGroupFromSelection()
+    {
+        var player = G.World.Player!;
+        var sel = Ui.SelectedDivisions.ToList();
+        var list = sel.Select(d => d.Army).Where(a => a != null).Distinct().Cast<Army>().ToList();
+        var loose = sel.Where(d => d.Army == null).ToList();
+        if (loose.Count > 0)
+        {
+            var army = G.Warfare.CreateArmy(player);
+            foreach (var d in loose) G.Warfare.AssignToArmy(d, army);
+            list.Add(army);
+        }
+        var group = G.ArmyOrg.CreateGroup(player);
+        foreach (var a in list)
+        {
+            if (G.ArmyOrg.GroupOf(a) is { } old) G.ArmyOrg.Remove(old, a);
+            G.ArmyOrg.Add(group, a);
+        }
+        Ui.SelectedArmy = list.FirstOrDefault();
+        _armyTab = 1;
+        Ui.Left = LeftPanel.Military;
+        Ui.SetStatus($"Created the {group.Name} with {list.Count} army(ies)");
     }
 }

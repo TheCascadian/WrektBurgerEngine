@@ -91,6 +91,7 @@ public sealed class MapOverlay
             Raylib.DrawLineEx(new Vector2(s.X + r * 0.6f, s.Y - r * 0.6f), new Vector2(s.X - r * 0.6f, s.Y + r * 0.6f), 3, Color.White);
             var bar = new Rectangle(s.X - 26 * scale, s.Y + r + 4, 52 * scale, 6 * scale);
             Gui.Bar(bar, (float)b.AttackerProgress, C(b.AttackerCountry.Color), C(b.DefenderCountry.Color));
+            if (_game.Logistics.Enabled && Burger.Core.Warfare.CombatMath.RiverCrossing(b)) DrawRiverIcon(new Vector2(s.X + r + 10 * scale, s.Y), scale);
             var hit = new Rectangle(s.X - r, s.Y - r, r * 2, r * 2);
             if (Gui.Hover(hit) && !mouseOverUi)
                 Gui.Tooltip($"[icon:battle] Battle of {b.Location.DisplayName}\n" +
@@ -168,10 +169,11 @@ public sealed class MapOverlay
                 Raylib.DrawTriangle(tp + new Vector2(0, -6 * scale), tp + new Vector2(-6 * scale, 5 * scale), tp + new Vector2(6 * scale, 5 * scale), tcol);
             }
 
+            string statecraft = DrawStatecraftBadges(g.ToList(), first, rect, scale, loc, mine);
             if (!mouseOverUi && Gui.Hover(rect))
             {
                 string army = string.Join(", ", g.Where(d => d.Army != null).Select(d => d.Army!.Name).Distinct());
-                Gui.Tooltip($"[icon:army][state:value] {owner.Name}: {count} division(s) in {loc.DisplayName}\n" + (army.Length > 0 ? $"Army: {army}\n" : "") +
+                Gui.Tooltip($"[icon:army][state:value] {owner.Name}: {count} division(s) in {loc.DisplayName}\n" + (army.Length > 0 ? $"Army: {army}\n" : "") + statecraft +
                             string.Join("\n", g.Take(8).Select(d => $"{d.Name}  str {d.StrengthFraction:P0}  org {d.OrgFraction:P0}" +
                                 (_game.Features.HasSupply ? $"  supply {d.Supply:P0}" : "") + (d.Retreating ? " (retreating)" : ""))) +
                             (count > 8 ? $"\n... and {count - 8} more" : ""));
@@ -186,6 +188,127 @@ public sealed class MapOverlay
             }
         }
         return clicked;
+    }
+
+    private static Color ArmColor(string arm) => arm switch { "cavalry" => new Color(232, 200, 84, 255), "support" => new Color(224, 104, 84, 255), _ => new Color(150, 176, 214, 255) };
+
+    private static Color GroupColor(int id) => new Color((byte)(90 + id * 67 % 150), (byte)(110 + id * 41 % 130), (byte)(90 + id * 97 % 150), (byte)255);
+
+    /// <summary>Two blue waves: a river crossing (logistics feature).</summary>
+    private static void DrawRiverIcon(Vector2 c, float scale)
+    {
+        Raylib.DrawCircleV(c, 8 * scale, new Color(0, 0, 0, 190));
+        var blue = new Color(110, 190, 250, 255);
+        for (int row = -1; row <= 1; row += 2)
+        {
+            var p = new Vector2(c.X - 5 * scale, c.Y + row * 2.6f * scale);
+            for (int i = 0; i < 4; i++)
+            {
+                var q = new Vector2(p.X + 2.5f * scale, c.Y + row * 2.6f * scale + (i % 2 == 0 ? -1.6f : 1.6f) * scale);
+                Raylib.DrawLineEx(p, q, 1.6f, blue);
+                p = q;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Everything the statecraft features add to a unit counter: a bar for each arm (army organization), the army group border and name plate, a red arrow for attrition
+    /// (logistics), icons for mobilised, levy, mercenary, attached and legion divisions (raising troops) and a river crossing icon. Returns the tooltip lines.
+    /// </summary>
+    private string DrawStatecraftBadges(IReadOnlyCollection<Division> g, Division first, Rectangle rect, float scale, Location loc, bool mine)
+    {
+        var tip = new System.Text.StringBuilder();
+        float top = rect.Y - 4 * scale;
+        if (_game.ArmyOrg.Enabled)
+        {
+            var comp = _game.ArmyOrg.CompositionOf(g);
+            if (comp.Total > 0)
+            {
+                float y = rect.Y + rect.Height + 1 + 7 * scale, x = rect.X;
+                Raylib.DrawRectangleRec(new Rectangle(rect.X - 2, y - 1, rect.Width + 4, 3 * scale + 3), new Color(0, 0, 0, 200));
+                foreach (var (arm, amount) in comp.Arms.OrderBy(k => k.Key == "infantry" ? 0 : k.Key == "cavalry" ? 1 : 2))
+                {
+                    float w = (float)(rect.Width * amount / comp.Total);
+                    Raylib.DrawRectangleRec(new Rectangle(x, y, w, 3 * scale), ArmColor(arm));
+                    x += w;
+                }
+                var army = g.Select(d => d.Army).FirstOrDefault(a => a != null);
+                if (army != null) tip.Append(_game.ArmyOrg.DescribeBonus(army)).Append('\n');
+                else tip.Append($"Combined arms {_game.ArmyOrg.CombinedArmsBonus(comp):+0%;-0%;+0%}\n");
+            }
+            var grp = g.Select(d => d.Army).Where(a => a != null).Select(a => _game.ArmyOrg.GroupOf(a!)).FirstOrDefault(x => x != null);
+            if (grp != null)
+            {
+                var col = GroupColor(grp.Id);
+                Raylib.DrawRectangleLinesEx(new Rectangle(rect.X - 3, rect.Y - 3, rect.Width + 6, rect.Height + 6 + 7 * scale), 2, col);
+                string name = grp.Name + (grp.Marshal != null ? " - " + grp.Marshal.DisplayName : "");
+                float fs = 12 * scale / Gui.Scale;
+                var m = Gui.Measure(name, fs);
+                var plate = new Rectangle(rect.X + rect.Width / 2 - m.X / 2 - 5, top - m.Y - 2, m.X + 10, m.Y + 3);
+                Raylib.DrawRectangleRounded(plate, 0.4f, 6, new Color(col.R, col.G, col.B, (byte)215));
+                Gui.Label(name, plate.X + 5, plate.Y + 1, fs, Color.White);
+                top = plate.Y - 2;
+                tip.Append($"{grp.Name}{(grp.Marshal != null ? $", field marshal {grp.Marshal.DisplayName} +{_game.ArmyOrg.MarshalBonus(grp):P1}" : "")}\n");
+            }
+        }
+        if (_game.Logistics.Enabled)
+        {
+            var hit = g.Where(d => d.Attrition > 0).ToList();
+            if (hit.Count > 0)
+            {
+                double rate = hit.Max(d => d.Attrition);
+                var c = new Vector2(rect.X - 8 * scale, rect.Y + rect.Height / 2);
+                Raylib.DrawTriangle(c + new Vector2(-6 * scale, -5 * scale), c + new Vector2(0, 6 * scale), c + new Vector2(6 * scale, -5 * scale), new Color(0, 0, 0, 220));
+                Raylib.DrawTriangle(c + new Vector2(-4.5f * scale, -3.5f * scale), c + new Vector2(0, 4.2f * scale), c + new Vector2(4.5f * scale, -3.5f * scale), new Color(226, 52, 44, 255));
+                tip.Append($"Attrition -{rate:P1}/day ({hit.First(d => d.Attrition == rate).AttritionWhy})\n");
+            }
+        }
+        if (_game.Raising.Enabled)
+        {
+            float x = rect.X;
+            foreach (var kind in g.Select(d => d.Raised).Where(r => !string.IsNullOrEmpty(r)).Distinct())
+            {
+                var c = new Vector2(x + 6 * scale, top - 6 * scale);
+                x += 15 * scale;
+                Raylib.DrawCircleV(c, 7 * scale, new Color(0, 0, 0, 210));
+                switch (kind)
+                {
+                    case "mobilised": // a clock
+                        Raylib.DrawCircleLinesV(c, 5 * scale, Color.White);
+                        Raylib.DrawLineEx(c, c + new Vector2(0, -3.5f * scale), 1.4f, Color.White);
+                        Raylib.DrawLineEx(c, c + new Vector2(2.6f * scale, 0), 1.4f, Color.White);
+                        tip.Append("Mobilised: goes home when the mobilisation ends\n");
+                        break;
+                    case "mercenary": // a coin
+                        Raylib.DrawCircleV(c, 5 * scale, new Color(226, 186, 60, 255));
+                        Raylib.DrawCircleLinesV(c, 3 * scale, new Color(150, 110, 20, 255));
+                        tip.Append("Mercenaries: paid by the month\n");
+                        break;
+                    case "attached": // the flag of the subject
+                        Raylib.DrawLineEx(c + new Vector2(-3 * scale, 5 * scale), c + new Vector2(-3 * scale, -5 * scale), 1.4f, Color.White);
+                        Raylib.DrawRectangleRec(new Rectangle(c.X - 3 * scale, c.Y - 5 * scale, 7 * scale, 5 * scale), C((g.Select(d => d.VolunteerFrom).FirstOrDefault(v => v != null) ?? first.Owner).Color));
+                        tip.Append($"Sent by {g.Select(d => d.VolunteerFrom).FirstOrDefault(v => v != null)?.Name ?? "a subject"}: goes home at peace\n");
+                        break;
+                    case "legion": // a shield
+                        Raylib.DrawRectangleRec(new Rectangle(c.X - 3.5f * scale, c.Y - 4 * scale, 7 * scale, 6 * scale), new Color(190, 60, 52, 255));
+                        Raylib.DrawTriangle(c + new Vector2(-3.5f * scale, 2 * scale), c + new Vector2(0, 5.5f * scale), c + new Vector2(3.5f * scale, 2 * scale), new Color(190, 60, 52, 255));
+                        tip.Append("Foreign legion\n");
+                        break;
+                    default: // levy: a spear
+                        Raylib.DrawLineEx(c + new Vector2(0, 5 * scale), c + new Vector2(0, -3 * scale), 1.5f, Color.White);
+                        Raylib.DrawTriangle(c + new Vector2(0, -6 * scale), c + new Vector2(-2.2f * scale, -2.5f * scale), c + new Vector2(2.2f * scale, -2.5f * scale), Color.White);
+                        tip.Append("Levies: weaker, disbanded after the war\n");
+                        break;
+                }
+            }
+        }
+        if (_game.Logistics.Enabled && first.Path.Count > 0 && loc.AdjacencyTo(first.Path[0]) is { River: true })
+        {
+            DrawRiverIcon(new Vector2(rect.X + rect.Width + 8 * scale, rect.Y + rect.Height + 4 * scale), scale);
+            bool eng = g.Any(d => d.Stat("engineers") > 0);
+            tip.Append($"River crossing ahead: attack -{_game.Logistics.CrossingPenalty(loc, first.Path[0], eng):P0}{(eng ? " (engineers)" : "")}\n");
+        }
+        return tip.ToString();
     }
 
     /// <summary>Fleets (navy feature): a ship counter per fleet, naval battles and the selected fleet's route. Returns true if a fleet was clicked.</summary>

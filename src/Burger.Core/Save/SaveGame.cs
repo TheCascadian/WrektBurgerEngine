@@ -167,6 +167,7 @@ public static class SaveGame
             n.Add("experience", F(d.Experience));
             if (d.Army != null) n.Add("army", I(d.Army.Id));
             if (d.VolunteerFrom != null) n.Add("volunteer_from", d.VolunteerFrom.Tag);
+            if (d.Raised != null) { n.Add("raised", d.Raised); n.Add("raised_mark", d.RaisedMark.ToString(System.Globalization.CultureInfo.InvariantCulture)); }
             if (d.Path.Count > 0)
             {
                 var p = n.AddBlock("path");
@@ -630,6 +631,8 @@ public static class SaveGame
             foreach (var lk in n.GetList("path")) if (w.GetLocation(lk) is { } pl) d.Path.Add(pl);
             if (n.Has("army") && armyById.TryGetValue(n.GetInt("army"), out var army)) { d.Army = army; army.Divisions.Add(d); }
             d.VolunteerFrom = w.GetCountry(n.GetString("volunteer_from"));
+            d.Raised = n.GetString("raised");
+            d.RaisedMark = (int)n.GetDouble("raised_mark");
             game.Warfare.AddLoadedDivision(d);
         }
 

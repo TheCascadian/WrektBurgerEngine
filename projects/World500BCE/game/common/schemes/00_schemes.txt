@@ -1,0 +1,42 @@
+# Schemes (intrigue feature). A character (the owner) works against another (the target). Each month the scheme gains progress (100 over 'months' at normal skill;
+# 6% a point of the owner's 'stat' above 5) and may be discovered (base 'discovery' a month, less 2% a point of skill, more with the
+# target country's spies: modifier scheme_defense). Starting it costs 'stress'. Scopes in the scripts: ROOT = the owner's country, scope:owner, scope:target,
+# scope:target_country.
+#   allow = { }  more conditions     foreign = yes  the target belongs to another country     ruler_only = yes  the target rules a country
+#   on_success / on_discovered       effects (the engine also lowers the opinion of the target's country when a scheme is found)
+
+murder = {
+	name = "Murder"
+	desc = "Have the target killed. It takes a year, is dangerous to the owner and the world does not forget."
+	months = 12
+	stat = finesse
+	discovery = 0.30
+	stress = 35
+	on_success = {
+		scope:target = { kill_character = yes }
+	}
+}
+seduce = {
+	name = "Seduce"
+	desc = "Win the target's heart or trust and turn them from their own ruler: their loyalty falls by 25."
+	months = 8
+	stat = charisma
+	discovery = 0.15
+	stress = 15
+	on_success = {
+		scope:target = { add_loyalty = -25 }
+	}
+}
+fabricate_claim_scheme = {
+	name = "Fabricate Claim"
+	desc = "Forge a pedigree that gives our country a claim on a state of the target's country."
+	months = 10
+	stat = finesse
+	discovery = 0.20
+	stress = 10
+	foreign = yes
+	ruler_only = yes
+	on_success = {
+		fabricate_claim = { target = scope:target_country }
+	}
+}

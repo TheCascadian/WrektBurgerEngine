@@ -379,6 +379,7 @@ public sealed partial class App
                     break;
                 case "politics": Ui.Left = LeftPanel.Politics; _hud!.PoliticsTab = int.TryParse(parts.ElementAtOrDefault(1), out var pt2) ? pt2 : 0; break;
                 case "navy": Ui.Left = LeftPanel.Navy; _hud!.NavyTab = int.TryParse(parts.ElementAtOrDefault(1), out var nt) ? nt : 0; break;
+                case "sc": _hud!.OpenStatecraft(parts.ElementAtOrDefault(1) ?? "", game.World.GetCountry(parts.ElementAtOrDefault(2))); break;
                 case "wars": Ui.Right = RightPanel.Wars; break;
                 case "world": Ui.Right = RightPanel.World; break;
                 case "errors": Ui.ErrorsOpen = true; break;

@@ -1,0 +1,13 @@
+# Mercenary companies (raising_troops feature). A country hires a company with the effect hire_mercenaries = key (a decision does it).
+#   divisions   divisions in the company     template   division template (common/units)
+#   cost        gold a month for each division (it is part of the monthly expenses)
+#   quality     strength in battle against regular troops (1 = as good)
+# At most three companies at a time (define mercenary_companies); a company leaves when the treasury is empty.
+sellswords = {
+	name = "Sellswords"
+	desc = "Soldiers of fortune who fight for whoever pays."
+	divisions = 4
+	template = infantry_division
+	cost = 20
+	quality = 0.8
+}

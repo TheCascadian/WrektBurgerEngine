@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Titles, vassals & court"
+category = "Politics"
+order = 64
+description = "Every state is a county; counties make duchies (regions), duchies kingdoms (the realms of the start) and explicit titles in common/titles add empires. A county is held by the ruler or by a vassal who keeps 70-90% of its tax and levies by contract, has an opinion of the ruler and plots to break away at -50. A ruler who holds every county of a duchy may create it; claims on de jure land cost less. The ruler names a council of five (steward, marshal, chancellor, spymaster, chaplain: bonus 2% a point of skill) and one governor for each duchy (1% of tax a point of skill; -1 loyalty a year after five years)."
+requires = { politics characters cabinet }

@@ -68,6 +68,7 @@ public sealed partial class Hud
         PortraitFrame(new Rectangle(pr.X - 1, pr.Y - 1, pr.Width + 2, pr.Height + 2), new Color(0, 0, 0, 220), 2);
         PortraitFrame(pr, roles.Count > 0 ? roles[0].Tint : Gui.PanelBorder, 2);
         SickMark(ch, pr);
+        DrawIntrigueOverlay(ch, pr);
         float hx = x + pw + 12 * S, hw = w - pw - 12 * S, hy = y;
         Gui.Label(Gui.Fit(ch.DisplayName, hw, 21, FontKind.Header), hx, hy, 21, Gui.Gold, FontKind.Header);
         hy += 30 * S;
@@ -158,6 +159,10 @@ public sealed partial class Hud
             }
             y += 30 * S;
         }
+
+        y = DrawTitlesSection(ch, x, y, w);
+        y = DrawMarriageSection(ch, x, y, w);
+        y = DrawIntrigueSection(ch, x, y, w);
 
         // ---- family
         Gui.Section("Family", x, y, w);

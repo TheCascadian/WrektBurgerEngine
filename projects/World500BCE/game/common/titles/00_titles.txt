@@ -1,0 +1,17 @@
+# Titles above the kingdoms of the start (titles feature). Counties are the states, duchies are the regions of the states (the part of a state key before
+# its number) and every country of the start has a kingdom k_TAG; the file adds more.
+#   tier             empire or kingdom (or duchy)      name       capital   a state key (default: the holder's capital)
+#   parts            titles that make it up (their de jure parent becomes this title)
+#   holder           a country tag: its ruler holds the title from the start of the game
+e_persia = {
+	tier = empire
+	name = "Empire of the Persians"
+	parts = { k_ACH }
+	holder = ACH
+}
+e_zhou = {
+	tier = empire
+	name = "Empire under Heaven"
+	parts = { k_ZHO }
+	holder = ZHO
+}

@@ -273,28 +273,38 @@ public sealed class SuccessionSystem
             }
             else heirTax += st.Tax;
         }
-        var type = _game.Data.SubjectTypes.TryGetValue("vassal", out var v) ? v : _game.Data.SubjectTypes.TryGetValue("client_state", out var cs) ? cs : _game.Data.SubjectTypes.Values.First();
         foreach (var (son, states, _) in shares.Where(x => x.States.Count > 0))
         {
-            string tag = FreeTag();
-            var best = states.MaxBy(s => s.Tax)!;
-            var realm = _game.World.CreateCountry(tag, $"{best.DisplayName} ({son.FirstName})", c.Color.Lerp(Rgb.White, 0.25), c.FlagPath, c.Government);
-            realm.Origin = c.Tag;
-            realm.Playable = false;
-            realm.Names = c.Names;
-            foreach (var s in states) { _game.Diplomacy.TransferState(s, realm); s.Cores.Add(realm); }
-            realm.Capital = best.Locations.FirstOrDefault(l => l.IsLand && l.IsPassable) ?? best.Locations[0];
-            son.Country = realm;
-            foreach (var kid in son.Children.Where(k => k.Alive && k.Country == c)) kid.Country = realm;
-            if (son.Spouse is { Alive: true } sp && sp.Country == c) sp.Country = realm;
-            realm.Ruler = son;
-            if (_game.Politics.Enabled) _game.Politics.SetRulingParty(realm, _game.Politics.Of(c).Ruling, "gavelkind");
-            _game.Diplomacy.MakeSubject(realm, c, type);
-            _game.NotifyPlayer($"{son.DisplayName} inherits {best.DisplayName} and rules it under {heir.DisplayName}.", NotificationKind.Character, c);
+            var realm = CreateRealm(c, son, states, "gavelkind");
+            _game.NotifyPlayer($"{son.DisplayName} inherits {realm.Capital?.State?.DisplayName ?? realm.Name} and rules it under {heir.DisplayName}.", NotificationKind.Character, c);
         }
         Partitions++;
         _game.Events.FireOnAction("on_realm_partitioned", c);
         _game.RaiseMapChanged();
+    }
+
+    /// <summary>
+    /// Makes a new country of some states of a country, ruled by one of its characters, and a subject of the old country. Used when a realm is divided among sons
+    /// and when a vassal breaks away.
+    /// </summary>
+    public Country CreateRealm(Country origin, Character ruler, List<State> states, string reason)
+    {
+        var type = _game.Data.SubjectTypes.TryGetValue("vassal", out var v) ? v : _game.Data.SubjectTypes.TryGetValue("client_state", out var cs) ? cs : _game.Data.SubjectTypes.Values.First();
+        string tag = FreeTag();
+        var best = states.MaxBy(s => s.Tax)!;
+        var realm = _game.World.CreateCountry(tag, $"{best.DisplayName} ({ruler.FirstName})", origin.Color.Lerp(Rgb.White, 0.25), origin.FlagPath, origin.Government);
+        realm.Origin = origin.Tag;
+        realm.Playable = false;
+        realm.Names = origin.Names;
+        foreach (var s in states) { _game.Diplomacy.TransferState(s, realm); s.Cores.Add(realm); }
+        realm.Capital = best.Locations.FirstOrDefault(l => l.IsLand && l.IsPassable) ?? best.Locations[0];
+        ruler.Country = realm;
+        foreach (var kid in ruler.Children.Where(k => k.Alive && k.Country == origin)) kid.Country = realm;
+        if (ruler.Spouse is { Alive: true } sp && sp.Country == origin) sp.Country = realm;
+        realm.Ruler = ruler;
+        if (_game.Politics.Enabled) _game.Politics.SetRulingParty(realm, _game.Politics.Of(origin).Ruling, reason);
+        _game.Diplomacy.MakeSubject(realm, origin, type);
+        return realm;
     }
 
     private string FreeTag()

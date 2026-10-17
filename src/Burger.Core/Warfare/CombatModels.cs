@@ -143,7 +143,7 @@ public sealed class Hoi4CombatModel : ICombatModel
         var frontD = CombatMath.Frontline(b.Defenders, width);
         if (frontA.Count == 0 || frontD.Count == 0) return;
 
-        double attMult = (1 + terrain.AttackModifier) * (CombatMath.RiverCrossing(b) ? 1 - d.RiverAttackPenalty : 1)
+        double attMult = (1 + terrain.AttackModifier) * (CombatMath.RiverCrossing(b) ? 1 - (game.Logistics.Enabled ? game.Logistics.RiverPenalty(b) : d.RiverAttackPenalty) : 1)
                          * CombatMath.GeneralMultiplier(game, b.Attackers, "general_attack");
         double defMult = (1 + terrain.DefenseModifier + b.Location.Fort * d.FortDefenseBonus)
                          * CombatMath.GeneralMultiplier(game, b.Defenders, "general_defense");
@@ -263,7 +263,7 @@ public sealed class ImperatorCombatModel : ICombatModel
 
         double martialA = CombatMath.GeneralSkill(game, b.Attackers), martialD = CombatMath.GeneralSkill(game, b.Defenders);
         int rollA = 1 + game.Rngs.Combat.Next(6), rollD = 1 + game.Rngs.Combat.Next(6);
-        double tacticA = 1 + 0.1 * (rollA - rollD) + 0.05 * (martialA - martialD) - (CombatMath.RiverCrossing(b) ? def.RiverAttackPenalty : 0);
+        double tacticA = 1 + 0.1 * (rollA - rollD) + 0.05 * (martialA - martialD) - (CombatMath.RiverCrossing(b) ? (game.Logistics.Enabled ? game.Logistics.RiverPenalty(b) : def.RiverAttackPenalty) : 0);
         double tacticD = 1 + 0.1 * (rollD - rollA) + 0.05 * (martialD - martialA) + b.Location.Terrain.DefenseModifier + b.Location.Fort * def.FortDefenseBonus;
 
         double offA = frontA.Sum(x => Offense(x) * x.StrengthFraction) * Math.Max(0.2, tacticA) * CombatMath.CountryMultiplier(game, b.Attackers, "attack");

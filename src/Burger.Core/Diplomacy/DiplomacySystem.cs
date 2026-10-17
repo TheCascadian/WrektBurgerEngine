@@ -77,7 +77,9 @@ public sealed partial class DiplomacySystem
     {
         var ctx = ActionContext(a, actor, recipient);
         var list = _game.Script.ExplainTrigger(a.Allow, ctx);
-        if (CostOf(a) > 0) list.Add(($"Costs {CostOf(a):0} gold", actor.Gold >= CostOf(a)));
+        double price = CostOf(a, actor, recipient);
+        if (price > 0) list.Add(($"Costs {price:0} gold", actor.Gold >= price));
+        foreach (var extra in ExtraRequirements) if (extra(a, actor, recipient) is { } req) list.Add(req);
         int cd = CooldownLeft(a, actor, recipient);
         if (cd > 0) list.Add(($"Available again in {cd} days", false));
         return list;
@@ -85,6 +87,22 @@ public sealed partial class DiplomacySystem
 
     /// <summary>Gold an action costs (nothing without the economy feature: there is no gold to pay with).</summary>
     public double CostOf(ActionDef a) => _game.Features.Has(Burger.Core.Modding.FeatureSet.Economy) ? a.CostGold : 0;
+
+    /// <summary>Systems that change what an action costs the actor (aggressive expansion makes claims dearer): each returns a factor.</summary>
+    public readonly List<Func<ActionDef, Country, IScope?, double>> CostFactors = new();
+    /// <summary>Systems that add a requirement to an action (an envoy to spare): the text and whether it is met; null = no opinion.</summary>
+    public readonly List<Func<ActionDef, Country, IScope, (string Text, bool Ok)?>> ExtraRequirements = new();
+    /// <summary>An action was used (actor, recipient): systems lock envoys and the like.</summary>
+    public event Action<ActionDef, Country, IScope>? ActionUsed;
+
+    /// <summary>Gold an action costs this actor, after the factors of the systems.</summary>
+    public double CostOf(ActionDef a, Country actor, IScope? recipient = null)
+    {
+        double cost = CostOf(a);
+        if (cost <= 0) return cost;
+        foreach (var f in CostFactors) cost *= f(a, actor, recipient);
+        return cost;
+    }
 
     public bool CanUse(ActionDef a, Country actor, IScope recipient)
         => IsVisible(a, actor, recipient) && Requirements(a, actor, recipient).All(r => r.Ok);
@@ -100,8 +118,9 @@ public sealed partial class DiplomacySystem
         ctx.Where = a.Where;
         if (!_game.Script.EvalTrigger(a.Potential, ctx)) return false;
         if (!_game.Script.EvalTrigger(a.Allow, ctx)) return false;
-        double cost = CostOf(a);
+        double cost = CostOf(a, actor, recipient);
         if (cost > 0 && actor.Gold < cost) return false;
+        foreach (var extra in ExtraRequirements) if (extra(a, actor, recipient) is { Ok: false }) return false;
         return CooldownLeft(a, actor, recipient) <= 0;
     }
 
@@ -165,7 +184,8 @@ public sealed partial class DiplomacySystem
     public string Use(ActionDef a, Country actor, IScope recipient, bool force = false)
     {
         if (!force && !CanUse(a, actor, recipient)) return "Not possible right now";
-        actor.Gold -= CostOf(a);
+        actor.Gold -= CostOf(a, actor, recipient);
+        ActionUsed?.Invoke(a, actor, recipient);
         if (a.CooldownDays > 0) _game.World.ActionCooldowns[CooldownKey(a, actor, recipient)] = _game.World.Date.TotalDays;
         var ctx = ActionContext(a, actor, recipient);
         var recipientCountry = recipient as Country ?? (recipient as Character)?.Country;
@@ -448,7 +468,7 @@ public sealed partial class DiplomacySystem
     }
 
     /// <summary>Peace cost of one term (for the peace window).</summary>
-    public double TermCost(War war, PeaceTerm t, Country winner, Country loser) => Rules.PeaceTermCost(_game, war, t, winner, loser);
+    public double TermCost(War war, PeaceTerm t, Country winner, Country loser) => Rules.PeaceTermCost(_game, war, t, winner, loser) * _game.Reputation.RivalCostFactor(winner, loser);
 
     public double ComputeWarScore(War war)
     {
@@ -504,6 +524,7 @@ public sealed partial class DiplomacySystem
     /// <summary>Validates a peace offer; returns a reason if invalid.</summary>
     public string? InvalidReason(PeaceOffer o)
     {
+        if (o.War.Armistice && !o.NoEnd) return "An armistice holds: the conference decides";
         var war = o.War;
         if (!_game.World.Wars.Contains(war)) return "The war is over";
         if (war.Vars.HasFlag("civil_war")) return "A civil war ends only when one side is defeated";
@@ -605,6 +626,7 @@ public sealed partial class DiplomacySystem
                     {
                         bool gift = !war.Involves(t.Beneficiary);
                         TransferState(t.State, t.Beneficiary);
+                        if (!gift) _game.Reputation.OnTaken(t.Beneficiary, t.State);
                         if (gift) AddOpinion(t.Beneficiary, winner, "Gave us our people's land", 50, 0.5);
                     }
                     break;
@@ -619,7 +641,12 @@ public sealed partial class DiplomacySystem
                     }
                     break;
                 case PeaceTermType.Annex:
-                    if (t.Beneficiary != null) Annex(t.Beneficiary, loser);
+                    if (t.Beneficiary != null)
+                    {
+                        var taken = loser.OwnedStates.ToList();
+                        Annex(t.Beneficiary, loser);
+                        foreach (var st in taken) _game.Reputation.OnTaken(t.Beneficiary, st);
+                    }
                     break;
                 case PeaceTermType.Gold:
                     {
@@ -656,7 +683,7 @@ public sealed partial class DiplomacySystem
             foreach (var sub in R.SubjectsOf(loser).Where(war.Involves).ToList()) LeaveWar(sub, war);
             if (_game.World.Wars.Contains(war)) LeaveWar(loser, war);
         }
-        else if (leadersPeace) EndWar(war);
+        else if (leadersPeace) { if (!_game.Conferences.TryOpen(war, winner, loser)) EndWar(war); }
         else LeaveWar(war.LeaderOf(o.From) == o.From ? o.To : o.From, war);
         _game.RaiseMapChanged();
     }

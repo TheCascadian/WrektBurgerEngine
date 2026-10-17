@@ -21,6 +21,27 @@ public sealed partial class Hud
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
 
+        var tabNames = new List<(string Label, int Id)> { ("Armies", 0) };
+        if (G.ArmyOrg.Enabled) tabNames.Add(("Groups", 1));
+        if (G.Raising.Enabled) tabNames.Add(("Raising", 2));
+        if (!tabNames.Any(t => t.Id == _armyTab)) _armyTab = 0;
+        if (tabNames.Count > 1)
+        {
+            float tw = (w - (tabNames.Count - 1) * 4 * S) / tabNames.Count;
+            for (int i = 0; i < tabNames.Count; i++)
+                if (Gui.Button(new Rectangle(x + i * (tw + 4 * S), y - 4 * S, tw, 26 * S), tabNames[i].Label, true, tabNames[i].Id == 1 ? "Army groups under field marshals" : tabNames[i].Id == 2 ? "Mobilisation, levies, mercenaries, call to arms and the foreign legion" : null, _armyTab == tabNames[i].Id, 13)) { _armyTab = tabNames[i].Id; Gui.ResetScroll("army_sc"); }
+            y += 30 * S;
+        }
+        if (_armyTab != 0)
+        {
+            FitEnd("army", r, r.Y + 3000);
+            float stop = Gui.BeginScroll("army_sc", new Rectangle(x, y, w, r.Y + r.Height - y - 8 * S), _worldScH);
+            float send = _armyTab == 1 ? ScArmies(player, x, stop, w - 10 * S) : ScTroops(player, x, stop, w - 10 * S);
+            _worldScH = send - stop + 12 * S;
+            Gui.EndScroll();
+            return;
+        }
+
         var armies = G.World.ArmiesOf(player).ToList();
         var unassigned = G.World.Divisions.Where(d => d.Owner == player && d.Army == null).ToList();
         var enemies = G.World.WarsOf(player).SelectMany(war => war.EnemiesOf(player)).Distinct().Where(e => e.Exists).ToList();

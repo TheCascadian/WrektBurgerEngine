@@ -134,7 +134,7 @@ public sealed class World
     public bool AtWar(Country a, Country b)
     {
         foreach (var w in Wars)
-            if ((w.IsAttacker(a) && w.IsDefender(b)) || (w.IsDefender(a) && w.IsAttacker(b))) return true;
+            if (((w.IsAttacker(a) && w.IsDefender(b)) || (w.IsDefender(a) && w.IsAttacker(b))) && !w.Armistice) return true;
         return false;
     }
 

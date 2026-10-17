@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Great powers, spheres & leagues"
+category = "Diplomacy"
+order = 34
+description = "A monthly ranking of countries by power (40% industry, 30% army, 20% navy and air, 10% people; the top eight are great powers, who get war reach and the right to annex). A great power builds influence over weaker countries (+1 a month, -0.5 decay); above 50 it may draw one into its sphere (opinion +20, trade +10%). Two powers above 50 on one country start a crisis and the weaker backs down. Leagues (common/bodies) vote on sanctions with two thirds; sanctions cost the target opinion and income and block trade."
+requires = { diplomacy }

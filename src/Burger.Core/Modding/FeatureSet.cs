@@ -55,6 +55,14 @@ public sealed class FeatureSet
     public const string GovernmentReforms = "government_reforms";
     public const string Succession = "succession";
     public const string Dynasties = "dynasties";
+    public const string Reputation = "reputation";
+    public const string GreatPowers = "great_powers";
+    public const string ExpandedDiplomacy = "expanded_diplomacy";
+    public const string Intrigue = "intrigue";
+    public const string Titles = "titles";
+    public const string RaisingTroops = "raising_troops";
+    public const string ArmyOrganization = "army_organization";
+    public const string Logistics = "logistics";
 
     /// <summary>The features games had before features existed (all on for a game without features.txt).</summary>
     public static readonly string[] BuiltIn = { Military, Diplomacy, Characters, CharacterInteractions, Economy, FogOfWar, Ai };

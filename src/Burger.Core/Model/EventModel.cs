@@ -67,6 +67,12 @@ public sealed class ActionDef
     public int CooldownDays;
     /// <summary>Gold cost paid by the actor when the action is used.</summary>
     public double CostGold;
+    /// <summary>The action ties up an envoy for a while (expanded_diplomacy feature); envoy = no in the file frees it.</summary>
+    public bool Envoy = true;
+    /// <summary>Listed in the action list of the country panel (menu = no: used from another screen, e.g. a character sheet).</summary>
+    public bool Menu = true;
+    /// <summary>Free labels (tags = { fabricate }) other systems look for.</summary>
+    public List<string> Tags = new();
     /// <summary>Opens a window in the game instead of acting at once (volunteers, lend_lease); the window does the work.</summary>
     public string? Dialog;
     public string File = "";

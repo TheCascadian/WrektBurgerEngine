@@ -1,0 +1,10 @@
+# The casus belli of a coalition (reputation feature): only members of a coalition against the target have it.
+coalition_war = {
+	name = "Coalition War"
+	allow = { in_coalition_against = scope:recipient }
+	war_goal = conquest
+	goal_cost_multiplier = 0.6
+	peace_cost_multiplier = 1.0
+	others_opinion = 0
+	ai_weight = 40
+}

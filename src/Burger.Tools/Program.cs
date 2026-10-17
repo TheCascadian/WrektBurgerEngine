@@ -54,6 +54,7 @@ public static partial class Program
                 "sec-test" => SecurityTest(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
                 "society-test" => SocietyTest(rest),
+                "statecraft-test" => StatecraftTest(rest),
                 "run" => Run(rest),
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
@@ -795,6 +796,7 @@ public static partial class Program
             if (game.Features.Has(FeatureSet.Military) && game.Features.Has(FeatureSet.Diplomacy)) WarGoalTests(project);
             if (game.Features.Has(FeatureSet.Diplomacy) && game.Features.Has(FeatureSet.Population)) ReleaseTests(project);
             if (game.CultureLife.Enabled || game.Reforms.Enabled || game.Succession.Enabled || game.Dynasties.Enabled) SocietyFeatureTests(project);
+            StatecraftFeatureTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticsFeatureTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticalDepthTests(project);
             if (game.Features.Has(FeatureSet.Population)) PopulationFeatureTests(project);
@@ -822,6 +824,17 @@ public static partial class Program
         try { SocietyFeatureTests(project); }
         finally { foreach (var e in Log.Entries.TakeLast(15)) Console.WriteLine("  log: " + e); }
         Console.WriteLine(_failedChecks == 0 ? "society checks passed" : $"{_failedChecks} society checks FAILED");
+        return _failedChecks == 0 ? 0 : 1;
+    }
+
+    /// <summary>Runs only the statecraft checks of the self-test.</summary>
+    private static int StatecraftTest(List<string> args)
+    {
+        string project = ResolveProject(RequireProjectArg(args, "burger statecraft-test <project>"));
+        Log.EchoToConsole = false;
+        try { StatecraftFeatureTests(project); }
+        finally { foreach (var e in Log.Entries.Where(e => e.Level != LogLevel.Info).TakeLast(15)) Console.WriteLine("  log: " + e); }
+        Console.WriteLine(_failedChecks == 0 ? "statecraft checks passed" : $"{_failedChecks} statecraft checks FAILED");
         return _failedChecks == 0 ? 0 : 1;
     }
 

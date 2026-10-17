@@ -69,4 +69,33 @@ public class WarfareRules
         if (s <= 0) s = d.MaxStrength;
         return s * (0.4 * d.StrengthFraction + 0.6 * d.OrgFraction + 0.05);
     }
+
+    /// <summary>Divisions a place can feed (logistics feature): 6, +4 for a port or the capital, + the infrastructure of its state.</summary>
+    public virtual double SupplyLimit(Game game, Country owner, Location l)
+    {
+        var d = game.Data.Defines;
+        double limit = d.Get("supply_limit_base", 6);
+        bool hub = owner.Capital == l || (l.IsCoastal && (!game.Navy.Enabled || game.Navy.IsPort(owner, l)));
+        if (hub) limit += d.Get("supply_limit_hub", 4);
+        limit += l.State?.Working("infrastructure") ?? 0;
+        return limit;
+    }
+
+    /// <summary>Daily strength share lost for each division above the limit, at most 3%.</summary>
+    public virtual double OverLimitAttrition(Game game, Division d, double over)
+        => Math.Min(game.Data.Defines.Get("supply_attrition_max", 0.03), over * game.Data.Defines.Get("supply_attrition", 0.003));
+
+    /// <summary>Daily strength share lost to hostile terrain (the terrain's attrition) outside friendly land.</summary>
+    public virtual double TerrainAttrition(Game game, Division d)
+    {
+        var t = d.Location.Terrain;
+        if (t.Modifiers.TryGetValue("attrition", out var v)) return v;
+        return t.Name.ToLowerInvariant() switch { "desert" or "jungle" or "tundra" or "mountains" or "mountain" => 0.005, _ => 0 };
+    }
+
+    /// <summary>Daily strength share lost in winter outside friendly land.</summary>
+    public virtual double WinterAttrition(Game game, Division d) => game.Data.Defines.Get("winter_attrition", 0.005);
+
+    /// <summary>Daily share of a ship's hit points lost when the fleet is far from any friendly port.</summary>
+    public virtual double NavalAttrition(Game game, Fleet fleet) => game.Data.Defines.Get("naval_attrition", 0.002);
 }

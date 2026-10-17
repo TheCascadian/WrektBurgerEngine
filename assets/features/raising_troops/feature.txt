@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Raising troops"
+category = "Military"
+order = 81
+description = "More ways to get an army than recruiting: mobilise (2% of the people for 90 days, then 90 days rest; -5 stability, 1 gold a man), raise levies in a war (up to 1.5% of the people, 70% strength, 30 organisation, free, tax -10% while they stand, disbanded 30 days after peace), hire mercenary companies (common/mercenaries; gold a month for each division), call the subjects' divisions to arms (a quarter of them, +5 liberty desire while away) and keep a foreign legion (a thousandth of the people a month). The conscription laws set the recruitable share of the people (modifier 'recruitable', 1% to 5%), which caps the manpower pool."
+requires = { military }

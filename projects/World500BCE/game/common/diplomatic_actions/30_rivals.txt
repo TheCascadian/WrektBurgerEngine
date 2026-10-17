@@ -1,0 +1,20 @@
+# Rivals (reputation feature): up to three. War goals against a rival cost 10% less and its strength gives prestige.
+name_rival = {
+	name = "Name Rival"
+	desc = "Make this country a rival: war goals against it cost 10% less, and its strength brings us prestige."
+	envoy = no
+	potential = {
+		has_feature = reputation
+		NOT = { has_rival = scope:recipient }
+	}
+	allow = { can_add_rival = scope:recipient }
+	on_accept = { add_rival = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+end_rivalry = {
+	name = "End Rivalry"
+	envoy = no
+	potential = { has_rival = scope:recipient }
+	on_accept = { remove_rival = scope:recipient }
+	ai_will_do = { base = 0 }
+}

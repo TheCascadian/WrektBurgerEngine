@@ -1,0 +1,38 @@
+# Faction goals and royal marriages (expanded_diplomacy feature).
+set_faction_goal = {
+	name = "Set Faction Goal"
+	desc = "As leader of the faction, name the country the faction goes to war on. Members that have not joined within 30 days lose 25 opinion with us and may leave."
+	envoy = no
+	potential = {
+		has_feature = expanded_diplomacy
+		is_faction_leader = yes
+		NOT = { is_allied_with = scope:recipient }
+	}
+	allow = { can_set_faction_goal = scope:recipient }
+	on_accept = { set_faction_goal = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+royal_marriage = {
+	name = "Royal Marriage"
+	menu = no
+	desc = "Marry a prince or princess of our house to one of theirs: +50 opinion while both live. A house that dies out may be claimed by the other, or joined to it in a personal union."
+	requires_acceptance = yes
+	cooldown_days = 730
+	potential = {
+		has_feature = expanded_diplomacy
+		NOT = { has_marriage_with = scope:recipient }
+		NOT = { is_at_war_with = scope:recipient }
+	}
+	allow = { can_marry = scope:recipient }
+	ai_acceptance = {
+		base = -10
+		opinion_factor = 0.5
+		modifier = { add = 15 borders = scope:recipient }
+		modifier = { add = -1000 scope:recipient = { is_at_war_with = ROOT } }
+	}
+	on_accept = { royal_marriage = scope:recipient }
+	ai_will_do = {
+		base = 0
+		modifier = { add = 0.5 scope:recipient = { opinion = { target = ROOT value > 10 } } }
+	}
+}

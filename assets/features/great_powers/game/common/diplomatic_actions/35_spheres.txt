@@ -1,0 +1,69 @@
+# Spheres of influence and leagues (great_powers feature).
+build_influence = {
+	name = "Build Influence"
+	desc = "Spend our diplomats on this country: influence grows 1 a month, and above 50 it can be drawn into our sphere."
+	envoy = no
+	potential = {
+		has_feature = great_powers
+		is_great_power = yes
+		NOT = { is_campaigning_influence = scope:recipient }
+		NOT = { in_sphere_of = ROOT }
+	}
+	allow = { can_campaign_influence = scope:recipient }
+	on_accept = { start_influence = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+stop_influence = {
+	name = "Stop Building Influence"
+	envoy = no
+	potential = { is_campaigning_influence = scope:recipient }
+	on_accept = { stop_influence = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+add_to_sphere = {
+	name = "Draw into Sphere"
+	desc = "With more than 50 influence we may make this country part of our sphere: it likes us better (+20) and trades 10% better."
+	envoy = no
+	potential = {
+		has_feature = great_powers
+		is_great_power = yes
+		NOT = { in_sphere_of = ROOT }
+	}
+	allow = { can_add_to_sphere = scope:recipient }
+	on_accept = { add_to_sphere = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+leave_sphere = {
+	name = "Release from Sphere"
+	envoy = no
+	potential = { in_sphere_of = ROOT }
+	on_accept = { release_from_sphere = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+join_league = {
+	name = "Join Their League"
+	desc = "Ask to join the league this country leads."
+	requires_acceptance = yes
+	potential = { has_feature = great_powers }
+	allow = { NOT = { shares_body_with = scope:recipient } }
+	ai_acceptance = { base = -20 opinion_factor = 0.6 }
+	on_accept = { join_bodies_of = scope:recipient }
+	ai_will_do = { base = 0 }
+}
+leave_league = {
+	name = "Leave the League"
+	envoy = no
+	potential = { shares_body_with = scope:recipient }
+	on_accept = { leave_all_bodies = yes }
+	ai_will_do = { base = 0 }
+}
+propose_sanctions = {
+	name = "Propose Sanctions"
+	desc = "Put sanctions on this country to the vote of our league (two thirds must agree): it loses opinion (-20), income and trade."
+	envoy = no
+	cooldown_days = 365
+	potential = { has_feature = great_powers }
+	allow = { can_propose_sanctions = scope:recipient }
+	on_accept = { propose_sanctions = scope:recipient }
+	ai_will_do = { base = 0 }
+}

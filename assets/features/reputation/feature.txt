@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Diplomatic reputation"
+category = "Diplomacy"
+order = 33
+description = "Taking land in a war builds aggressive expansion (+1 per level of development, half for a core or claim; it fades 0.1 a month). From 10 the neighbours dislike you (-2 opinion a point) and fabricating claims costs 50% more. At 20, three countries within war reach that think ill of you (-50) form a coalition with a casus belli of its own, until it falls below 10. Each country names up to three rivals: war goals against them cost 10% less and their strength gives prestige."
+requires = { diplomacy }

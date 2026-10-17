@@ -1,0 +1,25 @@
+# Mercenary companies of the 500 BCE world (raising_troops feature).
+greek_hoplites = {
+	name = "Greek Hoplites"
+	desc = "Citizens of poor cities who sell their spears abroad."
+	divisions = 4
+	template = infantry_division
+	cost = 20
+	quality = 0.8
+}
+scythian_horse_archers = {
+	name = "Scythian Horse Archers"
+	desc = "Riders of the steppe who fight for gold and plunder."
+	divisions = 3
+	template = cavalry_division
+	cost = 25
+	quality = 0.8
+}
+thracian_peltasts = {
+	name = "Thracian Peltasts"
+	desc = "Light skirmishers from the Balkan hills."
+	divisions = 4
+	template = infantry_division
+	cost = 15
+	quality = 0.75
+}

@@ -187,6 +187,7 @@ public sealed partial class PoliticsSystem
                     Desc = n.GetString("desc", "")!,
                     Stat = n.GetString("stat", "")!,
                     Cost = n.GetDouble("cost", data.Defines.Get("minister_cost", 50)),
+                    Council = n.GetBool("council"),
                     Order = Positions.Count,
                 };
                 ReadNumbers(n.Get("per_point"), p.PerPoint);
@@ -627,7 +628,7 @@ public sealed partial class PoliticsSystem
         else p.NextElection ??= _game.World.Date.AddMonths(ElectionMonths());
         // ministers of parties that left the government step down
         foreach (var kv in p.Ministers.ToList())
-            if (!PartyInGovernmentOf(c, kv.Value)) p.Ministers.Remove(kv.Key);
+            if (!PartyInGovernmentOf(c, kv.Value) && !(Positions.FirstOrDefault(x => x.Key == kv.Key)?.Council ?? false)) p.Ministers.Remove(kv.Key);
         if (_game.World.Player != null)
         {
             string how = reason switch { "election" => "after an election", "revolution" => "after a revolution", "coup" => "in a coup", "overlord" => "backed by its overlord", _ => "" };

@@ -7,7 +7,7 @@ using Raylib_cs;
 
 namespace Burger.Runtime;
 
-public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents, Development, Institution }
+public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents, Development, Institution, Spheres, Titles }
 
 /// <summary>
 /// Builds and draws the 3D map from the province map, heightmap, terrain, tree and river inputs.
@@ -1061,6 +1061,22 @@ public sealed unsafe class MapRenderer : IDisposable
                     break;
                 case MapMode.Ideology:
                     if (owner != null && l.IsLand && _game.Politics.RulingIdeology(owner) is { } ide) col = C(ide.Color, 225);
+                    break;
+                case MapMode.Spheres:
+                    if (owner != null && l.IsLand && _game.GreatPowers.Enabled)
+                    {
+                        // great powers in their own colour, the countries in a sphere in the colour of their power (paler), the rest grey
+                        var power = _game.GreatPowers.IsGreat(owner) ? owner : _game.GreatPowers.SphereOf(owner);
+                        col = power == null ? new Color(96, 98, 104, 200) : _game.GreatPowers.IsGreat(owner) ? C(power.Color, 240) : C(power.Color, 150);
+                    }
+                    break;
+                case MapMode.Titles:
+                    if (owner != null && l.IsLand && l.State != null && _game.Titles.Enabled)
+                    {
+                        // the land the ruler holds directly in the colour of the country (pale), the land of each vassal in a colour of their own
+                        var vassal = _game.Titles.VassalOf(l.State);
+                        col = vassal != null ? HashColor(vassal.Id * 13 + 5) : C(owner.Color, 120);
+                    }
                     break;
                 case MapMode.Population:
                     if (l.IsLand && l.State != null && _game.Population.HasPops(l.State))

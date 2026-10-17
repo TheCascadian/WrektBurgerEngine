@@ -1,0 +1,2 @@
+# The subject of a personal union (expanded_diplomacy feature): two crowns on one head.
+personal_union = { name = "Personal Union" income_share = 0 joins_overlord_wars = yes counts_as_relation = no liberty_desire = 0 government = free }

@@ -1,0 +1,6 @@
+# Feature package. Everything next to this file is copied into a project when the feature is added.
+name = "Intrigue & loyalty"
+category = "Characters"
+order = 43
+description = "Characters scheme against each other (murder, seduction, a forged claim): a scheme has progress and a chance a month of being found out, the owner takes on stress. Loyalty drifts with the ruler's charisma, the stability of the country, family and traits; an ambitious character with low loyalty joins a plot against the ruler, which needs three members and time, and may be uncovered. Schemes are in common/schemes; traits give 'ambition' and 'loyalty'."
+requires = { characters }

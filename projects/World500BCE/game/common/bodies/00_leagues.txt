@@ -1,0 +1,12 @@
+# Leagues of the 500 BCE world (great_powers feature). members: the founders; countries that are fond of the leader join later, and
+# a league's members vote on sanctions (two thirds pass them). The leader is its strongest member.
+delian_league = {
+	name = "League of the Islands"
+	desc = "Cities of the Aegean that pay for common ships and common defence."
+	members = { ATH NAX ION }
+}
+peloponnesian_league = {
+	name = "Peloponnesian League"
+	desc = "Cities that follow Sparta in war and keep its order in their own lands."
+	members = { SPA COR ARG }
+}
