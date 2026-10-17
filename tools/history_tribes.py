@@ -119,3 +119,7 @@ def hallstatt_seeds():
 
 
 MASK_SEEDS.append(((6.0, 35.0, 29.0, 47.5), EXTRA_SEEDS + CULTURE_SEEDS['illyrians'] + BLOCK_SEEDS['THR']))
+
+# lands the dataset leaves empty in the later dates of antiquity (not used for the first start date, whose blocks cover them)
+MASK_LATER = [((28.0, 38.0, 100.0, 56.0), BLOCK_SEEDS['SCY'] + BLOCK_SEEDS['SAR'] + BLOCK_SEEDS['SAK']),
+              ((88.0, 36.0, 135.0, 56.0), CULTURE_SEEDS['proto-altaic pastoralists'])]

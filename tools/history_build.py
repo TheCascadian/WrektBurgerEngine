@@ -250,11 +250,26 @@ def build(m):
             # the lands the dataset leaves empty keep the peoples of the first start date
             for i, st in enumerate(states):
                 if res[i] is None and not raw[i]:
-                    for (w, so, e, no), seeds in TR.MASK_SEEDS:
+                    for (w, so, e, no), seeds in TR.MASK_SEEDS + TR.MASK_LATER:
                         if w <= st[1] <= e and so <= st[2] <= no:
                             k, disp, _, _ = min(seeds, key=lambda sd: ((st[1] - sd[2]) * math.cos(math.radians(st[2]))) ** 2 + (st[2] - sd[3]) ** 2)
                             res[i] = (k, N.tidy(disp))
                             break
+            groups = collections.defaultdict(list)
+            for i, o in enumerate(res):
+                if o and not raw[i] and o[0] in {sd[0] for _, ss in TR.MASK_SEEDS + TR.MASK_LATER for sd in ss}:
+                    groups[o[0]].append(i)
+            for k, members in groups.items():
+                if len(members) > 14:
+                    parts = cluster([(i, states[i][1], states[i][2]) for i in members], round(len(members) / TR.TRIBE_SIZE))
+                    for j, (seed, part) in enumerate(parts):
+                        if j == 0:
+                            continue
+                        ikey = f'{k}#{j}'
+                        nm2 = N.cluster_name('steppe tribes', ikey, N.year_of(y))
+                        for it in part:
+                            res[it[0]] = (ikey, nm2)
+        res = [(o[0], N.YEAR_NAMES.get((y, o[1]), o[1])) if o else None for o in res]
         snaps.append((y, m.astronomical(y), res))
         print(y, 'done', file=sys.stderr)
 
