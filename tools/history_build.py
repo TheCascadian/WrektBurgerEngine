@@ -255,10 +255,10 @@ def build(m):
         feats = m.load_snapshot(y)
         raw = [m.owner_of(feats, s[1], s[2]) for s in states]
         res = resolve(m, states, raw, y)
-        if m.astronomical(y) <= 250:
+        if m.astronomical(y) <= 450:
             # the lands the dataset leaves empty keep the peoples of the first start date (a people with fewer than three states of them is left out)
             groups = collections.defaultdict(list)
-            for (w, so, e, no), seeds in TR.MASK_SEEDS + TR.MASK_LATER + [(b0, sd0) for a0, z0, b0, sd0 in TR.MASK_YEAR if a0 <= m.astronomical(y) <= z0]:
+            for (w, so, e, no), seeds in [(b0, sd0) for a0, z0, b0, sd0 in TR.MASK_YEAR if a0 <= m.astronomical(y) <= z0] + (TR.MASK_SEEDS + TR.MASK_LATER if m.astronomical(y) <= 250 else []):
                 idx = [i for i, st in enumerate(states) if res[i] is None and not raw[i] and w <= st[1] <= e and so <= st[2] <= no]
                 live = list(seeds)
                 def nearest(i):

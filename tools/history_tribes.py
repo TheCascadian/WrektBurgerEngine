@@ -151,3 +151,19 @@ YEAR_SEEDS.extend([
 # lands left empty by the dataset in certain years: (from year, to year, box, seeds)
 MASK_YEAR = [(30, 250, (62.0, 32.0, 80.0, 41.0), [('kushan', 'Kushan Empire', 68.0, 36.0)]),
              (-130, 250, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamatai', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)])]
+
+MASK_YEAR.extend([
+    (250, 450, (3.0, 47.0, 30.0, 61.5), [('alamanni', 'Alamanni', 9.0, 48.5), ('franks_t', 'Franks', 7.0, 51.0), ('saxones_t', 'Saxons', 9.0, 53.5), ('burgundi', 'Burgundians', 15.0, 52.5),
+                                       ('vandali', 'Vandals', 17.5, 51.0), ('goths_t', 'Tervingi', 27.5, 47.0), ('goths_g', 'Greuthungi', 33.0, 48.5), ('gepidae', 'Gepids', 22.0, 47.5),
+                                       ('quadi', 'Quadi and Marcomanni', 17.0, 49.0), ('langobardi', 'Lombards', 11.0, 53.0), ('heruli', 'Heruls', 14.0, 54.5), ('thuringi', 'Thuringians', 11.0, 51.0),
+                                       ('anglii', 'Angles', 9.5, 54.8), ('jutes', 'Jutes', 9.0, 56.4), ('danes', 'Danes', 11.5, 55.3), ('svear', 'Svear', 16.5, 59.6), ('gotar', 'Gautar', 13.5, 57.8),
+                                       ('aesti_t', 'Aesti', 22.5, 55.5), ('finns_t', 'Finns', 24.0, 61.2), ('slavs_e', 'Slavs', 30.5, 51.0), ('venedi_t', 'Venedi', 21.5, 52.8)]),
+    (250, 450, (-11.0, 49.5, 2.0, 59.5), [('picts', 'Picts', -4.0, 57.0), ('scoti', 'Scoti', -7.5, 53.5), ('dalriada', 'Dal Riata', -6.0, 55.0)]),
+    (250, 450, (28.0, 38.0, 100.0, 56.0), [('alans', 'Alans', 46.5, 46.0), ('sarmatae', 'Sarmatians', 38.0, 47.5), ('kangju', 'Kangju', 68.0, 43.0), ('chionites', 'Chionites', 58.0, 42.0),
+                                          ('wusun', 'Wusun', 80.0, 44.0), ('dingling', 'Dingling', 90.0, 50.0), ('bulgars_t', 'Bulgars', 55.0, 52.0)]),
+    (250, 450, (88.0, 36.0, 135.0, 56.0), [('murong', 'Murong', 120.0, 41.5), ('duan', 'Duan', 117.0, 40.0), ('yuwen', 'Yuwen', 122.0, 43.5), ('tuoba', 'Tuoba', 111.0, 41.5), ('tufa', 'Tufa', 103.0, 38.5),
+                                          ('qifu', 'Qifu', 105.0, 36.0), ('xianbei_n', 'Xianbei', 100.0, 47.5), ('shiwei', 'Shiwei', 122.0, 50.0)]),
+    (250, 450, (92.0, 5.0, 110.0, 24.0), BLOCK_SEEDS['IRR']),
+    (250, 450, (123.0, 32.0, 132.0, 44.0), [('baekje', 'Baekje', 126.8, 36.8), ('gaya', 'Gaya', 128.5, 35.5), ('gojoseon', 'Goguryeo', 126.0, 40.0)]),
+    (250, 450, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamato', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)]),
+])
