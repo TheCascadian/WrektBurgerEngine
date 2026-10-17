@@ -93,6 +93,12 @@ def resolve(m, states, raw, year):
         if T.IGNORE.search(norm) or T.IGNORE.search(name.lower()):
             continue
         seeds = next((v for rx, v in T.SEED_NAMES if re.search(rx, norm)), None)
+        if seeds is None:
+            import history_tribes as TR2
+            yr = N.year_of(year)
+            seeds = next((sd for a0, b0, rx, sd in TR2.YEAR_SEEDS if a0 <= yr <= b0 and re.search(rx, norm)), None)
+            if seeds:
+                merge_year = True
         if seeds is None and norm == 'scythians' and len(idx) >= 20:
             import history_tribes as TR1
             seeds = TR1.BLOCK_SEEDS['SCY'] + TR1.BLOCK_SEEDS['SAR'] + TR1.BLOCK_SEEDS['SAK']
@@ -101,7 +107,7 @@ def resolve(m, states, raw, year):
             seeds = TR0.hallstatt_seeds()
         if seeds and len(idx) >= 2:
             live = list(seeds)
-            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$|scythians)', norm) is not None
+            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$|scythians)', norm) is not None or any(rx_ for a0, b0, rx_, sd in __import__('history_tribes').YEAR_SEEDS if sd is seeds)
             def nearest(i, pool):
                 lon, lat = states[i][1], states[i][2]
                 return min(pool, key=lambda sd: ((lon - sd[2]) * math.cos(math.radians(lat))) ** 2 + (lat - sd[3]) ** 2)
@@ -277,6 +283,11 @@ def build(m):
                         nm2 = N.cluster_name('steppe tribes' if states[members[0]][1] > 28 and states[members[0]][2] > 38 else 'celts', ikey, N.year_of(y))
                         for it in part:
                             res[it[0]] = (ikey, nm2)
+        if -130 <= m.astronomical(y) <= -70:
+            # Greece and Macedon are Roman provinces
+            for i, o in enumerate(res):
+                if o and o[0] in ('ath', 'thb', 'spa', 'cor', 'arg', 'ths', 'macedon', 'epirus', 'aetolia', 'achaea', 'elis', 'phocis') and 19 <= states[i][1] <= 28:
+                    res[i] = ('rom', 'Roman Republic')
         res = [(o[0], N.YEAR_NAMES.get((y, o[1]), o[1])) if o else None for o in res]
         snaps.append((y, m.astronomical(y), res))
         print(y, 'done', file=sys.stderr)

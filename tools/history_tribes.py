@@ -125,3 +125,13 @@ MASK_LATER = [((-10.0, 36.0, 6.0, 52.0), hallstatt_seeds()),
               ((123.0, 32.0, 132.0, 44.0), BLOCK_SEEDS['KOR']),
               ((28.0, 38.0, 100.0, 56.0), BLOCK_SEEDS['SCY'] + BLOCK_SEEDS['SAR'] + BLOCK_SEEDS['SAK']),
               ((88.0, 36.0, 135.0, 56.0), CULTURE_SEEDS['proto-altaic pastoralists'])]
+
+# umbrellas of the dataset that hide the powers of one date: (from year, to year, normalized name, seeds); the first seed of a polity that has a tag keeps it
+YEAR_SEEDS = [
+    (-130, -70, r'^seleucid', [('bab', 'Seleucid Kingdom', 36.7, 35.6), ('parthian', 'Parthian Empire', 50.5, 34.5), ('parthian', 'Parthian Empire', 44.0, 34.2), ('persis', 'Persis', 52.5, 29.5),
+                               ('elymais', 'Elymais', 48.8, 32.2), ('characene', 'Characene', 47.7, 30.8), ('atropatene', 'Media Atropatene', 47.0, 37.5), ('hyrcania', 'Hyrcania', 54.5, 36.8)]),
+    (-130, -70, r'^mauryan', [('ind', 'Shunga Empire', 84.0, 26.0), ('satavahana', 'Satavahana', 77.0, 18.0), ('kalinga_m', 'Kalinga', 85.5, 20.2), ('tamil', 'Pandya', 78.5, 10.0), ('malwa', 'Malwa', 76.5, 23.5)]),
+    (-130, -70, r'^kushan', [('kushan', 'Yuezhi', 66.0, 37.5), ('indogreek', 'Indo-Greek Kingdom', 72.0, 33.5), ('indoscythian', 'Indo-Scythians', 67.0, 29.0), ('indoscythian2', 'Sakas of Sindh', 69.5, 25.0), ('kashmir_ig', 'Kashmir', 75.5, 34.5)]),
+    (-130, -70, r'^minor states$', [('pontus', 'Kingdom of Pontus', 36.0, 40.8), ('bithynia', 'Bithynia', 30.5, 40.5), ('cappadocia_k', 'Cappadocia', 35.5, 38.3), ('galatia', 'Galatia', 32.5, 39.5),
+                                    ('armenia_k', 'Armenia', 43.0, 39.8), ('commagene', 'Commagene', 38.5, 37.8), ('rom', 'Roman Republic', 28.0, 38.0)]),
+]
