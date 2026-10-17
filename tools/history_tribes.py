@@ -26,7 +26,7 @@ BLOCK_SEEDS = {
     'SAR': [('sauromatae', 'Sauromatae', 47.0, 50.5), ('aorsi', 'Aorsi', 52.0, 46.5), ('siraces', 'Siraces', 42.5, 45.2), ('iazyges', 'Iazyges', 38.5, 47.0), ('thyssagetae', 'Thyssagetae', 52.0, 53.0),
             ('iyrcae', 'Iyrcae', 58.0, 51.0), ('maeotae', 'Maeotae', 38.0, 46.0)],
     'SAK': [('massagetae', 'Massagetae', 58.0, 46.0), ('dahae', 'Dahae', 55.0, 41.0), ('haumavarga', 'Saka Haumavarga', 72.0, 39.5), ('tigraxauda', 'Saka Tigraxauda', 66.0, 43.0),
-            ('issedones', 'Issedones', 77.0, 44.0), ('argippaei', 'Argippaei', 66.0, 50.0), ('sogdians', 'Sogdian steppe', 69.0, 41.0), ('khwarezm', 'Chorasmians', 60.0, 42.0)],
+            ('issedones', 'Issedones', 77.0, 44.0), ('argippaei', 'Argippaei', 66.0, 50.0), ('sogdians', 'Sogdians', 69.0, 41.0), ('khwarezm', 'Chorasmians', 60.0, 42.0)],
     # ---- North Africa and the Sahel
     'LIB': [('nasamones', 'Nasamones', 19.5, 30.5), ('maxyes', 'Maxyes', 10.5, 34.5), ('mauri', 'Mauri', -5.0, 34.5), ('gaetuli', 'Gaetuli', 1.0, 31.5), ('numidae', 'Numidae', 6.5, 36.0),
             ('lotophagi', 'Lotophagi', 10.5, 33.3), ('adyrmachidae', 'Adyrmachidae', 25.0, 31.2), ('libu', 'Libu', 15.0, 31.5), ('asbystae', 'Asbystae', 21.5, 32.0), ('zaueces', 'Zaueces', 8.0, 33.5),
@@ -46,7 +46,7 @@ BLOCK_SEEDS = {
     'TML': [('chola', 'Chola', 79.8, 10.9), ('pandya', 'Pandya', 78.1, 9.9), ('chera', 'Chera', 76.4, 10.4), ('ay', 'Ay and Mushika', 77.0, 8.3), ('tuluva', 'Tuluva', 75.0, 13.0)],
     'GAN': [('gandhara', 'Gandhara', 72.0, 34.0), ('madra', 'Madra', 74.5, 32.5), ('sindhu', 'Sindhu-Sauvira', 68.5, 26.5), ('kamboja', 'Kamboja', 71.5, 36.3), ('kekaya', 'Kekaya', 73.5, 32.8)],
     'IRR': [('pyu', 'Pyu', 95.5, 21.5), ('mon', 'Mon', 97.0, 17.0), ('arakan', 'Arakan', 94.0, 20.0), ('dvaravati', 'Lavo and the Chao Phraya tribes', 100.5, 14.5), ('funan', 'Funan', 105.5, 10.3),
-            ('chenla', 'Khmer tribes', 103.5, 13.3), ('champa', 'Cham tribes', 108.5, 15.5), ('lanna', 'Tai tribes', 99.5, 19.0), ('shan', 'Shan hills', 98.0, 23.0), ('khorat', 'Khorat plateau', 103.0, 16.0),
+            ('chenla', 'Khmer tribes', 103.5, 13.3), ('champa', 'Cham tribes', 108.5, 15.5), ('lanna', 'Tai tribes', 99.5, 19.0), ('shan', 'Shan', 98.0, 23.0), ('khorat', 'Mun', 103.0, 16.0),
             ('malay', 'Malay tribes', 101.0, 5.0), ('laos', 'Lao tribes', 102.5, 19.5)],
     # ---- east Asia
     'ZHO': [('zhou', 'Zhou', 112.4, 34.7), ('zheng', 'Zheng', 113.7, 34.4), ('wey', 'Wey', 114.6, 35.8), ('lu', 'Lu', 117.0, 35.6), ('song', 'Song', 115.6, 34.4), ('chen', 'Chen', 114.9, 33.7),
@@ -135,3 +135,8 @@ YEAR_SEEDS = [
     (-130, -70, r'^minor states$', [('pontus', 'Kingdom of Pontus', 36.0, 40.8), ('bithynia', 'Bithynia', 30.5, 40.5), ('cappadocia_k', 'Cappadocia', 35.5, 38.3), ('galatia', 'Galatia', 32.5, 39.5),
                                     ('armenia_k', 'Armenia', 43.0, 39.8), ('commagene', 'Commagene', 38.5, 37.8), ('rom', 'Roman Republic', 28.0, 38.0)]),
 ]
+
+MASK_LATER.insert(0, ((92.0, 5.0, 110.0, 24.0), BLOCK_SEEDS['IRR']))
+
+# unowned lands of antiquity cut into tribes of about TRIBE_SIZE states by position: (box, the family whose names the tribes take)
+MASK_CLUSTER = [((95.0, -11.0, 141.0, 6.0), 'Austronesians'), ((117.0, 5.0, 127.0, 27.0), 'Austronesians'), ((-17.0, 14.0, 35.0, 31.0), 'Saharan pastoral nomads')]

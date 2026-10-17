@@ -273,6 +273,15 @@ def build(m):
                     sd = nearest(i)
                     res[i] = (sd[0], N.tidy(sd[1]))
                     groups[sd[0]].append(i)
+            for bi, ((w, so, e, no), fam) in enumerate(TR.MASK_CLUSTER):
+                idx = [i for i, st in enumerate(states) if res[i] is None and not raw[i] and w <= st[1] <= e and so <= st[2] <= no]
+                if len(idx) >= 3:
+                    parts = cluster([(i, states[i][1], states[i][2]) for i in idx], max(1, round(len(idx) / TR.TRIBE_SIZE)))
+                    for j, (seed, part) in enumerate(parts):
+                        ikey = f'mc:{bi}#{j}'
+                        nm2 = N.cluster_name(fam, ikey, N.year_of(y))
+                        for it in part:
+                            res[it[0]] = (ikey, nm2)
             for k, members in groups.items():
                 if len(members) > 14:
                     parts = cluster([(i, states[i][1], states[i][2]) for i in members], round(len(members) / TR.TRIBE_SIZE))
