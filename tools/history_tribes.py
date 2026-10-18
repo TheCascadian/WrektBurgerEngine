@@ -196,3 +196,6 @@ MASK_YEAR.extend([
 
 YEAR_SEEDS.append((640, 790, r'^sasanian', [('umayyad', 'Umayyad Caliphate', 52.0, 33.0), ('umayyad', 'Umayyad Caliphate', 60.0, 36.0), ('umayyad', 'Umayyad Caliphate', 46.0, 30.0),
                                            ('tabaristan', 'Dabuyids', 53.5, 36.5), ('khwarazm', 'Khwarazm', 60.0, 41.5), ('sogd', 'Sogdian city-states', 65.5, 39.0)]))
+
+YEAR_SEEDS.append((950, 1070, r'^denmark-norway', [('den', 'Denmark', 10.5, 56.0), ('norway', 'Kingdom of Norway', 9.5, 61.0), ('iceland', 'Iceland', -19.0, 64.8), ('greenland', 'Norse Greenland', -45.0, 61.0),
+                                                   ('hebrides', 'Kingdom of the Isles', -6.5, 57.5)]))
