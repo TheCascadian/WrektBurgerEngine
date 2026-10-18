@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+SAK = {
+	500BCE.1.1 = {
+		add = { central_asian_saka_1 central_asian_saka_2_1 central_asian_saka_2_2 central_asian_saka_2_3 central_asian_saka_2_4 central_asian_saka_2_5 central_asian_saka_2_6 massagetae_1 massagetae_2_1 massagetae_2_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

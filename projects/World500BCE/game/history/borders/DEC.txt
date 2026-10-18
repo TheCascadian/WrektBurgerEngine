@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+DEC = {
+	500BCE.1.1 = {
+		add = { deccan_1_1 deccan_1_2 deccan_2 deccan_3 deccan_4_1 deccan_4_2 deccan_4_3 deccan_5 deccan_6 deccan_7 deccan_8 deccan_9 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

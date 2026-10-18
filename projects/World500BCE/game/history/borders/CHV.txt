@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+CHV = {
+	500BCE.1.1 = {
+		add = { chavin_peru_1 chavin_peru_2_1 chavin_peru_2_2 chorrera_ecuador_m13_1_1 chorrera_ecuador_m13_1_2 chorrera_ecuador_m13_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

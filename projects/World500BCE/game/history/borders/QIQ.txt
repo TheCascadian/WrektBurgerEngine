@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+QIQ = {
+	500BCE.1.1 = {
+		add = { zhou_states_north_china_plain_10 zhou_states_north_china_plain_11 zhou_states_north_china_plain_13 zhou_states_north_china_plain_14 zhou_states_north_china_plain_16 zhou_states_north_china_plain_18 zhou_states_north_china_plain_2 zhou_states_north_china_plain_23 zhou_states_north_china_plain_26 zhou_states_north_china_plain_27 zhou_states_north_china_plain_28 zhou_states_north_china_plain_29 zhou_states_north_china_plain_32 zhou_states_north_china_plain_33 zhou_states_north_china_plain_36 zhou_states_north_china_plain_37 zhou_states_north_china_plain_39 zhou_states_north_china_plain_40 zhou_states_north_china_plain_6 zhou_states_north_china_plain_7 zhou_states_yellow_river_14 zhou_states_yellow_river_42 zhou_states_yellow_river_59 zhou_states_yellow_river_63 zhou_states_yellow_river_68 zhou_states_yellow_river_8 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

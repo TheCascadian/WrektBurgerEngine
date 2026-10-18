@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+YAY = {
+	500BCE.1.1 = {
+		add = { yaya_mama_titicaca_1_1 yaya_mama_titicaca_1_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

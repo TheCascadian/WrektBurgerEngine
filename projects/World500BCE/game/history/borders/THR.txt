@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+THR = {
+	500BCE.1.1 = {
+		add = { danube_and_carpathians_1 thrace_1 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

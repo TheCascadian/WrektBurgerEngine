@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+CAR = {
+	500BCE.1.1 = {
+		add = { carthage_and_tunisia_1 carthage_and_tunisia_2 carthage_and_tunisia_3 carthage_and_tunisia_4 sardinia_m108_1 western_sicily_1 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

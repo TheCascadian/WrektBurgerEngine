@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+CIB = {
+	500BCE.1.1 = {
+		add = { iberian_interior_m116_1 iberian_interior_m119_1 iberian_interior_m9_1_1 iberian_interior_m9_1_2 iberian_interior_m9_2 iberian_interior_m9_3 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

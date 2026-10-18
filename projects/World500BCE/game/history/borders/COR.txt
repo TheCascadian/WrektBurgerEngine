@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+COR = {
+	500BCE.1.1 = {
+		add = { corinthia_1 greek_mainland_and_aegean_m117_1 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

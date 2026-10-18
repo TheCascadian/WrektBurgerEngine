@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+SAB = {
+	500BCE.1.1 = {
+		add = { south_arabia_1 south_arabia_2 south_arabia_3 south_arabia_4 south_arabia_5_1 south_arabia_5_2 south_arabia_6 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

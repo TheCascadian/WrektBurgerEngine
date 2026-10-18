@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+BAN = {
+	500BCE.1.1 = {
+		add = { bantu_homeland_m213_1 bantu_homeland_m9_1_1 bantu_homeland_m9_1_2 bantu_homeland_m9_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

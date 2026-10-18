@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+EGY = {
+	500BCE.1.1 = {
+		add = { nile_delta_1 nile_delta_2 nile_delta_3 nile_delta_4 nile_delta_5 nile_valley_1 nile_valley_2 nile_valley_3 nile_valley_4 nile_valley_5 nile_valley_6 nile_valley_7 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

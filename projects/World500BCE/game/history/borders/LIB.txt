@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+LIB = {
+	500BCE.1.1 = {
+		add = { libyans_1 maghreb_1 maghreb_2 maghreb_3 maghreb_4 maghreb_5_1 maghreb_5_2 maghreb_6_1 maghreb_6_2 maghreb_7 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

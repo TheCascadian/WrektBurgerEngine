@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+ION = {
+	500BCE.1.1 = {
+		add = { anatolia_m115_1 anatolia_m121_1 anatolia_m123_1 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

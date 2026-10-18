@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+SHU = {
+	500BCE.1.1 = {
+		add = { shu_and_ba_sichuan_1 shu_and_ba_sichuan_2 shu_and_ba_sichuan_3 shu_and_ba_sichuan_4 shu_and_ba_sichuan_5 shu_and_ba_sichuan_6 shu_and_ba_sichuan_7 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

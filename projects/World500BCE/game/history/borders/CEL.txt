@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+CEL = {
+	500BCE.1.1 = {
+		add = { gaul_and_the_hallstatt_lands_1 gaul_and_the_hallstatt_lands_2 gaul_and_the_hallstatt_lands_3 gaul_and_the_hallstatt_lands_4 gaul_and_the_hallstatt_lands_5 gaul_and_the_hallstatt_lands_6 gaul_and_the_hallstatt_lands_7 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

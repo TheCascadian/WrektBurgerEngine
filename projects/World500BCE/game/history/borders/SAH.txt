@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+SAH = {
+	500BCE.1.1 = {
+		add = { mande_lands_1 mande_lands_2 mande_lands_3 mande_lands_4_1 mande_lands_4_2 sahel_and_west_african_farmers_1 sahel_and_west_african_farmers_2 sahel_and_west_african_farmers_3 sahel_and_west_african_farmers_4 sahel_and_west_african_farmers_5_1 sahel_and_west_african_farmers_5_2 sahel_and_west_african_farmers_6 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

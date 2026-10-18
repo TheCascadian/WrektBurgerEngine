@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+BAB = {
+	500BCE.1.1 = {
+		add = { mesopotamia_1 mesopotamia_10 mesopotamia_11 mesopotamia_12 mesopotamia_13 mesopotamia_14 mesopotamia_15 mesopotamia_16 mesopotamia_17 mesopotamia_2 mesopotamia_3 mesopotamia_4 mesopotamia_5 mesopotamia_6 mesopotamia_7 mesopotamia_8 mesopotamia_9 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

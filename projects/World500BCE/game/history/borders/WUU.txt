@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+WUU = {
+	500BCE.1.1 = {
+		add = { wu_and_yue_1_1 wu_and_yue_1_2 wu_and_yue_10 wu_and_yue_12 wu_and_yue_3 wu_and_yue_5 wu_and_yue_6 wu_and_yue_9 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

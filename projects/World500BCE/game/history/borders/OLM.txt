@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+OLM = {
+	500BCE.1.1 = {
+		add = { central_american_maize_farmers_m13_1_1 central_american_maize_farmers_m13_1_2 central_american_maize_farmers_m13_1_3 central_american_maize_farmers_m201_1 olmec_gulf_coast_1 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

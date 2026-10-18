@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+CHU = {
+	500BCE.1.1 = {
+		add = { chu_middle_yangtze_1 chu_middle_yangtze_10 chu_middle_yangtze_11 chu_middle_yangtze_12 chu_middle_yangtze_13 chu_middle_yangtze_14 chu_middle_yangtze_15 chu_middle_yangtze_16_1 chu_middle_yangtze_16_2 chu_middle_yangtze_17_1 chu_middle_yangtze_17_2 chu_middle_yangtze_18 chu_middle_yangtze_19 chu_middle_yangtze_2 chu_middle_yangtze_3 chu_middle_yangtze_4 chu_middle_yangtze_5_1 chu_middle_yangtze_5_2 chu_middle_yangtze_6 chu_middle_yangtze_7 chu_middle_yangtze_8 chu_middle_yangtze_9 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

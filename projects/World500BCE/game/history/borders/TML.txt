@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+TML = {
+	500BCE.1.1 = {
+		add = { south_india_1 south_india_2 south_india_3 south_india_4_1 south_india_4_2 south_india_5_1 south_india_5_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

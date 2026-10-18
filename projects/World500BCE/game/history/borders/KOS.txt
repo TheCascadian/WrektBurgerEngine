@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+KOS = {
+	500BCE.1.1 = {
+		add = { ganges_plain_13 ganges_plain_22 ganges_plain_30 ganges_plain_38 ganges_plain_46 ganges_plain_49 ganges_plain_6 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

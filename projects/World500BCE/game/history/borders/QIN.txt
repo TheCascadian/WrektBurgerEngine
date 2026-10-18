@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+QIN = {
+	500BCE.1.1 = {
+		add = { zhou_states_yellow_river_1_1 zhou_states_yellow_river_1_2 zhou_states_yellow_river_11 zhou_states_yellow_river_16 zhou_states_yellow_river_20 zhou_states_yellow_river_21 zhou_states_yellow_river_25 zhou_states_yellow_river_26 zhou_states_yellow_river_27 zhou_states_yellow_river_28 zhou_states_yellow_river_29 zhou_states_yellow_river_34 zhou_states_yellow_river_48 zhou_states_yellow_river_52 zhou_states_yellow_river_67 zhou_states_yellow_river_71_1 zhou_states_yellow_river_71_2 zhou_states_yellow_river_9 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

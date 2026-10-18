@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+JDH = {
+	500BCE.1.1 = {
+		add = { judah_and_israel_1 judah_and_israel_2 judah_and_israel_3 judah_and_israel_4_1 judah_and_israel_4_2 judah_and_israel_4_3 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

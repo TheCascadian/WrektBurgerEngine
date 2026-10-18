@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+YAO = {
+	500BCE.1.1 = {
+		add = { japan_honshu_and_kyushu_m107_1 japan_honshu_and_kyushu_m118_1 japan_honshu_and_kyushu_m128_1 japan_honshu_and_kyushu_m131_1 japan_honshu_and_kyushu_m132_1 japan_honshu_and_kyushu_m134_1 japan_honshu_and_kyushu_m135_1 japan_honshu_and_kyushu_m137_1 japan_honshu_and_kyushu_m9_1_1 japan_honshu_and_kyushu_m9_1_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

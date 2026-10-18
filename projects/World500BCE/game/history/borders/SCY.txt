@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+SCY = {
+	500BCE.1.1 = {
+		add = { pontic_steppe_scythians_1_1 pontic_steppe_scythians_1_2 pontic_steppe_scythians_2 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}

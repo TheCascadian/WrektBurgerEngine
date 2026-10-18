@@ -1,0 +1,9 @@
+# Placeholder: ownership copied from map/states. Nothing here is attested history.
+IRR = {
+	500BCE.1.1 = {
+		add = { irrawaddy_m177_1 irrawaddy_m9_1 irrawaddy_m9_2 irrawaddy_m9_3 irrawaddy_m9_4 mainland_southeast_asia_rice_farmers_m9_1 mainland_southeast_asia_rice_farmers_m9_10 mainland_southeast_asia_rice_farmers_m9_11 mainland_southeast_asia_rice_farmers_m9_12_1 mainland_southeast_asia_rice_farmers_m9_12_2 mainland_southeast_asia_rice_farmers_m9_12_3 mainland_southeast_asia_rice_farmers_m9_13 mainland_southeast_asia_rice_farmers_m9_2 mainland_southeast_asia_rice_farmers_m9_3 mainland_southeast_asia_rice_farmers_m9_4 mainland_southeast_asia_rice_farmers_m9_5_1 mainland_southeast_asia_rice_farmers_m9_5_2 mainland_southeast_asia_rice_farmers_m9_6 mainland_southeast_asia_rice_farmers_m9_7_1 mainland_southeast_asia_rice_farmers_m9_7_2 mainland_southeast_asia_rice_farmers_m9_8 mainland_southeast_asia_rice_farmers_m9_9 tai_lands_1_1 tai_lands_1_2 tai_lands_1_3 tai_lands_1_4 tai_lands_1_5 }
+		control = unknown
+		source = generated
+		note = "Converted from the project's states; not a cited claim."
+	}
+}
