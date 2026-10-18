@@ -199,6 +199,16 @@ public static partial class Program
         var clash = Load(areas, ("ATH", "ATH = { 500BCE.1.1 = { add = { attica } control = core source = generated } }"), ("SPA", "SPA = { 400BCE.1.1 = { add = { attica } control = core source = generated } }"));
         Check(BorderCompiler.Replay(clash).Issues.Any(i => i.Severity == GeoSeverity.Error && i.Message.Contains("overlap")), "taking an area another polity still holds is reported as an overlap");
 
+        // ---- the ledger: only APPROVED ids can be cited; PENDING OWNER candidates are refused
+        string ledger = Path.Combine(Path.GetTempPath(), "burger_borders_ledger.csv");
+        File.WriteAllText(ledger, "id,name,status\nplaces,\"Places, ancient\",APPROVED\nghs_ucdb,Urban centres,PENDING OWNER\ngough,Routes,REJECTED\n");
+        var led = new BorderSet();
+        BorderLoader.LoadLedger(led, ledger);
+        BorderLoader.LoadAreas(led, Burger.Core.Script.ScriptParser.Parse(areas, "areas.txt"));
+        BorderLoader.LoadClaims(led, Burger.Core.Script.ScriptParser.Parse("ATH = { -700 = { add = { attica } control = core source = places } -600 = { add = { boeotia } control = core source = ghs_ucdb } }", "ATH.txt"), "ATH");
+        File.Delete(ledger);
+        Check(led.Claims.Count == 1 && led.Issues.Count == 1 && led.Issues[0].Message.Contains("ghs_ucdb"), "an APPROVED ledger id (even with a comma in a quoted name) is accepted and a PENDING OWNER id is refused");
+
         // ---- override order
         var over = new BorderSet();
         BorderLoader.LoadAreas(over, Burger.Core.Script.ScriptParser.Parse("attica = { a1 }", "areas.txt"));
