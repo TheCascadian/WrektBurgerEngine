@@ -86,8 +86,18 @@ EARLY_MEDIEVAL = [
 ]
 
 
+HIGH_MEDIEVAL = [
+    (r'mongol', 'tribe', ['Khamag Mongol', 'Tatars', 'Keraites', 'Naiman', 'Merkits', 'Oirats', 'Jalairs', 'Kiyat', 'Tayichiud', 'Onggirat', 'Ikires', 'Khongirad', 'Mangud', 'Uriankhai', 'Ongud', 'Buryats', 'Barulas', 'Dorbens', 'Besud', 'Suldus', 'Jurkin', 'Taichigud', 'Tumed', 'Khori', 'Bargut', 'Khitan remnants', 'Kereyid']),
+    (r'cuman|kipchak|kimek|oghuz|khanate|central asian|turcik|steppe', 'khanate', ['Kipchak', 'Cuman', 'Kangly', 'Kimek', 'Yemek', 'Turkmen', 'Karluk', 'Kyrgyz', 'Naiman', 'Kerait', 'Tatars', 'Merkit', 'Ogur', 'Berendei', 'Torks', 'Chernye Klobuki', 'Kai', 'Itoba', 'Burchoglu', 'Toksoba', 'Durut', 'Olberli', 'Terteroba', 'Yedi Oba', 'Kangar', 'Bayat', 'Yazir', 'Salur', 'Avshar', 'Begdili', 'Kinik', 'Eymur', 'Dodurga', 'Bayundur', 'Cavuldur', 'Yagma', 'Chigil', 'Tukhsi', 'Ghuz', 'Khalaj', 'Sary Kipchak', 'Lipka', 'Polovtsy']),
+]
+
+
 def pool_for(family, year=9999):
     low = family.lower()
+    if 900 <= year < 1400:
+        for rx, kind, names in HIGH_MEDIEVAL:
+            if re.search(rx, low):
+                return kind, names
     if 500 <= year < 900:
         for rx, kind, names in EARLY_MEDIEVAL:
             if re.search(rx, low):
@@ -159,4 +169,4 @@ history_names_extra.merge(POOLS)
 
 
 # the name a polity of the dataset had at a date, where the dataset keeps one name for a dynasty's whole span: (snapshot, name) -> name
-YEAR_NAMES = {('700', 'Sui Empire'): 'Tang Empire', ('700', 'Kanauj'): 'Later Gupta Kingdom', ('700', 'Palas'): 'Gauda Kingdom', ('700', 'Tufan Empire'): 'Tibetan Empire', ('600', 'Kanauj'): 'Pushyabhuti Kingdom', ('600', 'Shaskanka'): 'Gauda Kingdom', ('500', 'Jin Empire'): 'Southern Qi', ('400', 'Persia'): 'Sasanian Empire', ('400', 'Indo-Parthian Kingdom'): 'Kidarite Kingdom', ('400', 'Satavahana'): 'Vakataka Kingdom', ('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}
+YEAR_NAMES = {('1100', 'Kingdom of Sukhotai'): 'Kingdom of Pagan', ('700', 'Sui Empire'): 'Tang Empire', ('700', 'Kanauj'): 'Later Gupta Kingdom', ('700', 'Palas'): 'Gauda Kingdom', ('700', 'Tufan Empire'): 'Tibetan Empire', ('600', 'Kanauj'): 'Pushyabhuti Kingdom', ('600', 'Shaskanka'): 'Gauda Kingdom', ('500', 'Jin Empire'): 'Southern Qi', ('400', 'Persia'): 'Sasanian Empire', ('400', 'Indo-Parthian Kingdom'): 'Kidarite Kingdom', ('400', 'Satavahana'): 'Vakataka Kingdom', ('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}

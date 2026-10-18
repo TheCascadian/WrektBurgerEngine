@@ -107,7 +107,7 @@ def resolve(m, states, raw, year):
             seeds = TR0.hallstatt_seeds()
         if seeds and len(idx) >= 2:
             live = list(seeds)
-            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$|scythians)', norm) is not None or any(rx_ for a0, b0, rx_, sd in __import__('history_tribes').YEAR_SEEDS if sd is seeds)
+            merge_small = re.match(r'^(hallstatt|celts$|germanic tribes$|scythians|holy roman)', norm) is not None or any(rx_ for a0, b0, rx_, sd in __import__('history_tribes').YEAR_SEEDS if sd is seeds)
             def nearest(i, pool):
                 lon, lat = states[i][1], states[i][2]
                 return min(pool, key=lambda sd: ((lon - sd[2]) * math.cos(math.radians(lat))) ** 2 + (lat - sd[3]) ** 2)
