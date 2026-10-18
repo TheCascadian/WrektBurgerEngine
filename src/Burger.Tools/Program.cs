@@ -653,6 +653,7 @@ public static partial class Program
         {
             PatchSelfTest(game);
             GeographySelfTest(game, GameDir(project));
+            BordersSelfTest();
             FlagSelfTest();
             FigureSelfTest(game);
             ScopeHierarchySelfTest(game);

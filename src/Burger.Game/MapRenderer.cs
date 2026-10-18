@@ -7,7 +7,7 @@ using Raylib_cs;
 
 namespace Burger.Runtime;
 
-public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents, Development, Institution, Spheres, Titles }
+public enum MapMode { Political, Terrain, States, Diplomacy, Locations, Supply, Air, Ideology, Population, Culture, Religion, Provinces, Continents, Development, Institution, Spheres, Titles, Time }
 
 /// <summary>
 /// Builds and draws the 3D map from the province map, heightmap, terrain, tree and river inputs.
@@ -1030,7 +1030,7 @@ public sealed unsafe class MapRenderer : IDisposable
         Dictionary<string, int>? geoIndex = null;
         int geoDay = GeoDay ?? w.Date.TotalDays;
         if (Mode == MapMode.Provinces) _game.GeoDynamics.EnsureSynced();
-        if (Mode == MapMode.Provinces && CustomMode == null && _game.Geo.Enabled)
+        if (Mode is MapMode.Provinces or MapMode.Time && CustomMode == null && _game.Geo.Enabled)
         {
             geoIndex = new(StringComparer.Ordinal);
             foreach (var gp in _game.Geo.Snapshot(geoDay).Provinces) geoIndex[gp.Id] = geoIndex.Count + 1;
@@ -1112,6 +1112,15 @@ public sealed unsafe class MapRenderer : IDisposable
                 case MapMode.Religion:
                     if (l.IsLand && l.State != null && _game.Population.Religion(_game.Population.MajorityReligion(l.State)) is { } rel) col = C(rel.Color, 225);
                     break;
+                case MapMode.Time:
+                    // owner on the shown date from the compiled border claims; hatching (flag 128) marks control other than core/direct
+                    if (geoIndex != null && l.IsLand)
+                    {
+                        var bi = BorderView.At(_game.Geo, l.Key, geoDay);
+                        var bo = bi?.Owner != null ? w.GetCountry(bi.Owner) : null;
+                        col = bo != null ? C(bo.Color, 230) : new Color(120, 120, 120, 200);
+                    }
+                    break;
                 case MapMode.Provinces:
                     if (geoIndex != null && GeoDebug && l.IsLand && _game.Geo.ProvinceOfAtom(l.Key, geoDay) is { } gd)
                     {
@@ -1187,6 +1196,7 @@ public sealed unsafe class MapRenderer : IDisposable
             if (!_game.IsVisible(l)) flags |= 32;
             if (HighlightState != null && l.State == HighlightState) flags |= 64;
             if (l.State?.Demilitarized == true && !l.IsWater) flags |= 128; // demilitarized zone: hatched
+            if (TimeHatched(l, geoDay)) flags |= 128;
             if (!charted) flags &= 1 | 4 | 8 | 16 | 32;
             var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
             _lut[block * 2 + i] = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
@@ -1285,7 +1295,7 @@ public sealed unsafe class MapRenderer : IDisposable
                     _revealing[idx] = -(unchecked((uint)idx * 2654435761u) % 1000u / 1000f) * 0.8f / RevealSeconds;
             Dirty = true;
         }
-        if (Mode == MapMode.Provinces && _game.Geo.Enabled && _game.Geo.Version != _geoVersion) { _geoVersion = _game.Geo.Version; Dirty = true; }
+        if (Mode is MapMode.Provinces or MapMode.Time && _game.Geo.Enabled && _game.Geo.Version != _geoVersion) { _geoVersion = _game.Geo.Version; Dirty = true; }
         if (Dirty) UpdateLut();
         AdvanceReveal();
         Raylib.SetShaderValue(_shader, _locTi, explore.Enabled && _game.World.Player != null ? 1f : 0f, ShaderUniformDataType.Float);
@@ -1370,6 +1380,11 @@ public sealed unsafe class MapRenderer : IDisposable
 
     private int _lastHovered = -1, _lastSelected = -1;
 
+    /// <summary>Time mode hatches land whose owner holds it with a control level other than core or direct.</summary>
+    private bool TimeHatched(Location l, int day)
+        => Mode == MapMode.Time && CustomMode == null && l.IsLand && _game.Geo.Enabled
+           && BorderView.At(_game.Geo, l.Key, day) is { Owner: not null } bi && BorderControl.Hatched(bi.Control);
+
     /// <summary>
     /// Recomputes and re-uploads only one location's flag texel of the LUT (hover/selection highlight),
     /// avoiding a full UpdateLut rebuild when only the highlight moved. The other two LUT rows for this
@@ -1389,6 +1404,8 @@ public sealed unsafe class MapRenderer : IDisposable
         if (l.IsLake) flags |= 16;
         if (!_game.IsVisible(l)) flags |= 32;
         if (HighlightState != null && l.State == HighlightState) flags |= 64;
+        if (l.State?.Demilitarized == true && !l.IsWater) flags |= 128;
+        if (TimeHatched(l, GeoDay ?? w.Date.TotalDays)) flags |= 128;
         if (_game.Exploration.Enabled && !_game.Exploration.IsCharted(l)) flags &= 1 | 4 | 8 | 16 | 32;
         var stripe = occupied && l.Controller != null ? l.Controller.Color : Rgb.Black;
         var cell = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);

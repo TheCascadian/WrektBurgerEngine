@@ -42,3 +42,19 @@ public sealed class BorderSet
 
     public void Error(string message, string where) => Issues.Add(new GeoIssue(GeoSeverity.Error, message, where));
 }
+
+/// <summary>What the compiled border claims say about one location on one date.</summary>
+public sealed record BorderInfo(string Area, string? Owner, string? Control, string? Source);
+
+public static class BorderView
+{
+    /// <summary>The area (province) holding <paramref name="atom"/> on <paramref name="day"/> with its polity, control level and source; null when no province covers it.</summary>
+    public static BorderInfo? At(GeoRegistry reg, string atom, int day)
+    {
+        var p = reg.ProvinceOfAtom(atom, day);
+        if (p == null) return null;
+        string? owner = reg.Owner(p.Id, day);
+        if (owner == BorderTimeline.None) owner = null;
+        return new BorderInfo(p.Id, owner, owner == null ? null : reg.Control(p.Id, day), owner == null ? null : reg.Value(p.Id, "claim_source", day));
+    }
+}

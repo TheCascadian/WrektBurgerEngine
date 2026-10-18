@@ -1,5 +1,6 @@
 using System.Numerics;
 using Burger.Core;
+using Burger.Core.Geography;
 using Burger.Core.Map;
 using Burger.Core.Model;
 using Burger.Core.Script;
@@ -30,6 +31,10 @@ public sealed partial class Studio
     private string? _loadedSave;
 
     private static readonly string[] BaseModes = { "Political", "Terrain", "States", "Diplomacy", "Locations" };
+    /// <summary>The read-only border claim view sits right after the base modes; custom modes follow it.</summary>
+    private const int TimeModeIndex = 5;
+    private int _timeYear = -499; // astronomical: 500 BCE
+    private Location? _timeClick;
 
     /// <summary>Loads the world from the saved files (asks to save map files first).</summary>
     public void LoadWorld(bool askSave = true, string? savePath = null)
@@ -142,7 +147,7 @@ public sealed partial class Studio
 
         // ------------------------------------------------ toolbar
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + 4);
-        var modes = BaseModes.Concat(_world?.Interface.MapModes.Select(m => m.Name) ?? Enumerable.Empty<string>()).ToArray();
+        var modes = BaseModes.Append("Time").Concat(_world?.Interface.MapModes.Select(m => m.Name) ?? Enumerable.Empty<string>()).ToArray();
         if (_mapMode >= modes.Length) _mapMode = 0;
         ImGui.SetNextItemWidth(140);
         ImGui.Combo("##mapmode", ref _mapMode, modes, modes.Length);
@@ -169,6 +174,7 @@ public sealed partial class Studio
         }
         if (_loadedSave != null) { ImGui.SameLine(); Ui.T("save: " + _loadedSave, Ui.Gold); }
         if (_worldStale) { ImGui.SameLine(); Ui.T("map files changed - reload to see them", Ui.Yellow); }
+        if (_mapMode == TimeModeIndex) DrawTimeBar();
         if (_tool == 1)
         {
             var target = PaintTarget();
@@ -221,6 +227,7 @@ public sealed partial class Studio
             if (_tool == 0)
             {
                 FlushPendingStates();
+                _timeClick = loc;
                 Selected = loc == null ? null : new SelLocation { Loc = loc };
             }
             else _painting = true;
@@ -231,8 +238,11 @@ public sealed partial class Studio
 
         // ------------------------------------------------ draw into the texture
         var r = _renderer;
-        r.Mode = _mapMode < BaseModes.Length ? (MapMode)_mapMode : MapMode.Political;
-        r.CustomMode = _mapMode >= BaseModes.Length ? _world.Interface.MapModes[_mapMode - BaseModes.Length] : null;
+        r.Mode = _mapMode == TimeModeIndex ? MapMode.Time : _mapMode < BaseModes.Length ? (MapMode)_mapMode : MapMode.Political;
+        r.CustomMode = _mapMode > TimeModeIndex ? _world.Interface.MapModes[_mapMode - TimeModeIndex - 1] : null;
+        int timeDay = HistoricalCalendar.FromAstronomical(_timeYear);
+        if (_mapMode == TimeModeIndex && r.GeoDay != timeDay) { r.GeoDay = timeDay; r.Dirty = true; }
+        else if (_mapMode != TimeModeIndex && r.GeoDay != null) { r.GeoDay = null; r.Dirty = true; }
         var selLoc = Selected switch { SelLocation sl => sl.Loc, _ => null };
         var selState = Selected switch { SelLocation sl => sl.Loc.State, SelState ss => ss.State, _ => null };
         if (r.Selected != selLoc || r.HighlightState != selState || r.Hovered != loc)
@@ -262,10 +272,39 @@ public sealed partial class Studio
                 Ui.T($"State: {loc.State?.Key ?? "none"}");
                 Ui.T($"Owner: {(loc.Owner != null ? $"{loc.Owner.Name} ({loc.Owner.Tag})" : "none")}");
                 Ui.T($"Terrain: {loc.Terrain.Name}");
+                if (_mapMode == TimeModeIndex) Ui.T(TimeText(loc), Ui.Gold);
             }
             ImGui.EndTooltip();
         }
         ImGui.End();
+    }
+
+    /// <summary>Year box and slider for the Time map mode, and the claim behind the last clicked location.</summary>
+    private void DrawTimeBar()
+    {
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(90);
+        ImGui.InputInt("##timeyear", ref _timeYear, 0);
+        Ui.Tip("Year to show (astronomical: 0 is 1 BCE, -499 is 500 BCE)");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(260);
+        ImGui.SliderInt("##timeslider", ref _timeYear, -499, 2020, "");
+        _timeYear = Math.Clamp(_timeYear, -3700, 9999);
+        ImGui.SameLine();
+        Ui.T(HistoricalCalendar.Format(HistoricalCalendar.FromAstronomical(_timeYear)).Replace("1 January ", ""), Ui.Gold);
+        if (_timeClick != null) { ImGui.SameLine(); Ui.T(TimeText(_timeClick), Ui.Dim); }
+        ImGui.SameLine();
+        Ui.T("hatched = control other than core or direct", Ui.Dim);
+    }
+
+    private string TimeText(Location loc)
+    {
+        if (_world == null || !_world.Geo.Enabled) return "no border claims in this project";
+        var bi = BorderView.At(_world.Geo, loc.Key, HistoricalCalendar.FromAstronomical(_timeYear));
+        if (bi == null) return "in no area";
+        if (bi.Owner == null) return $"{bi.Area}: unclaimed";
+        string src = bi.Source == BorderSet.Generated ? "generated (placeholder, not attested)" : bi.Source ?? "?";
+        return $"{bi.Area}: {_world.World.GetCountry(bi.Owner)?.Name ?? bi.Owner} ({bi.Owner}), control {bi.Control}, source {src}";
     }
 
     private State? PaintTarget() => Selected switch { SelLocation sl => sl.Loc.State, SelState ss => ss.State, _ => null };

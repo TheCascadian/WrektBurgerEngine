@@ -215,6 +215,11 @@ public static partial class Program
               && reg.Control("boeotia", D("450BCE.1.1")) == "core" && reg.Control("boeotia", D("300BCE.1.1")) == "direct" && reg.Value("boeotia", "claim_source", D("450BCE.1.1")) == "pleiades"
               && reg.Value("boeotia", "claim_source", D("300BCE.1.1")) == "generated", "the generated file loads into the geography layer and reads back owner, control and source");
         Check(reg.DynamicSettings.Enabled == false, "the generated layer turns off runtime splitting so gameplay is unchanged");
+        // ---- the Time view reads a location on two dates
+        var v1 = BorderView.At(reg, "b1", D("450BCE.1.1")); var v2 = BorderView.At(reg, "b1", D("300BCE.1.1"));
+        Check(v1 is { Area: "boeotia", Owner: "ATH", Control: "core", Source: "pleiades" } && v2 is { Owner: "BOE", Control: "direct", Source: "generated" }, "Time view: a location shows its polity, control and source on two different dates");
+        Check(BorderView.At(reg, "l1", D("450BCE.1.1")) is { Area: "laconia", Owner: null } && BorderView.At(reg, "nowhere", D("450BCE.1.1")) == null, "Time view: an unclaimed area has no polity and an atom outside every area has no entry");
+        Check(!BorderControl.Hatched("core") && !BorderControl.Hatched("direct") && new[] { "tributary", "claimed", "contested", "unknown" }.All(c => BorderControl.Hatched(c)), "Time view hatches every control level except core and direct");
         string dir = Path.Combine(Path.GetTempPath(), "burger_borders_selftest");
         if (Directory.Exists(dir)) Directory.Delete(dir, true);
         Directory.CreateDirectory(Path.Combine(dir, "map")); Directory.CreateDirectory(Path.Combine(dir, "history", "borders"));
