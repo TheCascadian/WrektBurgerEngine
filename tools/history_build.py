@@ -259,7 +259,7 @@ def build(m):
         feats = m.load_snapshot(y)
         raw = [m.owner_of(feats, s[1], s[2]) for s in states]
         res = resolve(m, states, raw, y)
-        if m.astronomical(y) <= 450:
+        if m.astronomical(y) <= 700:
             # the lands the dataset leaves empty keep the peoples of the first start date (a people with fewer than three states of them is left out)
             groups = collections.defaultdict(list)
             for (w, so, e, no), seeds in [(b0, sd0) for a0, z0, b0, sd0 in TR.MASK_YEAR if a0 <= m.astronomical(y) <= z0] + (TR.MASK_SEEDS + TR.MASK_LATER if m.astronomical(y) <= 250 else []):

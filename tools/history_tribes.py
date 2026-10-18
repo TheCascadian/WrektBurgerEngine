@@ -173,3 +173,23 @@ MASK_YEAR.insert(0, (350, 450, (3.0, 47.0, 30.0, 61.5), [('alamanni', 'Alamanni'
                                                        ('quadi', 'Suebi', 17.0, 48.8), ('langobardi', 'Lombards', 11.0, 53.0), ('heruli', 'Heruls', 14.0, 54.5), ('thuringi', 'Thuringians', 11.0, 51.0),
                                                        ('anglii', 'Angles', 9.5, 54.8), ('jutes', 'Jutes', 9.0, 56.4), ('danes', 'Danes', 11.5, 55.3), ('svear', 'Svear', 16.5, 59.6), ('gotar', 'Gautar', 13.5, 57.8),
                                                        ('aesti_t', 'Aesti', 22.5, 55.5), ('finns_t', 'Finns', 24.0, 61.2), ('slavs_e', 'Slavs', 30.5, 51.0), ('sciri', 'Sciri', 21.0, 53.0), ('rugii_t', 'Rugii', 16.0, 54.0)]))
+
+MASK_YEAR.extend([
+    (451, 700, (3.0, 47.0, 31.0, 61.5), [('alamanni', 'Alamanni', 9.0, 48.5), ('thuringi', 'Thuringians', 11.0, 51.0), ('langobardi', 'Lombards', 16.5, 48.5), ('gepidae', 'Gepids', 21.0, 46.5),
+                                        ('heruli', 'Heruls', 14.0, 54.0), ('saxones_t', 'Saxons', 9.0, 53.0), ('frisii_t', 'Frisians', 5.5, 53.2), ('anglii', 'Angles', 9.5, 54.8), ('jutes', 'Jutes', 9.0, 56.4),
+                                        ('danes', 'Danes', 11.5, 55.3), ('svear', 'Svear', 16.5, 59.6), ('gotar', 'Gautar', 13.5, 57.8), ('aesti_t', 'Aesti', 22.5, 55.5), ('finns_t', 'Finns', 24.0, 61.2),
+                                        ('slavs_e', 'Slavs', 30.5, 51.0), ('slavs_w', 'Wends', 15.0, 50.5), ('bavarii', 'Bavarians', 12.0, 48.6), ('rugii_t', 'Rugii', 16.0, 54.0), ('sciri', 'Sciri', 21.0, 53.0),
+                                        ('karelians_t', 'Karelians', 30.0, 61.5)]),
+    (451, 700, (-11.0, 49.5, 2.0, 59.5), [('picts', 'Picts', -4.0, 57.5), ('dalriada', 'Dal Riata', -6.0, 56.0), ('gododdin', 'Gododdin', -3.0, 55.8), ('rheged', 'Rheged', -3.0, 54.6), ('gwynedd', 'Gwynedd', -4.0, 53.0),
+                                         ('powys', 'Powys', -3.2, 52.5), ('dumnonia', 'Dumnonia', -3.8, 50.7), ('kent', 'Kent', 0.9, 51.3), ('sussex', 'Sussex', -0.5, 50.9), ('wessex', 'Wessex', -1.6, 51.0),
+                                         ('essex', 'Essex', 0.5, 51.8), ('eastangles', 'East Angles', 1.0, 52.5), ('mercia', 'Mercia', -1.5, 52.6), ('deira', 'Deira', -1.2, 54.0),
+                                         ('ulaid', 'Ulaid', -6.5, 54.6), ('laigin', 'Laigin', -6.8, 53.0), ('mumu', 'Munster', -8.5, 52.3), ('connachta', 'Connachta', -8.7, 53.8), ('midhe', 'Mide', -7.4, 53.5)]),
+    (451, 600, (28.0, 38.0, 100.0, 56.0), [('sabir', 'Sabir', 47.0, 44.0), ('utigur', 'Utigurs', 38.0, 47.0), ('kutrigur', 'Kutrigurs', 32.0, 47.5), ('akatziri', 'Akatziri', 50.0, 48.0),
+                                           ('hephthalites', 'Hephthalites', 66.0, 38.0), ('hephthalites2', 'Hephthalites', 70.0, 35.0), ('kangju', 'Kangju', 68.0, 43.0), ('tiele', 'Tiele', 95.0, 48.0),
+                                           ('bulgars_t', 'Onogurs', 55.0, 52.0), ('chionites', 'Chionites', 58.0, 42.0)]),
+    (451, 600, (88.0, 36.0, 135.0, 56.0), [('tiele', 'Tiele', 95.0, 48.0), ('shiwei', 'Shiwei', 122.0, 50.0), ('kurykan', 'Kurykans', 104.0, 52.0), ('xi', 'Xi', 118.0, 43.0), ('khitan', 'Khitan', 120.5, 43.8),
+                                           ('wuji', 'Wuji', 128.0, 47.0), ('tuyuhun', 'Tuyuhun', 100.0, 36.5), ('gaoche', 'Gaoche', 90.0, 44.0)]),
+    (451, 700, (92.0, 5.0, 110.0, 24.0), BLOCK_SEEDS['IRR']),
+    (451, 700, (123.0, 32.0, 132.0, 44.0), [('baekje', 'Baekje', 126.8, 36.8), ('gaya', 'Gaya', 128.5, 35.5), ('gojoseon', 'Goguryeo', 126.0, 40.0), ('silla', 'Silla', 129.0, 36.0)]),
+    (451, 700, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamato', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)]),
+])
