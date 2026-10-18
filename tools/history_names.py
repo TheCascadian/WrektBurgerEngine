@@ -138,4 +138,4 @@ history_names_extra.merge(POOLS)
 
 
 # the name a polity of the dataset had at a date, where the dataset keeps one name for a dynasty's whole span: (snapshot, name) -> name
-YEAR_NAMES = {('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}
+YEAR_NAMES = {('400', 'Persia'): 'Sasanian Empire', ('400', 'Indo-Parthian Kingdom'): 'Kidarite Kingdom', ('400', 'Satavahana'): 'Vakataka Kingdom', ('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}

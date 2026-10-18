@@ -167,3 +167,9 @@ MASK_YEAR.extend([
     (250, 450, (123.0, 32.0, 132.0, 44.0), [('baekje', 'Baekje', 126.8, 36.8), ('gaya', 'Gaya', 128.5, 35.5), ('gojoseon', 'Goguryeo', 126.0, 40.0)]),
     (250, 450, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamato', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)]),
 ])
+
+MASK_YEAR.insert(0, (350, 450, (3.0, 47.0, 30.0, 61.5), [('alamanni', 'Alamanni', 9.0, 48.5), ('franks_t', 'Franks', 6.5, 51.0), ('saxones_t', 'Saxons', 9.0, 53.5), ('burgundi', 'Burgundians', 8.0, 50.5),
+                                                       ('vandali', 'Vandals', 17.0, 50.8), ('goths_t', 'Visigoths', 26.0, 45.0), ('goths_g', 'Ostrogoths', 33.0, 48.5), ('gepidae', 'Gepids', 22.0, 47.5),
+                                                       ('quadi', 'Suebi', 17.0, 48.8), ('langobardi', 'Lombards', 11.0, 53.0), ('heruli', 'Heruls', 14.0, 54.5), ('thuringi', 'Thuringians', 11.0, 51.0),
+                                                       ('anglii', 'Angles', 9.5, 54.8), ('jutes', 'Jutes', 9.0, 56.4), ('danes', 'Danes', 11.5, 55.3), ('svear', 'Svear', 16.5, 59.6), ('gotar', 'Gautar', 13.5, 57.8),
+                                                       ('aesti_t', 'Aesti', 22.5, 55.5), ('finns_t', 'Finns', 24.0, 61.2), ('slavs_e', 'Slavs', 30.5, 51.0), ('sciri', 'Sciri', 21.0, 53.0), ('rugii_t', 'Rugii', 16.0, 54.0)]))
