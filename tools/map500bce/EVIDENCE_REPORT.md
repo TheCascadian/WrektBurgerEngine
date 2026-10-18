@@ -1,6 +1,6 @@
 # Evidence points: first-pass report
 
-Generated 2026-10-18. File: `evidence_points.csv` (152 rows). Sources used: `pleiades` and `wikidata` only (both APPROVED, license files present and hash-matched).
+Generated 2026-10-18. File: `evidence_points.csv` (4,861 rows: 152 first-pass Pleiades/Wikidata rows plus 4,709 `nasa_urban_pop` rows). Sources used: `pleiades`, `wikidata`, `nasa_urban_pop` (all APPROVED; the owner approved `nasa_urban_pop` on 2026-10-18).
 
 ## Counts
 
@@ -61,3 +61,13 @@ Generated 2026-10-18. File: `evidence_points.csv` (152 rows). Sources used: `ple
 - Barrington Atlas / DARE, Wikidata SPARQL bulk pulls, and a Wikidata `instance of city-state` pull would help but need an owner decision.
 - Unreferenced Wikidata population values (MEDIUM rows) should be checked against a primary publication before relying on them.
 - Kyiv year-1000 statements conflict (10000 and 50000); the larger was used and noted.
+
+## Addendum: NASA SEDAC Historical Urban Population
+
+- Input: `docs/SOURCES/nasa/urbanspatial-hist-urban-pop-3700bc-ad2000-xlsx.xlsx` (SHA-256 `7355dd9d3ce162f98db90b4806cd0cb1f0209dca8e9108a34ee0a336f91f168e`), sheet "Historical Urban Population", 10,352 records, years -3700 to 2000. The data does start at 3700 BC; the catalog's "Temporal Extent 1700-2000" field is wrong or truncated.
+- Method: each record falls in one of 21 bins (labels like `NASA500BCE-251BCE`). One row per place (lat/lon rounded to 2 decimals) per bin, keeping the largest population. Weight/radius use the same population tier table as above. Confidence maps the source's geocode Certainty (1 HIGH, 2 MEDIUM, 3 LOW); it rates location accuracy, not population accuracy.
+- Counts: 3,747 HIGH, 519 MEDIUM, 443 LOW. Per bin: 3700-3001 BCE 4, 3000-2501 15, 2500-2001 31, 2000-1501 40, 1500-1001 33, 1000-751 17, 750-501 18, 500-251 50, 250-1 52, 1-250 CE 26, 251-500 42, 501-750 75, 751-1000 159, 1001-1250 228, 1251-1500 337, 1501-1650 388, 1651-1800 600, 1801-1875 645, 1876-1925 1,138, 1926-1975 518, 1976-2000 293.
+- Regions (NASA rows, rough box): Europe/N. Africa/Near East 2,477; East/SE Asia 824; Persia/Central/South Asia 745; Americas 549; Sub-Saharan Africa 101; Oceania 13.
+- Validation: `read_evidence` accepts all 4,861 rows; 4 unit tests OK. I did not run the full generator (no `ne_raster.npz` was located).
+- Caveats: pre-1000 CE is thin (under 100 points per bin), so the 1700-2000 era dominates the demand map by count. Pre-1700 values are compiled estimates (Chandler, Modelski). The dataset ends at 2000, so the 2020CE rows still come from Wikidata. Political complexity and corridors after 640 CE remain empty.
+- Attribution required: Reba, Reitsma & Seto (2018), doi:10.7927/H4ZG6QBX.
