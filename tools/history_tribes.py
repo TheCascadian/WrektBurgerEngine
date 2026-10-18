@@ -199,3 +199,15 @@ YEAR_SEEDS.append((640, 790, r'^sasanian', [('umayyad', 'Umayyad Caliphate', 52.
 
 YEAR_SEEDS.append((950, 1070, r'^denmark-norway', [('den', 'Denmark', 10.5, 56.0), ('norway', 'Kingdom of Norway', 9.5, 61.0), ('iceland', 'Iceland', -19.0, 64.8), ('greenland', 'Norse Greenland', -45.0, 61.0),
                                                    ('hebrides', 'Kingdom of the Isles', -6.5, 57.5)]))
+
+YEAR_SEEDS.extend([
+    (1130, 1230, r'^song', [('song', 'Southern Song', 114.0, 29.0), ('song', 'Southern Song', 119.0, 27.0), ('song', 'Southern Song', 107.0, 28.0), ('song', 'Southern Song', 111.0, 23.0), ('song', 'Southern Song', 114.0, 32.8), ('song', 'Southern Song', 119.0, 32.5),
+                           ('jin', 'Jin Dynasty', 114.0, 36.5), ('jin', 'Jin Dynasty', 110.0, 35.0), ('jin', 'Jin Dynasty', 118.0, 36.5)]),
+    (1130, 1230, r'^liao', [('jin', 'Jin Dynasty', 125.0, 44.0)]),
+    (1150, 1205, r'^mongol', [('mongol', 'Khamag Mongol', 110.0, 48.5), ('tatars', 'Tatars', 118.0, 47.0), ('keraites', 'Keraites', 104.0, 47.0), ('naiman', 'Naiman', 92.0, 47.0),
+                              ('merkit', 'Merkits', 106.0, 52.5), ('oirat', 'Oirats', 95.0, 51.5), ('onggud', 'Ongud', 111.0, 42.0)]),
+])
+
+YEAR_SEEDS.append((1230, 1340, r'^ryazan', [('ryazan', 'Ryazan', 40.0, 54.5), ('vladimir', 'Vladimir-Suzdal', 40.4, 56.2), ('smolensk', 'Smolensk', 32.0, 54.8), ('chernigov', 'Chernigov', 31.3, 51.6),
+                                           ('galicia', 'Galicia-Volhynia', 25.0, 50.0), ('kiev', 'Kiev', 30.5, 50.4), ('polotsk', 'Polotsk', 28.0, 55.5), ('tver', 'Tver', 35.9, 57.0),
+                                           ('murom', 'Murom', 42.0, 55.0), ('turov', 'Turov-Pinsk', 27.5, 52.5)]))

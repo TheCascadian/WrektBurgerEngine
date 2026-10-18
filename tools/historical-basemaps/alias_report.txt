@@ -32,1354 +32,1364 @@ IND	magadha	Magadha	-499
 ION	orig:ION	Ionian Greek Cities	-499
 IRR	pyu	Pyu	-499
 IRR	irr	Khmer Empire	900
-J3N	adena culture#8.1	Jaega	-499
-J3O	jin_han	Jin	-499
-J3P	khoisan#1.3	Ju	-499
-J3Q	jutes	Jutes	-499
-J3R	austronesians#1.1	Kerinci	-499
-J3S	khoisan#1.2	Kgalagadi	-499
-J3T	chenla	Khmer	-499
-J3U	khoisan#3.7	Khoe	-499
-J3V	khoisan#4.1	Khoikhoi	-499
-J3W	kinki	Kinki	-499
-J3X	papuan neolithic farmers#0.1	Kiwai	-499
-J3Y	khoisan#5.1	Kora	-499
-J3Z	west african cereal farmers#0.2	Kpelle	-499
-J40	moesi	Moesi	-499
-J41	mon	Mon	-499
-J42	mossi	Mossi	-499
-J43	mulaka	Mulaka	-499
-J44	khorat	Mun	-499
-J45	haumavarga	Saka Haumavarga	-499
-J46	tigraxauda	Saka Tigraxauda	-499
-J47	salluvii	Salluvii and Ligurians	-499
-J48	onega	Sami	-499
-J49	samnites	Samnites	-499
-J4A	kru	Kru	-499
-J4B	kuntala	Kuntala	-499
-J4C	kuru	Kuru	-499
-J4D	khoisan#8.1	Kwangali	-499
-J4E	khoisan#6.4	Kxoe	-499
-J4F	saharan pastoral nomads#1.1	Maces	-499
-J4G	machalilla	Machalilla	-499
-J4H	manioc farmers#2.2	Machiguenga	-499
-J4I	madra	Madra	-499
-J4J	magan	Magan	-499
-J4K	mahan	Mahan	-499
-J4L	malay	Malay	-499
-J4M	malla	Malla	-499
-J4N	manioc farmers#3.1	Marubo	-499
-J4O	saharan pastoral nomads#8.1	Massyli	-499
-J4P	matsya	Matsya	-499
-J4Q	mauri	Mauri	-499
-J4R	maurusii	Maurusii	-499
-J4S	kaminaljuyu	Maya of Kaminaljuyu	-499
-J4T	glades culture#8.1	Mayaimi	-499
-J4U	khoisan#3.2	Mbukushu	-499
-J4V	papuan neolithic farmers#8.2	Mekeo	-499
-J4W	melanchlaeni	Melanchlaeni	-499
-J4X	merya	Merya	-499
-J4Y	midhe	Mide	-499
-J4Z	maize farmers#3.1	Minuane	-499
-J50	tiv	Tiv	-499
-J51	tohoku	Tohoku	-499
-J52	khoisan#6.1	Topnaar	-499
-J53	khoisan#2.2	Totela	-499
-J54	tres_zapotes	Tres Zapotes	-499
-J55	treveri	Treveri	-499
-J56	triballi	Triballi	-499
-J57	papuan neolithic farmers#8.1	Trobriander	-499
-J58	khoisan#3.6	Tswana	-499
-J59	tuluva	Tuluva	-499
-J5A	pomeranian culture#8.1	Selonians	-499
-J5B	semnones	Semnones	-499
-J5C	sequani	Sequani	-499
-J5D	shan	Shan	-499
-J5E	shikoku	Shikoku	-499
-J5F	manioc farmers#4.1	Shipibo	-499
-J5G	silures	Silures and Ordovices	-499
-J5H	simhala	Simhala	-499
-J5I	siraces	Siraces	-499
-J5J	west african cereal farmers#0.3	Sisala	-499
-J5K	song	Song	-499
-J5L	songhai	Songhai	-499
-J5M	khoisan#8.4	Songua	-499
-J5N	khoisan#0.3	Subia	-499
-J5O	suhma	Suhma and Radha	-499
-J5P	surasena	Surasena	-499
-J5Q	svear	Svear	-499
-J5R	khoisan#0.5	Taa	-499
-J5S	lanna	Tai Lue	-499
-J5T	manioc farmers#2.1	Tairona	-499
-J5U	manioc farmers#6.1	Tamoio	-499
-J5V	tauri	Tauri	-499
-J5W	khoisan#7.2	Tcaiti	-499
-J5X	temne	Temne	-499
-J5Y	thyssagetae	Thyssagetae	-499
-J5Z	pampas cultures#5.1	Timbira	-499
-J60	mc:0#5	Ibaloi	-399
-J61	austro-asiatic rice cultures#3.2	Iban	-399
-J62	west african cereal farmers#0.5	Ife	-399
-J63	mc:1#1	Ifugao	-399
-J64	mc:0#3	Ilocano	-399
-J65	austro-asiatic rice cultures#6.1	Isneg	-399
-J66	austro-asiatic rice cultures#2.1	Jeh	-399
-J67	proto-tibetan cultures#7.1	Jie	-399
-J68	jutes_h	Jutes	-399
-J69	mc:0#4	Kadazan	-399
-J6A	proto-thai cultures#4.2	Aeta	-399
-J6B	proto-tibetan cultures#6.1	Agathyrsi	-399
-J6C	austro-asiatic rice cultures#3.1	Alas	-399
-J6D	hindu kingdoms#2.1	Ambashtha	-399
-J6E	ardiaei	Ardiaei	-399
-J6F	armorici	Armoricans	-399
-J6G	saharan pastoral nomads#3.1	Augilae	-399
-J6H	austro-asiatic rice cultures#8.4	Bunun	-399
-J6I	byeonhan	Byeonhan and Jinhan	-399
-J6J	manioc farmers#6.3	Caete	-399
-J6K	carnutes	Carnutes	-399
-J6L	austro-asiatic rice cultures#1.1	Chin	-399
-J6M	manioc farmers#8.2	Chono	-399
-J6N	maize farmers#7.2	Comechingon	-399
-J6O	khoisan#8.5	Danisi	-399
-J6P	mc:1#0	Dayak	-399
-J6Q	proto-tibetan cultures#3.1	Di	-399
-J6R	frisii_h	Frisii	-399
-J6S	west african cereal farmers#4.6	Ga	-399
-J6T	west african cereal farmers#0.7	Gonja	-399
-J6U	khoisan#6.6	Griqua	-399
-J6V	west african cereal farmers#4.7	Gurma	-399
-J6W	khoisan#6.5	Hadza	-399
-J6X	austro-asiatic rice cultures#8.1	Hre	-399
-J6Y	issedones#1	Hunnic clans	-399
-J6Z	iazyges	Iazyges	-399
-J70	issedones#2	Tashtyk	-399
-J71	argippaei#1	Tochari	-399
-J72	khoisan#8.6	Tonga	-399
-J73	proto-tibetan cultures#0.1	Tyrcae	-399
-J74	armenia	Armenia	-322
-J75	atropatene	Atropatene	-322
-J76	saharan pastoral nomads#5.1	Auschisae	-322
-J77	bosporan	Bosporan Kingdom	-322
-J78	cappadocia	Cappadocia	-322
-J79	issedones#4	Catacomb	-322
-J7A	austro-asiatic rice cultures#6.3	Karo	-399
-J7B	proto-thai cultures#0.1	Khasi	-399
-J7C	austro-asiatic rice cultures#0.1	Khun	-399
-J7D	west african cereal farmers#0.8	Krahn	-399
-J7E	proto-thai cultures#4.1	Kreung	-399
-J7F	hindu kingdoms#1.1	Kshudraka	-399
-J7G	austro-asiatic rice cultures#6.4	Kuy	-399
-J7H	saharan pastoral nomads#0.3	Macae	-399
-J7I	maeotae	Maeotae	-399
-J7J	mc:0#2	Mandailing	-399
-J7K	marcomanni_h	Marcomanni	-399
-J7L	saharan pastoral nomads#2.1	Mazices	-399
-J7M	austro-asiatic rice cultures#5.1	Melanau	-399
-J7N	proto-tibetan cultures#4.1	Saka Paradraya	-399
-J7O	khoisan#8.7	Sandawe	-399
-J7P	austro-asiatic rice cultures#8.3	Santal	-399
-J7Q	hindu kingdoms#6.1	Satiyaputra	-399
-J7R	austro-asiatic rice cultures#0.2	Senoi	-399
-J7S	west african cereal farmers#4.5	Senufo	-399
-J7T	hindu kingdoms#4.1	Sibi	-399
-J7U	west african cereal farmers#4.4	Soninke	-399
-J7V	proto-tibetan cultures#8.1	Srubna	-399
-J7W	austro-asiatic rice cultures#8.2	Stieng	-399
-J7X	suebi_h	Suebi	-399
-J7Y	austro-asiatic rice cultures#7.1	Tai Dam	-399
-J7Z	hindu kingdoms#6.2	Tamraparni	-399
-J80	bactria	Bactria	-199
-J81	mon-khmer#8.1	Bahnar	-199
-J82	papuan#4.1	Baining	-199
-J83	thai#8.2	Bima	-199
-J84	malays#4.1	Brao	-199
-J85	malays#1.2	Bugis	-199
-J86	saharan pastoral nomads#7.1	Byzacenes	-199
-J87	mon-khmer#0.1	Champasak	-199
-J88	papuan#0.1	Elema	-199
-J89	malays#5.1	Gorontalo	-199
-J8A	chatti	Chatti	-322
-J8B	colchis	Colchis	-322
-J8C	hulun#3	Derbices	-322
-J8D	iapodes	Iapodes	-322
-J8E	insubres	Insubres and Golaseccans	-322
-J8F	issedones#6	Karakol	-322
-J8G	mc:0#8	Karen	-322
-J8H	hindu kingdoms#2.2	Malava	-322
-J8I	marcomanni	Marcomanni	-322
-J8J	monte alban	Monte Albán	-322
-J8K	mc:0#9	Sakalava	-322
-J8L	mc:0#7	Sasak	-322
-J8M	hindu kingdoms#7.1	Sauvira	-322
-J8N	mc:0#6	Sikka	-322
-J8O	mc:0#12	Simalungun	-322
-J8P	mc:0#11	Tagalog	-322
-J8Q	hulun#2	Taksai	-322
-J8R	mc:0#10	Taoi	-322
-J8S	laos#1	Tigurini	-322
-J8T	maya chiefdoms and states#8.1	Totonac	-322
-J8U	dalmatae	Dalmatae	-299
-J8V	antigonus	Kingdom of Antigonus	-299
-J8W	kassander	Kingdom of Kassander	-299
-J8X	lysimachus	Kingdom of Lysimachus	-299
-J8Y	arabs#0.1	Amalekites	-199
-J8Z	turcik tribes#8.1	Amyrgians	-199
-J90	turcik tribes#0.1	Jushi	-199
-J91	bithynia	Bithynia	-99
-J92	mc:2#3	Cabales	-99
-J93	hopewell culture#3.1	Caddo	-99
-J94	point peninsula#8.1	Choctaw	-99
-J95	commagene	Commagene	-99
-J96	elymais	Elymais	-99
-J97	mc:2#2	Gindanes	-99
-J98	hopewell culture#0.1	Hopewell	-99
-J99	laurel complex#8.1	Houma	-99
-J9A	han	Han Empire	-199
-J9B	thai#4.1	Kankanaey	-199
-J9C	arabs#8.1	Katabania	-199
-J9D	mon-khmer#6.1	Katu	-199
-J9E	arabs#3.1	Kinda	-199
-J9F	syphax	Kingdom of Syphax	-199
-J9G	mon-khmer#5.1	Koho	-199
-J9H	maan	Maan	-199
-J9I	mauretania	Mauretania	-199
-J9J	malays#1.1	Merina	-199
-J9K	min-yue	Min-Yue	-199
-J9L	iron age chieftainships#8.1	Mnong	-199
-J9M	turcik tribes#0.2	Mohe	-199
-J9N	thai#8.1	Samre	-199
-J9O	malays#8.2	Sangir	-199
-J9P	thai#2.1	Savu	-199
-J9Q	sogdians	Sogdians	-199
-J9R	thai#0.1	Sumba	-199
-J9S	thai#3.1	Sumbawa	-199
-J9T	mon-khmer#3.1	Tai Yuan	-199
-J9U	malays#8.1	Tampuan	-199
-J9V	papuan#4.2	Toaripi	-199
-J9W	papuan#8.1	Tolai	-199
-J9X	minor states#0.1	Trigarta	-199
-J9Y	armenia_k	Armenia	-99
-J9Z	mc:2#0	Atlantes	-99
 JDH	orig:JDH	Judah and Yehud	-499
 JIN	orig:JIN	Jin	-499
 JIN	jin	Jin	300
-JV8	pampas cultures#5.2	Abipon	-499
-JV9	austronesians#0.1	Acehnese	-499
-JW0	austronesians#8.1	Banjar	-499
-JW1	bell-shaped burials culture#8.1	Bastarnae	-499
-JW2	batavi	Batavi and the Rhine	-499
-JW3	west african cereal farmers#4.2	Baule	-499
-JW4	khoisan#3.4	Bergdama	-499
-JW5	mahishmati	Bhil	-499
-JW6	blemmyes	Blemmyes	-499
-JW7	west african cereal farmers#8.3	Bobo	-499
-JW8	boii	Boii	-499
-JW9	brushed pottery culture#8.1	Boruski	-499
-JWA	adyrmachidae	Adyrmachidae	-499
-JWB	sambian-nothangian culture#8.1	Aestii	-499
-JWC	dacians	Agathyrsi and Dacians	-499
-JWD	akan	Akan	-499
-JWE	khoisan#3.3	Akhoe	-499
-JWF	alazones	Alazones and Scythian plowmen	-499
-JWG	allobroges	Allobroges	-499
-JWH	ananyino	Ananyino	-499
-JWI	anarta	Anarta and Saurashtra	-499
-JWJ	andhra	Andhra	-499
-JWK	eastern masurian culture#8.1	Androphagi	-499
-JWL	anga	Anga	-499
-JWM	west african cereal farmers#0.4	Anyi	-499
-JWN	aorsi	Aorsi	-499
-JWO	apuli	Apulians	-499
-JWP	aquitani	Aquitani	-499
-JWQ	arakan	Arakan	-499
-JWR	pampas cultures#4.1	Arawak	-499
-JWS	argippaei	Argippaei	-499
-JWT	arverni	Arverni	-499
-JWU	astures	Astures	-499
-JWV	khoisan#0.6	Auen	-499
-JWW	saharan pastoral nomads#4.1	Auses	-499
-JWX	autariatae	Autariatae	-499
-JWY	avanti	Avanti	-499
-JWZ	ay	Ay and Mushika	-499
-JX0	connachta	Connachta	-499
-JX1	contestani	Contestani	-499
-JX2	cosetani	Cosetani and Indigetes	-499
-JX3	pampas cultures#2.1	Cuica	-499
-JX4	manioc farmers#6.2	Cuiva	-499
-JX5	manioc farmers#0.4	Culina	-499
-JX6	cupisnique	Cupisnique	-499
-JX7	curonians	Curonians	-499
-JX8	conii	Cynetes	-499
-JX9	west african cereal farmers#8.2	Dagara	-499
-JXA	brigantes	Brigantes	-499
-JXB	budini	Budini	-499
-JXC	khoisan#7.1	Buga	-499
-JXD	khoisan#2.4	Bugakhwe	-499
-JXE	cai	Cai	-499
-JXF	caledonii	Caledonians	-499
-JXG	callaeci	Callaeci	-499
-JXH	callipidae	Callipidae	-499
-JXI	cao	Cao	-499
-JXJ	manioc farmers#1.1	Carib	-499
-JXK	carpetani	Carpetani	-499
-JXL	celtici	Celtici	-499
-JXM	khoisan#8.3	Chainouqua	-499
-JXN	champa	Cham	-499
-JXO	manioc farmers#0.3	Chamacoco	-499
-JXP	west african cereal farmers#4.1	Chamba	-499
-JXQ	chedi	Chedi	-499
-JXR	chera	Chera	-499
-JXS	cherusci	Cherusci	-499
-JXT	chiapas	Chiapas	-499
-JXU	chinchoros	Chinchoros	-499
-JXV	khwarezm	Chorasmians	-499
-JXW	chorrera	Chorrera	-499
-JXX	chubu	Chubu Jomon	-499
-JXY	chugoku	Chugoku	-499
-JXZ	khoisan#3.5	Cochoqua	-499
-JY0	gaetuli	Gaetuli	-499
-JY1	manioc farmers#5.3	Galibi	-499
-JY2	plain-pottery culture#8.1	Galindians	-499
-JY3	khoisan#1.1	Gamtoos	-499
-JY4	saharan pastoral nomads#0.1	Garamantian clans	-499
-JY5	gotar	Gautar	-499
-JY6	austronesians#4.1	Gayo	-499
-JY7	geloni	Geloni	-499
-JY8	gerrha	Gerrha and Dilmun	-499
-JY9	getae	Getae	-499
-JYA	dahae	Dahae	-499
-JYB	kosala_s	Dakshina Kosala	-499
-JYC	khoisan#6.2	Dama	-499
-JYD	khoisan#3.1	Damara	-499
-JYE	danes	Danes	-499
-JYF	west african cereal farmers#8.1	Dendi	-499
-JYG	khoisan#0.2	Deti	-499
-JYH	dingling	Dingling	-499
-JYJ	west african cereal farmers#4.3	Diola	-499
-JYK	dobunni	Dobunni and Cornovii	-499
-JYL	dogon	Dogon	-499
-JYM	donghu	Donghu	-499
-JYN	dyakovo	Dyakovo	-499
-JYO	treveri_e	Eburones	-499
-JYP	edetani	Edetani	-499
-JYQ	el paraiso	El Paraiso	-499
-JYS	late jomon culture#8.1	Emishi	-499
-JYT	papuan neolithic farmers#4.1	Enga	-499
-JYU	erainn	Erainn of Munster	-499
-JYV	estonians	Estonians	-499
-JYW	ewe	Ewe and Fon	-499
-JYX	finns	Finns	-499
-JYY	frisii	Frisii	-499
-JYZ	funan	Funan	-499
-JZ0	iyrcae	Iyrcae	-499
-JZ1	izapa	Izapa	-499
-JZ2	austronesians#5.1	Kachin	-499
-JZ3	khoisan#0.1	Kakia	-499
-JZ4	kalinga	Kalinga	-499
-JZ5	kamarupa	Kamarupa	-499
-JZ6	kanto	Kanto Jomon	-499
-JZ7	karelians	Karelians	-499
-JZ8	kasi	Kasi	-499
-JZ9	kekaya	Kekaya	-499
-JZA	saharan pastoral nomads#4.2	Giligammae	-499
-JZB	gobi	Gobi	-499
-JZC	khoisan#7.3	Gora	-499
-JZD	khoisan#4.2	Gorachouqua	-499
-JZE	khoisan#6.3	Goringhaiqua	-499
-JZF	manioc farmers#5.1	Guane	-499
-JZG	maize farmers#8.1	Guaycuru	-499
-JZH	gur	Gurunsi	-499
-JZI	hadramaut	Hadramaut	-499
-JZJ	khoisan#2.1	Hai	-499
-JZK	hanstate	Han	-499
-JZL	hausa	Hausa	-499
-JZM	hejaz	Hejaz	-499
-JZN	helvetii	Helvetii	-499
-JZO	saxones	Hermunduri	-499
-JZP	khoisan#0.7	Hessequa	-499
-JZQ	xiongnu_p	Hu and Ordos	-499
-JZR	maize farmers#8.2	Huilliche	-499
-JZS	hulun	Hulun	-499
-JZT	iceni	Iceni and Trinovantes	-499
-JZU	west african cereal farmers#0.1	Ijebu	-499
-JZV	ilergetes	Ilergetes	-499
-JZW	illyrians	Illyrians	-499
-JZX	khoisan#8.2	Inqua	-499
-JZY	issedones	Issedones	-499
-JZZ	west african cereal farmers#8.4	Itsekiri	-499
 KOR	gojoseon	Gojoseon	-499
 KOR	kor	Gojoseon	-399
-LHL	laos	Lao Lum	-499
-LHM	latgalians	Latgalians	-499
-LHP	dvaravati	Lavo	-499
-LHQ	khoisan#5.3	Leghoya	-499
-LHT	milograd culture#8.1	Lemovii	-499
-LHV	libu	Libu	-499
-LHW	ligures	Ligurians	-499
-LHX	lotophagi	Lotophagi	-499
-LHZ	khoisan#0.4	Lozi	-499
-LI0	lu	Lu	-499
-LI1	lugii	Lugii	-499
-LI2	lusitani	Lusitani	-499
-LI3	proto-thai cultures#8.1	Lao Lum	-399
-LI4	mc:0#0	Lawa	-399
-LI5	donghu tribes#8.1	Lohan	-399
-LI6	maize farmers#3.2	Lule	-399
-LI7	lusones	Lusones and Belli	-399
-LI8	lihyan	Lihyan	-322
-LI9	hulun#1	Lin Hu	-322
 LIB	nasamones	Nasamones	-499
-LIC	issedones#5	Loulan	-322
-LIF	swift creek culture#8.1	Illinois	-99
-LIJ	indogreek	Indo-Greek Kingdom	-99
-LIP	indoscythian	Indo-Scythians	-99
-LIQ	izumo	Izumo	-99
-LIW	kalinga_m	Kalinga	-99
-LIX	kashmir_ig	Kashmir	-99
-LJ0	dong_zhuo	Dong Zhuo	200
-LJ1	gongsun	Gongsun Du	200
-LJ2	heruli	Heruli	200
-LJ3	liu_biao	Liu Biao	200
-LJ4	liu_zhang	Liu Zhang	200
-LJ5	ma_teng	Ma Teng	200
-LJ6	milograd	Milograd	200
-LJ7	shi_xie	Shi Xie	200
-LJ8	sun	Sun Quan	200
-LJ9	tao_qian	Tao Qian	200
-LJA	kenu	Kenu	-99
-LJB	pontus	Kingdom of Pontus	-99
-LJC	malwa	Malwa	-99
-LJD	tamil	Pandya	-99
-LJE	parthian	Parthian Empire	-99
-LJF	persis	Persis	-99
-LJG	marksville culture#8.1	Powhatan	-99
-LJH	saces	Saces	-99
-LJI	indoscythian2	Sakas of Sindh	-99
-LJJ	sarmates	Sarmates	-99
-LJK	satavahana	Satavahana	-99
-LJL	mc:2#1	Troglodytes	-99
-LJM	tsukushi	Tsukushi	-99
-LJN	hopewell culture#4.1	Tuscarora	-99
-LJO	hindu kingdoms#0.1	Abhira	0
-LJP	hindu kingdoms#3.2	Andhaka	0
-LJQ	hindu kingdoms#0.2	Ay	0
-LJR	koguryo	Goguryeo	0
-LJS	himyarite	Himyarite Kingdom	0
-LJT	suren	Indo-Parthian Kingdom	0
-LJU	hindu kingdoms#8.3	Kuninda	0
-LJV	pth	Parthian Empire	0
-LJW	silla	Silla	0
-LJX	alans	Alans	100
-LJY	aesti	Aesti	200
-LJZ	kushan#1	Apasiacae	200
-LK0	dingling#1	Linhu	300
-LK1	langobardi	Lombards	300
-LK2	dingling#3	Sintashta	300
-LK3	slavs_e	Slavs	300
-LK4	bulgars_t#3	Tagar	300
-LK5	chionites#1	Tapuri	300
-LK6	goths_t	Tervingi	300
-LK7	thuringi	Thuringians	300
-LK8	tufa	Tufa	300
-LK9	tuoba	Tuoba	300
-LKB	aesti_t	Aesti	300
-LKC	wusun#1	Arimaspi	300
-LKD	bulgars_t	Bulgars	300
-LKE	chionites	Chionites	300
-LKF	ghana	Empire of Ghana	300
-LKG	finns_t	Finns	300
-LKH	gaya	Gaya	300
-LKI	shiwei#1	Gedrosians	300
-LKJ	gepidae	Gepids	300
-LKK	han zhao	Han Zhao	300
-LKL	kangju	Kangju	300
-LKM	shiwei#2	Kucha	300
-LKP	kangju#2	Kulai	300
-LKQ	murong	Murong	300
-LKR	dingling#4	Pazyryk	300
-LKT	picts	Picts	300
-LKU	bulgars_t#2	Sai	300
-LKV	sarmatae#3	Sargat	300
-LKW	sarmatae	Sarmatians	300
-LKX	scoti	Scoti	300
-LKY	shiwei	Shiwei	300
-LKZ	wusun#2	Shule	300
-LL0	sixteen kingdoms#0.2	Liang	400
-LL1	franks	Franks	500
-LL2	khoisan#7.4	Gui	500
-LL3	kushan principalities#8.1	Haripunjaya	500
-LL4	hephthalites	Hephthalites	500
-LL5	hephthalites2	Hephthalites	500
-LL6	kadambas	Kadambas	500
-LL7	khoisan#6.8	Kalahari San	500
-LL8	karelians_t	Karelians	500
-LL9	khitan	Khitan	500
-LLB	akatziri	Akatziri	400
-LLC	burgundians	Burgundians	400
-LLD	caucasian alans	Caucasian Alans	400
-LLF	sixteen kingdoms#4.3	Chouchi	400
-LLG	dalriada	Dal Riata	400
-LLH	byzantine	Eastern Roman Empire	400
-LLJ	sixteen kingdoms#0.1	Feng	400
-LLK	sixteen kingdoms#4.2	Han Zhao	400
-LLO	sixteen kingdoms#8.2	Helian	400
-LLP	hunnic	Hunnic Empire	400
-LLQ	sixteen kingdoms#8.1	Juqu	400
-LLR	iran	Sasanian Empire	400
-LLT	sciri	Sciri	400
-LLV	swedes	Swedes	400
-LLW	caloosahatchee culture#8.1	Catawba	500
-LLX	maya states#8.1	Chalco	500
-LLY	cholas	Cholas	500
-LLZ	tiele#1	Dulu	500
-LM0	lavo	Lavo	500
-LM1	tiele	Tiele	500
-LM2	tuyuhun	Tuyuhun	500
-LM3	tuʻi tonga	Tuʻi Tonga Empire	500
-LM4	anglii	Angles	600
-LM5	avars	Avars	600
-LM6	bulgars	Bulgars	600
-LM7	chalukyas	Chalukyas	600
-LM8	chauhans	Chauhans	600
-LM9	chen-la	Chen-La	600
-LMC	wuji#1	Kimek	500
-LMF	kangju#3	Kumo Xi	500
-LMH	khoisan#6.7	Kung	500
-LMJ	kurykans	Kurykans	500
-LML	kutrigur	Kutrigurs	500
-LMP	west african cereal farmers#8.5	Malinke	500
-LMQ	pallavas	Pallavas	500
-LMW	sabir	Sabir	500
-LMX	sasanian	Sasanian Empire	500
-LMY	saxons	Saxons	500
-LMZ	suebi	Suebi	500
-LN0	sui	Sui Empire	600
-LN1	lombard principalities#8.1	Tabyn	600
-LN2	tiahuanaco	Tiahuanaco Empire	600
-LN3	balts	Balts	700
-LN4	barghawata	Barghawata	700
-LN5	bega	Bega	700
-LN6	tabaristan	Dabuyids	700
-LN7	danube bulgars	Danube Bulgars	700
-LN8	saharan nomadic tribes#7.1	Hintata	700
-LN9	khwarazm	Khwarazm	700
-LNC	thai kingdoms#1.1	Chenla	600
-LNF	thai kingdoms#5.1	Dvaravati	600
-LNJ	shaskanka	Gauda Kingdom	600
-LNK	gokturks	Göktürks	600
-LNM	huari	Huari Empire	600
-LNP	minor states under indian influence#3.1	Kadamba	600
-LNQ	khazars	Khazars	600
-LNV	kurykan	Kurykans	600
-LNW	mercia	Mercia	600
-LNY	tiele#3	Pecheneg	600
-LNZ	kanauj	Pushyabhuti Kingdom	600
-LO0	kryvichs	Kryvichs	700
-LO1	kushites	Kushites	700
-LO2	saharan nomadic tribes#2.1	Lawata	700
-LO3	magyars	Magyars	700
-LO4	maitraka	Maitraka Kingdom	700
-LO5	saharan nomadic tribes#4.1	Masmuda	700
-LO6	saharan nomadic tribes#0.1	Miknasa	700
-LO7	polanes	Polanes	700
-LO8	proto-slavs	Proto-Slavs	700
-LO9	sogd	Sogdian city-states	700
-LOJ	kashmir	Kingdom of Kashmir	700
-LOQ	sind	Kingdom of Sind	700
-LOX	zunbil	Kingdom of Zunbil	700
-LP0	gurjara pratihara	Gurjara Pratihara	800
-LP1	bantu peoples#1.1	Hema	800
-LP2	bantu peoples#0.1	Holoholo	800
-LP3	idrisid	Idrisid Caliphate	800
-LP4	irlanda	Irlanda	800
-LP5	sinhalese kingdoms#8.1	Kalyani	800
-LP6	kanem	Kanem	800
-LP7	rajput kingdoms#3.1	Karkota	800
-LP8	tupis#4.1	Kawesqar	800
-LP9	bantu peoples#1.2	Kinga	800
-LPB	tufan	Tibetan Empire	700
-LPD	abbasid	Abbasid Caliphate	800
-LPE	aghlabid	Aghlabid Emirate	800
-LPF	rajput kingdoms#8.1	Alupa	800
-LPJ	bantu peoples#7.1	Bamileke	800
-LPK	permians#7.1	Bessi	800
-LPL	bantu peoples#3.3	Binja	800
-LPM	bantu peoples#3.1	Chagga	800
-LPN	tupis#6.1	Chiriguano	800
-LPO	bantu peoples#0.5	Chokwe	800
-LPP	baltic tribes#8.1	Chud	800
-LPQ	anasazi#7.1	Cocopa	800
-LPR	mogollon#0.1	Concho	800
-LPS	bashkirs#8.1	Dacians	800
-LPT	bantu peoples#5.1	Doe	800
-LPU	bantu peoples#3.4	Duala	800
-LPV	cordoba	Emirate of Córdoba	800
-LPW	anasazi#4.1	Eudeve	800
-LPX	bantu peoples#0.3	Fang	800
-LPY	rajput kingdoms#7.2	Gahadavala	800
-LPZ	bantu peoples#4.2	Ganda	800
-LQ0	papuans#3.1	Lani	800
-LQ1	lombard duchies#8.1	Lithuanians	800
-LQ2	permians#1.1	Livonians	800
-LQ3	ciboney#8.1	Lucayan	800
-LQ4	bantu peoples#0.2	Luhya	800
-LQ5	srivijaya	Srivijaya Empire	800
-LQ6	mogollon#8.1	Suma	800
-LQ7	swedes and goths	Swedes and Goths	800
-LQ8	bantu peoples#8.3	Tabwa	800
-LQ9	bantu peoples#0.4	Taita	800
-LQA	bantu peoples#0.6	Kusu	800
-LQB	tupis#2.2	Macushi	800
-LQC	malagasy	Malagasy	800
-LQD	papuans#7.1	Marind	800
-LQE	mogollon#7.1	Mayo	800
-LQF	bantu peoples#4.1	Mbalantu	800
-LQG	bantu peoples#8.1	Mbunda	800
-LQH	malay#2.1	Medang	800
-LQI	malay#6.1	Melayu	800
-LQJ	mixtecs	Mixtecs	800
-LQK	tupis#6.2	Mocovi	800
-LQL	mordvinians	Mordvinians	800
-LQM	tupis#8.1	Muisca	800
-LQN	slavonic tribes#8.2	Murom	800
-LQO	pallava	Pallava state	800
-LQP	bantu peoples#6.2	Pare	800
-LQQ	parhae	Parhae	800
-LQR	malay#1.1	Pattani	800
-LQS	bantu peoples#8.5	Pende	800
-LQT	slavonic tribes#8.1	Polotsk	800
-LQU	bantu peoples#7.3	Sangu	800
-LQV	tupis#1.2	Selknam	800
-LQW	bantu peoples#5.2	Sena	800
-LQX	bantu peoples#2.1	Shambaa	800
-LQY	bantu peoples#6.3	Shi	800
-LQZ	silia	Silia	800
-LR0	oghuz turks#4.1	Bayat	900
-LR1	mandes#4.2	Bijago	900
-LR2	karluks#0.1	Buvum	900
-LR3	oghuz turks#0.2	Chernye Klobuki	900
-LR4	croatian	Croatian kingdom	900
-LR5	oghuz turks#8.1	Cuman	900
-LR6	oghuz turks#4.2	Dodurga	900
-LR7	east francia	East Francia	900
-LR8	azandes#4.1	Edo	900
-LR9	sicily	Emirate of Sicily	900
-LRB	tang	Tang Empire	800
-LRC	bantu peoples#2.2	Tanga	800
-LRF	mesoamerican city-states and chiefdoms#8.1	Tarascan	800
-LRH	celtic kingdoms#8.1	Taurisci	800
-LRJ	slavonic tribes#0.1	Terebovl	800
-LRK	maya city-states#8.1	Texcoco	800
-LRL	tibetan	Tibetan Empire	800
-LRQ	anasazi#8.1	Tiwa	800
-LRR	toltec	Toltec Empire	800
-LRT	rajput kingdoms#7.1	Later Gupta	800
-LRV	tupis#7.1	Tsachila	800
-LRW	mandes#0.1	Balanta	900
-LRX	balhae	Balhae	900
-LRY	azandes#7.1	Bambara	900
-LRZ	banas	Banas	900
-LS0	lambakannas	Lambakannas	900
-LS1	beja people#8.1	Lango	900
-LS2	oghuz turks#5.1	Lipka	900
-LS3	burma	Pagan	900
-LS4	slavic tribes#8.1	Peremyshl	900
-LS5	saffarids	Saffarids	900
-LS6	samanid	Samanid Empire	900
-LS7	serbia	Serbia	900
-LS8	sindh	Sindh	900
-LS9	mandes#5.1	Somono	900
-LSC	mandes#8.3	Ewe	900
-LSF	cushites#1.1	Fusoa	900
-LSG	azandes#8.1	Gbe	900
-LSH	great moravia	Great Moravia	900
-LSJ	mandes#4.3	Grebo	900
-LSK	azandes#0.1	Gwari	900
-LSM	mandes#0.3	Jalonke	900
-LSP	oghuz turks#0.1	Kai	900
-LSQ	khitans	Khitans	900
-LSR	norway	Kingdom of Norway	900
-LSU	mandes#0.2	Kono	900
-LSV	slavic tribes#7.1	Kostroma	900
-LSW	kyivan	Kyivan Rus	900
-LSX	mandes#8.1	Mano	900
-LSY	oghuz turks#8.3	Merkit	900
-LSZ	multan	Multan	900
-LT0	chalukya	Chalukya Empire	1000
-LT1	den	Denmark	1000
-LT2	bavaria	Duchy of Bavaria	1000
-LT3	benevento	Duchy of Benevento	1000
-LT4	swabia	Duchy of Swabia	1000
-LT5	east java	East Java	1000
-LT6	eng	England	1000
-LT7	fatimid	Fatimid Caliphate	1000
-LT8	rajput kingdoms#3.2	Ganga	1000
-LT9	ghaznavid	Ghaznavid Emirate	1000
-LTB	berbers#8.1	Tebu	900
-LTC	mandes#8.2	Tem	900
-LTD	oghuz turks#8.2	Torks	900
-LTF	mandes#4.1	Tukulor	900
-LTJ	mon states#8.1	Tusaneika	900
-LTK	bantu peoples#5.4	Bakongo	1000
-LTM	buwayhid emirates#4.1	Banijurid	1000
-LTQ	islamic city-states#8.1	Berbera	1000
-LTV	rajput kingdoms#0.1	Bhati	1000
-LTW	bohemia	Bohemia	1000
-LTX	bulgar	Bulgar Khanate	1000
-LTY	burgandy	Burgandy	1000
-LTZ	buyid	Buyid Emirate	1000
-LU0	kimek-kipchak khaganate	Kimek-Kipchak khaganate	1000
-LU1	georgia	Kingdom of Georgia	1000
-LU2	bantu peoples#7.4	Konjo	1000
-LU3	liao	Liao	1000
-LU4	lowcountries	Low Countries	1000
-LU5	madagascar	Madagascar	1000
-LU6	mali	Mali	1000
-LU7	mesoamerican city-states and chiefdoms#7.1	Mazahua	1000
-LU8	merina	Merina Kingdom	1000
-LU9	buwayhid emirates#7.1	Mirdasid	1000
-LUJ	great zimbabwe	Great Zimbabwe	1000
-LUQ	haripunjaya	Haripunjaya	1000
-LUV	rajput kingdoms#6.1	Hoysala	1000
-LUW	buwayhid emirates#8.1	Ilyasid	1000
-LV0	cuman-kipchak confederation#0.2	Itoba	1100
-LV1	oghuz#2.1	Kangly	1100
-LV2	karkhanids	Karkhanids	1100
-LV3	mongols#5.2	Keraites	1100
-LV4	mongols#0.1	Khamag Mongol	1100
-LV5	mongols#8.2	Khongirad	1100
-LV6	kievan rus	Kievan Rus	1100
-LV7	sukhotai	Kingdom of Pagan	1100
-LV8	cuman-kipchak confederation#0.1	Kinik	1100
-LV9	mongols#1.1	Kiyat	1100
-LVB	buwayhid emirates#6.1	Muhtajid	1000
-LVC	muscat	Muscat	1000
-LVD	peshemegs	Pechenegs	1000
-LVE	rajput kingdoms#5.1	Peshwa	1000
-LVF	pol	Poland	1000
-LVG	pratiharas	Pratiharas	1000
-LVH	prussians	Prussians	1000
-LVJ	buwayhid emirates#0.1	Saffarid	1000
-LVK	bantu peoples#1.3	Sanga	1000
-LVL	sardinia	Sardinia	1000
-LVM	scotland	Scotland	1000
-LVP	senas	Senas	1000
-LVQ	swe	Sweden	1000
-LVR	bantu peoples#5.3	Tharaka	1000
-LVT	tibet	Tibet	1000
-LVU	tuscany	Tuscany	1000
-LVV	almoravid	Almoravid dynasty	1100
-LVW	mongols#8.1	Besud	1100
-LVX	mongols#4.2	Buryats	1100
-LVY	chandellas	Chandellas	1100
-LVZ	hungary	Hungary	1100
-LW0	cuman khanates#4.1	Bayundur	1200
-LW1	cuman khanates#5.1	Burchoglu	1200
-LW2	cuman khanates#8.1	Chigil	1200
-LW3	papuans#4.1	Chimbu	1200
-LW4	champa city states#8.1	Chrau	1200
-LW5	comte de toulouse	Comté de Toulouse	1200
-LW6	cuman khanates#0.1	Ghuz	1200
-LW7	harapunchai	Harapunchai	1200
-LW8	tuareg nomadic tribes#7.1	Haskura	1200
-LW9	ifat	Ifat	1200
-LWB	klachuris	Klachuris	1100
-LWD	cuman-kipchak confederation#4.1	Kyrgyz	1100
-LWF	paramas	Paramas	1100
-LWG	cuman-kipchak confederation#7.1	Polovtsy	1100
-LWH	seljuk	Seljuk Empire	1100
-LWJ	solankis	Solankis	1100
-LWK	soomra	Soomra Emirate	1100
-LWL	mongols#0.2	Suldus	1100
-LWM	oghuz#8.1	Terteroba	1100
-LWP	cuman-kipchak confederation#8.1	Turkmen	1100
-LWQ	đai viet	Đại Việt	1100
-LWV	tuareg nomadic tribes#3.1	Ait Atta	1200
-LWW	almohad	Almohad Caliphate	1200
-LWX	angevin	Angevin Empire	1200
-LWY	aragon	Aragón	1200
-LWZ	bagan	Bagan	1200
-LX0	berber tribes#8.1	Lamtuna	1200
-LX1	siberians#0.7	Assan	1279
-LX2	austria	Austria	1279
-LX3	siberians#8.4	Beltir	1279
-LX4	benin	Benin	1279
-LX5	brandenburg	Brandenburg	1279
-LX6	castile	Castile	1279
-LX7	chagatai	Chagatai Khanate	1279
-LX8	chimu	Chimú Empire	1279
-LX9	siberians#8.2	Chukchi	1279
-LXA	other rus principalities#8.2	Ilmen Slavs	1200
-LXC	rajput kingdoms#8.2	Kakatiya	1200
-LXD	kara khitai khaganate	Kara Khitai Khaganate	1200
-LXF	khwarazmian	Khwarazmian dynasty	1200
-LXH	mongol	Mongol Empire	1200
-LXI	malays#6.1	Pangasinan	1200
-LXJ	por	Portugal	1200
-LXK	galicia-volhynia	Principality of Galicia-Volhynia	1200
-LXL	kyiv	Principality of Kyiv	1200
-LXN	novgorod	Principality of Novgorod	1200
-LXP	vladimir-suzdal	Principality of Vladimir-Suzdal	1200
-LXQ	cuman khanates#4.2	Salur	1200
-LXS	rajput kingdoms#4.1	Sisodia	1200
-LXT	delhi	Sultanate of Delhi	1200
-LXV	other rus principalities#8.1	Suzdal	1200
-LXW	cuman khanates#3.1	Tatars	1200
-LXX	cuman khanates#7.1	Tukhsi	1200
-LXY	abdelouadides	Abdelouadides	1279
-LXZ	siberians#4.5	Ainu	1279
-LY0	lithuania	Lithuania	1279
-LY1	siberians#4.6	Sakha	1279
-LY2	shogun japan	Shogun Japan	1279
-LY3	sinhalese	Sinhalese kingdom	1279
-LY4	siberians#4.1	Soyot	1279
-LY5	sukhothai	Sukhothai	1279
-LY6	switzerland	Swiss lands	1279
-LY7	aymara kingdoms#8.1	Tepehua	1279
-LY8	teutonic knights	Teutonic Knights	1279
-LY9	touareg	Touareg	1279
-LYB	siberians#4.7	Chuvan	1279
-LYC	english territory	English territory	1279
-LYD	siberians#8.1	Evenki	1279
-LYE	franconia	Franconia	1279
-LYF	great	Great Khanate	1279
-LYG	hafsid	Hafsid Caliphate	1279
-LYH	ilkhanate	Ilkhanate	1279
-LYI	siberians#8.5	Inupiat	1279
-LYJ	siberians#4.3	Itelmen	1279
-LYK	siberians#8.7	Kamasin	1279
-LYL	kanem-bornu	Kanem-Bornu	1279
-LYM	kashmir and ladakh	Kashmir and Ladakh	1279
-LYO	kediri	Kediri	1279
-LYP	siberians#8.3	Kerek	1279
-LYQ	siberians#0.5	Ket	1279
-LYR	siberians#0.2	Khakas	1279
-LYS	the golden horde	Khanate of the Golden Horde	1279
-LYT	siberians#0.6	Koibal	1279
-LYV	siberians#8.6	Koryak	1279
-LYW	mamluke	Mamluke Sultanate	1279
-LYX	maori	Maori	1279
-LYY	merinides	Merinides	1279
-LYZ	mixtec	Mixtec Empire	1279
-LZ0	bijapur	Bijapur	1492
-LZ1	boe	Boe	1492
-LZ2	caddo	Caddo	1492
-LZ3	calusa	Calusa	1492
-LZ4	castille	Castille	1492
-LZ5	catawba	Catawba	1492
-LZ6	chahta yakni	Chahta Yakni	1492
-LZ7	charrua	Charrúa	1492
-LZ8	chickasaw	Chickasaw	1492
-LZ9	chikashsha yaki	Chikashsha Yaki	1492
-LZB	siberians#0.4	Tungus	1279
-LZC	siberians#4.4	Tuvan	1279
-LZD	morocco	Morocco	1300
-LZE	ayutthaya	Ayutthaya	1400
-LZF	goldenhorde	Blue Horde	1400
-LZJ	kalinago	Kalinago	1400
-LZK	kalmar union	Kalmar Union	1400
-LZL	timurid	Timurid Empire	1400
-LZM	abitibiwinni aki	Abitibiwinni Aki	1492
-LZO	adal	Adal	1492
-LZP	ahmadnagar	Ahmadnagar	1492
-LZQ	alutiiq	Alutiiq	1492
-LZR	anishinabewaki ᐊᓂᔑᓈᐯᐗᑭ	Anishinabewaki ᐊᓂᔑᓈᐯᐗᑭ	1492
-LZS	apsaalooke	Apsaalooké	1492
-LZT	arapaho	Arapaho	1492
-LZU	assiniboine	Assiniboine	1492
-LZV	awa	Awá	1492
-LZW	aonikenk	Aónikenk	1492
-LZX	beaver	Beaver	1492
-LZY	bengal	Bengal	1492
-LZZ	berar	Berar	1492
 MAC	orig:MAC	Macedon	-499
 MAC	mac	Empire of Alexander	-322
 MAY	nakbe	Mirador Maya	-499
 NAX	orig:NAX	Naxos and the Cyclades	-499
-NO4	najd	Najd	-499
-NO5	khoisan#2.3	Nama	-499
-NO6	narino	Narino	-499
-NO7	neuri	Neuri	-499
-NO8	norici	Norici	-499
-NO9	numidae	Numidae	-499
-NOJ	nupe	Nupe	-499
 NOK	nok	Nok	-499
-NOQ	khoisan#1.4	Nharo	-399
-NOX	nabatean	Nabatean Kingdom	-299
-NOZ	thai#0.2	Naga	-199
-NP0	nan-yue	Nan-Yue	-199
-NP1	norsemen	Norsemen	-199
-NP2	numidia	Numidia	-99
-NP3	toba wei	Northern Wei	500
-NP4	neustria	Neustria	600
-NP5	nobatia	Nobatia	600
-NP6	saharan nomadic tribes#8.1	Nafusa	700
-NP7	nan-zhao	Nan-Zhao	700
-NP8	malay#8.1	Namayan	800
-NP9	nan chao	Nan Chao	800
-NPB	northmen	Norse	800
-NPC	bantu peoples#8.4	Nyanja	800
-NPD	nagas	Nagas of Padmavati	200
-NPF	bantu peoples#6.1	Nyoro	800
-NPG	karluks#4.1	Nekir	900
-NPJ	greenland	Norse Greenland	1000
-NPM	mongols#4.3	Naiman	1100
-NPP	nepal	Nepal	1200
-NPQ	siberians#4.8	Nanai	1279
-NPR	siberians#0.3	Nenets	1279
-NPV	chiquitano	Chiquitano	1492
-NPW	choctaw	Choctaw	1492
-NPX	chono	Chono	1492
-NPY	congo	Congo	1492
-NPZ	crimean	Crimean Khanate	1492
-NQ0	kalina/karina	Kalina/Kariña	1492
-NQ1	kaska dena kayeh	Kaska Dena Kayeh	1492
-NQ2	kaskaskia	Kaskaskia	1492
-NQ3	malaysian islamic states#8.1	Kayan	1492
-NQ4	sibir	Khanate of Sibir	1492
-NQ5	koyukon	Koyukon	1492
-NQ6	k’asho got’ine	K’asho Got’ine	1492
-NQ7	lingit aani	Lingít Aaní	1492
-NQ8	lokono	Lokono	1492
-NQ9	malacca	Malacca	1492
-NQA	dehcho dene	Dehcho Dene	1492
-NQB	denendeh	Denendeh	1492
-NQC	eastern shoshone	Eastern Shoshone	1492
-NQD	eeyou istchee	Eeyou Istchee	1492
-NQE	the white sheep turks	Emirate of the White Sheep Turks	1492
-NQF	erie	Erie	1492
-NQG	funj	Funj	1492
-NQH	malaysian islamic states#0.2	Gaddang	1492
-NQI	golkonda	Golkonda	1492
-NQJ	gondwana	Gondwana	1492
-NQK	rus	Grand Duchy of Moscow	1492
-NQL	guato	Guató	1492
-NQM	guenoa-muinanes	Guenoa-Muinanes	1492
-NQN	gujarat	Gujarat	1492
-NQO	gwich'in nanh	Gwich'in Nành	1492
-NQP	gunun a atuk	Günün a atük	1492
-NQQ	timurid emirates#3.1	Hamdanid	1492
-NQR	timurid emirates#2.1	Hasanwayhid	1492
-NQS	huarpe	Huarpe	1492
-NQT	imperial hungary	Imperial Hungary	1492
-NQU	inupiat	Inupiat	1492
-NQV	inuvialuit	Inuvialuit	1492
-NQW	iowa	Iowa	1492
-NQX	tamaulipeco tribes#8.1	Itza	1492
-NQY	jicarilla apache	Jicarilla Apache	1492
-NQZ	jumanos	Jumanos	1492
-NR0	ming	Ming Empire	1492
-NR1	moqoit	Moqoit	1492
-NR2	malaysian islamic states#8.2	Munda	1492
-NR3	mundurukania	Mundurukânia	1492
-NR4	mvskoke	Mvskoke	1492
-NR5	mwenemutapa	Mwenemutapa	1492
-NR6	nwt metis nation	NWT Métis Nation	1492
-NR7	timurid emirates#8.1	Najahid	1492
-NR8	natchez	Natchez	1492
-NR9	niitsitpiis-stahkoii ᖹᐟᒧᐧᐨᑯᐧ ᓴᐦᖾᐟ	Niitsítpiis-stahkoii ᖹᐟᒧᐧᐨᑯᐧ ᓴᐦᖾᐟ	1492
-NRB	malaysian islamic states#4.2	Malagasy	1492
-NRF	maya yucateco	Maya Yucateco	1492
-NRJ	mbya	Mbya	1492
-NRQ	mdewakanton	Mdewakanton	1492
-NRV	mebengokre	Mebêngôkre	1492
-NRX	mescalero apache	Mescalero Apache	1492
-NRZ	mi'kma'ki	Mi'kma'ki	1492
-NS0	nitassinan	Nitassinan	1492
-NS1	mossi states#8.1	Nuer	1492
-NS2	nunatukavut	NunatuKavut	1492
-NS3	nunavik	Nunavik	1492
-NS4	p’urhepecha	P’urhépecha	1492
-NS5	timurid emirates#6.1	Sallarid	1492
-NS6	satare-mawe	Sataré-Mawé	1492
-NS7	sauk and meskwaki	Sauk and Meskwaki	1492
-NS8	burmese kingdoms#4.1	Semang	1492
-NS9	shoshone-bannock	Shoshone-Bannock	1492
-NSB	papua new guinea	Papua New Guinea	1492
-NSC	pegu	Pegu	1492
-NSJ	philippines	Philippines	1492
-NSQ	popukare	Popũkare	1492
-NSX	punjab	Punjab	1492
-NSY	puri	Puri	1492
-NSZ	pari	Pâri	1492
-NT0	tłıcho nde	Tłı̨chǫ Ndè	1492
-NT1	[gauigu	[Gáuigú	1492
-NT2	ꮳꮃꭻꮺꮨᏹ tsalaguwetiyi	ᏣᎳᎫᏪᏘᏱ Tsalaguwetiyi	1492
-NT3	ᒋᑦ ᐊᔅᒋᓄᐤ st'aschinuw	ᒋᑦ ᐊᔅᒋᓄᐤ St'aschinuw	1492
-NT4	algonquin	Algonquin	1500
-NT5	apache	Apache	1500
-NT6	aztec	Aztec Empire	1500
-NT7	islamic states#8.1	Chauhan	1500
-NT8	cherokee	Cherokee	1500
-NT9	comanche	Comanche	1500
-NTB	stoney	Stoney	1492
-NTF	tekoha	Tekohá	1492
-NTJ	tepehuan	Tepehuán	1492
-NTQ	timucua	Timucua	1492
-NTX	burmese kingdoms#6.1	Toraja	1492
-NU0	iroquois	Iroquois	1500
-NU1	navajo	Navajo	1500
-NU2	islamic states#4.1	Paramara	1500
-NU3	pomo	Pomo	1500
-NU4	islamic states#0.1	Solanki	1500
-NU5	tlinoit	Tlinoit	1500
-NU6	shan states#8.1	Angkola	1530
-NU7	assiniboin	Assiniboin	1530
-NU8	astrakhan	Astrakhan Khanate	1530
-NU9	atakapa	Atakapa	1530
 NUB	orig:NUB	Kush	-499
 NUB	nub	Meroe	-499
-NUC	coqs	Coqs	1500
-NUG	crow	Crow	1500
-NUJ	delaware	Delaware	1500
-NUO	hopi	Hopi	1500
-NUQ	huron	Huron	1500
-NUX	inca	Inca Empire	1500
-NV0	kazan	Kazan Khanate	1530
-NV1	khanty	Khanty	1530
-NV2	khiva	Khiva Khanate	1530
-NV3	kiowa	Kiowa	1530
-NV4	koryaks	Koryaks	1530
-NV5	malaysian islamic states#7.1	Kutai	1530
-NV6	luba	Luba	1530
-NV7	lunda	Lunda	1530
-NV8	islamic kingdoms#8.2	Maitraka	1530
-NV9	maoris	Maoris	1530
-NVB	bagirmi	Bagirmi	1530
-NVC	blackfoot	Blackfoot	1530
-NVD	bukara	Bukara Khanate	1530
-NVF	islamic kingdoms#4.2	Chandela	1530
-NVG	chukchi	Chukchi	1530
-NVH	coahuiltec	Coahuiltec	1530
-NVL	cuba	Cuba	1530
-NVM	england and ireland	England and Ireland	1530
-NVN	eyaq	Eyaq	1530
-NVP	islamic kingdoms#8.3	Gurjara	1530
-NVQ	hispaniola	Hispaniola	1530
-NVR	hitchiti	Hitchiti	1530
-NVS	holstein	Holstein and Mecklenburg	1530
-NVV	illinois	Illinois	1530
-NVW	inupiaq	Inupiaq	1530
-NVX	itelmen	Itelmen	1530
-NVY	rajputana kingdoms#8.1	Kachwaha	1530
-NVZ	islamic kingdoms#8.1	Kalachuri	1530
-NW0	naples	Naples	1530
-NW1	naskapi innu	Naskapi Innu	1530
-NW2	nenets	Nenets	1530
-NW3	nogai horde	Nogai Horde	1530
-NW4	northern paiute	Northern Paiute	1530
-NW5	santee	Santee	1530
-NW6	saylan	Saylan	1530
-NW7	senegal	Senegal	1530
-NW8	shawnee	Shawnee	1530
-NW9	shoshoni	Shoshoni	1530
-NWF	mescalero	Mescalero	1530
-NWG	missouri	Missouri	1530
-NWJ	burmese kingdoms#8.1	Mongondow	1530
-NWK	montagnais innu	Montagnais Innu	1530
-NWP	mughal	Mughal Empire	1530
-NWQ	islamic kingdoms#3.1	Pala	1530
-NWV	islamic kingdoms#0.1	Pratihara	1530
-NWX	prussia	Prussia	1530
-NWY	safavid	Safavid Empire	1530
-NX0	qing	Manchu Empire	1650
-NX1	massachusetts bay	Massachusetts Bay	1650
-NX2	bra	Portuguese Brazil	1650
-NX3	portuguese east africa	Portuguese East Africa	1650
-NX4	post-ming warlords	Post-Ming Warlords	1650
-NX5	laotian states#8.1	Sukhothai	1650
-NX6	central asian khanates#8.3	Tatar	1650
-NX7	islamic kingdoms#5.1	Tomara	1650
-NX8	sahtu	Sahtu	1700
-NX9	algiers	Algiers	1715
-NXA	spain	Spain	1530
-NXB	suspiaq	Suspiaq	1530
-NXC	t'atsaot'ine	T'atsaot'ine	1530
-NXD	tamalipueca	Tamalipueca	1530
-NXE	tepehuane	Tepehuane	1530
-NXF	teton	Teton	1530
-NXG	tonkawa	Tonkawa	1530
-NXH	central asian khanates#0.1	Basmil	1600
-NXI	central asian khanates#5.2	Jalayir	1600
-NXJ	kamilaroi	Kamilaroi	1600
-NXK	central asian khanates#3.1	Karluk	1600
-NXL	kokatha	Kokatha	1600
-NXM	lan na	Lan Na	1600
-NXN	mirning	Mirning	1600
-NXO	central asian khanates#1.1	Sart	1600
-NXP	central asian khanates#8.1	Tekke	1600
-NXQ	central asian khanates#0.2	Tolis	1600
-NXR	ceylon	Ceylon	1650
-NXS	dutch brazil	Dutch Brazil	1650
-NXT	dutch east indies	Dutch East Indies	1650
-NXU	essequibo	Essequibo	1650
-NXV	florida	Florida	1650
-NXW	islamic kingdoms#1.1	Holkar	1650
-NXX	central asian khanates#4.1	Kirghiz	1650
-NXY	luxembourg	Luxembourg	1650
-NXZ	malaya	Malaya	1650
-NY0	mahratta states#5.1	Bundela	1783
-NY1	carnatic	Carnatic	1783
-NY2	cochin china	Cochin China	1783
-NY3	dahomey	Dahomey	1783
-NY4	dutch settlements	Dutch settlements	1783
-NY5	rift valley states#8.1	Funj	1783
-NY6	mahratta states#2.1	Gaekwad	1783
-NY7	golconda	Golconda	1783
-NY8	india	India	1783
-NY9	kaarta	Kaarta	1783
-NYB	asante	Asante	1715
-NYC	british american colonies	British American colonies	1715
-NYF	cape colony	Cape Colony	1715
-NYG	pampas cultures#1.2	Cofan	1715
-NYI	guyana	Guyana	1715
-NYM	ireland	Kingdom of Ireland	1715
-NYP	maratha	Maratha	1715
-NYQ	segu	Segu	1715
-NYT	tunis	Tunis	1715
-NYV	afghanistan	Afghanistan	1783
-NYW	assam	Assam	1783
-NYX	bahamas	Bahamas	1783
-NYY	mahratta states#7.1	Bhonsle	1783
-NYZ	british guiana	British Guiana	1783
-NZ0	nejd	Nejd	1783
-NZ1	nizam's dominions	Nizam's Dominions	1800
-NZ2	burundi	Burundi	1815
-NZ3	fulani	Fulani Empire	1815
-NZ4	guiana	Guiana	1815
-NZ5	kazembe	Kazembe	1815
-NZ6	new south wales	New South Wales	1815
-NZ7	nkore	Nkore	1815
-NZ8	sierra leone	Sierra Leone	1815
-NZ9	somalia	Somalia	1815
-NZB	the two sicilies	Kingdom of the Two Sicilies	1783
-NZC	kong	Kong Empire	1783
-NZF	lahore	Lahore	1783
-NZG	lozi	Lozi	1783
-NZJ	luisiana	Luisiana	1783
-NZK	maratha confederacy	Maratha Confederacy	1783
-NZP	mysore	Mysore	1783
-NZQ	paraguay	Paraguay	1783
-NZR	mahratta states#4.1	Scindia	1783
-NZT	bundelkhand	Bundelkhand	1800
-NZU	circars	Circars	1800
-NZV	rajputs kingdoms#3.1	Kugiya	1800
-NZW	rajputs kingdoms#0.1	Pibosira	1800
-NZX	sikhs	Sikhs	1800
-NZY	angola	Angola	1815
-NZZ	bunyoro	Bunyoro	1815
-O67	khoisan#5.2	Okavango	-499
-O68	manioc farmers#3.2	Omagua	-499
-O69	oretani	Oretani	-499
-O6A	western masurian culture#8.1	Osi	-499
-O6B	turcik tribes#4.1	Okunevo	-199
-O6C	porter#8.1	Osage	-99
-O6D	mascat	Oman	0
-O6E	ostrogoths	Ostrogoths	400
-O6F	orissa	Orissa	1000
-O6G	mesoamerican city-states and chiefdoms#3.1	Otomi	1000
-O6H	cuman-kipchak confederation#0.3	Ogur	1100
-O6I	omamiwininiwag	Omàmìwininìwag	1492
-O6J	oyo	Oyo	1492
-O6K	opata	Ópata	1492
-O6L	obiwa	Obiwa	1530
-O6M	oromo	Oromo	1530
-O6N	osage	Osage	1530
-O6O	central asian khanates#8.2	Oghuz	1600
-O6P	oman	Oman	1783
-O6Q	oudh	Oudh	1783
-OA0	bosnia-herzegovina	Bosnia-Herzegovina	1880
-OA1	bulgaria	Bulgaria	1880
-OA2	chile	Chile	1880
-OA3	colombia	Colombia	1880
-OA4	costa rica	Costa Rica	1880
-OA5	dutch guiana	Dutch Guiana	1880
-OA6	ecuador	Ecuador	1880
-OA7	french guiana	French Guiana	1880
-OA8	french indochina	French Indochina	1880
-OA9	gabon	Gabon	1880
-OAB	turan	Turan	1815
-OAJ	algeria	Algeria	1880
-OAK	arabia	Arabia	1880
-OAL	argentina	Argentina	1880
-OAQ	barotse	Barotse	1880
-OAS	bokhara	Bokhara Khanate	1880
-OAY	bolivia	Bolivia	1880
-OB0	tukular	Tukular Caliphate	1880
-OB1	first samori	First Samori Empire	1900
-OB2	tunisia	Tunisia	1900
-OB3	australia	Australia	1914
-OB4	azerbaijan	Azerbaijan	1914
-OB5	belgian congo	Belgian Congo	1914
-OB6	botswana	Botswana	1914
-OB7	british east africa	British East Africa	1914
-OB8	british protectorate	British Protectorate	1914
-OB9	british somaliland	British Somaliland	1914
-OBB	germany	Germany	1880
-OBC	greece	Greece	1880
-OBD	guatemala	Guatemala	1880
-OBE	harer	Harer	1880
-OBF	honduras	Honduras	1880
-OBG	imerina	Imerina	1880
-OBH	italy	Italy	1880
-OBJ	ivory coast	Ivory Coast	1880
-OBK	borgu states#8.1	Kanuri	1880
-OBL	liberia	Liberia	1880
-OBM	mexico	Mexico	1880
-OBN	mirambo unyanyembe ukimbu	Mirambo Unyanyembe Ukimbu	1880
-OBO	mozambique	Mozambique	1880
-OBP	netherlands indies	Netherlands Indies	1880
-OBR	nicaragua	Nicaragua	1880
-OBS	northern territory	Northern Territory	1880
-OBT	shona	Shona	1880
-OBU	sokoto	Sokoto Caliphate	1880
-OBV	south australia	South Australia	1880
-OBX	utetera	Sultanate of Utetera	1880
-OBY	teke	Teke	1880
-OBZ	transvaal	Transvaal	1880
-OC0	malaysia	Malaysia	1920
-OC1	mandatory palestine	Mandatory Palestine	1920
-OC2	mesopotamia	Mesopotamia	1920
-OC3	muscat and oman	Muscat and Oman	1920
-OC4	syria	Syria	1920
-OC5	tanzania, united republic of	Tanzania, United Republic of	1920
-OC6	israel	Israel	1938
-OC7	new caledonia	New Caledonia	1938
-OC8	new hebrides	New Hebrides	1938
-OC9	northern rhodesia	Northern Rhodesia	1938
-OCA	eritrea	Eritrea	1914
-OCB	finland	Finland	1914
-OCC	french equatorial africa	French Equatorial Africa	1914
-OCD	french west africa	French West Africa	1914
-OCE	german e. africa	German E. Africa	1914
-OCF	german south-west africa	German South-West Africa	1914
-OCG	gold coast	Gold Coast	1914
-OCH	kamerun	Kamerun	1914
-OCI	libya	Libya	1914
-OCJ	malawi	Malawi	1914
-OCK	mongolia	Mongolia	1914
-OCL	new zealand	New Zealand	1914
-OCM	nigeria	Nigeria	1914
-OCN	austro-hungarian#8.1	Slovakia	1914
-OCO	oirat confederation	Oirat Confederation	1492
-OCP	south africa	South Africa	1914
-OCQ	suriname	Suriname	1914
-OCR	togoland	Togoland	1914
-OCS	austro-hungarian#3.1	Tyrol	1914
-OCT	chinese warlords	Chinese Warlords	1920
-OCU	czechoslovakia	Czechoslovakia	1920
-OCV	dominion of newfoundland	Dominion of Newfoundland	1920
-OCW	bin shal'an	Emirate of Bin Shal'an	1920
-OCX	french cameroons	French Cameroons	1920
-OCY	french indo-china	French Indo-China	1920
-OCZ	kenya	Kenya	1920
-OD0	mauritania	Mauritania	1945
-OD1	namibia	Namibia	1945
-OD2	niger	Niger	1945
-OD3	nyasaland	Nyasaland	1945
-OD4	pakistan	Pakistan	1945
-OD5	sri lanka	Sri Lanka	1945
-OD6	thailand	Thailand	1945
-OD7	tonkin	Tonkin	1945
-OD8	korea, republic of	Korea, Republic of	1960
-OD9	bosnia and herzegovina	Bosnia and Herzegovina	1994
-ODB	saudi arabia	Saudi Arabia	1938
-ODC	siam	Siam	1938
-ODE	southern rhodesia	Southern Rhodesia	1938
-ODF	bangladesh	Bangladesh	1945
-ODJ	burkina faso	Burkina Faso	1945
-ODL	cameroon	Cameroon	1945
-ODP	central african	Central African Republic	1945
-ODQ	chad	Chad	1945
-ODT	china	China	1945
-ODU	cyraneica	Cyraneica	1945
-ODV	dutch guinea	Dutch Guinea	1945
-ODW	guinea	Guinea	1945
-ODX	indonesia	Indonesia	1945
-ODZ	iraq	Iraq	1945
-OEB	byelarus	Byelarus	1994
-OEC	czech	Czech Republic	1994
-OED	kazakhstan	Kazakhstan	1994
-OEE	kyrgyzstan	Kyrgyzstan	1994
-OEF	turkmenistan	Turkmenistan	1994
-OEM	ott	Ottoman Empire	1400
-OLB	cuman-kipchak confederation#4.2	Olberli	1100
+O6R	khoisan#5.2	Okavango	-499
+O6S	manioc farmers#3.2	Omagua	-499
+O6T	oretani	Oretani	-499
+O6U	western masurian culture#8.1	Osi	-499
+O6V	turcik tribes#4.1	Okunevo	-199
+O6W	porter#8.1	Osage	-99
+O6X	mascat	Oman	0
+O6Y	ostrogoths	Ostrogoths	400
+O6Z	tupis#4.1	Kawesqar	800
+O70	bantu peoples#6.2	Pare	800
+O71	parhae	Parhae	800
+O72	malay#1.1	Pattani	800
+O73	bantu peoples#8.5	Pende	800
+O74	slavonic tribes#8.1	Pereyaslavl	800
+O75	bantu peoples#7.3	Sangu	800
+O76	tupis#1.2	Selknam	800
+O77	bantu peoples#5.2	Sena	800
+O78	bantu peoples#2.1	Shambaa	800
+O79	bantu peoples#6.3	Shi	800
+O7A	bantu peoples#1.2	Kinga	800
+O7B	bantu peoples#0.6	Kusu	800
+O7C	papuans#3.1	Lani	800
+O7D	rajput kingdoms#7.1	Later Gupta	800
+O7E	lombard duchies#8.1	Lithuanians	800
+O7F	permians#1.1	Livonians	800
+O7G	ciboney#8.1	Lucayan	800
+O7H	bantu peoples#0.2	Luhya	800
+O7I	tupis#2.2	Macushi	800
+O7J	malagasy	Malagasy	800
+O7K	papuans#7.1	Marind	800
+O7L	mogollon#7.1	Mayo	800
+O7M	bantu peoples#4.1	Mbalantu	800
+O7N	bantu peoples#8.1	Mbunda	800
+O7O	malay#2.1	Medang	800
+O7P	malay#6.1	Melayu	800
+O7Q	mixtecs	Mixtecs	800
+O7R	tupis#6.2	Mocovi	800
+O7S	mordvinians	Mordvinians	800
+O7T	tupis#8.1	Muisca	800
+O7U	malay#8.1	Namayan	800
+O7V	nan chao	Nan Chao	800
+O7W	northmen	Norse	800
+O7X	bantu peoples#8.4	Nyanja	800
+O7Y	bantu peoples#6.1	Nyoro	800
+O7Z	pallava	Pallava state	800
+O80	oghuz turks#4.2	Dodurga	900
+O81	east francia	East Francia	900
+O82	azandes#4.1	Edo	900
+O83	sicily	Emirate of Sicily	900
+O84	mandes#8.3	Ewe	900
+O85	cushites#1.1	Fusoa	900
+O86	azandes#8.1	Gbe	900
+O87	great moravia	Great Moravia	900
+O88	mandes#4.3	Grebo	900
+O89	azandes#0.1	Gwari	900
+O8A	silia	Silia	800
+O8B	srivijaya	Srivijaya Empire	800
+O8C	mogollon#8.1	Suma	800
+O8D	swedes and goths	Swedes and Goths	800
+O8E	bantu peoples#8.3	Tabwa	800
+O8F	bantu peoples#0.4	Taita	800
+O8G	tang	Tang Empire	800
+O8H	bantu peoples#2.2	Tanga	800
+O8I	mesoamerican city-states and chiefdoms#8.1	Tarascan	800
+O8J	celtic kingdoms#8.1	Taurisci	800
+O8K	slavonic tribes#0.1	Terebovl	800
+O8L	maya city-states#8.1	Texcoco	800
+O8M	tibetan	Tibetan Empire	800
+O8N	anasazi#8.1	Tiwa	800
+O8O	toltec	Toltec Empire	800
+O8P	tupis#7.1	Tsachila	800
+O8Q	mandes#0.1	Balanta	900
+O8R	balhae	Balhae	900
+O8S	azandes#7.1	Bambara	900
+O8T	banas	Banas	900
+O8U	oghuz turks#4.1	Bayat	900
+O8V	mandes#4.2	Bijago	900
+O8W	karluks#0.1	Buvum	900
+O8X	oghuz turks#0.2	Chernye Klobuki	900
+O8Y	croatian	Croatian kingdom	900
+O8Z	oghuz turks#8.1	Cuman	900
+O90	bantu peoples#5.4	Bakongo	1000
+O91	buwayhid emirates#4.1	Banijurid	1000
+O92	islamic city-states#8.1	Berbera	1000
+O93	rajput kingdoms#0.1	Bhati	1000
+O94	bohemia	Bohemia	1000
+O95	bulgar	Bulgar Khanate	1000
+O96	burgandy	Burgandy	1000
+O97	buyid	Buyid Emirate	1000
+O98	chalukya	Chalukya Empire	1000
+O99	den	Denmark	1000
+O9A	mandes#0.3	Jalonke	900
+O9B	oghuz turks#0.1	Kai	900
+O9C	khitans	Khitans	900
+O9D	norway	Kingdom of Norway	900
+O9E	mandes#0.2	Kono	900
+O9F	slavic tribes#7.1	Kostroma	900
+O9G	kyivan	Kyivan Rus	900
+O9H	lambakannas	Lambakannas	900
+O9I	beja people#8.1	Lango	900
+O9J	oghuz turks#5.1	Lipka	900
+O9K	mandes#8.1	Mano	900
+O9L	oghuz turks#8.3	Merkit	900
+O9M	multan	Multan	900
+O9N	karluks#4.1	Nekir	900
+O9O	burma	Pagan	900
+O9P	slavic tribes#8.1	Peremyshl	900
+O9Q	saffarids	Saffarids	900
+O9R	samanid	Samanid Empire	900
+O9S	serbia	Serbia	900
+O9T	sindh	Sindh	900
+O9U	mandes#5.1	Somono	900
+O9V	berbers#8.1	Tebu	900
+O9W	mandes#8.2	Tem	900
+O9X	oghuz turks#8.2	Torks	900
+O9Y	mandes#4.1	Tukulor	900
+O9Z	mon states#8.1	Tusaneika	900
+OE0	west african cereal farmers#0.4	Anyi	-499
+OE1	aorsi	Aorsi	-499
+OE2	apuli	Apulians	-499
+OE3	aquitani	Aquitani	-499
+OE4	arakan	Arakan	-499
+OE5	pampas cultures#4.1	Arawak	-499
+OE6	argippaei	Argippaei	-499
+OE7	arverni	Arverni	-499
+OE8	astures	Astures	-499
+OE9	khoisan#0.6	Auen	-499
+OEG	pampas cultures#5.2	Abipon	-499
+OEH	austronesians#0.1	Acehnese	-499
+OEJ	adyrmachidae	Adyrmachidae	-499
+OEK	sambian-nothangian culture#8.1	Aestii	-499
+OEL	dacians	Agathyrsi and Dacians	-499
+OEP	akan	Akan	-499
+OEQ	khoisan#3.3	Akhoe	-499
+OER	alazones	Alazones and Scythian plowmen	-499
+OES	allobroges	Allobroges	-499
+OEU	ananyino	Ananyino	-499
+OEW	anarta	Anarta and Saurashtra	-499
+OEX	andhra	Andhra	-499
+OEY	eastern masurian culture#8.1	Androphagi	-499
+OEZ	anga	Anga	-499
+OF0	celtici	Celtici	-499
+OF1	khoisan#8.3	Chainouqua	-499
+OF2	champa	Cham	-499
+OF3	manioc farmers#0.3	Chamacoco	-499
+OF4	west african cereal farmers#4.1	Chamba	-499
+OF5	chedi	Chedi	-499
+OF6	chera	Chera	-499
+OF7	cherusci	Cherusci	-499
+OF8	chiapas	Chiapas	-499
+OF9	chinchoros	Chinchoros	-499
+OFA	saharan pastoral nomads#4.1	Auses	-499
+OFB	autariatae	Autariatae	-499
+OFC	avanti	Avanti	-499
+OFD	ay	Ay and Mushika	-499
+OFE	austronesians#8.1	Banjar	-499
+OFF	bell-shaped burials culture#8.1	Bastarnae	-499
+OFG	batavi	Batavi and the Rhine	-499
+OFH	west african cereal farmers#4.2	Baule	-499
+OFI	khoisan#3.4	Bergdama	-499
+OFJ	mahishmati	Bhil	-499
+OFK	blemmyes	Blemmyes	-499
+OFL	west african cereal farmers#8.3	Bobo	-499
+OFM	boii	Boii	-499
+OFN	brushed pottery culture#8.1	Boruski	-499
+OFP	brigantes	Brigantes	-499
+OFQ	budini	Budini	-499
+OFR	khoisan#7.1	Buga	-499
+OFS	khoisan#2.4	Bugakhwe	-499
+OFT	cai	Cai	-499
+OFU	caledonii	Caledonians	-499
+OFV	callaeci	Callaeci	-499
+OFW	callipidae	Callipidae	-499
+OFX	cao	Cao	-499
+OFY	manioc farmers#1.1	Carib	-499
+OFZ	carpetani	Carpetani	-499
+OG0	curonians	Curonians	-499
+OG1	conii	Cynetes	-499
+OG2	west african cereal farmers#8.2	Dagara	-499
+OG3	dahae	Dahae	-499
+OG4	kosala_s	Dakshina Kosala	-499
+OG5	khoisan#6.2	Dama	-499
+OG6	khoisan#3.1	Damara	-499
+OG7	danes	Danes	-499
+OG8	west african cereal farmers#8.1	Dendi	-499
+OG9	khoisan#0.2	Deti	-499
+OGB	khwarezm	Chorasmians	-499
+OGC	chorrera	Chorrera	-499
+OGD	chubu	Chubu Jomon	-499
+OGF	chugoku	Chugoku	-499
+OGG	khoisan#3.5	Cochoqua	-499
+OGI	connachta	Connachta	-499
+OGJ	contestani	Contestani	-499
+OGL	cosetani	Cosetani and Indigetes	-499
+OGQ	pampas cultures#2.1	Cuica	-499
+OGV	manioc farmers#6.2	Cuiva	-499
+OGW	manioc farmers#0.4	Culina	-499
+OGY	cupisnique	Cupisnique	-499
+OH0	khoisan#1.1	Gamtoos	-499
+OH1	saharan pastoral nomads#0.1	Garamantian clans	-499
+OH2	gotar	Gautar	-499
+OH3	austronesians#4.1	Gayo	-499
+OH4	geloni	Geloni	-499
+OH5	gerrha	Gerrha and Dilmun	-499
+OH6	getae	Getae	-499
+OH7	saharan pastoral nomads#4.2	Giligammae	-499
+OH8	gobi	Gobi	-499
+OH9	khoisan#7.3	Gora	-499
+OHA	dingling	Dingling	-499
+OHB	west african cereal farmers#4.3	Diola	-499
+OHC	dobunni	Dobunni and Cornovii	-499
+OHD	dogon	Dogon	-499
+OHE	donghu	Donghu	-499
+OHF	dyakovo	Dyakovo	-499
+OHG	treveri_e	Eburones	-499
+OHH	edetani	Edetani	-499
+OHI	el paraiso	El Paraiso	-499
+OHJ	late jomon culture#8.1	Emishi	-499
+OHL	papuan neolithic farmers#4.1	Enga	-499
+OHM	erainn	Erainn of Munster	-499
+OHN	estonians	Estonians	-499
+OHO	ewe	Ewe and Fon	-499
+OHP	finns	Finns	-499
+OHQ	frisii	Frisii	-499
+OHV	funan	Funan	-499
+OHW	gaetuli	Gaetuli	-499
+OHX	manioc farmers#5.3	Galibi	-499
+OHY	plain-pottery culture#8.1	Galindians	-499
+OI0	xiongnu_p	Hu and Ordos	-499
+OI1	maize farmers#8.2	Huilliche	-499
+OI2	hulun	Hulun	-499
+OI3	iceni	Iceni and Trinovantes	-499
+OI4	west african cereal farmers#0.1	Ijebu	-499
+OI5	ilergetes	Ilergetes	-499
+OI6	illyrians	Illyrians	-499
+OI7	khoisan#8.2	Inqua	-499
+OI8	issedones	Issedones	-499
+OI9	west african cereal farmers#8.4	Itsekiri	-499
+OIB	khoisan#4.2	Gorachouqua	-499
+OIH	khoisan#6.3	Goringhaiqua	-499
+OIJ	manioc farmers#5.1	Guane	-499
+OIK	maize farmers#8.1	Guaycuru	-499
+OIL	gur	Gurunsi	-499
+OIM	hadramaut	Hadramaut	-499
+OIP	khoisan#2.1	Hai	-499
+OIQ	hanstate	Han	-499
+OIU	hausa	Hausa	-499
+OIV	hejaz	Hejaz	-499
+OIX	helvetii	Helvetii	-499
+OIY	saxones	Hermunduri	-499
+OIZ	khoisan#0.7	Hessequa	-499
+OJ0	khoisan#8.1	Kwangali	-499
+OJ1	khoisan#6.4	Kxoe	-499
+OJ2	laos	Lao Lum	-499
+OJ3	latgalians	Latgalians	-499
+OJ4	dvaravati	Lavo	-499
+OJ5	khoisan#5.3	Leghoya	-499
+OJ6	milograd culture#8.1	Lemovii	-499
+OJ7	libu	Libu	-499
+OJ8	ligures	Ligurians	-499
+OJ9	lotophagi	Lotophagi	-499
+OJA	iyrcae	Iyrcae	-499
+OJB	izapa	Izapa	-499
+OJC	adena culture#8.1	Jaega	-499
+OJD	jin_han	Jin	-499
+OJE	khoisan#1.3	Ju	-499
+OJF	jutes	Jutes	-499
+OJG	austronesians#5.1	Kachin	-499
+OJH	khoisan#0.1	Kakia	-499
+OJI	kalinga	Kalinga	-499
+OJJ	kamarupa	Kamarupa	-499
+OJK	kanto	Kanto Jomon	-499
+OJL	karelians	Karelians	-499
+OJM	kasi	Kasi	-499
+OJN	kekaya	Kekaya	-499
+OJO	austronesians#1.1	Kerinci	-499
+OJP	khoisan#1.2	Kgalagadi	-499
+OJQ	chenla	Khmer	-499
+OJR	khoisan#3.7	Khoe	-499
+OJS	khoisan#4.1	Khoikhoi	-499
+OJT	kinki	Kinki	-499
+OJU	papuan neolithic farmers#0.1	Kiwai	-499
+OJV	khoisan#5.1	Kora	-499
+OJW	west african cereal farmers#0.2	Kpelle	-499
+OJX	kru	Kru	-499
+OJY	kuntala	Kuntala	-499
+OJZ	kuru	Kuru	-499
+OK0	khoisan#3.2	Mbukushu	-499
+OK1	papuan neolithic farmers#8.2	Mekeo	-499
+OK2	melanchlaeni	Melanchlaeni	-499
+OK3	merya	Merya	-499
+OK4	midhe	Mide	-499
+OK5	maize farmers#3.1	Minuane	-499
+OK6	moesi	Moesi	-499
+OK7	mon	Mon	-499
+OK8	mossi	Mossi	-499
+OK9	mulaka	Mulaka	-499
+OKB	khoisan#0.4	Lozi	-499
+OKC	lu	Lu	-499
+OKD	lugii	Lugii	-499
+OKF	lusitani	Lusitani	-499
+OKH	saharan pastoral nomads#1.1	Maces	-499
+OKI	machalilla	Machalilla	-499
+OKJ	manioc farmers#2.2	Machiguenga	-499
+OKK	madra	Madra	-499
+OKL	magan	Magan	-499
+OKM	mahan	Mahan	-499
+OKP	malay	Malay	-499
+OKQ	malla	Malla	-499
+OKR	manioc farmers#3.1	Marubo	-499
+OKS	saharan pastoral nomads#8.1	Massyli	-499
+OKT	matsya	Matsya	-499
+OKW	mauri	Mauri	-499
+OKX	maurusii	Maurusii	-499
+OKY	kaminaljuyu	Maya of Kaminaljuyu	-499
+OKZ	glades culture#8.1	Mayaimi	-499
+OL0	sequani	Sequani	-499
+OL1	shan	Shan	-499
+OL2	shikoku	Shikoku	-499
+OL3	manioc farmers#4.1	Shipibo	-499
+OL4	silures	Silures and Ordovices	-499
+OL5	simhala	Simhala	-499
+OL6	siraces	Siraces	-499
+OL7	west african cereal farmers#0.3	Sisala	-499
+OL8	song	Song	-499
+OL9	songhai	Songhai	-499
+OLA	khorat	Mun	-499
+OLC	najd	Najd	-499
+OLD	khoisan#2.3	Nama	-499
+OLE	narino	Narino	-499
+OLF	neuri	Neuri	-499
+OLG	norici	Norici	-499
+OLH	numidae	Numidae	-499
+OLI	nupe	Nupe	-499
+OLJ	pancala	Pancala	-499
+OLK	panchala	Panchala	-499
+OLL	pandya	Pandya	-499
 OLM	olmec	Olmec of La Venta	-499
-ONT	mongols#3.1	Onggirat	1100
-OPZ	o-ga-xpa ma-zhon	O-ga-xpa Ma-zhoⁿ	1492
-OYG	odrysian	Odrysian Kingdom	0
+OLN	maize farmers#7.1	Paresi	-499
+OLO	manioc farmers#8.1	Parintintin	-499
+OLP	pampas cultures#1.1	Payagua	-499
+OLQ	finnic_n	Perm Finns	-499
+OLR	pictones	Pictones	-499
+OLS	pundra	Pundra	-499
+OLT	haumavarga	Saka Haumavarga	-499
+OLU	tigraxauda	Saka Tigraxauda	-499
+OLV	salluvii	Salluvii and Ligurians	-499
+OLW	onega	Sami	-499
+OLX	samnites	Samnites	-499
+OLY	pomeranian culture#8.1	Selonians	-499
+OLZ	semnones	Semnones	-499
+OM0	tohoku	Tohoku	-499
+OM1	khoisan#6.1	Topnaar	-499
+OM2	khoisan#2.2	Totela	-499
+OM3	tres_zapotes	Tres Zapotes	-499
+OM4	treveri	Treveri	-499
+OM5	triballi	Triballi	-499
+OM6	papuan neolithic farmers#8.1	Trobriander	-499
+OM7	khoisan#3.6	Tswana	-499
+OM8	tuluva	Tuluva	-499
+OM9	proto-thai cultures#4.2	Aeta	-399
+OMB	khoisan#8.4	Songua	-499
+OMC	khoisan#0.3	Subia	-499
+OMD	suhma	Suhma and Radha	-499
+OMF	surasena	Surasena	-499
+OMH	svear	Svear	-499
+OMJ	khoisan#0.5	Taa	-499
+OMK	lanna	Tai Lue	-499
+OML	manioc farmers#2.1	Tairona	-499
+OMQ	manioc farmers#6.1	Tamoio	-499
+OMS	tauri	Tauri	-499
+OMT	khoisan#7.2	Tcaiti	-499
+OMV	temne	Temne	-499
+OMX	thyssagetae	Thyssagetae	-499
+OMY	pampas cultures#5.1	Timbira	-499
+OMZ	tiv	Tiv	-499
+ON0	mc:1#0	Dayak	-399
+ON1	proto-tibetan cultures#3.1	Di	-399
+ON2	frisii_h	Frisii	-399
+ON3	west african cereal farmers#4.6	Ga	-399
+ON4	west african cereal farmers#0.7	Gonja	-399
+ON5	khoisan#6.6	Griqua	-399
+ON6	west african cereal farmers#4.7	Gurma	-399
+ON7	khoisan#6.5	Hadza	-399
+ON8	austro-asiatic rice cultures#8.1	Hre	-399
+ON9	issedones#1	Hunnic clans	-399
+ONB	proto-tibetan cultures#6.1	Agathyrsi	-399
+ONC	austro-asiatic rice cultures#3.1	Alas	-399
+OND	hindu kingdoms#2.1	Ambashtha	-399
+ONF	ardiaei	Ardiaei	-399
+ONH	armorici	Armoricans	-399
+ONJ	saharan pastoral nomads#3.1	Augilae	-399
+ONK	austro-asiatic rice cultures#8.4	Bunun	-399
+ONL	byeonhan	Byeonhan and Jinhan	-399
+ONQ	manioc farmers#6.3	Caete	-399
+ONS	carnutes	Carnutes	-399
+ONU	austro-asiatic rice cultures#1.1	Chin	-399
+ONX	manioc farmers#8.2	Chono	-399
+ONY	maize farmers#7.2	Comechingon	-399
+ONZ	khoisan#8.5	Danisi	-399
+OO0	west african cereal farmers#0.8	Krahn	-399
+OO1	proto-thai cultures#4.1	Kreung	-399
+OO2	hindu kingdoms#1.1	Kshudraka	-399
+OO3	austro-asiatic rice cultures#6.4	Kuy	-399
+OO4	proto-thai cultures#8.1	Lao Lum	-399
+OO5	mc:0#0	Lawa	-399
+OO6	donghu tribes#8.1	Lohan	-399
+OO7	maize farmers#3.2	Lule	-399
+OO8	lusones	Lusones and Belli	-399
+OO9	saharan pastoral nomads#0.3	Macae	-399
+OOB	iazyges	Iazyges	-399
+OOC	mc:0#5	Ibaloi	-399
+OOD	austro-asiatic rice cultures#3.2	Iban	-399
+OOF	west african cereal farmers#0.5	Ife	-399
+OOJ	mc:1#1	Ifugao	-399
+OOK	mc:0#3	Ilocano	-399
+OOL	austro-asiatic rice cultures#6.1	Isneg	-399
+OOQ	austro-asiatic rice cultures#2.1	Jeh	-399
+OOU	proto-tibetan cultures#7.1	Jie	-399
+OOV	jutes_h	Jutes	-399
+OOW	mc:0#4	Kadazan	-399
+OOX	austro-asiatic rice cultures#6.3	Karo	-399
+OOY	proto-thai cultures#0.1	Khasi	-399
+OOZ	austro-asiatic rice cultures#0.1	Khun	-399
+OP0	austro-asiatic rice cultures#8.2	Stieng	-399
+OP1	suebi_h	Suebi	-399
+OP2	austro-asiatic rice cultures#7.1	Tai Dam	-399
+OP3	hindu kingdoms#6.2	Tamraparni	-399
+OP4	issedones#2	Tashtyk	-399
+OP5	argippaei#1	Tochari	-399
+OP6	khoisan#8.6	Tonga	-399
+OP7	proto-tibetan cultures#0.1	Tyrcae	-399
+OP8	armenia	Armenia	-322
+OP9	atropatene	Atropatene	-322
+OPB	maeotae	Maeotae	-399
+OPC	mc:0#2	Mandailing	-399
+OPD	marcomanni_h	Marcomanni	-399
+OPE	saharan pastoral nomads#2.1	Mazices	-399
+OPF	austro-asiatic rice cultures#5.1	Melanau	-399
+OPG	khoisan#1.4	Nharo	-399
+OPH	pannonii	Pannonians	-399
+OPI	maize farmers#0.1	Pano	-399
+OPJ	issedones#3	Paricanii	-399
+OPK	mc:0#1	Pear	-399
+OPL	manioc farmers#1.2	Pilaga	-399
+OPN	zarubintsy	Proto-Slavs	-399
+OPO	saharan pastoral nomads#0.2	Psylli	-399
+OPP	proto-tibetan cultures#4.1	Saka Paradraya	-399
+OPQ	khoisan#8.7	Sandawe	-399
+OPR	austro-asiatic rice cultures#8.3	Santal	-399
+OPS	hindu kingdoms#6.1	Satiyaputra	-399
+OPU	austro-asiatic rice cultures#0.2	Senoi	-399
+OPV	west african cereal farmers#4.5	Senufo	-399
+OPW	hindu kingdoms#4.1	Sibi	-399
+OPX	west african cereal farmers#4.4	Soninke	-399
+OPY	proto-tibetan cultures#8.1	Srubna	-399
+OQ0	maya chiefdoms and states#8.1	Totonac	-322
+OQ1	dalmatae	Dalmatae	-299
+OQ2	antigonus	Kingdom of Antigonus	-299
+OQ3	kassander	Kingdom of Kassander	-299
+OQ4	lysimachus	Kingdom of Lysimachus	-299
+OQ5	nabatean	Nabatean Kingdom	-299
+OQ6	arabs#0.1	Amalekites	-199
+OQ7	turcik tribes#8.1	Amyrgians	-199
+OQ8	bactria	Bactria	-199
+OQ9	mon-khmer#8.1	Bahnar	-199
+OQA	saharan pastoral nomads#5.1	Auschisae	-322
+OQB	bosporan	Bosporan Kingdom	-322
+OQC	cappadocia	Cappadocia	-322
+OQD	issedones#4	Catacomb	-322
+OQE	chatti	Chatti	-322
+OQF	colchis	Colchis	-322
+OQG	hulun#3	Derbices	-322
+OQH	iapodes	Iapodes	-322
+OQI	insubres	Insubres and Golaseccans	-322
+OQJ	issedones#6	Karakol	-322
+OQK	mc:0#8	Karen	-322
+OQL	lihyan	Lihyan	-322
+OQM	hulun#1	Lin Hu	-322
+OQN	issedones#5	Loulan	-322
+OQO	hindu kingdoms#2.2	Malava	-322
+OQP	marcomanni	Marcomanni	-322
+OQQ	monte alban	Monte Albán	-322
+OQR	mc:0#9	Sakalava	-322
+OQS	mc:0#7	Sasak	-322
+OQT	hindu kingdoms#7.1	Sauvira	-322
+OQU	mc:0#6	Sikka	-322
+OQV	mc:0#12	Simalungun	-322
+OQW	mc:0#11	Tagalog	-322
+OQX	hulun#2	Taksai	-322
+OQY	mc:0#10	Taoi	-322
+OQZ	laos#1	Tigurini	-322
+OR0	turcik tribes#0.1	Jushi	-199
+OR1	thai#4.1	Kankanaey	-199
+OR2	arabs#8.1	Katabania	-199
+OR3	mon-khmer#6.1	Katu	-199
+OR4	arabs#3.1	Kinda	-199
+OR5	syphax	Kingdom of Syphax	-199
+OR6	mon-khmer#5.1	Koho	-199
+OR7	maan	Maan	-199
+OR8	mauretania	Mauretania	-199
+OR9	malays#1.1	Merina	-199
+ORB	papuan#4.1	Baining	-199
+ORJ	thai#8.2	Bima	-199
+ORL	malays#4.1	Brao	-199
+ORP	malays#1.2	Bugis	-199
+ORU	saharan pastoral nomads#7.1	Byzacenes	-199
+ORV	mon-khmer#0.1	Champasak	-199
+ORW	papuan#0.1	Elema	-199
+ORX	malays#5.1	Gorontalo	-199
+ORZ	han	Han Empire	-199
+OS0	malays#8.1	Tampuan	-199
+OS1	papuan#4.2	Toaripi	-199
+OS2	papuan#8.1	Tolai	-199
+OS3	minor states#0.1	Trigarta	-199
+OS4	armenia_k	Armenia	-99
+OS5	mc:2#0	Atlantes	-99
+OS6	bithynia	Bithynia	-99
+OS7	mc:2#3	Cabales	-99
+OS8	hopewell culture#3.1	Caddo	-99
+OS9	point peninsula#8.1	Choctaw	-99
+OSB	min-yue	Min-Yue	-199
+OSC	iron age chieftainships#8.1	Mnong	-199
+OSD	turcik tribes#0.2	Mohe	-199
+OSF	thai#0.2	Naga	-199
+OSJ	nan-yue	Nan-Yue	-199
+OSK	norsemen	Norsemen	-199
+OSL	thai#7.1	Pampangan	-199
+OSM	parthia	Parthia	-199
+OSN	mon-khmer#2.1	Phuan	-199
+OSP	minor states#8.1	Pulinda	-199
+OSQ	thai#8.1	Samre	-199
+OSU	malays#8.2	Sangir	-199
+OSV	thai#2.1	Savu	-199
+OSW	sogdians	Sogdians	-199
+OSX	thai#0.1	Sumba	-199
+OSY	thai#3.1	Sumbawa	-199
+OSZ	mon-khmer#3.1	Tai Yuan	-199
+OT0	kenu	Kenu	-99
+OT1	pontus	Kingdom of Pontus	-99
+OT2	malwa	Malwa	-99
+OT3	numidia	Numidia	-99
+OT4	tamil	Pandya	-99
+OT5	parthian	Parthian Empire	-99
+OT6	persis	Persis	-99
+OT7	marksville culture#8.1	Powhatan	-99
+OT8	saces	Saces	-99
+OT9	indoscythian2	Sakas of Sindh	-99
+OTB	commagene	Commagene	-99
+OTJ	elymais	Elymais	-99
+OTK	mc:2#2	Gindanes	-99
+OTL	hopewell culture#0.1	Hopewell	-99
+OTQ	laurel complex#8.1	Houma	-99
+OTU	swift creek culture#8.1	Illinois	-99
+OTV	indogreek	Indo-Greek Kingdom	-99
+OTW	indoscythian	Indo-Scythians	-99
+OTX	izumo	Izumo	-99
+OTY	kalinga_m	Kalinga	-99
+OTZ	kashmir_ig	Kashmir	-99
+OU0	pth	Parthian Empire	0
+OU1	silla	Silla	0
+OU2	alans	Alans	100
+OU3	aesti	Aesti	200
+OU4	kushan#1	Apasiacae	200
+OU5	dong_zhuo	Dong Zhuo	200
+OU6	gongsun	Gongsun Du	200
+OU7	heruli	Heruli	200
+OU8	liu_biao	Liu Biao	200
+OU9	liu_zhang	Liu Zhang	200
+OUB	sarmates	Sarmates	-99
+OUC	satavahana	Satavahana	-99
+OUF	mc:2#1	Troglodytes	-99
+OUG	tsukushi	Tsukushi	-99
+OUI	hopewell culture#4.1	Tuscarora	-99
+OUJ	hindu kingdoms#0.1	Abhira	0
+OUM	hindu kingdoms#3.2	Andhaka	0
+OUP	hindu kingdoms#0.2	Ay	0
+OUQ	koguryo	Goguryeo	0
+OUW	himyarite	Himyarite Kingdom	0
+OUX	suren	Indo-Parthian Kingdom	0
+OUY	hindu kingdoms#8.3	Kuninda	0
+OV0	dingling#4	Pazyryk	300
+OV1	picts	Picts	300
+OV2	bulgars_t#2	Sai	300
+OV3	sarmatae#3	Sargat	300
+OV4	sarmatae	Sarmatians	300
+OV5	scoti	Scoti	300
+OV6	shiwei	Shiwei	300
+OV7	wusun#2	Shule	300
+OV8	dingling#3	Sintashta	300
+OV9	slavs_e	Slavs	300
+OVB	ma_teng	Ma Teng	200
+OVC	milograd	Milograd	200
+OVD	nagas	Nagas of Padmavati	200
+OVE	shi_xie	Shi Xie	200
+OVF	sun	Sun Quan	200
+OVH	tao_qian	Tao Qian	200
+OVI	aesti_t	Aesti	300
+OVJ	wusun#1	Arimaspi	300
+OVK	bulgars_t	Bulgars	300
+OVL	chionites	Chionites	300
+OVM	ghana	Empire of Ghana	300
+OVP	finns_t	Finns	300
+OVQ	gaya	Gaya	300
+OVR	shiwei#1	Gedrosians	300
+OVS	gepidae	Gepids	300
+OVT	han zhao	Han Zhao	300
+OVU	kangju	Kangju	300
+OVV	shiwei#2	Kucha	300
+OVW	kangju#2	Kulai	300
+OVX	dingling#1	Linhu	300
+OVY	langobardi	Lombards	300
+OVZ	murong	Murong	300
+OW0	caloosahatchee culture#8.1	Catawba	500
+OW1	maya states#8.1	Chalco	500
+OW2	cholas	Cholas	500
+OW3	tiele#1	Dulu	500
+OW4	franks	Franks	500
+OW5	khoisan#7.4	Gui	500
+OW6	kushan principalities#8.1	Haripunjaya	500
+OW7	hephthalites	Hephthalites	500
+OW8	hephthalites2	Hephthalites	500
+OW9	kadambas	Kadambas	500
+OWB	bulgars_t#3	Tagar	300
+OWC	chionites#1	Tapuri	300
+OWD	goths_t	Tervingi	300
+OWE	thuringi	Thuringians	300
+OWF	tufa	Tufa	300
+OWH	tuoba	Tuoba	300
+OWJ	akatziri	Akatziri	400
+OWK	burgundians	Burgundians	400
+OWL	caucasian alans	Caucasian Alans	400
+OWM	sixteen kingdoms#4.3	Chouchi	400
+OWO	dalriada	Dal Riata	400
+OWP	byzantine	Eastern Roman Empire	400
+OWQ	sixteen kingdoms#0.1	Feng	400
+OWR	sixteen kingdoms#4.2	Han Zhao	400
+OWS	sixteen kingdoms#8.2	Helian	400
+OWT	hunnic	Hunnic Empire	400
+OWU	sixteen kingdoms#8.1	Juqu	400
+OWV	sixteen kingdoms#0.2	Liang	400
+OWX	iran	Sasanian Empire	400
+OWY	sciri	Sciri	400
+OWZ	swedes	Swedes	400
+OX0	anglii	Angles	600
+OX1	avars	Avars	600
+OX2	bulgars	Bulgars	600
+OX3	chalukyas	Chalukyas	600
+OX4	chauhans	Chauhans	600
+OX5	chen-la	Chen-La	600
+OX6	thai kingdoms#1.1	Chenla	600
+OX7	thai kingdoms#5.1	Dvaravati	600
+OX8	shaskanka	Gauda Kingdom	600
+OX9	gokturks	Göktürks	600
+OXB	khoisan#6.8	Kalahari San	500
+OXC	karelians_t	Karelians	500
+OXD	khitan	Khitan	500
+OXE	wuji#1	Kimek	500
+OXF	kangju#3	Kumo Xi	500
+OXG	khoisan#6.7	Kung	500
+OXI	kurykans	Kurykans	500
+OXJ	kutrigur	Kutrigurs	500
+OXK	lavo	Lavo	500
+OXL	west african cereal farmers#8.5	Malinke	500
+OXQ	toba wei	Northern Wei	500
+OXR	pallavas	Pallavas	500
+OXS	sabir	Sabir	500
+OXT	sasanian	Sasanian Empire	500
+OXU	saxons	Saxons	500
+OXV	suebi	Suebi	500
+OXW	tiele	Tiele	500
+OXX	tuyuhun	Tuyuhun	500
+OXY	tuʻi tonga	Tuʻi Tonga Empire	500
+OY0	khwarazm	Khwarazm	700
+OY1	kashmir	Kingdom of Kashmir	700
+OY2	sind	Kingdom of Sind	700
+OY3	zunbil	Kingdom of Zunbil	700
+OY4	kryvichs	Kryvichs	700
+OY5	kushites	Kushites	700
+OY6	saharan nomadic tribes#2.1	Lawata	700
+OY7	magyars	Magyars	700
+OY8	maitraka	Maitraka Kingdom	700
+OY9	saharan nomadic tribes#4.1	Masmuda	700
+OYB	huari	Huari Empire	600
+OYC	minor states under indian influence#3.1	Kadamba	600
+OYD	odrysian	Odrysian Kingdom	0
+OYE	khazars	Khazars	600
+OYF	kurykan	Kurykans	600
+OYH	mercia	Mercia	600
+OYJ	neustria	Neustria	600
+OYL	nobatia	Nobatia	600
+OYM	tiele#3	Pecheneg	600
+OYP	kanauj	Pushyabhuti Kingdom	600
+OYQ	sui	Sui Empire	600
+OYR	lombard principalities#8.1	Tabyn	600
+OYT	tiahuanaco	Tiahuanaco Empire	600
+OYU	balts	Balts	700
+OYV	barghawata	Barghawata	700
+OYW	bega	Bega	700
+OYX	tabaristan	Dabuyids	700
+OYY	danube bulgars	Danube Bulgars	700
+OYZ	saharan nomadic tribes#7.1	Hintata	700
+OZ0	rajput kingdoms#7.2	Gahadavala	800
+OZ1	bantu peoples#4.2	Ganda	800
+OZ2	gurjara pratihara	Gurjara Pratihara	800
+OZ3	bantu peoples#1.1	Hema	800
+OZ4	bantu peoples#0.1	Holoholo	800
+OZ5	idrisid	Idrisid Caliphate	800
+OZ6	irlanda	Irlanda	800
+OZ7	sinhalese kingdoms#8.1	Kalyani	800
+OZ8	kanem	Kanem	800
+OZ9	rajput kingdoms#3.1	Karkota	800
+OZA	saharan nomadic tribes#0.1	Miknasa	700
+OZB	saharan nomadic tribes#8.1	Nafusa	700
+OZC	nan-zhao	Nan-Zhao	700
+OZD	polanes	Polanes	700
+OZE	proto-slavs	Proto-Slavs	700
+OZF	sogd	Sogdian city-states	700
+OZG	tufan	Tibetan Empire	700
+OZH	abbasid	Abbasid Caliphate	800
+OZI	aghlabid	Aghlabid Emirate	800
+OZJ	rajput kingdoms#8.1	Alupa	800
+OZK	bantu peoples#7.1	Bamileke	800
+OZL	permians#7.1	Bessi	800
+OZM	bantu peoples#3.3	Binja	800
+OZN	bantu peoples#3.1	Chagga	800
+OZO	tupis#6.1	Chiriguano	800
+OZP	bantu peoples#0.5	Chokwe	800
+OZQ	baltic tribes#8.1	Chud	800
+OZR	anasazi#7.1	Cocopa	800
+OZS	mogollon#0.1	Concho	800
+OZU	bashkirs#8.1	Dacians	800
+OZV	bantu peoples#5.1	Doe	800
+OZW	bantu peoples#3.4	Duala	800
+OZX	cordoba	Emirate of Córdoba	800
+OZY	anasazi#4.1	Eudeve	800
+OZZ	bantu peoples#0.3	Fang	800
 PAR	paracas	Paracas	-499
 PNT	orig:PNT	Pontic Greek Cities	-499
 PNT	pnt	Pontic Greek cities	-399
-PZ8	pancala	Pancala	-499
-PZ9	panchala	Panchala	-499
-PZA	pandya	Pandya	-499
-PZB	maize farmers#7.1	Paresi	-499
-PZC	manioc farmers#8.1	Parintintin	-499
-PZE	pampas cultures#1.1	Payagua	-499
-PZG	finnic_n	Perm Finns	-499
-PZH	pictones	Pictones	-499
-PZJ	pundra	Pundra	-499
-PZM	pannonii	Pannonians	-399
-PZN	maize farmers#0.1	Pano	-399
-PZP	issedones#3	Paricanii	-399
-PZQ	mc:0#1	Pear	-399
-PZS	manioc farmers#1.2	Pilaga	-399
-PZT	zarubintsy	Proto-Slavs	-399
-PZU	saharan pastoral nomads#0.2	Psylli	-399
-PZV	thai#7.1	Pampangan	-199
-PZW	parthia	Parthia	-199
-PZX	mon-khmer#2.1	Phuan	-199
-PZZ	minor states#8.1	Pulinda	-199
-Q1R	qedar	Qedar	-499
-Q1S	manioc farmers#0.1	Quimbaya	-499
-Q1T	xiqu	Qiang	-322
-Q1U	andean states and chiefdoms#8.1	Quiche	1279
-Q1V	qom	Qom	1492
-Q1W	can	Quebec	1783
-QDM	quadi	Quadi and Marcomanni	300
-QDW	qataban	Qataban and Awsan	-499
+Q1X	qedar	Qedar	-499
+Q1Y	manioc farmers#0.1	Quimbaya	-499
+Q1Z	xiqu	Qiang	-322
+Q20	andean states and chiefdoms#8.1	Quiche	1279
+Q21	qom	Qom	1492
+Q22	can	Quebec	1783
+Q23	queensland	Queensland	1880
+QA0	ghaznavid	Ghaznavid Emirate	1000
+QA1	great zimbabwe	Great Zimbabwe	1000
+QA2	haripunjaya	Haripunjaya	1000
+QA3	rajput kingdoms#6.1	Hoysala	1000
+QA4	buwayhid emirates#8.1	Ilyasid	1000
+QA5	kimek-kipchak khaganate	Kimek-Kipchak khaganate	1000
+QA6	georgia	Kingdom of Georgia	1000
+QA7	bantu peoples#7.4	Konjo	1000
+QA8	liao	Liao	1000
+QA9	lowcountries	Low Countries	1000
+QAF	bavaria	Duchy of Bavaria	1000
+QAJ	benevento	Duchy of Benevento	1000
+QAL	swabia	Duchy of Swabia	1000
+QAP	east java	East Java	1000
+QAU	eng	England	1000
+QAV	fatimid	Fatimid Caliphate	1000
+QAX	rajput kingdoms#3.2	Ganga	1000
+QB0	scotland	Scotland	1000
+QB1	senas	Senas	1000
+QB2	swe	Sweden	1000
+QB3	bantu peoples#5.3	Tharaka	1000
+QB4	tibet	Tibet	1000
+QB5	tuscany	Tuscany	1000
+QB6	almoravid	Almoravid dynasty	1100
+QB7	mongols#8.1	Besud	1100
+QB8	mongols#4.2	Buryats	1100
+QB9	chandellas	Chandellas	1100
+QBB	madagascar	Madagascar	1000
+QBF	mali	Mali	1000
+QBG	mesoamerican city-states and chiefdoms#7.1	Mazahua	1000
+QBH	merina	Merina Kingdom	1000
+QBI	buwayhid emirates#7.1	Mirdasid	1000
+QBJ	buwayhid emirates#6.1	Muhtajid	1000
+QBK	muscat	Muscat	1000
+QBL	greenland	Norse Greenland	1000
+QBM	orissa	Orissa	1000
+QBO	mesoamerican city-states and chiefdoms#3.1	Otomi	1000
+QBP	peshemegs	Pechenegs	1000
+QBQ	rajput kingdoms#5.1	Peshwa	1000
+QBR	pol	Poland	1000
+QBT	pratiharas	Pratiharas	1000
+QBU	prussians	Prussians	1000
+QBV	buwayhid emirates#0.1	Saffarid	1000
+QBX	bantu peoples#1.3	Sanga	1000
+QBZ	sardinia	Sardinia	1000
+QC0	oghuz#8.1	Terteroba	1100
+QC1	cuman-kipchak confederation#8.1	Turkmen	1100
+QC2	đai viet	Đại Việt	1100
+QC3	tuareg nomadic tribes#3.1	Ait Atta	1200
+QC4	almohad	Almohad Caliphate	1200
+QC5	angevin	Angevin Empire	1200
+QC6	aragon	Aragón	1200
+QC7	bagan	Bagan	1200
+QC8	cuman khanates#4.1	Bayundur	1200
+QC9	cuman khanates#3.1	Berendei	1200
+QCA	hungary	Hungary	1100
+QCB	mongols#0.1	Ikires	1100
+QCC	cuman-kipchak confederation#0.2	Itoba	1100
+QCD	oghuz#2.1	Kangly	1100
+QCF	karkhanids	Karkhanids	1100
+QCG	mongols#8.2	Khongirad	1100
+QCI	kievan rus	Kievan Rus	1100
+QCJ	sukhotai	Kingdom of Pagan	1100
+QCK	cuman-kipchak confederation#0.1	Kinik	1100
+QCL	mongols#4.3	Kiyat	1100
+QCM	klachuris	Klachuris	1100
+QCN	cuman-kipchak confederation#4.1	Kyrgyz	1100
+QCO	mongols#1.1	Mangud	1100
+QCP	cuman-kipchak confederation#0.3	Ogur	1100
+QCQ	cuman-kipchak confederation#4.2	Olberli	1100
+QCR	mongols#3.1	Onggirat	1100
+QCS	paramas	Paramas	1100
+QCT	cuman-kipchak confederation#7.1	Polovtsy	1100
+QCU	polotsk	Principality of Polotsk	1100
+QCV	seljuk	Seljuk Empire	1100
+QCW	solankis	Solankis	1100
+QCX	soomra	Soomra Emirate	1100
+QCY	mongols#0.2	Suldus	1100
+QCZ	mongols#5.2	Tayichiud	1100
+QD0	naiman	Naiman	1200
+QD1	nepal	Nepal	1200
+QD2	oirat	Oirats	1200
+QD3	malays#6.1	Pangasinan	1200
+QD4	por	Portugal	1200
+QD5	galicia-volhynia	Principality of Galicia-Volhynia	1200
+QD6	kyiv	Principality of Kyiv	1200
+QD7	novgorod	Principality of Novgorod	1200
+QD8	vladimir-suzdal	Principality of Vladimir-Suzdal	1200
+QD9	cuman khanates#4.2	Salur	1200
+QDB	cuman khanates#5.1	Burchoglu	1200
+QDC	quadi	Quadi and Marcomanni	300
+QDE	cuman khanates#8.1	Chigil	1200
+QDF	papuans#4.1	Chimbu	1200
+QDG	champa city states#8.1	Chrau	1200
+QDH	comte de toulouse	Comté de Toulouse	1200
+QDJ	cuman khanates#0.1	Ghuz	1200
+QDK	harapunchai	Harapunchai	1200
+QDL	tuareg nomadic tribes#7.1	Haskura	1200
+QDO	ifat	Ifat	1200
+QDP	other rus principalities#8.2	Ilmen Slavs	1200
+QDQ	rajput kingdoms#8.2	Kakatiya	1200
+QDS	qataban	Qataban and Awsan	-499
+QDT	kara khitai khaganate	Kara Khitai Khaganate	1200
+QDU	keraites	Keraites	1200
+QDV	mongol	Khamag Mongol	1200
+QDX	khwarazmian	Khwarazmian dynasty	1200
+QDY	berber tribes#8.1	Lamtuna	1200
+QDZ	merkit	Merkits	1200
+QE0	siberians#4.7	Chuvan	1279
+QE1	english territory	English territory	1279
+QE2	siberians#8.1	Evenki	1279
+QE3	franconia	Franconia	1279
+QE4	galicia	Galicia-Volhynia	1279
+QE5	hafsid	Hafsid Caliphate	1279
+QE6	ilkhanate	Ilkhanate	1279
+QE7	siberians#8.5	Inupiat	1279
+QE8	siberians#4.3	Itelmen	1279
+QE9	siberians#8.7	Kamasin	1279
+QEF	rajput kingdoms#4.1	Sisodia	1200
+QEG	delhi	Sultanate of Delhi	1200
+QEH	other rus principalities#8.1	Suzdal	1200
+QEI	tatars	Tatars	1200
+QEJ	cuman khanates#7.1	Tukhsi	1200
+QEK	abdelouadides	Abdelouadides	1279
+QEM	siberians#4.5	Ainu	1279
+QEO	siberians#0.7	Assan	1279
+QEP	austria	Austria	1279
+QEQ	siberians#8.4	Beltir	1279
+QET	benin	Benin	1279
+QEU	brandenburg	Brandenburg	1279
+QEV	castile	Castile	1279
+QEW	chagatai	Chagatai Khanate	1279
+QEX	chernigov	Chernigov	1279
+QEY	chimu	Chimú Empire	1279
+QEZ	siberians#8.2	Chukchi	1279
+QF0	teutonic knights	Teutonic Knights	1279
+QF1	touareg	Touareg	1279
+QF2	siberians#0.4	Tungus	1279
+QF3	siberians#4.4	Tuvan	1279
+QF4	morocco	Morocco	1300
+QF5	ayutthaya	Ayutthaya	1400
+QF6	goldenhorde	Blue Horde	1400
+QF7	kalinago	Kalinago	1400
+QF8	kalmar union	Kalmar Union	1400
+QF9	ott	Ottoman Empire	1400
+QFA	kanem-bornu	Kanem-Bornu	1279
+QFB	kashmir and ladakh	Kashmir and Ladakh	1279
+QFC	kediri	Kediri	1279
+QFD	siberians#8.3	Kerek	1279
+QFE	siberians#0.5	Ket	1279
+QFF	siberians#0.2	Khakas	1279
+QFG	the golden horde	Khanate of the Golden Horde	1279
+QFH	kiev	Kiev	1279
+QFI	siberians#0.6	Koibal	1279
+QFJ	siberians#8.6	Koryak	1279
+QFK	lithuania	Lithuania	1279
+QFL	mamluke	Mamluke Sultanate	1279
+QFM	maori	Maori	1279
+QFN	merinides	Merinides	1279
+QFO	mixtec	Mixtec Empire	1279
+QFP	murom	Murom	1279
+QFQ	siberians#4.8	Nanai	1279
+QFR	siberians#0.3	Nenets	1279
+QFS	siberians#4.6	Sakha	1279
+QFT	shogun japan	Shogun Japan	1279
+QFU	sinhalese	Sinhalese kingdom	1279
+QFV	smolensk	Smolensk	1279
+QFW	siberians#4.1	Soyot	1279
+QFX	sukhothai	Sukhothai	1279
+QFY	switzerland	Swiss lands	1279
+QFZ	aymara kingdoms#8.1	Tepehua	1279
+QG0	chono	Chono	1492
+QG1	congo	Congo	1492
+QG2	crimean	Crimean Khanate	1492
+QG3	dehcho dene	Dehcho Dene	1492
+QG4	denendeh	Denendeh	1492
+QG5	eastern shoshone	Eastern Shoshone	1492
+QG6	eeyou istchee	Eeyou Istchee	1492
+QG7	the white sheep turks	Emirate of the White Sheep Turks	1492
+QG8	erie	Erie	1492
+QG9	funj	Funj	1492
+QGA	timurid	Timurid Empire	1400
+QGB	abitibiwinni aki	Abitibiwinni Aki	1492
+QGC	adal	Adal	1492
+QGD	ahmadnagar	Ahmadnagar	1492
+QGE	alutiiq	Alutiiq	1492
+QGF	anishinabewaki ᐊᓂᔑᓈᐯᐗᑭ	Anishinabewaki ᐊᓂᔑᓈᐯᐗᑭ	1492
+QGG	apsaalooke	Apsaalooké	1492
+QGH	arapaho	Arapaho	1492
+QGI	assiniboine	Assiniboine	1492
+QGJ	awa	Awá	1492
+QGK	aonikenk	Aónikenk	1492
+QGL	beaver	Beaver	1492
+QGM	bengal	Bengal	1492
+QGN	berar	Berar	1492
+QGO	bijapur	Bijapur	1492
+QGP	boe	Boe	1492
+QGQ	caddo	Caddo	1492
+QGR	calusa	Calusa	1492
+QGS	castille	Castille	1492
+QGT	catawba	Catawba	1492
+QGU	chahta yakni	Chahta Yakni	1492
+QGV	charrua	Charrúa	1492
+QGW	chickasaw	Chickasaw	1492
+QGX	chikashsha yaki	Chikashsha Yaki	1492
+QGY	chiquitano	Chiquitano	1492
+QGZ	choctaw	Choctaw	1492
+QH0	k’asho got’ine	K’asho Got’ine	1492
+QH1	lingit aani	Lingít Aaní	1492
+QH2	lokono	Lokono	1492
+QH3	malacca	Malacca	1492
+QH4	malaysian islamic states#4.2	Malagasy	1492
+QH5	maya yucateco	Maya Yucateco	1492
+QH6	mbya	Mbya	1492
+QH7	mdewakanton	Mdewakanton	1492
+QH8	mebengokre	Mebêngôkre	1492
+QH9	mescalero apache	Mescalero Apache	1492
+QHA	malaysian islamic states#0.2	Gaddang	1492
+QHB	golkonda	Golkonda	1492
+QHC	gondwana	Gondwana	1492
+QHD	rus	Grand Duchy of Moscow	1492
+QHF	guato	Guató	1492
+QHG	guenoa-muinanes	Guenoa-Muinanes	1492
+QHH	gujarat	Gujarat	1492
+QHI	gwich'in nanh	Gwich'in Nành	1492
+QHJ	gunun a atuk	Günün a atük	1492
+QHK	timurid emirates#3.1	Hamdanid	1492
+QHL	timurid emirates#2.1	Hasanwayhid	1492
+QHM	huarpe	Huarpe	1492
+QHN	imperial hungary	Imperial Hungary	1492
+QHO	inupiat	Inupiat	1492
+QHP	inuvialuit	Inuvialuit	1492
+QHQ	iowa	Iowa	1492
+QHR	tamaulipeco tribes#8.1	Itza	1492
+QHS	jicarilla apache	Jicarilla Apache	1492
+QHT	jumanos	Jumanos	1492
+QHU	kalina/karina	Kalina/Kariña	1492
+QHV	kaska dena kayeh	Kaska Dena Kayeh	1492
+QHW	kaskaskia	Kaskaskia	1492
+QHX	malaysian islamic states#8.1	Kayan	1492
+QHY	sibir	Khanate of Sibir	1492
+QHZ	koyukon	Koyukon	1492
+QI0	o-ga-xpa ma-zhon	O-ga-xpa Ma-zhoⁿ	1492
+QI1	oirat confederation	Oirat Confederation	1492
+QI2	omamiwininiwag	Omàmìwininìwag	1492
+QI3	oyo	Oyo	1492
+QI4	papua new guinea	Papua New Guinea	1492
+QI5	pegu	Pegu	1492
+QI6	philippines	Philippines	1492
+QI7	popukare	Popũkare	1492
+QI8	punjab	Punjab	1492
+QI9	puri	Puri	1492
+QID	mi'kma'ki	Mi'kma'ki	1492
+QII	ming	Ming Empire	1492
+QIJ	moqoit	Moqoit	1492
+QIK	malaysian islamic states#8.2	Munda	1492
+QIL	mundurukania	Mundurukânia	1492
 QIN	orig:QIN	Qin	-499
 QIN	qin	Qin	-399
+QIO	mvskoke	Mvskoke	1492
+QIP	mwenemutapa	Mwenemutapa	1492
 QIQ	orig:QIQ	Qi	-499
 QIQ	qi	Qi	-399
-QLD	queensland	Queensland	1880
-QQH	quazaq	Quazaq Khanate	1530
-R7G	raeti	Raeti	-499
-R7H	hedmark	Raumar	-499
-R7I	wu_c	Royal Zhou	-499
-R7J	rugii	Rugii	-499
-R7K	norse_w	Rygir	-499
-R7L	rong	Rong and Di	-322
-R7M	thai#8.3	Rade	-199
-R7N	sarmatae#2	Rong	300
-R7O	sixteen kingdoms#0.3	Ran Wei	400
-R7P	ruanruan	Ruanruan	400
-R7Q	rugii_t	Rugii	400
-R7R	minor states under indian influence#7.1	Rashtrakuta	600
-R7S	rashtrakuta	Rashtrakuta state	800
-R7T	bantu peoples#8.2	Rundi	800
-R7U	rus' khaganate	Rus' Khaganate	800
-R7V	tuareg nomadic tribes#4.1	Regraga	1200
-R7W	ryazan	Ryazan	1279
-R7X	rajastan	Rajastan	1492
-R7Y	rankulche	Rankülche	1492
-R7Z	islamic kingdoms#4.1	Rathore	1530
-R80	rozwi	Rozwi	1650
-R81	rupert's land	Rupert's Land	1715
-R82	rwanda	Rwanda	1815
-R83	romania	Romania	1880
-R84	rhodesia	Rhodesia	1914
-RBY	turkey	Republic of Turkey	1930
-RIN	rhine	Rhineland	1000
-RIU	bedouins#8.1	Robifua	900
-RKB	rub	Rub al Khali Bedouin	-499
-RMK	karluks#8.1	Rosamak	700
+QIR	nwt metis nation	NWT Métis Nation	1492
+QIS	timurid emirates#8.1	Najahid	1492
+QIT	natchez	Natchez	1492
+QIU	niitsitpiis-stahkoii ᖹᐟᒧᐧᐨᑯᐧ ᓴᐦᖾᐟ	Niitsítpiis-stahkoii ᖹᐟᒧᐧᐨᑯᐧ ᓴᐦᖾᐟ	1492
+QIV	nitassinan	Nitassinan	1492
+QIW	mossi states#8.1	Nuer	1492
+QIX	nunatukavut	NunatuKavut	1492
+QIZ	nunavik	Nunavik	1492
+QJ0	hopi	Hopi	1500
+QJ1	huron	Huron	1500
+QJ2	inca	Inca Empire	1500
+QJ3	iroquois	Iroquois	1500
+QJ4	navajo	Navajo	1500
+QJ5	islamic states#4.1	Paramara	1500
+QJ6	pomo	Pomo	1500
+QJ7	islamic states#0.1	Solanki	1500
+QJ8	tlinoit	Tlinoit	1500
+QJ9	shan states#8.1	Angkola	1530
+QJA	pari	Pâri	1492
+QJB	p’urhepecha	P’urhépecha	1492
+QJC	timurid emirates#6.1	Sallarid	1492
+QJD	satare-mawe	Sataré-Mawé	1492
+QJE	sauk and meskwaki	Sauk and Meskwaki	1492
+QJF	burmese kingdoms#4.1	Semang	1492
+QJG	shoshone-bannock	Shoshone-Bannock	1492
+QJH	stoney	Stoney	1492
+QJI	tekoha	Tekohá	1492
+QJJ	tepehuan	Tepehuán	1492
+QJK	timucua	Timucua	1492
+QJL	burmese kingdoms#6.1	Toraja	1492
+QJM	tłıcho nde	Tłı̨chǫ Ndè	1492
+QJN	[gauigu	[Gáuigú	1492
+QJO	opata	Ópata	1492
+QJP	ꮳꮃꭻꮺꮨᏹ tsalaguwetiyi	ᏣᎳᎫᏪᏘᏱ Tsalaguwetiyi	1492
+QJQ	ᒋᑦ ᐊᔅᒋᓄᐤ st'aschinuw	ᒋᑦ ᐊᔅᒋᓄᐤ St'aschinuw	1492
+QJR	algonquin	Algonquin	1500
+QJS	apache	Apache	1500
+QJT	aztec	Aztec Empire	1500
+QJU	islamic states#8.1	Chauhan	1500
+QJV	cherokee	Cherokee	1500
+QJW	comanche	Comanche	1500
+QJX	coqs	Coqs	1500
+QJY	crow	Crow	1500
+QJZ	delaware	Delaware	1500
+QK0	malaysian islamic states#7.1	Kutai	1530
+QK1	luba	Luba	1530
+QK2	lunda	Lunda	1530
+QK3	islamic kingdoms#8.2	Maitraka	1530
+QK4	maoris	Maoris	1530
+QK5	mescalero	Mescalero	1530
+QK6	missouri	Missouri	1530
+QK7	burmese kingdoms#8.1	Mongondow	1530
+QK8	montagnais innu	Montagnais Innu	1530
+QK9	mughal	Mughal Empire	1530
+QKA	assiniboin	Assiniboin	1530
+QKB	astrakhan	Astrakhan Khanate	1530
+QKC	atakapa	Atakapa	1530
+QKD	bagirmi	Bagirmi	1530
+QKE	blackfoot	Blackfoot	1530
+QKF	bukara	Bukara Khanate	1530
+QKG	islamic kingdoms#4.2	Chandela	1530
+QKH	chukchi	Chukchi	1530
+QKI	coahuiltec	Coahuiltec	1530
+QKJ	cuba	Cuba	1530
+QKK	england and ireland	England and Ireland	1530
+QKL	eyaq	Eyaq	1530
+QKM	islamic kingdoms#8.3	Gurjara	1530
+QKN	hispaniola	Hispaniola	1530
+QKO	hitchiti	Hitchiti	1530
+QKP	holstein	Holstein and Mecklenburg	1530
+QKQ	illinois	Illinois	1530
+QKR	inupiaq	Inupiaq	1530
+QKS	itelmen	Itelmen	1530
+QKT	rajputana kingdoms#8.1	Kachwaha	1530
+QKU	islamic kingdoms#8.1	Kalachuri	1530
+QKV	kazan	Kazan Khanate	1530
+QKW	khanty	Khanty	1530
+QKX	khiva	Khiva Khanate	1530
+QKY	kiowa	Kiowa	1530
+QKZ	koryaks	Koryaks	1530
+QL0	tonkawa	Tonkawa	1530
+QL1	central asian khanates#0.1	Basmil	1600
+QL2	central asian khanates#5.2	Jalayir	1600
+QL3	kamilaroi	Kamilaroi	1600
+QL4	central asian khanates#3.1	Karluk	1600
+QL5	kokatha	Kokatha	1600
+QL6	lan na	Lan Na	1600
+QL7	mirning	Mirning	1600
+QL8	central asian khanates#8.2	Oghuz	1600
+QL9	central asian khanates#1.1	Sart	1600
+QLB	naples	Naples	1530
+QLC	naskapi innu	Naskapi Innu	1530
+QLE	nenets	Nenets	1530
+QLF	nogai horde	Nogai Horde	1530
+QLG	northern paiute	Northern Paiute	1530
+QLH	obiwa	Obiwa	1530
+QLI	oromo	Oromo	1530
+QLJ	osage	Osage	1530
+QLK	islamic kingdoms#3.1	Pala	1530
+QLL	islamic kingdoms#0.1	Pratihara	1530
+QLM	prussia	Prussia	1530
+QLO	safavid	Safavid Empire	1530
+QLP	santee	Santee	1530
+QLQ	saylan	Saylan	1530
+QLR	senegal	Senegal	1530
+QLS	shawnee	Shawnee	1530
+QLT	shoshoni	Shoshoni	1530
+QLU	spain	Spain	1530
+QLV	suspiaq	Suspiaq	1530
+QLW	t'atsaot'ine	T'atsaot'ine	1530
+QLX	tamalipueca	Tamalipueca	1530
+QLY	tepehuane	Tepehuane	1530
+QLZ	teton	Teton	1530
+QM0	cape colony	Cape Colony	1715
+QM1	pampas cultures#1.2	Cofan	1715
+QM2	guyana	Guyana	1715
+QM3	ireland	Kingdom of Ireland	1715
+QM4	maratha	Maratha	1715
+QM5	segu	Segu	1715
+QM6	tunis	Tunis	1715
+QM7	afghanistan	Afghanistan	1783
+QM8	assam	Assam	1783
+QM9	bahamas	Bahamas	1783
+QMC	central asian khanates#8.1	Tekke	1600
+QMD	central asian khanates#0.2	Tolis	1600
+QME	ceylon	Ceylon	1650
+QMF	dutch brazil	Dutch Brazil	1650
+QMG	dutch east indies	Dutch East Indies	1650
+QMH	essequibo	Essequibo	1650
+QMI	florida	Florida	1650
+QMJ	islamic kingdoms#1.1	Holkar	1650
+QMK	central asian khanates#4.1	Kirghiz	1650
+QML	luxembourg	Luxembourg	1650
+QMM	malaya	Malaya	1650
+QMN	qing	Manchu Empire	1650
+QMO	massachusetts bay	Massachusetts Bay	1650
+QMP	bra	Portuguese Brazil	1650
+QMQ	portuguese east africa	Portuguese East Africa	1650
+QMR	post-ming warlords	Post-Ming Warlords	1650
+QMS	laotian states#8.1	Sukhothai	1650
+QMT	central asian khanates#8.3	Tatar	1650
+QMU	islamic kingdoms#5.1	Tomara	1650
+QMV	sahtu	Sahtu	1700
+QMW	algiers	Algiers	1715
+QMX	asante	Asante	1715
+QMZ	british american colonies	British American colonies	1715
+QN0	nejd	Nejd	1783
+QN1	oman	Oman	1783
+QN2	oudh	Oudh	1783
+QN3	paraguay	Paraguay	1783
+QN4	mahratta states#4.1	Scindia	1783
+QN5	bundelkhand	Bundelkhand	1800
+QN6	circars	Circars	1800
+QN7	rajputs kingdoms#3.1	Kugiya	1800
+QN8	nizam's dominions	Nizam's Dominions	1800
+QN9	rajputs kingdoms#0.1	Pibosira	1800
+QNB	mahratta states#7.1	Bhonsle	1783
+QNC	british guiana	British Guiana	1783
+QNE	mahratta states#5.1	Bundela	1783
+QNF	carnatic	Carnatic	1783
+QNH	cochin china	Cochin China	1783
+QNI	dahomey	Dahomey	1783
+QNJ	dutch settlements	Dutch settlements	1783
+QNK	rift valley states#8.1	Funj	1783
+QNM	mahratta states#2.1	Gaekwad	1783
+QNO	golconda	Golconda	1783
+QNP	india	India	1783
+QNQ	kaarta	Kaarta	1783
+QNR	the two sicilies	Kingdom of the Two Sicilies	1783
+QNT	kong	Kong Empire	1783
+QNU	lahore	Lahore	1783
+QNV	lozi	Lozi	1783
+QNX	luisiana	Luisiana	1783
+QNY	maratha confederacy	Maratha Confederacy	1783
+QNZ	mysore	Mysore	1783
+QO0	french guiana	French Guiana	1880
+QO1	french indochina	French Indochina	1880
+QO2	gabon	Gabon	1880
+QO3	germany	Germany	1880
+QO4	greece	Greece	1880
+QO5	guatemala	Guatemala	1880
+QO6	harer	Harer	1880
+QO7	honduras	Honduras	1880
+QO8	imerina	Imerina	1880
+QO9	italy	Italy	1880
+QOA	sikhs	Sikhs	1800
+QOB	angola	Angola	1815
+QOC	bunyoro	Bunyoro	1815
+QOD	burundi	Burundi	1815
+QOE	fulani	Fulani Empire	1815
+QOF	guiana	Guiana	1815
+QOG	kazembe	Kazembe	1815
+QOH	new south wales	New South Wales	1815
+QOI	nkore	Nkore	1815
+QOJ	sierra leone	Sierra Leone	1815
+QOK	somalia	Somalia	1815
+QOL	turan	Turan	1815
+QON	algeria	Algeria	1880
+QOO	arabia	Arabia	1880
+QOP	argentina	Argentina	1880
+QOQ	barotse	Barotse	1880
+QOR	bokhara	Bokhara Khanate	1880
+QOS	bolivia	Bolivia	1880
+QOT	bosnia-herzegovina	Bosnia-Herzegovina	1880
+QOU	bulgaria	Bulgaria	1880
+QOV	chile	Chile	1880
+QOW	colombia	Colombia	1880
+QOX	costa rica	Costa Rica	1880
+QOY	dutch guiana	Dutch Guiana	1880
+QOZ	ecuador	Ecuador	1880
+QP0	finland	Finland	1914
+QP1	french equatorial africa	French Equatorial Africa	1914
+QP2	french west africa	French West Africa	1914
+QP3	german e. africa	German E. Africa	1914
+QP4	german south-west africa	German South-West Africa	1914
+QP5	gold coast	Gold Coast	1914
+QP6	kamerun	Kamerun	1914
+QP7	libya	Libya	1914
+QP8	malawi	Malawi	1914
+QP9	mongolia	Mongolia	1914
+QPA	ivory coast	Ivory Coast	1880
+QPB	borgu states#8.1	Kanuri	1880
+QPC	liberia	Liberia	1880
+QPD	mexico	Mexico	1880
+QPE	mirambo unyanyembe ukimbu	Mirambo Unyanyembe Ukimbu	1880
+QPF	mozambique	Mozambique	1880
+QPG	netherlands indies	Netherlands Indies	1880
+QPH	nicaragua	Nicaragua	1880
+QPI	northern territory	Northern Territory	1880
+QPJ	shona	Shona	1880
+QPK	sokoto	Sokoto Caliphate	1880
+QPL	south australia	South Australia	1880
+QPM	utetera	Sultanate of Utetera	1880
+QPN	teke	Teke	1880
+QPO	transvaal	Transvaal	1880
+QPP	tukular	Tukular Caliphate	1880
+QPQ	first samori	First Samori Empire	1900
+QPR	tunisia	Tunisia	1900
+QPS	australia	Australia	1914
+QPT	azerbaijan	Azerbaijan	1914
+QPU	belgian congo	Belgian Congo	1914
+QPV	botswana	Botswana	1914
+QPW	british east africa	British East Africa	1914
+QPX	british protectorate	British Protectorate	1914
+QPY	british somaliland	British Somaliland	1914
+QPZ	eritrea	Eritrea	1914
+QQ0	northern rhodesia	Northern Rhodesia	1938
+QQ1	saudi arabia	Saudi Arabia	1938
+QQ2	siam	Siam	1938
+QQ3	southern rhodesia	Southern Rhodesia	1938
+QQ4	bangladesh	Bangladesh	1945
+QQ5	burkina faso	Burkina Faso	1945
+QQ6	cameroon	Cameroon	1945
+QQ7	central african	Central African Republic	1945
+QQ8	chad	Chad	1945
+QQ9	china	China	1945
+QQA	quazaq	Quazaq Khanate	1530
+QQB	new zealand	New Zealand	1914
+QQC	nigeria	Nigeria	1914
+QQD	austro-hungarian#8.1	Slovakia	1914
+QQE	south africa	South Africa	1914
+QQF	suriname	Suriname	1914
+QQG	togoland	Togoland	1914
+QQI	austro-hungarian#3.1	Tyrol	1914
+QQJ	chinese warlords	Chinese Warlords	1920
+QQL	czechoslovakia	Czechoslovakia	1920
+QQM	dominion of newfoundland	Dominion of Newfoundland	1920
+QQN	bin shal'an	Emirate of Bin Shal'an	1920
+QQO	french cameroons	French Cameroons	1920
+QQP	french indo-china	French Indo-China	1920
+QQQ	kenya	Kenya	1920
+QQR	malaysia	Malaysia	1920
+QQS	mandatory palestine	Mandatory Palestine	1920
+QQT	mesopotamia	Mesopotamia	1920
+QQU	muscat and oman	Muscat and Oman	1920
+QQV	syria	Syria	1920
+QQW	tanzania, united republic of	Tanzania, United Republic of	1920
+QQX	israel	Israel	1938
+QQY	new caledonia	New Caledonia	1938
+QQZ	new hebrides	New Hebrides	1938
+QRA	cyraneica	Cyraneica	1945
+QRB	dutch guinea	Dutch Guinea	1945
+QRC	guinea	Guinea	1945
+QRD	indonesia	Indonesia	1945
+QRE	iraq	Iraq	1945
+QRF	mauritania	Mauritania	1945
+QRG	namibia	Namibia	1945
+QRH	niger	Niger	1945
+QRI	nyasaland	Nyasaland	1945
+QRJ	pakistan	Pakistan	1945
+QRK	sri lanka	Sri Lanka	1945
+QRL	thailand	Thailand	1945
+QRM	tonkin	Tonkin	1945
+QRN	korea, republic of	Korea, Republic of	1960
+QRO	bosnia and herzegovina	Bosnia and Herzegovina	1994
+QRP	byelarus	Byelarus	1994
+QRQ	czech	Czech Republic	1994
+QRR	kazakhstan	Kazakhstan	1994
+QRS	kyrgyzstan	Kyrgyzstan	1994
+QRT	turkmenistan	Turkmenistan	1994
+R85	raeti	Raeti	-499
+R86	hedmark	Raumar	-499
+R87	wu_c	Royal Zhou	-499
+R88	rugii	Rugii	-499
+R89	norse_w	Rygir	-499
+R8A	rong	Rong and Di	-322
+R8B	thai#8.3	Rade	-199
+R8C	sarmatae#2	Rong	300
+R8D	sixteen kingdoms#0.3	Ran Wei	400
+R8E	ruanruan	Ruanruan	400
+R8F	rugii_t	Rugii	400
+R8G	minor states under indian influence#7.1	Rashtrakuta	600
+R8H	karluks#8.1	Rosamak	700
+R8I	tupis#1.1	Ranquel	800
+R8J	rashtrakuta	Rashtrakuta state	800
+R8K	bantu peoples#8.2	Rundi	800
+R8L	rus' khaganate	Rus' Khaganate	800
+R8M	tuareg nomadic tribes#4.1	Regraga	1200
+R8N	ryazan	Ryazan	1279
+R8O	rajastan	Rajastan	1492
+R8P	rankulche	Rankülche	1492
+R8Q	islamic kingdoms#4.1	Rathore	1530
+R8R	rozwi	Rozwi	1650
+R8S	rupert's land	Rupert's Land	1715
+R8T	rwanda	Rwanda	1815
+R8U	romania	Romania	1880
+R8V	rhodesia	Rhodesia	1914
+RFU	bedouins#8.1	Robifua	900
+RIE	rub	Rub al Khali Bedouin	-499
+RIG	rattanakosin	Rattanakosin Kingdom	1783
+RIL	rhine	Rhineland	1000
+RLF	turkey	Republic of Turkey	1930
 ROM	orig:ROM	Rome and Latium	-499
 ROM	rom	Roman Republic	-399
-RQL	tupis#1.1	Ranquel	800
-RSO	rattanakosin	Rattanakosin Kingdom	1783
+RSV	slavonic tribes#8.2	Rostov	800
 SAB	orig:SAB	South Arabia	-499
 SAH	mande	Mande	-499
 SAK	massagetae	Massagetae	-499
@@ -1396,168 +1406,170 @@ THR	odrysae	Odrysae	-499
 THS	ths	Thessaly	-499
 THS	orig:THS	Thessaly	-499
 TML	chola	Chola	-499
-U42	ulaid	Ulaid	-499
-U43	hindu kingdoms#3.1	Utkala	-399
-U44	minor states#4.1	Ujjayini	-199
-U45	utigur	Utigurs	500
-U46	tiele#2	Uyghur	500
-U47	uyghurs	Uyghurs	700
-U48	buwayhid emirates#2.1	Uqaylid	1000
-U49	siberians#0.1	Udege	1279
-U4A	burmese kingdoms#1.1	Urak Lawoi	1492
-U4B	ute	Ute	1530
-U4C	central asian khanates#5.1	Uz	1600
-U4D	central asian khanates#2.1	Uighur	1783
-U4E	uruguay	Uruguay	1880
-U4F	uganda	Uganda	1914
-U4G	ukraine	Ukraine	1920
-U4H	uzbekistan	Uzbekistan	1994
-UDI	united	United Kingdom	1715
-UDS	usa	United States of America	1783
-UKH	mongols#8.3	Uriankhai	1100
-UOC	union of south africa	Union of South Africa	1920
-UYT	umayyad	Umayyad Caliphate	700
-V9R	vaccaei	Vaccaei	-499
-V9S	vajji	Vajji	-499
-V9T	vanga	Vanga	-499
-V9U	vascones	Vascones	-499
-V9V	venedi	Venedi	-499
-V9W	vidarbha	Vidarbha	-499
-V9X	hindu kingdoms#8.1	Videha	-499
-V9Y	manioc farmers#0.2	Vilela	-499
-V9Z	vindelici	Vindelici	-499
-VA0	volcae	Volcae	-499
-VA1	volga_finns	Volga Finns	-499
-VA2	votadini	Votadini	-499
-VA3	austro-asiatic rice cultures#6.2	Viet	-399
-VA4	veneti	Veneti	-322
-VA5	vandali	Vandals	300
-VA6	venedi_t	Venedi	300
-VA7	visigoths	Visigoths	400
-VA8	vakataka	Vakataka	500
-VA9	vandals	Vandals	500
+U4I	ulaid	Ulaid	-499
+U4J	hindu kingdoms#3.1	Utkala	-399
+U4K	minor states#4.1	Ujjayini	-199
+U4L	utigur	Utigurs	500
+U4M	tiele#2	Uyghur	500
+U4N	uyghurs	Uyghurs	700
+U4O	buwayhid emirates#2.1	Uqaylid	1000
+U4P	siberians#0.1	Udege	1279
+U4Q	burmese kingdoms#1.1	Urak Lawoi	1492
+U4R	ute	Ute	1530
+U4S	central asian khanates#5.1	Uz	1600
+U4T	central asian khanates#2.1	Uighur	1783
+U4U	uruguay	Uruguay	1880
+U4V	uganda	Uganda	1914
+U4W	ukraine	Ukraine	1920
+U4X	uzbekistan	Uzbekistan	1994
+UDN	united	United Kingdom	1715
+UDT	usa	United States of America	1783
+UFS	union of south africa	Union of South Africa	1920
+UHA	mongols#8.3	Uriankhai	1100
+UYE	umayyad	Umayyad Caliphate	700
 VAN	orig:VAN	Van Lang	-499
 VAN	van	Annam	1000
-VAQ	vazimba	Vazimba	600
-VAX	bantu peoples#7.2	Venda	800
-VB0	veps	Veps	800
-VB1	slavonic tribes#4.1	Volhynians	800
-VB2	permians#4.1	Votes	800
-VB3	cushites#5.1	Vaba	900
-VB4	rajput kingdoms#2.1	Vriji	1000
-VB5	vijayanagara	Vijayanagara	1492
-VB6	islamic kingdoms#6.1	Varman	1530
-VB7	rajputs kingdoms#5.1	Vuvukaika	1800
-VB8	venezuela	Venezuela	1880
-VB9	victoria	Victoria	1880
-VBB	vietnam	Vietnam	1960
-VFL	the rio de la plata	Viceroyalty of the Río de la Plata	1783
-VHD	visigothic	Visigothic Kingdom	600
-VNW	new spain	Viceroyalty of New Spain	1530
-VPE	peru	Viceroyalty of Peru	1650
-VUS	volga bulgars	Volga Bulgars	800
-VWG	new granada	Viceroyalty of New Granada	1783
-VZC	veracruz civilization	Veracruz civilization	500
-W74	ethiopian highland farmers#8.1	Wandite	-499
-W75	wey	Wey	-499
-W76	manioc farmers#4.2	Wichi	-499
-W77	wusun	Wusun	-499
-W78	west african cereal farmers#0.6	Wala	-399
-W79	wei	Wei	-399
-W7A	turcik tribes#4.2	Wuhuan	-199
-W7B	saka	Western Satraps	0
-W7C	kangju#1	Wensu	300
-W7D	slavs_w	Wends	500
-W7E	wuji	Wuji	500
-W7F	warsenis	Warsenis	700
-W7G	hindu kingdoms#7.2	Western Ganga	700
-W7H	tupis#5.1	Wampis	800
-W7I	mogollon#3.1	Warihio	800
-W7J	fra	West Francia	900
-W7K	white horde	White Horde	1400
-W7L	malaysian islamic states#0.1	Wa	1492
-W7M	wahpeton	Wahpeton	1492
-W7N	wallmapu	Wallmapu	1492
-W7O	warao	Warao	1492
-W7P	wari	Wari	1492
-W7Q	wayana	Wayana	1492
-W7R	wichita	Wichita	1492
-W7S	watassid morocco	Watassid Morocco	1530
-W7T	wiradjuri	Wiradjuri	1600
-W7U	western australia	Western Australia	1880
-W7V	white russia	White Russia	1920
-WHL	western chalukyas	Western Chalukyas	1100
-WKL	ethiopian highland peoples#8.1	Wankumbolua	700
-WLE	wattasid	Wattasid Caliphate	1492
-WMH	washtage monzhan	Washtáge Moⁿzháⁿ	1492
-WMM	wrm	Western Roman Empire	400
-WOT	western gokturk khaganate	Western Gokturk Khaganate	700
+VBC	vaccaei	Vaccaei	-499
+VBD	vajji	Vajji	-499
+VBE	vanga	Vanga	-499
+VBF	vascones	Vascones	-499
+VBJ	venedi	Venedi	-499
+VBK	vidarbha	Vidarbha	-499
+VBM	hindu kingdoms#8.1	Videha	-499
+VBN	manioc farmers#0.2	Vilela	-499
+VBO	vindelici	Vindelici	-499
+VBP	volcae	Volcae	-499
+VBQ	volga_finns	Volga Finns	-499
+VBT	votadini	Votadini	-499
+VBV	austro-asiatic rice cultures#6.2	Viet	-399
+VBW	veneti	Veneti	-322
+VBX	vandali	Vandals	300
+VBY	venedi_t	Venedi	300
+VBZ	visigoths	Visigoths	400
+VC0	vakataka	Vakataka	500
+VC1	vandals	Vandals	500
+VC2	vazimba	Vazimba	600
+VC3	bantu peoples#7.2	Venda	800
+VC4	veps	Veps	800
+VC5	volga bulgars	Volga Bulgars	800
+VC6	slavonic tribes#4.1	Volhynians	800
+VC7	permians#4.1	Votes	800
+VC8	cushites#5.1	Vaba	900
+VC9	rajput kingdoms#2.1	Vriji	1000
+VCB	vijayanagara	Vijayanagara	1492
+VCJ	islamic kingdoms#6.1	Varman	1530
+VCK	rajputs kingdoms#5.1	Vuvukaika	1800
+VCM	venezuela	Venezuela	1880
+VCQ	victoria	Victoria	1880
+VCX	vietnam	Vietnam	1960
+VHO	visigothic	Visigothic Kingdom	600
+VHR	the rio de la plata	Viceroyalty of the Río de la Plata	1783
+VLM	vladimir	Vladimir-Suzdal	1279
+VNP	new spain	Viceroyalty of New Spain	1530
+VPR	peru	Viceroyalty of Peru	1650
+VWR	new granada	Viceroyalty of New Granada	1783
+VZV	veracruz civilization	Veracruz civilization	500
+W7W	ethiopian highland farmers#8.1	Wandite	-499
+W7X	wey	Wey	-499
+W7Y	manioc farmers#4.2	Wichi	-499
+W7Z	wusun	Wusun	-499
+W80	west african cereal farmers#0.6	Wala	-399
+W81	wei	Wei	-399
+W82	turcik tribes#4.2	Wuhuan	-199
+W83	saka	Western Satraps	0
+W84	kangju#1	Wensu	300
+W85	slavs_w	Wends	500
+W86	wuji	Wuji	500
+W87	warsenis	Warsenis	700
+W88	hindu kingdoms#7.2	Western Ganga	700
+W89	tupis#5.1	Wampis	800
+W8A	mogollon#3.1	Warihio	800
+W8B	fra	West Francia	900
+W8C	white horde	White Horde	1400
+W8D	malaysian islamic states#0.1	Wa	1492
+W8E	wahpeton	Wahpeton	1492
+W8F	wallmapu	Wallmapu	1492
+W8G	warao	Warao	1492
+W8H	wari	Wari	1492
+W8I	wayana	Wayana	1492
+W8J	wichita	Wichita	1492
+W8K	watassid morocco	Watassid Morocco	1530
+W8L	wiradjuri	Wiradjuri	1600
+W8M	western australia	Western Australia	1880
+W8N	white russia	White Russia	1920
+WHK	western chalukyas	Western Chalukyas	1100
+WKA	ethiopian highland peoples#8.1	Wankumbolua	700
+WOU	western gokturk khaganate	Western Gokturk Khaganate	700
+WOZ	washtage monzhan	Washtáge Moⁿzháⁿ	1492
+WPH	wattasid	Wattasid Caliphate	1492
+WPR	wrm	Western Roman Empire	400
 WUU	orig:WUU	Wu	-499
-X1X	pampas cultures#8.1	Xokleng	-499
-X1Y	xu	Xu	-499
-X1Z	austro-asiatic rice cultures#1.2	Xinh Mun	-399
-X20	xiongnu	Xiongnu	-399
-X21	xianbei_n	Xianbei	300
-X22	xi	Xi	500
-X23	xixia	Xixia	1000
-X24	xinjiang	Xinjiang	1914
-XUO	utigur#1	Xueyantuo	500
-XYW	xianyu	Xianyu and Wuhuan	-499
-YA9	yamama	Yamama	-499
-YAB	manioc farmers#5.2	Yanomami	-499
-YAJ	yoruba	Yoruba	-499
+X25	pampas cultures#8.1	Xokleng	-499
+X26	xu	Xu	-499
+X27	austro-asiatic rice cultures#1.2	Xinh Mun	-399
+X28	xiongnu	Xiongnu	-399
+X29	xianbei_n	Xianbei	300
+X2A	xi	Xi	500
+X2B	xixia	Xixia	1000
+X2C	xinjiang	Xinjiang	1914
+XEY	utigur#1	Xueyantuo	500
+XYH	xianyu	Xianyu and Wuhuan	-499
 YAO	kyushu	Kyushu Yayoi	-499
 YAO	yao	Japan	800
-YAX	yucatan	Yucatan Maya	-499
 YAY	yaya_mama	Yaya-Mama	-499
-YB0	yuezhi	Yuezhi	-499
-YB1	austro-asiatic rice cultures#4.1	Yakan	-399
-YB2	yan	Yan	-399
-YB3	hindu kingdoms#8.2	Yaudheya	-399
-YB4	yayoi	Yayoi	-399
-YB5	mc:1#2	Yuan	-399
-YB6	kushan	Yuezhi	-99
-YB7	yuan_shao	Yuan Shao	200
-YB8	sarmatae#1	Yamnaya	300
-YB9	dingling#2	Yancai	300
-YBB	bulgars_t#1	Yuban	300
-YBC	yuwen#1	Yutian	300
-YBD	yuwen	Yuwen	300
-YBE	yamato	Yamato	500
-YBF	tupis#2.1	Yagan	800
-YBG	bantu peoples#3.2	Yaka	800
-YBH	papuans#8.1	Yali	800
-YBI	anasazi#5.1	Yaqui	800
-YBJ	slavonic tribes#4.2	Yaroslavl	800
-YBK	yemen	Yemen	1000
-YBL	rajput kingdoms#5.2	Yadava	1200
-YBM	siberians#4.2	Yakut	1279
-YBO	yaminawa	Yaminawá	1492
-YBP	yankton	Yankton	1492
-YBQ	yanomami	Yanomami	1492
-YBR	yup’ik/cup’ik	Yup’ik/Cup’ik	1492
-YBS	yukagir	Yukagir	1530
-YBT	yup'ik & cup'ik	Yup'ik & Cup'ik	1530
-YBU	central asian khanates#4.2	Yagma	1650
-YBV	yeke	Yeke	1880
-YBW	yugoslavia	Yugoslavia	1920
-YMK	oghuz turks#4.3	Yemek	900
+YBX	yamama	Yamama	-499
+YBY	manioc farmers#5.2	Yanomami	-499
+YBZ	yoruba	Yoruba	-499
+YC0	yucatan	Yucatan Maya	-499
+YC1	yuezhi	Yuezhi	-499
+YC2	austro-asiatic rice cultures#4.1	Yakan	-399
+YC3	yan	Yan	-399
+YC4	hindu kingdoms#8.2	Yaudheya	-399
+YC5	yayoi	Yayoi	-399
+YC6	mc:1#2	Yuan	-399
+YC7	kushan	Yuezhi	-99
+YC8	yuan_shao	Yuan Shao	200
+YC9	sarmatae#1	Yamnaya	300
+YCB	dingling#2	Yancai	300
+YCC	bulgars_t#1	Yuban	300
+YCD	yuwen#1	Yutian	300
+YCE	yuwen	Yuwen	300
+YCF	yamato	Yamato	500
+YCG	tupis#2.1	Yagan	800
+YCH	bantu peoples#3.2	Yaka	800
+YCJ	papuans#8.1	Yali	800
+YCL	anasazi#5.1	Yaqui	800
+YCO	slavonic tribes#4.2	Yaroslavl	800
+YCQ	oghuz turks#4.3	Yemek	900
+YCR	yemen	Yemen	1000
+YCS	cuman-kipchak confederation#8.2	Yazir	1100
+YCV	rajput kingdoms#5.2	Yadava	1200
+YCW	siberians#4.2	Yakut	1279
+YCX	yaminawa	Yaminawá	1492
+YCZ	yankton	Yankton	1492
+YD0	yanomami	Yanomami	1492
+YD1	yup’ik/cup’ik	Yup’ik/Cup’ik	1492
+YD2	yukagir	Yukagir	1530
+YD3	yup'ik & cup'ik	Yup'ik & Cup'ik	1530
+YD4	central asian khanates#4.2	Yagma	1650
+YD5	yeke	Yeke	1880
+YD6	yugoslavia	Yugoslavia	1920
+YND	great	Yuan Dynasty	1279
 YUE	orig:YUE	Yue	-499
 YUE	yue	Yue	-399
-YZR	cuman-kipchak confederation#8.2	Yazir	1100
-Z3G	zaueces	Zaueces	-499
-Z3H	zheng	Zheng	-499
-Z3I	zhao	Zhao	-399
-Z3J	zhang_lu	Zhang Lu	200
-Z3K	tuaregs#2.1	Zanata	900
-Z3L	tuaregs#6.1	Zeghawa	900
-Z3M	hausa states#8.1	Zande	1492
-Z3N	zanzibar	Zanzibar	1715
-Z3O	zulu	Zulu	1783
-Z3P	zaire	Zaire	1920
-Z3Q	zambia	Zambia	1920
-Z3R	zimbabwe	Zimbabwe	1920
+Z3S	zaueces	Zaueces	-499
+Z3T	zheng	Zheng	-499
+Z3U	zhao	Zhao	-399
+Z3V	zhang_lu	Zhang Lu	200
+Z3W	tuaregs#2.1	Zanata	900
+Z3X	tuaregs#6.1	Zeghawa	900
+Z3Y	hausa states#8.1	Zande	1492
+Z3Z	zanzibar	Zanzibar	1715
+Z40	zulu	Zulu	1783
+Z41	zaire	Zaire	1920
+Z42	zambia	Zambia	1920
+Z43	zimbabwe	Zimbabwe	1920
 ZAP	zapotec	Zapotec of Monte Alban	-499
-ZGK	zhangzhung	Zhangzhung Kingdom	-399
+ZGI	zhangzhung	Zhangzhung Kingdom	-399
 ZHO	zhou	Zhou	-499
-ZIL	zayyanid	Zayyanid Caliphate	1492
+ZIH	zayyanid	Zayyanid Caliphate	1492
