@@ -69,8 +69,21 @@ def invented(seed, family=''):
     return out[:1].upper() + out[1:]
 
 
+EARLY_MEDIEVAL = [
+    (r'hindu|rajput|indian|mahratta|islamic and hindu|islamic states', 'state', ['Maitraka', 'Gurjara', 'Maukhari', 'Later Gupta', 'Gauda', 'Kamarupa', 'Pandya', 'Chola', 'Chera', 'Kalabhra', 'Western Ganga', 'Kadamba', 'Vishnukundin', 'Eastern Chalukya', 'Matsya', 'Haihaya', 'Chedi', 'Malava', 'Licchavi', 'Karkota', 'Odra', 'Vanga', 'Samatata', 'Khadga', 'Bhauma-Kara', 'Sailodbhava', 'Pallava', 'Rashtrakuta', 'Alupa', 'Mushika', 'Ay', 'Chahamana', 'Pratihara', 'Gahadavala', 'Hunas', 'Mauryas of Konkan', 'Nala', 'Sharabhapuriya', 'Panduvamsi', 'Soma', 'Varman', 'Rai', 'Brahmin Shahi', 'Turk Shahi', 'Kabul Shahi', 'Zunbil']),
+    (r'turcik|turkic|cuman|kipchak|khanate|central asian|steppe', 'khanate', ['Göktürk', 'Uyghur', 'Karluk', 'Oghuz', 'Khazar', 'Bulgar', 'Kimek', 'Kyrgyz', 'Tuyuhun', 'Türgesh', 'Basmil', 'Tölis', 'Khitan', 'Xueyantuo', 'Tiele', 'Pecheneg', 'Magyar', 'Avar', 'Sabir', 'Onogur', 'Utigur', 'Kutrigur', 'Hephthalite', 'Chigil', 'Yagma', 'Shatuo', 'Tatabi', 'Kumo Xi', 'Shiwei', 'Mohe', 'Bayegu', 'Tongra', 'Pugu', 'Sir', 'Azh', 'Chuy', 'Nushibi', 'Dulu']),
+    (r'minor states under indian|malaysian|austronesian|malay', 'state', ['Srivijaya', 'Tarumanagara', 'Kalingga', 'Melayu', 'Langkasuka', 'Pan Pan', 'Chitu', 'Kedah', 'Kandis', 'Sunda', 'Medang', 'Galuh', 'Barus', 'Tambralinga', 'Pattani', 'Sriwijaya', 'Butuan', 'Tondo', 'Namayan', 'Ma-i']),
+    (r'thai|dvaravati|laotian|shan|burmese|mon-khmer', 'state', ['Dvaravati', 'Haripunjaya', 'Nanzhao', 'Lavo', 'Si Thep', 'Sukhothai', 'Lanna', 'Tambralinga', 'Chenla', 'Pyu', 'Mon', 'Arakan', 'Sri Ksetra', 'Halin', 'Beikthano', 'Thaton', 'Pegu', 'Mueang Sua', 'Xiengkhouang', 'Muang Phuan']),
+    (r'saharan|tuareg|berber', 'tribe', ['Zenata', 'Sanhaja', 'Masmuda', 'Gazula', 'Lamta', 'Maghrawa', 'Awraba', 'Berghwata', 'Gaetuli', 'Mazices', 'Lawata', 'Haskura', 'Hintata', 'Kutama', 'Matmata', 'Houara', 'Nafusa', 'Banu Ifran', 'Miknasa', 'Ghumara']),
+]
+
+
 def pool_for(family, year=9999):
     low = family.lower()
+    if 500 <= year < 900:
+        for rx, kind, names in EARLY_MEDIEVAL:
+            if re.search(rx, low):
+                return kind, names
     if year < 500:
         for rx, kind, names in ANCIENT:
             if re.search(rx, low):
@@ -138,4 +151,4 @@ history_names_extra.merge(POOLS)
 
 
 # the name a polity of the dataset had at a date, where the dataset keeps one name for a dynasty's whole span: (snapshot, name) -> name
-YEAR_NAMES = {('500', 'Jin Empire'): 'Southern Qi', ('400', 'Persia'): 'Sasanian Empire', ('400', 'Indo-Parthian Kingdom'): 'Kidarite Kingdom', ('400', 'Satavahana'): 'Vakataka Kingdom', ('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}
+YEAR_NAMES = {('600', 'Kanauj'): 'Pushyabhuti Kingdom', ('600', 'Shaskanka'): 'Gauda Kingdom', ('500', 'Jin Empire'): 'Southern Qi', ('400', 'Persia'): 'Sasanian Empire', ('400', 'Indo-Parthian Kingdom'): 'Kidarite Kingdom', ('400', 'Satavahana'): 'Vakataka Kingdom', ('300', 'Parthian Empire'): 'Sasanian Empire', ('400', 'Parthian Empire'): 'Sasanian Empire', ('bc323', 'Magadha'): 'Nanda Empire', ('bc300', 'Magadha'): 'Maurya Empire'}
