@@ -201,6 +201,8 @@ public sealed class GeoRegistry
     public string? Name(string provinceId, int day) => Value(provinceId, "name", day);
     public string? Region(string provinceId, int day) => Value(provinceId, "state", day);
     public string? Owner(string provinceId, int day) => Value(provinceId, "owner", day);
+    /// <summary>How firmly the owner held the province (core, direct, tributary, claimed, contested, unknown); set by compiled border claims.</summary>
+    public string? Control(string provinceId, int day) => Value(provinceId, "control", day);
     public string? Controller(string provinceId, int day) => Value(provinceId, "controller", day) ?? Owner(provinceId, day);
 
     private double Weight(string atom)

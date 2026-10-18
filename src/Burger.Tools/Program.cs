@@ -60,6 +60,7 @@ public static partial class Program
                 "generate-locations" => GenerateLocations(rest),
                 "docs" => Docs(rest),
                 "geo" or "geography" => Geo(rest),
+                "borders" => Borders(rest),
                 "figure" or "figures" => Figure(rest),
                 "list" => ListProjects(),
                 "features" => Features(rest),
@@ -95,6 +96,9 @@ public static partial class Program
   burger generate-locations <project>       name every provinces.png color missing from locations.txt
   burger geo <project> [--date Y.M.D] [--density] [--province id]
                                             historical provinces: validate, snapshot on a date, density, lineage (docs/game/GEOGRAPHY.md)
+  burger borders build <project> [--year Y] compile history/borders into history/geography (+ states snapshot)
+  burger borders areas <project> [--claims]  make map/areas.txt (and placeholder claims) from map/states
+  burger borders test                       self-test of the border claim ledger
   burger geo test                           self-test of the historical province layer
   burger docs [project]                     write docs/game/SCRIPT_REFERENCE.md (all triggers, effects, scopes)
   burger figure list [--project <project>]  the animated bodies of Game.Figures: triangles, joints, clips
