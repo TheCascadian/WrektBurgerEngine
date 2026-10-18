@@ -193,3 +193,6 @@ MASK_YEAR.extend([
     (451, 700, (123.0, 32.0, 132.0, 44.0), [('baekje', 'Baekje', 126.8, 36.8), ('gaya', 'Gaya', 128.5, 35.5), ('gojoseon', 'Goguryeo', 126.0, 40.0), ('silla', 'Silla', 129.0, 36.0)]),
     (451, 700, (129.0, 31.0, 146.0, 42.0), [('yamatai', 'Yamato', 135.5, 34.5), ('tsukushi', 'Tsukushi', 130.5, 33.5), ('kenu', 'Kenu', 139.5, 36.0), ('izumo', 'Izumo', 132.8, 35.4)]),
 ])
+
+YEAR_SEEDS.append((640, 790, r'^sasanian', [('umayyad', 'Umayyad Caliphate', 52.0, 33.0), ('umayyad', 'Umayyad Caliphate', 60.0, 36.0), ('umayyad', 'Umayyad Caliphate', 46.0, 30.0),
+                                           ('tabaristan', 'Dabuyids', 53.5, 36.5), ('khwarazm', 'Khwarazm', 60.0, 41.5), ('sogd', 'Sogdian city-states', 65.5, 39.0)]))
