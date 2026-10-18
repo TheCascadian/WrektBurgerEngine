@@ -196,7 +196,7 @@ public sealed class TimelineSystem
     }
 
     /// <summary>Gives every state to the country the snapshot names, clears the relations of the first start date and names the countries as they were called.</summary>
-    private bool ApplySnapshot(Snapshot snap)
+    private bool ApplySnapshot(Snapshot snap, bool clearRelations = true)
     {
         var w = _game.World;
         var ordered = w.States.OrderBy(s => s.Key, StringComparer.Ordinal).ToList();
@@ -220,10 +220,20 @@ public sealed class TimelineSystem
         }
         w.RefreshOwnership();
         var R = w.Relations;
-        if (!snap.Keep) { R.Alliances.Clear(); R.MilitaryAccess.Clear(); R.Guarantees.Clear(); R.Subjects.Clear(); R.Truces.Clear(); R.Pacts.Clear(); R.Opinions.Clear(); }
+        if (!snap.Keep && clearRelations) { R.Alliances.Clear(); R.MilitaryAccess.Clear(); R.Guarantees.Clear(); R.Subjects.Clear(); R.Truces.Clear(); R.Pacts.Clear(); R.Opinions.Clear(); }
         foreach (var c in w.Countries)
         {
             if (snap.Names.TryGetValue(c.Tag, out var name)) { c.DefaultName = name; c.Name = name; c.NameVariants.Clear(); }
+        }
+        FixCapitals();
+        return true;
+    }
+
+    /// <summary>A country whose capital is not its own gets the land nearest the middle of its states.</summary>
+    private void FixCapitals()
+    {
+        foreach (var c in _game.World.Countries)
+        {
             if (!c.Exists) continue;
             if (c.Capital == null || c.Capital.Owner != c)
             {
@@ -232,7 +242,60 @@ public sealed class TimelineSystem
                 c.Capital = near?.Locations.FirstOrDefault(l => l.IsLand);
             }
         }
-        return true;
+    }
+
+    // ------------------------------------------------------------------------------------- previewing a date on a loaded world (the start screen)
+    private Dictionary<Country, (string Name, string Default, Location? Capital)>? _baseCountries;
+    private Dictionary<State, (Country? Owner, List<Country> Cores)>? _baseStates;
+
+    /// <summary>Remembers the world as the project data made it, so the start screen can show any date without loading the world again. Call right after Load().</summary>
+    public void CaptureBase()
+    {
+        var w = _game.World;
+        _baseCountries = w.Countries.ToDictionary(c => c, c => (c.RawName, c.DefaultName, c.Capital));
+        _baseStates = w.States.ToDictionary(s => s, s => (s.Owner, s.Cores.ToList()));
+    }
+
+    /// <summary>The name a country has in the project data, before any snapshot renamed it.</summary>
+    public string BaseNameOf(Country c) => _baseCountries != null && _baseCountries.TryGetValue(c, out var b) ? Localisation.Get(b.Name) : c.Name;
+
+    /// <summary>The capital a country has in the project data (null if it has none).</summary>
+    public Location? BaseCapitalOf(Country c) => _baseCountries != null && _baseCountries.TryGetValue(c, out var b) ? b.Capital : c.Capital;
+
+    /// <summary>The world as the project data made it: owners, cores, names and capitals (what a snapshot and the events change).</summary>
+    private void RestoreBase()
+    {
+        if (_baseCountries == null || _baseStates == null) return;
+        foreach (var (c, b) in _baseCountries) { c.Name = b.Name; c.DefaultName = b.Default; c.Capital = b.Capital; }
+        foreach (var (s, b) in _baseStates)
+        {
+            s.Owner = b.Owner; s.Cores.Clear(); foreach (var core in b.Cores) s.Cores.Add(core); s.Claims.Clear();
+            foreach (var l in s.Locations) _game.Warfare.SetController(l, b.Owner, silent: true);
+        }
+        _game.World.RefreshOwnership();
+    }
+
+    /// <summary>Makes the world that of a date, as loading it for that date would (the start screen has only shown it): the project data, then the history up to the date.</summary>
+    public void StartAt(GameDate date)
+    {
+        RestoreBase();
+        Apply(date);
+        _game.RaiseMapChanged();
+    }
+
+    /// <summary>Shows the map of a date on the loaded world at once: who owns what and what the countries are called. Only the map is changed (a game is started by loading the date).</summary>
+    public void Preview(GameDate date)
+    {
+        var w = _game.World;
+        if (_baseCountries == null || _baseStates == null) return;
+        if (date < Earliest) date = Earliest;
+        if (date > Latest) date = Latest;
+        w.Date = date;
+        RestoreBase();
+        var snap = SnapshotFor(date);
+        if (snap == null || !ApplySnapshot(snap, clearRelations: false)) FixCapitals();
+        _game.RefreshNames();
+        _game.RaiseMapChanged();
     }
 
     /// <summary>The event names up to a date, newest last (what has happened by then).</summary>

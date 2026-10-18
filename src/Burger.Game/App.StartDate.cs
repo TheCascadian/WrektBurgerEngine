@@ -7,6 +7,32 @@ namespace Burger.Runtime;
 /// <summary>The start date of the start screen: tabs for the eras, their suggested dates and a slider; the map changes to the history of the date picked.</summary>
 public sealed partial class App
 {
+    /// <summary>Shows the date on the loaded world at once (the world itself is loaded for that date when a game is started).</summary>
+    private void PreviewDate()
+    {
+        var game = Game;
+        if (game == null || _menuDate == null || Renderer == null) return;
+        game.Timeline.Preview(_menuDate.Value);
+        _previewing = true;
+        Renderer.Dirty = true;
+        Overlay?.RelayoutLabels(game.Timeline.SnapshotFor(_menuDate.Value)?.Date);
+        if (_menuSelection == null || !_menuSelection.Exists)
+            _menuSelection = game.World.GetCountry(game.Data.Info.DefaultTag) is { Exists: true } def ? def : game.World.Countries.Where(c => c.Playable && c.Exists).OrderByDescending(c => c.OwnedStates.Count).FirstOrDefault();
+    }
+
+    /// <summary>Starts a game; when the start screen shows another date than the one the world was loaded for, the world is loaded for that date first.</summary>
+    private void RequestStart(string? tag)
+    {
+        if (_previewing && Game != null && _menuDate != null && Renderer != null)
+        {
+            Game.Timeline.StartAt(_menuDate.Value);
+            _previewing = false;
+            Renderer.Dirty = true;
+            Overlay?.RelayoutLabels(Game.Timeline.SnapshotFor(_menuDate.Value)?.Date);
+        }
+        StartGame(tag);
+    }
+
     private void PickDate(GameDate date)
     {
         _menuDate = date;
@@ -97,7 +123,7 @@ public sealed partial class App
         if (_menuDateDirty && !Raylib.IsMouseButtonDown(MouseButton.Left))
         {
             _menuDateDirty = false;
-            if (_menuDate != null && _menuDate.Value != game.World.Date) _pending = () => LoadGame(keepMap: true);
+            if (_menuDate != null && _menuDate.Value != game.World.Date) _pending = PreviewDate;
         }
     }
 

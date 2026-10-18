@@ -32,6 +32,7 @@ public sealed partial class App
     /// <summary>The start date picked on the start screen (null = the first start date); the game is reloaded with the history up to it.</summary>
     private GameDate? _menuDate;
     private bool _menuDateDirty;
+    private bool _previewing;   // the start screen shows a date the loaded world is not made for
     private bool _quit;
     private int _frame;
     private Action? _pending;
@@ -167,6 +168,7 @@ public sealed partial class App
     private void LoadGame(bool keepMap = false, Burger.Core.Game? adopt = null, int? seed = null)
     {
         DrawLoading("Loading...");
+        _previewing = false;
         string? keepTag = _menuSelection?.Tag;
         var keptRenderer = keepMap ? Renderer : null;
         if (keptRenderer == null) Renderer?.Dispose();
@@ -737,6 +739,7 @@ public sealed partial class App
         Raylib.BeginDrawing();
         DrawWorld(cam.Camera);
         Overlay!.DrawLabels(cam.Camera);
+        Overlay.PrecomputeLabels(game.Timeline);
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Left) && hovered?.Owner != null && hovered.Owner.Playable)
         {
             _menuSelection = hovered.Owner;

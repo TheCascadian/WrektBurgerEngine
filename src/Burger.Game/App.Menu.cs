@@ -106,12 +106,12 @@ public sealed partial class App
         float bh = 40 * s;
         if (Gui.Button(new Rectangle(x, y, w, bh), _menuSelection != null ? $"Play as {_menuSelection.Name}" : "Select a country", _menuSelection != null, null, false, 18))
         {
-            StartGame(_menuSelection!.Tag);
+            RequestStart(_menuSelection!.Tag);
             Gui.EndFrame(); Raylib.EndDrawing();
             return;
         }
         y += bh + 6 * s;
-        if (Gui.Button(new Rectangle(x, y, w, 32 * s), "Observe: watch the AI play", true, null, false, 15)) { StartGame(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
+        if (Gui.Button(new Rectangle(x, y, w, 32 * s), "Observe: watch the AI play", true, null, false, 15)) { RequestStart(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
         y += 38 * s;
         if (Back(x, y, w, "main menu")) _menuPage = MenuPage.Home;
     }

@@ -326,11 +326,51 @@ public sealed class DevelopmentSystem
         }
         // the institutions that appeared before the game began have been spreading since: run the months in between
         var start = _game.World.Date;
-        foreach (var i in Institutions.Where(i => _presence.ContainsKey(i.Key) && i.Appears <= start))
+        var spreading = Institutions.Where(i => _presence.ContainsKey(i.Key) && i.Appears <= start).ToList();
+        foreach (var i in spreading) Appear(i);
+        Links();   // built once, before the institutions (which are independent of each other) spread on every core
+        Parallel.ForEach(spreading, i => CatchUp(i, Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30)));
+    }
+
+    /// <summary>
+    /// The same as <paramref name="months"/> calls of <see cref="Spread"/> while nothing else changes (as at the start of a game), without looking at the states that can never take the
+    /// institution, and stopping once nothing moves any more.
+    /// </summary>
+    private void CatchUp(InstitutionDef i, int months)
+    {
+        var p = _presence[i.Key];
+        var links = Links();
+        var idx = new List<int>();
+        var rate = new List<float>();
+        foreach (var s in _game.World.States)
         {
-            Appear(i);
-            int months = Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30);
-            for (int m = 0; m < months; m++) Spread(i);
+            if (_literacy[s.Index] < i.MinLiteracy || _urban[s.Index] < i.MinUrbanization || _level[s.Index] < i.MinDevelopment) continue;
+            double receptive = Math.Clamp(Math.Max(_urban[s.Index] / 0.08, _level[s.Index] / 8.0), 0.1, 1.0);
+            idx.Add(s.Index);
+            rate.Add((float)(i.SpreadPerMonth * Math.Max(0.03, receptive)));
+        }
+        int n = idx.Count;
+        var at = idx.ToArray();
+        var rt = rate.ToArray();
+        var near = new int[n][];
+        for (int k = 0; k < n; k++) near[k] = links[at[k]].Select(o => o.Index).ToArray();
+        var delta = new float[n];
+        for (int m = 0; m < months; m++)
+        {
+            bool any = false;
+            for (int k = 0; k < n; k++)
+            {
+                delta[k] = 0;
+                if (p[at[k]] >= 1) continue;
+                float best = 0;
+                var nb = near[k];
+                for (int j = 0; j < nb.Length; j++) { float v = p[nb[j]]; if (v > best) best = v; }
+                if (best <= 0) continue;
+                delta[k] = rt[k] * best;
+                any = true;
+            }
+            if (!any) break;
+            for (int k = 0; k < n; k++) if (delta[k] > 0) p[at[k]] = Math.Min(1f, p[at[k]] + delta[k]);
         }
     }
 

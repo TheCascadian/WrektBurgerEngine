@@ -167,6 +167,10 @@ def gen_code(name, used):
         c = (letters[:1] or 'X') + a + b
         if c not in used:
             return c
+    for a, b, c0 in itertools.product(string.ascii_uppercase, string.ascii_uppercase + string.digits, string.ascii_uppercase + string.digits):
+        c = a + b + c0
+        if c not in used:
+            return c
     raise RuntimeError('no tag code left for ' + name)
 
 

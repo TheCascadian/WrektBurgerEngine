@@ -15,7 +15,7 @@ EXTRA = {
 def merge(pools):
     for key, more in EXTRA.items():
         for rx, kind, names in pools:
-            if re.search(rx, key):
+            if rx != '.*' and re.search(rx, key):
                 for n in more:
                     if n not in names:
                         names.append(n)

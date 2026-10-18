@@ -301,6 +301,7 @@ public sealed class Game
         game.Sites.Load(game.Data.Root);
         game.Diplomacy.LoadDemilitarized();
         game.Timeline.Load();
+        game.Timeline.CaptureBase();
         var wanted = startDate ?? game.Data.Defines.StartDate;
         if (wanted > game.Data.Defines.StartDate || game.Timeline.Snapshots.Any(s => s.Date == wanted && s.Keep)) game.Timeline.Apply(wanted);
         game.Mods.Invoke(m => m.OnLoad());
