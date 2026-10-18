@@ -152,6 +152,7 @@ def clean(name):
     """The name of the dataset without 'culture', numbers and place words in brackets."""
     n = name.strip()
     n = re.sub(r'\s*\([^)]*\)\s*$', '', n) or n
+    n = re.sub('[᐀-ᙿᎠ-᏿]+', '', n).strip()   # syllabics (Cree, Cherokee) the game's font cannot draw
     n = re.sub(r'\s+cultures?\b', '', n, flags=re.I)
     n = re.sub(r'\s+\d+$', '', n)
     n = n.strip() or name

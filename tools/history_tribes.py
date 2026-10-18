@@ -211,3 +211,12 @@ YEAR_SEEDS.extend([
 YEAR_SEEDS.append((1230, 1340, r'^ryazan', [('ryazan', 'Ryazan', 40.0, 54.5), ('vladimir', 'Vladimir-Suzdal', 40.4, 56.2), ('smolensk', 'Smolensk', 32.0, 54.8), ('chernigov', 'Chernigov', 31.3, 51.6),
                                            ('galicia', 'Galicia-Volhynia', 25.0, 50.0), ('kiev', 'Kiev', 30.5, 50.4), ('polotsk', 'Polotsk', 28.0, 55.5), ('tver', 'Tver', 35.9, 57.0),
                                            ('murom', 'Murom', 42.0, 55.0), ('turov', 'Turov-Pinsk', 27.5, 52.5)]))
+
+YEAR_SEEDS.append((1368, 1450, r'^great', [('great', 'Ming Dynasty', 113.0, 31.0), ('great', 'Ming Dynasty', 108.0, 34.0), ('great', 'Ming Dynasty', 120.0, 30.0), ('great', 'Ming Dynasty', 112.0, 24.0),
+                                          ('great', 'Ming Dynasty', 104.0, 28.0), ('great', 'Ming Dynasty', 116.0, 37.0), ('great', 'Ming Dynasty', 117.0, 40.0), ('great', 'Ming Dynasty', 101.0, 25.5),
+                                          ('northernyuan', 'Northern Yuan', 108.0, 46.0), ('northernyuan', 'Northern Yuan', 100.0, 48.0), ('northernyuan', 'Northern Yuan', 118.0, 46.5), ('oirat_k', 'Oirats', 93.0, 46.0),
+                                          ('jurchen', 'Jurchens', 128.0, 45.0), ('jurchen', 'Jurchens', 131.0, 48.0), ('joseon', 'Joseon', 127.0, 37.0), ('uriankhai', 'Uriankhai', 120.0, 49.5)]))
+
+YEAR_SEEDS.append((1440, 1560, r'^chagatai', [('chagatai', 'Moghulistan', 80.0, 43.5), ('turpan', 'Turpan', 90.0, 43.0), ('yarkand', 'Yarkent', 77.0, 38.8), ('kumul', 'Kumul', 94.0, 42.5),
+                                            ('northernyuan', 'Northern Yuan', 108.0, 46.0), ('northernyuan', 'Northern Yuan', 100.0, 48.0), ('northernyuan', 'Northern Yuan', 118.0, 46.5),
+                                            ('jurchen', 'Jurchens', 128.0, 45.0), ('jurchen', 'Jurchens', 131.0, 48.0), ('uriankhai', 'Uriankhai', 120.0, 49.5), ('oirat_k', 'Oirats', 93.0, 47.5)]))
