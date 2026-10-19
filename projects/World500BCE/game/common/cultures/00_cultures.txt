@@ -5,7 +5,7 @@
 macedonian = {
 	name = "Macedonian"
 	color = { 118 133 72 }
-	ancient_macedonian = { name = "Ancient Macedonian" color = { 155 168 86 } religion = macedonian_religion traditions = { warrior_aristocracy horse_lords phalanx_discipline } }
+	ancient_macedonian = { name = "Macedonian" color = { 155 168 86 } religion = macedonian_religion traditions = { warrior_aristocracy horse_lords phalanx_discipline } }
 }
 hellenic = {
 	name = "Hellenic"
