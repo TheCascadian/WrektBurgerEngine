@@ -78,7 +78,9 @@ public static class Wire
     /// <summary>Command types a host may send to clients (system commands included).</summary>
     public static bool KnownCommandType(string type) =>
         type is GameCommand.Move or GameCommand.DeclareWar or GameCommand.AcceptPeace or GameCommand.RefusePeace or GameCommand.WhitePeace
-            or GameCommand.QueueProduction or GameCommand.EventOption or GameCommand.Respond or GameCommand.ModMessage
+            or GameCommand.QueueProduction or GameCommand.SetTradePolicy or GameCommand.NegotiateTrade or GameCommand.SetTradeBlockade
+            or GameCommand.BuildIndustry or GameCommand.SetIndustryMethod or GameCommand.Develop or GameCommand.Reform
+            or GameCommand.EventOption or GameCommand.Respond or GameCommand.ModMessage
             or GameCommand.Claim or GameCommand.Release;
 
     /// <summary>Shape check of the arguments of a command (the rules check happens in <see cref="CommandValidator"/>).</summary>

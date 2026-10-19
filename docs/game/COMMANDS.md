@@ -49,6 +49,7 @@ The CLI is available as `./burger.sh <command>` or as `dotnet src/Burger.Tools/b
 ./burger.sh validate MyGame
 ./burger.sh validate MyGame --days 30
 ./burger.sh validate MyGame --days 60 --profile
+./burger.sh validate World500BCE --days 90 --profile --digest 30 --max-tick-ms 2000 --max-ms-per-day 100
 
 tools/profile-sim.sh Earth1930 365
 tools/profile-sim-dense.sh Earth1930 365
@@ -80,6 +81,8 @@ With `--profile`, `burger validate` reports total time, calls, average milliseco
 The `tools/profile-sim.sh` wrapper saves the complete output and a filtered profile-lines file. `tools/profile-sim-dense.sh` additionally writes `all-metrics.tsv` and a summary report. The daily max and p99 values make month-boundary spikes visible; inspect `worst_days` against the calendar to distinguish monthly pulses from event-driven spikes such as wars, peace deals, or battles.
 
 The profiler records daily totals for each named scope, including nested scopes and path counters. Timing scopes are accumulated against the simulation day active when they run; count-only scopes have zero timing values.
+
+`--max-tick-ms` and `--max-ms-per-day` enable tick measurements and fail validation when the worst hourly tick or average simulation time per day exceeds the supplied limit. These are host-dependent regression budgets, not frame-rate guarantees. `PROFILE` lines include nested AI tasks and trade routing; `max_daily_ms` is a daily total, while `TICKSTATS` reports individual tick latency.
 
 ## Source packaging
 

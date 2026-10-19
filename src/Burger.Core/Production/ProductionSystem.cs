@@ -60,11 +60,159 @@ public class ProductionRules
         return basePts * (1 + 0.1 * infra) * game.Modifiers.Factor(c, "construction_speed") * wealth;
     }
 
+    /// <summary>
+    /// Resolves the construction method from building data, then supplies a historical default when older definitions
+    /// do not name one. Factory buildings retain the existing civilian-factory path.
+    /// </summary>
+    public virtual ConstructionMethod ResolveConstructionMethod(Game game, BuildingType b)
+    {
+        string key = b.Method;
+        if (string.IsNullOrWhiteSpace(key)) key = b.Definition.GetString("construction_method") ?? "";
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            if (b.Key.Equals(CivilianFactory, StringComparison.OrdinalIgnoreCase)
+                || b.Key.Equals(MilitaryFactory, StringComparison.OrdinalIgnoreCase)
+                || b.Key.Equals(Dockyard, StringComparison.OrdinalIgnoreCase)
+                || b.Category.Equals("factory", StringComparison.OrdinalIgnoreCase)) key = "civilian_factory";
+            else if (b.Key.Equals("workshop", StringComparison.OrdinalIgnoreCase)
+                     || b.Category.Equals("workshop", StringComparison.OrdinalIgnoreCase)) key = "workshop";
+            else if (b.Category.Equals("infrastructure", StringComparison.OrdinalIgnoreCase)
+                     || b.Category.Equals("service", StringComparison.OrdinalIgnoreCase)) key = "public_works";
+            else key = "manual";
+        }
+
+        string source = key.ToLowerInvariant() switch
+        {
+            "manual_public_works" => "public_works",
+            "public-works" => "public_works",
+            "artisan_workshop" => "workshop",
+            "guild_workshop" => "workshop",
+            "civilian-factory" => "civilian_factory",
+            _ => key.ToLowerInvariant(),
+        };
+        var method = new ConstructionMethod
+        {
+            Key = key,
+            Source = source,
+            CapacityOutput = source.Equals("public_works", StringComparison.OrdinalIgnoreCase) ? 1.25 : 1,
+            LabourPerThousand = source.Equals("public_works", StringComparison.OrdinalIgnoreCase) ? 0.04 : 0.05,
+            WorkshopCapacity = 3,
+            StartYear = b.StartYear,
+            EndYear = b.EndYear,
+        };
+        if (b.CapacityOutput > 0) method.CapacityOutput = b.CapacityOutput;
+        foreach (var tech in b.RequiresTech)
+            if (!method.RequiresTech.Contains(tech, StringComparer.OrdinalIgnoreCase)) method.RequiresTech.Add(tech);
+        foreach (var tech in b.Definition.GetList("construction_requires_tech"))
+            if (!method.RequiresTech.Contains(tech, StringComparer.OrdinalIgnoreCase)) method.RequiresTech.Add(tech);
+        if (b.Definition.Get("construction_inputs") is { Children: not null } inputs)
+            foreach (var entry in inputs.All)
+                if (entry.Value != null) method.Inputs[entry.Key] = entry.AsDouble(0);
+        foreach (var (keyName, amount) in b.ConstructionInputs) method.Inputs[keyName] = amount;
+        return method;
+    }
+
+    /// <summary>Construction speed supplied by the current market satisfaction of each required input.</summary>
+    public virtual double ConstructionInputFactor(Game game, Country c, ConstructionProject p, ConstructionMethod method)
+    {
+        if (!game.Commodities.Enabled || method.Inputs.Count == 0) return 1;
+
+        double floor = Math.Clamp(game.Data.Defines.Get("commodity_floor", 0.15), 0, 1);
+        double factor = 1;
+        string? unavailable = null;
+        bool hasInput = false;
+        foreach (var (key, amount) in method.Inputs.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!double.IsFinite(amount) || amount <= 0) continue;
+            hasInput = true;
+            if (!game.Commodities.Defs.TryGetValue(key, out var definition) || !definition.IsActive(game.World.Date))
+            {
+                p.BlockedReason = $"Construction input unavailable: {key}";
+                return 0;
+            }
+
+            double market = game.Commodities.BalanceOf(c, key).Satisfied;
+            double routed = game.TradeNetwork.CountrySatisfaction(c, key);
+            double satisfaction = Math.Min(market, routed);
+            if (!double.IsFinite(satisfaction) || satisfaction <= 0)
+            {
+                unavailable ??= key;
+                factor = 0;
+                continue;
+            }
+            factor = Math.Min(factor, Math.Clamp(satisfaction, 0, 1));
+        }
+
+        if (!hasInput) return 1;
+        if (factor <= 0)
+        {
+            p.BlockedReason = $"Construction input capacity unavailable: {unavailable ?? "market"}";
+            return 0;
+        }
+
+        // A shortage slows construction, but a positive supply keeps a project moving.
+        return Math.Clamp(Math.Max(floor, factor), floor, 1);
+    }
+
+    /// <summary>Construction capacity available to one project before the caller divides it among competing projects.</summary>
+    public virtual double ConstructionCapacity(Game game, Country c, ConstructionProject p)
+    {
+        var method = ResolveConstructionMethod(game, p.Building);
+        p.Method = method.Key;
+        if (!method.Active(game.World.Date))
+        {
+            p.BlockedReason = "Construction method belongs to another era";
+            return 0;
+        }
+        if (game.Tech.Enabled && method.RequiresTech.Any(t => !game.Tech.Has(c, t)))
+        {
+            p.BlockedReason = "Required construction technology is not known";
+            return 0;
+        }
+
+        p.BlockedReason = null;
+        double inputFactor = ConstructionInputFactor(game, c, p, method);
+        if (inputFactor <= 0) return 0;
+        double infrastructure = p.State.Buildings.GetValueOrDefault("infrastructure");
+        double speed = game.Modifiers.Factor(c, "construction_speed") * (1 + 0.1 * infrastructure);
+        if (method.Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase))
+            return CivilianForConstruction(game, c) * ConstructionPerFactory(game, c, p) * inputFactor;
+
+        if (method.Source.Equals("workshop", StringComparison.OrdinalIgnoreCase))
+        {
+            double workshops = p.State.Working("workshop");
+            if (workshops <= 0)
+            {
+                p.BlockedReason = "No workshop capacity available";
+                return 0;
+            }
+            return workshops * method.WorkshopCapacity * method.CapacityOutput * speed * inputFactor;
+        }
+
+        double people = game.Population.Enabled ? game.Population.TotalOf(p.State) : 0;
+        if (people <= 0) people = Math.Max(1000, p.State.Manpower * 1000);
+        double labour = Math.Max(0.01, people / 1000 * method.LabourPerThousand);
+        p.LabourAllocated = p.Building.LabourRequired > 0
+            ? Math.Min(labour, p.Building.LabourRequired)
+            : labour;
+        double labourFactor = p.Building.LabourRequired > 0
+            ? Math.Clamp(p.LabourAllocated / p.Building.LabourRequired, 0, 1)
+            : 1;
+        if (method.Source.Equals("public_works", StringComparison.OrdinalIgnoreCase))
+            speed *= 1 + 0.1 * p.State.Working("bureaucracy");
+        return Math.Max(0.1, method.CapacityOutput * labour * speed * labourFactor * inputFactor);
+    }
+
     /// <summary>Why a building cannot be queued in a state (null = allowed).</summary>
     public virtual string? CannotBuildReason(Game game, Country c, BuildingType b, State s)
     {
+        if (!b.Active(game.World.Date)) return "This building belongs to another era";
         if (s.Owner != c) return "You must own the state";
         if (s.ControlledShare(c) < 0.5) return "Most of the state is occupied";
+        if (!game.Tech.CanUse(c, b.Definition)) return "Required technology is not known";
+        if (game.Tech.Enabled && b.RequiresTech.Any(t => !game.Tech.Has(c, t))) return "Required technology is not known";
+        var method = ResolveConstructionMethod(game, b);
+        if (game.Tech.Enabled && method.RequiresTech.Any(t => !game.Tech.Has(c, t))) return "Required construction technology is not known";
         int queued = c.Construction.Count(p => p.State == s && p.Building == b);
         int level = s.Buildings.GetValueOrDefault(b.Key) + queued;
         if (b.SharesSlots)
@@ -111,7 +259,8 @@ public class ProductionRules
 /// <summary>
 /// Factories, production lines, the equipment stockpile and construction (production feature).
 /// Military factories produce equipment for the lines a country sets up; efficiency grows over time.
-/// Civilian factories build buildings. Training and reinforcing divisions take equipment from the stockpile.
+/// Construction uses manual, public-works, workshop or civilian-factory capacity according to the era and building data.
+/// Training and reinforcing divisions take equipment from the stockpile.
 /// </summary>
 public sealed class ProductionSystem
 {
@@ -129,6 +278,7 @@ public sealed class ProductionSystem
     public int CivilianFactories(Country c) => Rules.Factories(_game, c, Rules.CivilianFactory);
     public int Dockyards(Country c) => Rules.Factories(_game, c, Rules.Dockyard);
     public int CivilianForConstruction(Country c) => Rules.CivilianForConstruction(_game, c);
+    public double ConstructionCapacity(Country c, ConstructionProject p) => Rules.ConstructionCapacity(_game, c, p);
 
     public double Stock(Country c, string equipment) => c.Stockpile.GetValueOrDefault(equipment);
 
@@ -278,17 +428,63 @@ public sealed class ProductionSystem
 
     private void Construct(Country c)
     {
-        int civ = CivilianForConstruction(c);
+        var projects = c.Construction.ToList();
         int perProject = (int)_game.Data.Defines.Get("max_factories_per_project", 15);
-        foreach (var p in c.Construction.ToList())
+        foreach (var p in projects)
         {
-            if (p.State.Owner != c) { c.Construction.Remove(p); continue; }
-            int f = Math.Min(perProject, civ);
-            civ -= f;
-            p.Factories = f;
-            if (f <= 0) continue;
-            p.Progress += f * Rules.ConstructionPerFactory(_game, c, p);
-            if (p.Progress < p.Building.Cost) continue;
+            if (p.State.Owner != c) c.Construction.Remove(p);
+        }
+
+        projects = projects.Where(p => p.State.Owner == c).ToList();
+        int civ = CivilianForConstruction(c);
+        foreach (var p in projects)
+        {
+            var method = Rules.ResolveConstructionMethod(_game, p.Building);
+            if (!method.Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase)) continue;
+            p.Method = method.Key;
+            int factories = Math.Min(perProject, civ);
+            civ -= factories;
+            double inputFactor = Rules.ConstructionInputFactor(_game, c, p, method);
+            double capacity = factories * Rules.ConstructionPerFactory(_game, c, p) * inputFactor;
+            ApplyConstruction(p, factories, capacity,
+                capacity > 0 ? null : p.BlockedReason ?? "No civilian factory capacity available");
+        }
+
+        // Manual, public-works and workshop projects share the local capacity of their state and method.
+        // Keeping this allocation local prevents every queued project from receiving the full workforce pool.
+        foreach (var group in projects
+                     .Where(p => !Rules.ResolveConstructionMethod(_game, p.Building).Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase))
+                     .GroupBy(p => (p.State, Source: Rules.ResolveConstructionMethod(_game, p.Building).Source)))
+        {
+            foreach (var p in group)
+            {
+                double capacity = Rules.ConstructionCapacity(_game, c, p) / group.Count();
+                ApplyConstruction(p, 0, capacity, capacity > 0 ? null : p.BlockedReason ?? "No construction capacity available");
+            }
+        }
+
+        void ApplyConstruction(ConstructionProject p, int factories, double capacity, string? blockedReason)
+        {
+            p.Factories = factories;
+            p.Capacity = double.IsFinite(capacity) ? Math.Max(0, capacity) : 0;
+            p.BlockedReason = blockedReason;
+            if (p.Capacity <= 0) return;
+            double applied = Math.Min(p.Capacity, Math.Max(0, p.Building.Cost - p.Progress));
+            if (applied > 0)
+            {
+                var method = Rules.ResolveConstructionMethod(_game, p.Building);
+                double cost = Math.Max(0.0001, p.Building.Cost);
+                foreach (var (key, amount) in method.Inputs.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    if (!double.IsFinite(amount) || amount <= 0) continue;
+                    double total = Math.Max(0, amount);
+                    double alreadyConsumed = Math.Max(0, p.InputsConsumed.GetValueOrDefault(key));
+                    double consumed = Math.Min(total, alreadyConsumed + total * applied / cost);
+                    p.InputsConsumed[key] = consumed;
+                }
+            }
+            p.Progress += applied;
+            if (p.Progress < p.Building.Cost) return;
             c.Construction.Remove(p);
             p.State.Buildings[p.Building.Key] = p.State.Buildings.GetValueOrDefault(p.Building.Key) + 1;
             _game.NotifyPlayer($"{p.Building.Name} completed in {p.State.DisplayName}.", NotificationKind.Good, c);
@@ -366,7 +562,18 @@ public sealed class ProductionSystem
                 var b = n.AddBlock("construction");
                 b.Add("building", p.Building.Key);
                 b.Add("state", p.State.Key);
+                b.Add("method", p.Method);
+                b.Add("factories", p.Factories.ToString(CultureInfo.InvariantCulture));
                 b.Add("progress", F(p.Progress));
+                b.Add("labour_allocated", F(p.LabourAllocated));
+                b.Add("capacity", F(p.Capacity));
+                if (!string.IsNullOrEmpty(p.BlockedReason)) b.Add("blocked_reason", p.BlockedReason, true);
+                if (p.InputsConsumed.Count > 0)
+                {
+                    var inputs = b.AddBlock("inputs_consumed");
+                    foreach (var (key, amount) in p.InputsConsumed.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                        inputs.Add(key, F(amount));
+                }
             }
         }
     }
@@ -389,7 +596,23 @@ public sealed class ProductionSystem
                     c.ProductionLines.Add(new ProductionLine { Equipment = e, Factories = b.GetInt("factories"), Efficiency = b.GetDouble("efficiency", 0.1), Progress = b.GetDouble("progress") });
             foreach (var b in n.GetAll("construction"))
                 if (_game.Data.BuildingTypes.TryGetValue(b.GetString("building") ?? "", out var bt) && _game.World.GetState(b.GetString("state")) is { } s)
-                    c.Construction.Add(new ConstructionProject { Building = bt, State = s, Progress = b.GetDouble("progress") });
+                {
+                    var project = new ConstructionProject
+                    {
+                        Building = bt,
+                        State = s,
+                        Method = b.GetString("method", "")!,
+                        Factories = Math.Max(0, b.GetInt("factories", 0)),
+                        Progress = Math.Max(0, b.GetDouble("progress", 0)),
+                        LabourAllocated = Math.Max(0, b.GetDouble("labour_allocated", 0)),
+                        Capacity = Math.Max(0, b.GetDouble("capacity", 0)),
+                        BlockedReason = b.GetString("blocked_reason")
+                    };
+                    if (b.Get("inputs_consumed") is { Children: not null } inputs)
+                        foreach (var input in inputs.All)
+                            if (input.Value != null) project.InputsConsumed[input.Key] = Math.Max(0, input.AsDouble(0));
+                    c.Construction.Add(project);
+                }
         }
     }
 }

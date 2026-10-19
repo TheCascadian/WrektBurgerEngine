@@ -155,6 +155,8 @@ public sealed class Game
     public Burger.Core.Sites.SiteSystem Sites { get; }
     /// <summary>Strategic commodities: deposits, shortages and trade (commodities feature).</summary>
     public Burger.Core.Production.CommoditySystem Commodities { get; }
+    /// <summary>State markets, routes, tariffs, agreements, recipes and economic plans (commodities feature).</summary>
+    public Burger.Core.Production.TradeNetworkSystem TradeNetwork { get; }
     /// <summary>National focus trees (focus feature).</summary>
     public Burger.Core.Mechanics.FocusSystem Focus { get; }
     /// <summary>AI archetypes and the historical profiles of countries (ai_profiles feature).</summary>
@@ -256,6 +258,7 @@ public sealed class Game
         Sites = new Burger.Core.Sites.SiteSystem(this);
         Focus = new Burger.Core.Mechanics.FocusSystem(this);
         Commodities = new Burger.Core.Production.CommoditySystem(this);
+        TradeNetwork = new Burger.Core.Production.TradeNetworkSystem(this);
         AiProfiles = new Burger.Core.AI.AiProfileSystem(this);
         ScriptValues = new ScriptValueSystem(this);
         Modifiers = new ModifierSystem(this);
@@ -344,11 +347,13 @@ public sealed class Game
         game.Raising.LoadDefinitions(game.Data);
         game.Focus.Load(game.Data);
         game.Commodities.LoadDefinitions(game.Data);
+        game.TradeNetwork.LoadDefinitions(game.Data);
         game.AiProfiles.LoadDefinitions(game.Data);
         game.Figures.Load(game.Data.Root);
         if (compileScripts) game.Mods.CompileAndLoad();
         WorldLoader.LoadWorld(game);
         game.Commodities.LoadWorld();
+        game.TradeNetwork.LoadWorld();
         game.Sites.Load(game.Data.Root);
         game.Titles.Build();
         game.Diplomacy.LoadDemilitarized();
@@ -541,15 +546,18 @@ public sealed class Game
     private void RecordProfile(string name, int day, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(day, elapsedTicks);
     public void ProfileElapsed(string name, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsedTicks);
 
-    /// <summary>Advances the simulation by one hour.</summary>
-    public void Tick()
+    /// <summary>Advances the simulation by one hour and completes economic settlement at month boundaries.</summary>
+    public void Tick() => Tick(streamEconomicWork: false);
+
+    /// <summary>Advances one hour using the live-clock economic work budget.</summary>
+    internal void Tick(bool streamEconomicWork)
     {
         World.Date = World.Date.AddHours(1);
         if (Features.Has(F.Military)) P("Warfare.HourlyTick", () => Warfare.HourlyTick());
         if (Features.Has(F.Navy)) P("Navy.HourlyTick", () => Navy.HourlyTick());
         Exploration.HourlyTick();
         Mods.Invoke(m => m.OnHourlyTick());
-        if (World.Date.Hour == 0) DailyTick();
+        if (World.Date.Hour == 0) DailyTick(streamEconomicWork);
     }
 
     // ---------------------------------------------------------------------------------------- fog of war
@@ -586,7 +594,7 @@ public sealed class Game
     /// <summary>Changes every time visibility is recomputed (the renderer refreshes the map then).</summary>
     public int VisibilityVersion { get; private set; }
 
-    private void DailyTick()
+    private void DailyTick(bool streamEconomicWork)
     {
         P("Visibility", UpdateVisibility);
         if (Features.Has(F.Military)) P("Warfare.DailyTick", () => Warfare.DailyTick());
@@ -605,10 +613,11 @@ public sealed class Game
         if (Features.Has(F.Ai)) P("Ai.DailyTick", () => Ai.DailyTick());
         P("Events.DailyTick", () => Events.DailyTick());
         Mods.Invoke(m => m.OnDailyTick());
-        if (World.Date.Day == 1) MonthlyTick();
+        if (World.Date.Day == 1) MonthlyTick(streamEconomicWork);
+        else if (Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick());
     }
 
-    private void MonthlyTick()
+    private void MonthlyTick(bool streamEconomicWork)
     {
         if (Features.Has(F.Population))
         {
@@ -626,7 +635,7 @@ public sealed class Game
         if (Features.Has(F.GovernmentReforms)) P("Reforms.MonthlyTick", () => Reforms.MonthlyTick());
         if (Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());
         if (Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
-        if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick());
+        if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick(streamEconomicWork));
         if (Features.Has(F.Diplomacy)) P("Diplomacy.MonthlyTick", () => Diplomacy.MonthlyTick());
         if (Features.Has(F.GreatPowers)) P("GreatPowers.MonthlyTick", () => GreatPowers.MonthlyTick());
         if (Features.Has(F.Reputation)) P("Reputation.MonthlyTick", () => Reputation.MonthlyTick());
@@ -640,7 +649,12 @@ public sealed class Game
         if (Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());
         if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTick());
         P("Events.MonthlyTick", () => Events.MonthlyTick());
-        if (Features.Has(F.Ai)) P("Ai.MonthlyTick", () => Ai.MonthlyTick());
+        if (Features.Has(F.Ai))
+            P("Ai.MonthlyTick", () =>
+            {
+                if (streamEconomicWork) Ai.MonthlyTick(streamEconomicWork: true);
+                else Ai.MonthlyTick();
+            });
         Mods.Invoke(m => m.OnMonthlyTick());
         P("Statistics", () => Statistics.MonthlyTick());
         if (World.Date.Month == 1)
@@ -651,6 +665,7 @@ public sealed class Game
                 Events.FireOnAction("on_yearly_pulse", c);
             Mods.Invoke(m => m.OnYearlyTick());
         }
+        if (Features.Has(F.Politics)) Politics.CanonicalizeForSync();
         if (Notifications.Count > 300) Notifications.RemoveRange(0, Notifications.Count - 300);
     }
 
@@ -735,7 +750,7 @@ public sealed class GameClock
         while ((unlimited || _accumulator >= 1) && _budget.Elapsed.TotalMilliseconds < budget)
         {
             if (!unlimited) _accumulator -= 1;
-            _game.Tick();
+            _game.Tick(streamEconomicWork: true);
             ticks++;
             if (Paused) { _accumulator = 0; break; }
         }

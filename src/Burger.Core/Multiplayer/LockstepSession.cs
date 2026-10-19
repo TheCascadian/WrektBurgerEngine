@@ -298,7 +298,7 @@ public sealed class LockstepSession
     {
         if (_queue.Remove(Tick, out var due))
             foreach (var c in due) ApplyCommand(c);
-        Game.Tick();
+        Game.Tick(streamEconomicWork: true);
         Tick++;
         var d = Game.World.Date;
         if (d.Day == 1 && d.Hour == 0) // the 1st of a month: compare state

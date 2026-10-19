@@ -2,7 +2,9 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
+using Burger.Core.Multiplayer;
 using Burger.Core.Population;
+using Burger.Core.Production;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -11,10 +13,253 @@ namespace Burger.Runtime;
 public sealed partial class Hud
 {
     private string _ledgerMetric = "population";
+    private int _ledgerTab = 1;
+    private string? _ledgerCommodity;
     private bool _ledgerWorld;
+    private GlobalTradeLedgerCache? _globalTradeLedgerCache;
+    private IndustryLedgerCache? _industryLedgerCache;
+    private Game? _ledgerFallbackGame;
+    private Country? _ledgerFallbackSubject;
+    private int _ledgerFallbackMapVersion = -1;
     public bool LedgerWorld { get => _ledgerWorld; set => _ledgerWorld = value; }
-    public string LedgerMetric { get => _ledgerMetric; set => _ledgerMetric = value; }
+    public string LedgerMetric
+    {
+        get => _ledgerMetric;
+        set
+        {
+            _ledgerMetric = value;
+            if (value.Equals("industry", StringComparison.OrdinalIgnoreCase)) _ledgerTab = 2;
+            else if (value.Equals("global", StringComparison.OrdinalIgnoreCase) || value.Equals("global_trade", StringComparison.OrdinalIgnoreCase)) _ledgerTab = 1;
+        }
+    }
     private string? _releaseArmed;
+
+    private sealed class GlobalTradeLedgerCache
+    {
+        public Game Game = null!;
+        public int Day;
+        public int MapVersion;
+        public int SubjectStamp;
+        public Country? Subject;
+        public float Scale;
+        public float PanelWidth;
+        public int HistoryCount;
+        public int ActiveRouteCount;
+        public List<Country> Countries = new();
+        public List<GlobalTradeLedgerRow> Rows = new();
+        public double TradeVolume;
+        public int Shortages;
+        public string TradeSummary = "";
+        public string ShortageSummary = "";
+        public string PolicySummary = "";
+        public string RouteSummary = "";
+        public string RecentRouteText = "";
+        public string? DrilldownCommodity;
+        public List<TradeCountryLedgerRow> Drilldown = new();
+    }
+
+    private sealed class GlobalTradeLedgerRow
+    {
+        public CommodityDef Def = null!;
+        public double Satisfied;
+        public double AveragePrice;
+        public string Name = "";
+        public string Output = "";
+        public string Demand = "";
+        public string Trade = "";
+        public string Stockpile = "";
+        public string Price = "";
+        public string Met = "";
+        public string Tooltip = "";
+    }
+
+    private sealed class TradeCountryLedgerRow
+    {
+        public Country Country = null!;
+        public string Name = "";
+        public string Trade = "";
+        public string Met = "";
+        public double Satisfied;
+    }
+
+    private sealed class IndustryLedgerCache
+    {
+        public Game Game = null!;
+        public int Day;
+        public int MapVersion;
+        public int SubjectStamp;
+        public Country Country = null!;
+        public float Scale;
+        public float PanelWidth;
+        public List<IndustryLedgerRow> Rows = new();
+        public int ProducingStates;
+        public double Output;
+        public double PopulationDemand;
+        public double IndustryDemand;
+        public int Shortages;
+        public int Farms;
+        public int Workshops;
+        public int Markets;
+        public int Infrastructure;
+        public int QueuedProjects;
+        public string IdentityName = "";
+        public float IdentityNameWidth;
+        public string Summary = "";
+        public string DemandSummary = "";
+        public string BuildingSummary = "";
+        public string PlanSummary = "";
+        public List<ConstructionLedgerRow> Construction = new();
+        public double ConstructionCapacity;
+        public double ConstructionLabour;
+        public int ConstructionFactories;
+        public int BlockedProjects;
+        public string ConstructionSummary = "";
+        public string? ShortageCommodity;
+        public double ShortageAmount;
+        public Country? Supplier;
+        public BuildingType? Build;
+        public State? BuildState;
+        public bool CanBuild;
+        public State? MethodState;
+        public List<IndustryMethodChoice> Methods = new();
+    }
+
+    private sealed class IndustryLedgerRow
+    {
+        public CommodityDef Def = null!;
+        public double Output;
+        public double PopulationUse;
+        public double IndustryDemand;
+        public double Stockpile;
+        public double Demand;
+        public double Satisfied;
+        public double Price;
+        public string Name = "";
+        public string OutputText = "";
+        public string PopulationText = "";
+        public string IndustryText = "";
+        public string StockpileText = "";
+        public string Met = "";
+        public string Tooltip = "";
+    }
+
+    private sealed class IndustryMethodChoice
+    {
+        public State State = null!;
+        public string Output = "";
+        public List<IndustryRecipe> Methods = new();
+    }
+
+    private sealed class ConstructionLedgerRow
+    {
+        public string Target = "";
+        public string Method = "";
+        public string Allocation = "";
+        public string Capacity = "";
+        public string Progress = "";
+        public string Status = "";
+        public double ProgressRatio;
+        public bool Blocked;
+    }
+
+    private void InvalidateLedgerCache()
+    {
+        _globalTradeLedgerCache = null;
+        _industryLedgerCache = null;
+    }
+
+    private int LedgerPolicyStamp(Country? country)
+    {
+        if (country == null) return 0;
+        var policy = G.TradeNetwork.PolicyOf(country);
+        var hash = new HashCode();
+        hash.Add(country);
+        hash.Add(policy.TariffRate);
+        hash.Add(policy.ImportPriority);
+        hash.Add(policy.Protectionism);
+        hash.Add(policy.CustomsRevenue);
+        hash.Add(policy.AgreementsSigned);
+        return hash.ToHashCode();
+    }
+
+    /// <summary>Detects same-day building and method changes without re-reading market balances.</summary>
+    private int LedgerSubjectStamp(Country? country)
+    {
+        if (country == null) return 0;
+        var hash = new HashCode();
+        hash.Add(country);
+        foreach (var state in country.OwnedStates)
+        {
+            hash.Add(state);
+            hash.Add(state.Buildings.Count);
+            foreach (var building in state.Buildings)
+            {
+                hash.Add(building.Key);
+                hash.Add(building.Value);
+            }
+        }
+        foreach (var project in country.Construction)
+        {
+            hash.Add(project.State);
+            hash.Add(project.Building.Key);
+            hash.Add(project.Progress);
+            hash.Add(project.Factories);
+            hash.Add(project.Method);
+            hash.Add(project.LabourAllocated);
+            hash.Add(project.Capacity);
+            hash.Add(project.BlockedReason);
+        }
+        foreach (var project in G.Population.GoldProjects.Where(p => p.Country == country))
+        {
+            hash.Add(project.State);
+            hash.Add(project.Building.Key);
+            hash.Add(project.MonthsLeft);
+        }
+        foreach (var method in G.TradeNetwork.SelectedMethods)
+        {
+            if (method.Key.State.Owner != country) continue;
+            hash.Add(method.Key.State);
+            hash.Add(method.Key.Output);
+            hash.Add(method.Value);
+        }
+        return hash.ToHashCode();
+    }
+
+    /// <summary>The country shown by the Industry ledger, including observer mode.</summary>
+    private Country? LedgerSubject =>
+        G.World.Player
+        ?? (Ui.SelectedCountry is { Exists: true } selected ? selected : null)
+        ?? (Ui.SelectedLocation?.State?.Owner is { Exists: true } owner ? owner : null)
+        ?? FallbackLedgerSubject();
+
+    private Country? FallbackLedgerSubject()
+    {
+        if (_ledgerFallbackGame == G && _ledgerFallbackMapVersion == G.MapVersion) return _ledgerFallbackSubject;
+        _ledgerFallbackGame = G;
+        _ledgerFallbackMapVersion = G.MapVersion;
+        _ledgerFallbackSubject = G.World.Countries.Where(c => c.Exists).OrderByDescending(c => c.OwnedStates.Count).FirstOrDefault();
+        return _ledgerFallbackSubject;
+    }
+
+    private static string ConstructionMethodLabel(ConstructionProject project)
+    {
+        string key = !string.IsNullOrWhiteSpace(project.Method) ? project.Method : project.Building.Method;
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            key = project.Building.Category.Equals("factory", StringComparison.OrdinalIgnoreCase)
+                ? "civilian_factory"
+                : project.Building.Category.Equals("infrastructure", StringComparison.OrdinalIgnoreCase)
+                    || project.Building.Category.Equals("service", StringComparison.OrdinalIgnoreCase)
+                    ? "public_works"
+                    : project.Building.Key.Equals("workshop", StringComparison.OrdinalIgnoreCase)
+                        ? "workshop"
+                        : "manual";
+        }
+        return key.Replace('_', ' ');
+    }
+
+    private static bool IsFactoryConstruction(string method) => method.Equals("civilian factory", StringComparison.OrdinalIgnoreCase)
+        || method.Equals("civilian-factory", StringComparison.OrdinalIgnoreCase);
 
     public static string People(double n) => n >= 1e9 ? $"{n / 1e9:0.##}B" : n >= 1e6 ? $"{n / 1e6:0.##}M" : n >= 1e4 ? $"{n / 1e3:0}k" : n >= 1e3 ? $"{n / 1e3:0.#}k" : $"{n:0}";
 
@@ -396,15 +641,274 @@ public sealed partial class Hud
     }
 
     // ------------------------------------------------------------------------------------- ledger
+    private GlobalTradeLedgerCache GetGlobalTradeLedgerCache(float w)
+    {
+        var market = G.Commodities;
+        var subject = LedgerSubject;
+        int day = G.World.Date.TotalDays;
+        int subjectStamp = LedgerPolicyStamp(subject);
+        var cache = _globalTradeLedgerCache;
+        bool rebuild = cache == null
+            || cache.Game != G
+            || cache.Day != day
+            || cache.MapVersion != G.MapVersion
+            || cache.Subject != subject
+            || cache.SubjectStamp != subjectStamp
+            || cache.Scale != S
+            || cache.PanelWidth != w
+            || cache.HistoryCount != G.TradeNetwork.History.Count
+            || cache.ActiveRouteCount != G.TradeNetwork.ActiveRoutes.Count;
+        if (rebuild)
+        {
+            float nameW = w * 0.27f;
+            cache = new GlobalTradeLedgerCache
+            {
+                Game = G,
+                Day = day,
+                MapVersion = G.MapVersion,
+                Subject = subject,
+                SubjectStamp = subjectStamp,
+                Scale = S,
+                PanelWidth = w,
+                HistoryCount = G.TradeNetwork.History.Count,
+                ActiveRouteCount = G.TradeNetwork.ActiveRoutes.Count,
+                Countries = G.World.Countries.Where(c => c.Exists).ToList(),
+            };
+            foreach (var def in market.Defs.Values.Where(k => k.IsActive(G.World.Date)).OrderBy(k => k.Category).ThenBy(k => k.Name))
+            {
+                double output = 0, imports = 0, exports = 0, demand = 0, stockpile = 0, satisfied = 0, price = 0;
+                foreach (var country in cache.Countries)
+                {
+                    var balance = market.BalanceOf(country, def.Key);
+                    output += balance.Output;
+                    imports += balance.Import;
+                    exports += balance.Export;
+                    demand += balance.Demand;
+                    stockpile += balance.Stockpile;
+                    satisfied += balance.Satisfied * balance.Demand;
+                    price += balance.Price * balance.Demand;
+                }
+                double averagePrice = demand > 0 ? price / demand : def.Price;
+                double met = demand > 0 ? satisfied / demand : 1;
+                cache.Rows.Add(new GlobalTradeLedgerRow
+                {
+                    Def = def,
+                    Satisfied = met,
+                    AveragePrice = averagePrice,
+                    Name = Gui.Fit(def.Name, nameW - 16 * S, 13),
+                    Output = Num(output, 1),
+                    Demand = Num(demand, 1),
+                    Trade = $"{Num(imports, 1)} / {Num(exports, 1)}",
+                    Stockpile = Num(stockpile, 1),
+                    Price = averagePrice.ToString("0.##"),
+                    Met = $"{met:P0}",
+                    Tooltip = $"{def.Name} · {def.Category}\nOutput: {output:0.##}\nDemand: {demand:0.##}\nImports / exports: {imports:0.##} / {exports:0.##}\nStockpile: {stockpile:0.##}\nAverage price: {averagePrice:0.##}\nDemand met: {met:P1}",
+                });
+                cache.TradeVolume += imports;
+            }
+            cache.Shortages = cache.Rows.Count(row => row.Satisfied < 0.85);
+            cache.TradeSummary = $"{cache.Rows.Count} active commodities · {cache.Countries.Count} markets · {cache.TradeVolume:0.#} units traded this month";
+            cache.ShortageSummary = cache.Shortages == 0 ? "No global shortages" : $"{cache.Shortages} commodities below 85% satisfaction";
+            cache.RouteSummary = $"Routes {cache.ActiveRouteCount} · history {cache.HistoryCount} transactions";
+            var recent = G.TradeNetwork.RecentHistory(3).ToList();
+            cache.RecentRouteText = recent.Count == 0 ? "" : string.Join("  ·  ", recent.Select(t => $"{t.From.DisplayName}→{t.To.DisplayName} {t.Commodity} {t.Quantity:0.#} ({t.RouteKind.ToString().ToLowerInvariant()})"));
+            if (subject != null)
+            {
+                var policy = G.TradeNetwork.PolicyOf(subject);
+                cache.PolicySummary = $"{subject.Name} policy · tariff {policy.TariffRate:P0} · imports {policy.ImportPriority:0.0} · protection {policy.Protectionism:P0} · customs {policy.CustomsRevenue:0.#} · agreements {policy.AgreementsSigned}";
+            }
+            _globalTradeLedgerCache = cache;
+        }
+
+        if (cache == null) throw new InvalidOperationException("Global trade ledger cache was not created");
+
+        if (!string.Equals(cache.DrilldownCommodity, _ledgerCommodity, StringComparison.OrdinalIgnoreCase))
+        {
+            cache.DrilldownCommodity = _ledgerCommodity;
+            cache.Drilldown.Clear();
+            if (_ledgerCommodity != null && market.Defs.TryGetValue(_ledgerCommodity, out var selectedDef))
+            {
+                foreach (var (country, balance) in cache.Countries
+                    .Select(country => (country, balance: market.BalanceOf(country, selectedDef.Key)))
+                    .OrderByDescending(item => item.balance.Demand)
+                    .Take(4))
+                {
+                    cache.Drilldown.Add(new TradeCountryLedgerRow
+                    {
+                        Country = country,
+                        Name = Gui.Fit(country.Name, 130 * S, 12),
+                        Trade = $"{balance.Import:0.#} in · {balance.Export:0.#} out",
+                        Met = $"{balance.Satisfied:P0}",
+                        Satisfied = balance.Satisfied,
+                    });
+                }
+            }
+        }
+        return cache;
+    }
+
+    private IndustryLedgerCache? GetIndustryLedgerCache(float w)
+    {
+        var country = LedgerSubject;
+        if (country == null) return null;
+        var market = G.Commodities;
+        int day = G.World.Date.TotalDays;
+        int subjectStamp = LedgerSubjectStamp(country);
+        var cache = _industryLedgerCache;
+        bool rebuild = cache == null
+            || cache.Game != G
+            || cache.Day != day
+            || cache.MapVersion != G.MapVersion
+            || cache.Country != country
+            || cache.SubjectStamp != subjectStamp
+            || cache.Scale != S
+            || cache.PanelWidth != w;
+        if (!rebuild) return cache;
+
+        float flagW = 42 * S;
+        float identityNameWidth = Math.Max(80 * S, w - flagW - 18 * S);
+        cache = new IndustryLedgerCache
+        {
+            Game = G,
+            Day = day,
+            MapVersion = G.MapVersion,
+            SubjectStamp = subjectStamp,
+            Country = country,
+            Scale = S,
+            PanelWidth = w,
+            IdentityNameWidth = identityNameWidth,
+            IdentityName = Gui.Fit(country.Name, identityNameWidth, 18, FontKind.Bold),
+        };
+        foreach (var def in market.Defs.Values.Where(k => k.IsActive(G.World.Date)).OrderBy(k => k.Category).ThenBy(k => k.Name))
+        {
+            var balance = market.BalanceOf(country, def.Key);
+            double industryDemand = Math.Max(0, balance.Demand - balance.PopulationUse);
+            double met = balance.Demand > 0.0001 ? balance.Satisfied : 1;
+            cache.Rows.Add(new IndustryLedgerRow
+            {
+                Def = def,
+                Output = balance.Output,
+                PopulationUse = balance.PopulationUse,
+                IndustryDemand = industryDemand,
+                Stockpile = balance.Stockpile,
+                Demand = balance.Demand,
+                Satisfied = balance.Satisfied,
+                Price = balance.Price,
+                Name = Gui.Fit(def.Name, w * 0.29f - 16 * S, 13),
+                OutputText = Num(balance.Output, 1),
+                PopulationText = Num(balance.PopulationUse, 1),
+                IndustryText = Num(industryDemand, 1),
+                StockpileText = Num(balance.Stockpile, 1),
+                Met = $"{met:P0}",
+                Tooltip = $"{def.Name} · {def.Category}\nState output: {balance.Output:0.##}\nPopulation demand: {balance.PopulationUse:0.##}\nIndustry and military demand: {industryDemand:0.##}\nStockpile: {balance.Stockpile:0.##}\nPrice: {balance.Price:0.##}\nDemand met: {met:P1}",
+            });
+        }
+        cache.ProducingStates = country.OwnedStates.Count(state => market.Deposits.ContainsKey(state));
+        cache.Output = cache.Rows.Sum(row => row.Output);
+        cache.PopulationDemand = cache.Rows.Sum(row => row.PopulationUse);
+        cache.IndustryDemand = cache.Rows.Sum(row => row.IndustryDemand);
+        cache.Shortages = cache.Rows.Count(row => row.Demand > 0.0001 && row.Satisfied < 0.85);
+        cache.Farms = country.OwnedStates.Sum(state => state.Buildings.GetValueOrDefault("farm"));
+        cache.Workshops = country.OwnedStates.Sum(state => state.Buildings.GetValueOrDefault("workshop"));
+        cache.Markets = country.OwnedStates.Sum(state => state.Buildings.GetValueOrDefault("market"));
+        cache.Infrastructure = country.OwnedStates.Sum(state => state.Buildings.GetValueOrDefault("infrastructure"));
+        cache.QueuedProjects = G.Population.GoldProjects.Count(project => project.Country == country);
+        cache.Summary = $"{cache.ProducingStates} resource states · {cache.Output:0.#} units output / month";
+        cache.DemandSummary = $"Population {cache.PopulationDemand:0.#} · industry and military {cache.IndustryDemand:0.#}";
+        cache.BuildingSummary = $"Farms {cache.Farms} · workshops {cache.Workshops} · markets {cache.Markets} · infrastructure {cache.Infrastructure} · queued {cache.QueuedProjects}";
+        var plan = G.TradeNetwork.Plans.GetValueOrDefault(country);
+        cache.PlanSummary = plan == null ? "Economic plan: evaluating import versus build" : $"Economic plan: {plan.LastDecision} · priority {plan.Priority} · budget {plan.Budget:0.#}";
+
+        foreach (var project in country.Construction)
+        {
+            string method = ConstructionMethodLabel(project);
+            bool factory = IsFactoryConstruction(method);
+            double ratio = project.Building.Cost > 0 ? Math.Clamp(project.Progress / project.Building.Cost, 0, 1) : 0;
+            string allocation = factory
+                ? $"{project.Factories} factories"
+                : project.LabourAllocated > 0 ? $"{project.LabourAllocated:0.#} labour" : "0 labour";
+            string status = string.IsNullOrWhiteSpace(project.BlockedReason)
+                ? project.Capacity > 0 ? "active" : "awaiting capacity"
+                : project.BlockedReason;
+            cache.Construction.Add(new ConstructionLedgerRow
+            {
+                Target = $"{project.Building.Name} - {project.State.DisplayName}",
+                Method = method,
+                Allocation = allocation,
+                Capacity = $"{project.Capacity:0.##}/day capacity",
+                Progress = $"{project.Progress:0.#}/{project.Building.Cost:0.#} ({ratio:P0})",
+                Status = status,
+                ProgressRatio = ratio,
+                Blocked = !string.IsNullOrWhiteSpace(project.BlockedReason) || project.Capacity <= 0,
+            });
+            cache.ConstructionCapacity += Math.Max(0, project.Capacity);
+            cache.ConstructionLabour += Math.Max(0, project.LabourAllocated);
+            cache.ConstructionFactories += Math.Max(0, project.Factories);
+            if (!string.IsNullOrWhiteSpace(project.BlockedReason)) cache.BlockedProjects++;
+        }
+        cache.ConstructionSummary = cache.Construction.Count == 0
+            ? "No queued construction projects"
+            : $"{cache.Construction.Count} queued / {cache.ConstructionCapacity:0.##}/day capacity applied / {cache.ConstructionLabour:0.#} labour / {cache.ConstructionFactories} factories";
+
+        var shortage = market.Shortages(country).FirstOrDefault();
+        if (shortage.Commodity != null)
+        {
+            cache.ShortageCommodity = shortage.Commodity;
+            var shortageRow = cache.Rows.FirstOrDefault(row => row.Def.Key.Equals(shortage.Commodity, StringComparison.OrdinalIgnoreCase));
+            cache.ShortageAmount = shortageRow == null ? 0.1 : Math.Max(0.1, shortageRow.Demand - shortageRow.Output);
+            cache.Supplier = G.World.Countries
+                .Where(c => c.Exists && c != country)
+                .Select(c => (country: c, balance: market.BalanceOf(c, shortage.Commodity)))
+                .Where(item => item.balance.Output > item.balance.Demand)
+                .OrderBy(item => item.country.Index)
+                .Select(item => item.country)
+                .FirstOrDefault();
+            string buildKey = shortage.Commodity is "grain" or "fish" or "animal_products" ? "farm" : shortage.Commodity is "salt" or "textiles" or "pottery" or "glass" ? "workshop" : "market";
+            cache.Build = G.Data.BuildingTypes.GetValueOrDefault(buildKey);
+            cache.BuildState = country.OwnedStates.OrderByDescending(G.Population.TotalOf).FirstOrDefault();
+            cache.CanBuild = cache.Build != null && cache.BuildState != null && (cache.Build.Category == "factory" && G.Production.Enabled && G.Production.CivilianFactories(country) > 0
+                ? G.Production.CannotBuildReason(country, cache.Build, cache.BuildState) == null
+                : G.Population.CannotGoldBuild(country, cache.Build, cache.BuildState) == null);
+        }
+
+        if (country.IsPlayer)
+        {
+            cache.MethodState = country.OwnedStates.OrderByDescending(G.Population.TotalOf).FirstOrDefault();
+            if (cache.MethodState != null)
+            {
+                foreach (var output in G.TradeNetwork.Recipes.Values.Select(recipe => recipe.Output).Distinct(StringComparer.OrdinalIgnoreCase))
+                {
+                    var methods = G.TradeNetwork.MethodsFor(country, cache.MethodState, output).ToList();
+                    if (methods.Count <= 1) continue;
+                    cache.Methods.Add(new IndustryMethodChoice { State = cache.MethodState, Output = output, Methods = methods });
+                    if (cache.Methods.Count == 3) break;
+                }
+            }
+        }
+        _industryLedgerCache = cache;
+        return cache;
+    }
+
     private void DrawLedgerPanel()
     {
-        bool noData = G.Statistics.Available.Count() == 0 || G.Statistics.Dates.Count < 2;
-        var r = RightRect(noData ? 70 * S : 2000);
-        r.Width = noData ? r.Width : Math.Max(r.Width, 620 * S);
+        bool commodities = G.Commodities.Enabled;
+        bool noData = !commodities && (G.Statistics.Available.Count() == 0 || G.Statistics.Dates.Count < 2);
+        var r = RightRect(2000);
+        r.Width = Math.Max(r.Width, 620 * S);
         r.X = Raylib.GetScreenWidth() - r.Width - 8 * S;
         Gui.Panel(r, "Ledger");
         if (Gui.CloseButton(r)) { Ui.Right = RightPanel.None; return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
+        if (commodities)
+        {
+            float tabW = (w - 8 * S) / 3;
+            if (Gui.Button(new Rectangle(x, y, tabW, 27 * S), "History", true, "Population, income and other recorded history", _ledgerTab == 0, 13)) _ledgerTab = 0;
+            if (Gui.Button(new Rectangle(x + tabW + 4 * S, y, tabW, 27 * S), "Global Trade", true, "Every active commodity in the world market", _ledgerTab == 1, 13)) _ledgerTab = 1;
+            if (Gui.Button(new Rectangle(x + 2 * (tabW + 4 * S), y, tabW, 27 * S), "Industry", true, "Your country's production and industrial inputs", _ledgerTab == 2, 13)) _ledgerTab = 2;
+            y += 37 * S;
+            if (_ledgerTab == 1) { DrawGlobalTradeLedger(x, y, w, r); return; }
+            if (_ledgerTab == 2) { DrawIndustryLedger(x, y, w, r); return; }
+        }
         var st = G.Statistics;
         var metrics = st.Available.ToList();
         if (metrics.Count == 0 || st.Dates.Count < 2) { Gui.Wrapped("Statistics are recorded every month. Come back after a few months.", x, y, w, 15, Gui.TextDim); return; }
@@ -533,6 +1037,254 @@ public sealed partial class Hud
                 gi++;
             }
             y += (gi + 1) / 2 * 20 * S;
+        }
+    }
+
+    private void DrawGlobalTradeLedger(float x, float y, float w, Rectangle panel)
+    {
+        var market = G.Commodities;
+        var cache = GetGlobalTradeLedgerCache(w);
+        var countries = cache.Countries;
+        var rows = cache.Rows;
+        var subject = cache.Subject;
+        Gui.Label(cache.TradeSummary, x, y, 14, Gui.TextDim);
+        Gui.Label(cache.ShortageSummary, x + w - Gui.Measure(cache.ShortageSummary, 13).X, y + 1 * S, 13, cache.Shortages == 0 ? Gui.Good : Gui.Bad);
+        y += 25 * S;
+        if (subject != null)
+        {
+            var policy = G.TradeNetwork.PolicyOf(subject);
+            Gui.Label(cache.PolicySummary, x, y, 13, Gui.TextDim);
+            if (subject.IsPlayer)
+            {
+                float buttonY = y + 17 * S, buttonW = 58 * S;
+                bool SetPolicy(double tariff, double priority, double protection)
+                {
+                    string t = tariff.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    string p = priority.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    string r = protection.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+                    if (Send(GameCommand.SetTradePolicy, t, p, r)) { InvalidateLedgerCache(); return true; }
+                    policy.TariffRate = tariff; policy.ImportPriority = priority; policy.Protectionism = protection;
+                    InvalidateLedgerCache();
+                    return false;
+                }
+                if (Gui.Button(new Rectangle(x + w - 378 * S, buttonY, buttonW, 23 * S), "Tariff -", true, "Reduce import tariff by 1 percentage point", false, 11))
+                {
+                    double value = Math.Max(0, policy.TariffRate - 0.01);
+                    SetPolicy(value, policy.ImportPriority, policy.Protectionism);
+                }
+                if (Gui.Button(new Rectangle(x + w - 315 * S, buttonY, buttonW, 23 * S), "Tariff +", true, "Increase import tariff by 1 percentage point", false, 11))
+                {
+                    double value = Math.Min(0.50, policy.TariffRate + 0.01);
+                    SetPolicy(value, policy.ImportPriority, policy.Protectionism);
+                }
+                if (Gui.Button(new Rectangle(x + w - 252 * S, buttonY, buttonW, 23 * S), "Import -", true, "Lower the priority given to imports", false, 11))
+                    SetPolicy(policy.TariffRate, Math.Max(0.1, policy.ImportPriority - 0.1), policy.Protectionism);
+                if (Gui.Button(new Rectangle(x + w - 189 * S, buttonY, buttonW, 23 * S), "Import +", true, "Raise the priority given to imports", false, 11))
+                    SetPolicy(policy.TariffRate, Math.Min(4, policy.ImportPriority + 0.1), policy.Protectionism);
+                if (Gui.Button(new Rectangle(x + w - 126 * S, buttonY, buttonW, 23 * S), "Protect -", true, "Lower protectionism and import suppression", false, 11))
+                    SetPolicy(policy.TariffRate, policy.ImportPriority, Math.Max(0, policy.Protectionism - 0.05));
+                if (Gui.Button(new Rectangle(x + w - 63 * S, buttonY, buttonW, 23 * S), "Protect +", true, "Raise protectionism and import suppression", false, 11))
+                    SetPolicy(policy.TariffRate, policy.ImportPriority, Math.Min(0.9, policy.Protectionism + 0.05));
+                y += 22 * S;
+            }
+            y += 22 * S;
+        }
+        Gui.Label(cache.RouteSummary, x, y, 12, Gui.TextDim);
+        if (cache.RecentRouteText.Length > 0)
+        {
+            Gui.Label(Gui.Fit(cache.RecentRouteText, w, 12), x, y + 16 * S, 12, Gui.Gold);
+            y += 34 * S;
+        }
+        Gui.Section("World market balances", x, y, w, "ui_global_trade");
+        y += 27 * S;
+
+        if (_ledgerCommodity != null && market.Defs.TryGetValue(_ledgerCommodity, out var selectedDef))
+        {
+            Gui.Label($"Country drill-down · {selectedDef.Name}", x, y, 13, Gui.Gold, FontKind.Bold);
+            y += 20 * S;
+            foreach (var row in cache.Drilldown)
+            {
+                Gui.Flag(row.Country, new Rectangle(x, y, 26 * S, 17 * S));
+                Gui.Label(row.Name, x + 32 * S, y, 12, row.Country == subject ? Gui.Gold : Gui.Text);
+                Gui.Label($"{row.Trade} · {row.Met}", x + 165 * S, y, 12, row.Satisfied >= 0.85 ? Gui.TextDim : Gui.Bad);
+                y += 19 * S;
+            }
+            y += 4 * S;
+        }
+
+        float nameW = w * 0.27f, outputW = w * 0.13f, demandW = w * 0.13f, tradeW = w * 0.15f, stockW = w * 0.12f;
+        void Header(string text, float at, float width) => Gui.Label(Gui.Fit(text, width - 4 * S, 12), at, y, 12, Gui.TextDim, FontKind.Bold);
+        Header("Commodity", x, nameW);
+        Header("Output", x + nameW, outputW);
+        Header("Demand", x + nameW + outputW, demandW);
+        Header("Trade in / out", x + nameW + outputW + demandW, tradeW);
+        Header("Stockpile", x + nameW + outputW + demandW + tradeW, stockW);
+        Header("Price", x + nameW + outputW + demandW + tradeW + stockW, w * 0.08f);
+        Header("Met", x + w - 52 * S, 52 * S);
+        y += 20 * S;
+
+        float rowH = 27 * S;
+        float contentH = Math.Max(rowH, rows.Count * rowH);
+        float top = Gui.BeginScroll("global-trade-ledger", new Rectangle(x, y, w, panel.Bottom() - y - 10 * S), contentH);
+        float ry = top;
+        foreach (var row in rows)
+        {
+            var rowRect = new Rectangle(x, ry, w - 8 * S, rowH - 2 * S);
+            if (Gui.Hover(rowRect)) Raylib.DrawRectangleRec(rowRect, new Color(255, 255, 255, 14));
+            if (Gui.Hover(rowRect) && Raylib.IsMouseButtonPressed(MouseButton.Left)) _ledgerCommodity = row.Def.Key;
+            Raylib.DrawRectangleRec(new Rectangle(x, ry + 7 * S, 8 * S, 8 * S), C(row.Def.Color));
+            Gui.Label(row.Name, x + 13 * S, ry + 3 * S, 13, Gui.Text);
+            Gui.Label(row.Output, x + nameW, ry + 3 * S, 13, Gui.Text);
+            Gui.Label(row.Demand, x + nameW + outputW, ry + 3 * S, 13, Gui.Text);
+            Gui.Label(row.Trade, x + nameW + outputW + demandW, ry + 3 * S, 13, Gui.TextDim);
+            Gui.Label(row.Stockpile, x + nameW + outputW + demandW + tradeW, ry + 3 * S, 13, Gui.TextDim);
+            Gui.Label(row.Price, x + nameW + outputW + demandW + tradeW + stockW, ry + 3 * S, 13, row.AveragePrice > row.Def.Price * 1.5 ? Gui.Gold : Gui.Text);
+            Gui.Label(row.Met, x + w - 52 * S, ry + 3 * S, 13, row.Satisfied >= 0.85 ? Gui.Good : Gui.Bad);
+            if (Gui.Hover(rowRect)) Gui.Tooltip(row.Tooltip);
+            ry += rowH;
+        }
+        Gui.EndScroll();
+    }
+
+    private void DrawIndustryLedger(float x, float y, float w, Rectangle panel)
+    {
+        var country = LedgerSubject;
+        if (country == null)
+        {
+            Gui.Wrapped("Choose a country or start a game to inspect its industry ledger.", x, y, w, 15, Gui.TextDim);
+            return;
+        }
+
+        var cache = GetIndustryLedgerCache(w);
+        if (cache == null) return;
+        var rows = cache.Rows;
+        const float identityNameSize = 18;
+        float flagW = 42 * S, flagH = 28 * S, nameX = x + flagW + 9 * S;
+        float badgeW = Math.Min(w, nameX - x + Gui.Measure(cache.IdentityName, identityNameSize, FontKind.Bold).X + 14 * S);
+        var badge = new Rectangle(x - 5 * S, y - 5 * S, badgeW, 38 * S);
+        Raylib.DrawRectangleRec(badge, new Color(117, 82, 26, 230));
+        Raylib.DrawRectangleLinesEx(badge, 1 * S, Gui.Gold);
+        Gui.Flag(country, new Rectangle(x, y, flagW, flagH));
+        Gui.LabelShadow(cache.IdentityName, nameX, y + 3 * S, identityNameSize, Gui.Text, FontKind.Bold);
+        Gui.Label(cache.Summary, x, y + 32 * S, 13, Gui.TextDim);
+        Gui.Label(cache.DemandSummary, x, y + 47 * S, 13, Gui.TextDim);
+        if (cache.Shortages > 0) Gui.Label($"{cache.Shortages} inputs below 85%", x + w - Gui.Measure($"{cache.Shortages} inputs below 85%", 13).X, y + 47 * S, 13, Gui.Bad);
+        Gui.Label(cache.BuildingSummary, x, y + 62 * S, 13, Gui.TextDim);
+        Gui.Label(cache.PlanSummary, x, y + 77 * S, 12, cache.PlanSummary.Contains("hold", StringComparison.OrdinalIgnoreCase) ? Gui.Bad : Gui.Gold);
+        if (country.IsPlayer)
+        {
+            if (cache.ShortageCommodity != null && Gui.Button(new Rectangle(x, y + 91 * S, 150 * S, 23 * S), cache.Supplier == null ? "Import unavailable" : $"Import {Gui.Fit(cache.ShortageCommodity, 82 * S, 11)}", cache.Supplier != null, cache.Supplier == null ? "No current surplus supplier" : $"Negotiate a 12-month agreement with {cache.Supplier.Name}", false, 11))
+            {
+                if (cache.Supplier != null && !Send(GameCommand.NegotiateTrade, cache.Supplier.Tag, "0.5", cache.ShortageCommodity, cache.ShortageAmount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))) G.TradeNetwork.Negotiate(country, cache.Supplier, 0.5, 12, cache.ShortageCommodity, cache.ShortageAmount);
+                InvalidateLedgerCache();
+            }
+            if (Gui.Button(new Rectangle(x + 156 * S, y + 91 * S, 150 * S, 23 * S), cache.Build == null ? "Build unavailable" : $"Build {cache.Build.Name}", cache.CanBuild, "Spend treasury on the local capacity for the current shortage", false, 11))
+            {
+                if (cache.Build != null && cache.BuildState != null && !Send(GameCommand.BuildIndustry, cache.Build.Key, cache.BuildState.Key)) G.Population.GoldBuild(country, cache.Build, cache.BuildState);
+                InvalidateLedgerCache();
+            }
+        }
+        if (country.IsPlayer)
+        {
+            if (cache.MethodState != null && cache.Methods.Count > 0)
+            {
+                Gui.Label($"Methods in {cache.MethodState.DisplayName}", x, y + 118 * S, 12, Gui.TextDim, FontKind.Bold);
+                float mx = x;
+                foreach (var method in cache.Methods)
+                {
+                    var chosen = G.TradeNetwork.SelectedMethods.GetValueOrDefault((method.State, method.Output)) ?? method.Methods[0].Key;
+                    var current = method.Methods.FirstOrDefault(recipe => recipe.Key.Equals(chosen, StringComparison.OrdinalIgnoreCase)) ?? method.Methods[0];
+                    string label = Gui.Fit($"{method.Output}: {current.Method}", 145 * S, 10);
+                    if (Gui.Button(new Rectangle(mx, y + 135 * S, 145 * S, 21 * S), label, true, $"Select production method for {method.Output}", false, 10))
+                    {
+                        int next = method.Methods.IndexOf(current);
+                        next = (next + 1) % method.Methods.Count;
+                        if (!Send(GameCommand.SetIndustryMethod, method.State.Key, method.Output, method.Methods[next].Key)) G.TradeNetwork.SetMethod(country, method.State, method.Output, method.Methods[next].Key);
+                        InvalidateLedgerCache();
+                    }
+                    mx += 151 * S;
+                }
+                y += 64 * S;
+            }
+        }
+        y += country.IsPlayer ? 122 * S : 95 * S;
+        DrawConstructionCapacityLedger(cache, x, ref y, w);
+        y += 8 * S;
+        Gui.Section("Production and inputs", x, y, w, "ui_industry");
+        y += 27 * S;
+
+        float nameW = w * 0.29f, outputW = w * 0.13f, popW = w * 0.14f, inputW = w * 0.17f, stockW = w * 0.12f;
+        void Header(string text, float at, float width) => Gui.Label(Gui.Fit(text, width - 4 * S, 12), at, y, 12, Gui.TextDim, FontKind.Bold);
+        Header("Commodity", x, nameW);
+        Header("Output", x + nameW, outputW);
+        Header("People", x + nameW + outputW, popW);
+        Header("Industry / army", x + nameW + outputW + popW, inputW);
+        Header("Stockpile", x + nameW + outputW + popW + inputW, stockW);
+        Header("Met", x + w - 52 * S, 52 * S);
+        y += 20 * S;
+
+        float rowH = 27 * S;
+        float contentH = Math.Max(rowH, rows.Count * rowH);
+        const float noteH = 62;
+        float noteY = panel.Bottom() - noteH * S + 6 * S;
+        float top = Gui.BeginScroll("industry-ledger", new Rectangle(x, y, w, noteY - y - 8 * S), contentH);
+        float ry = top;
+        foreach (var row in rows)
+        {
+            var rowRect = new Rectangle(x, ry, w - 8 * S, rowH - 2 * S);
+            if (Gui.Hover(rowRect)) Raylib.DrawRectangleRec(rowRect, new Color(255, 255, 255, 14));
+            Raylib.DrawRectangleRec(new Rectangle(x, ry + 7 * S, 8 * S, 8 * S), C(row.Def.Color));
+            Gui.Label(row.Name, x + 13 * S, ry + 3 * S, 13, Gui.Text);
+            Gui.Label(row.OutputText, x + nameW, ry + 3 * S, 13, Gui.Text);
+            Gui.Label(row.PopulationText, x + nameW + outputW, ry + 3 * S, 13, Gui.TextDim);
+            Gui.Label(row.IndustryText, x + nameW + outputW + popW, ry + 3 * S, 13, row.IndustryDemand > 0 ? Gui.Text : Gui.TextDim);
+            Gui.Label(row.StockpileText, x + nameW + outputW + popW + inputW, ry + 3 * S, 13, Gui.TextDim);
+            Gui.Label(row.Met, x + w - 52 * S, ry + 3 * S, 13, row.Demand <= 0.0001 ? Gui.TextDim : row.Satisfied >= 0.85 ? Gui.Good : Gui.Bad);
+            if (Gui.Hover(rowRect)) Gui.Tooltip(row.Tooltip);
+            ry += rowH;
+        }
+        Gui.EndScroll();
+        Gui.Wrapped("Industry demand combines population, AI-built capacity and military use. Farms, workshops, markets and infrastructure now change local output; workshop input shortages reduce processed goods.", x, noteY, w, 12, Gui.TextDim);
+    }
+
+    private void DrawConstructionCapacityLedger(IndustryLedgerCache cache, float x, ref float y, float w)
+    {
+        Gui.Section("Construction capacity", x, y, w, "ui_construction");
+        y += 27 * S;
+        Gui.Label(cache.ConstructionSummary, x, y, 13, cache.Construction.Count == 0 ? Gui.TextDim : Gui.Gold);
+        y += 20 * S;
+        if (cache.Construction.Count == 0)
+        {
+            Gui.Wrapped("No projects are queued. Preindustrial construction uses manual labour, public works and workshops; civilian factories are only one later method.", x, y, w, 12, Gui.TextDim);
+            y += 30 * S;
+            return;
+        }
+
+        int visible = Math.Min(6, cache.Construction.Count);
+        float rowH = 38 * S;
+        for (int i = 0; i < visible; i++)
+        {
+            var row = cache.Construction[i];
+            var box = new Rectangle(x, y, w - 8 * S, rowH - 2 * S);
+            Card(box, new Color(36, 38, 44, 255));
+            string target = Gui.Fit(row.Target, w * 0.46f, 12, FontKind.Bold);
+            string method = Gui.Fit(row.Method, w * 0.24f, 12, FontKind.Bold);
+            Gui.Label(target, box.X + 7 * S, box.Y + 3 * S, 12, Gui.Text, FontKind.Bold);
+            Gui.Label(method, box.X + w * 0.48f, box.Y + 3 * S, 12, Gui.Gold, FontKind.Bold);
+            float barW = w * 0.25f;
+            Gui.Bar(new Rectangle(box.X + 7 * S, box.Y + 21 * S, barW, 7 * S), (float)row.ProgressRatio, row.Blocked ? Gui.Bad : Gui.Good);
+            Gui.Label(row.Progress, box.X + 7 * S + barW + 6 * S, box.Y + 17 * S, 11, Gui.TextDim);
+            string detail = $"{row.Allocation} / {row.Capacity}";
+            Gui.Label(Gui.Fit(detail, w * 0.34f, 11), box.X + w * 0.53f, box.Y + 17 * S, 11, Gui.TextDim);
+            string status = row.Blocked ? $"Blocked: {row.Status}" : row.Status;
+            Gui.Label(Gui.Fit(status, box.Width - 14 * S, 10), box.X + 7 * S, box.Y + 29 * S, 10, row.Blocked ? Gui.Bad : Gui.Good);
+            if (Gui.Hover(box)) Gui.Tooltip($"{row.Target}\nMethod: {row.Method}\nProgress: {row.Progress}\n{row.Allocation}\n{row.Capacity}\n{status}");
+            y += rowH;
+        }
+        if (cache.Construction.Count > visible)
+        {
+            Gui.Label($"+ {cache.Construction.Count - visible} more queued projects", x, y + 2 * S, 11, Gui.TextDim);
+            y += 18 * S;
         }
     }
 

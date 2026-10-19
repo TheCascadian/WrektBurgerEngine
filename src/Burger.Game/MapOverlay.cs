@@ -11,6 +11,19 @@ public sealed class MapOverlay
     private readonly Game _game;
     private readonly MapRenderer _map;
     private readonly CountryLabels _countryLabels;
+    private Burger.Core.Production.TradeTransaction? _selectedTrade;
+    // Unit, route and order overlays reuse the same location anchors. Keep the cache local to the
+    // overlay and invalidate it with camera/map state so interaction rectangles use the same pixels.
+    private readonly Dictionary<(Location Location, int Lift, bool Standing), Vector2> _locationScreen = new();
+    private Camera3D _projectionCamera;
+    private Game? _projectionGame;
+    private bool _projectionCacheReady;
+    private int _projectionMapVersion = -1;
+    private int _projectionVisibilityVersion = -1;
+    private int _projectionWidth = -1;
+    private int _projectionHeight = -1;
+    private bool _projectionBelowFigure;
+    private float _projectionUnitLift;
 
     /// <summary>Unit counters, fleets, battles and order arrows on the map (the Units button, H). Kept for the whole session like the fog shading.</summary>
     public static bool ShowUnits = true;
@@ -28,6 +41,45 @@ public sealed class MapOverlay
     }
 
     private float LiftFor(Location l) => l.IsWater ? 0.35f : CounterBelowFigure ? 0f : UnitLift;
+
+    private void PrepareProjectionCache(Camera3D cam)
+    {
+        bool changed = !_projectionCacheReady
+            || !ReferenceEquals(_projectionGame, _game)
+            || !_projectionCamera.Position.Equals(cam.Position)
+            || !_projectionCamera.Target.Equals(cam.Target)
+            || !_projectionCamera.Up.Equals(cam.Up)
+            || _projectionCamera.FovY != cam.FovY
+            || _projectionCamera.Projection != cam.Projection
+            || _projectionMapVersion != _game.MapVersion
+            || _projectionVisibilityVersion != _game.VisibilityVersion
+            || _projectionWidth != Viewport.W
+            || _projectionHeight != Viewport.H
+            || _projectionBelowFigure != CounterBelowFigure
+            || _projectionUnitLift != UnitLift;
+        if (!changed) return;
+        _locationScreen.Clear();
+        _projectionGame = _game;
+        _projectionCamera = cam;
+        _projectionMapVersion = _game.MapVersion;
+        _projectionVisibilityVersion = _game.VisibilityVersion;
+        _projectionWidth = Viewport.W;
+        _projectionHeight = Viewport.H;
+        _projectionBelowFigure = CounterBelowFigure;
+        _projectionUnitLift = UnitLift;
+        _projectionCacheReady = true;
+    }
+
+    private Vector2 ProjectLocation(Location location, float lift, Camera3D cam, bool standing = false)
+    {
+        PrepareProjectionCache(cam);
+        var key = (location, (int)MathF.Round(lift * 1000), standing);
+        if (_locationScreen.TryGetValue(key, out var screen)) return screen;
+        var world = standing ? StandPos(location, cam) : _map.LocationPos(location, lift);
+        return _locationScreen[key] = Viewport.SnapToScreen(world, cam);
+    }
+
+    private Vector2 ProjectStand(Location location, Camera3D cam) => ProjectLocation(location, LiftFor(location), cam, true);
 
     public MapOverlay(Game game, MapRenderer map)
     {
@@ -88,7 +140,7 @@ public sealed class MapOverlay
         foreach (var b in w.Battles)
         {
             if (!_game.IsVisible(b.Location)) continue; // fog of war
-            var s = Viewport.SnapToScreen(_map.LocationPos(b.Location, 0.3f), cam);
+            var s = ProjectLocation(b.Location, 0.3f, cam);
             if (!OnScreen(s)) continue;
             float r = 13 * scale;
             Raylib.DrawCircleV(s, r + 3, new Color(0, 0, 0, 160));
@@ -118,17 +170,19 @@ public sealed class MapOverlay
             int slot = perLocation.TryGetValue(loc, out var k) ? k : 0;
             perLocation[loc] = slot + 1;
             var basePos = StandPos(loc, cam);
-            var s = Viewport.SnapToScreen(basePos, cam);
+            var s = ProjectStand(loc, cam);
             if (!OnScreen(s)) continue;
             // moving units are drawn part of the way to their next location
             var first = g.First();
             if (first.Path.Count > 0 && first.Battle == null && g.All(d => d.Path.Count > 0 && d.Path[0] == first.Path[0]))
             {
-                var next = Viewport.SnapToScreen(StandPos(first.Path[0], cam), cam);
+                var next = ProjectStand(first.Path[0], cam);
                 s = Vector2.Lerp(s, next, (float)Math.Clamp(first.MoveProgress, 0, 1) * 0.8f);
             }
             float cw = 50 * scale, ch = 22 * scale;
-            var rect = new Rectangle(s.X - cw / 2, s.Y - ch / 2 - slot * (ch + 9 * scale), cw, ch);
+            float statH = 7 * scale, pillGap = 2 * scale;
+            float slotStep = ch + statH + pillGap + 9 * scale;
+            var rect = new Rectangle(s.X - cw / 2, s.Y - ch / 2 - slot * slotStep, cw, ch);
             if (CounterBelowFigure && !loc.IsWater)
             {
                 // under the feet, drawn over the figure; a tank is longer than a soldier is wide, so its hull reaches further down the screen
@@ -146,12 +200,18 @@ public sealed class MapOverlay
                     }
                     clear = lowest - s.Y;
                 }
-                rect.Y = s.Y + 4 * scale + clear + slot * (ch + 9 * scale);
+                rect.Y = s.Y + 4 * scale + clear + slot * slotStep;
             }
+            var statRect = new Rectangle(rect.X, rect.Y, rect.Width, statH);
+            rect.Y += statH + pillGap;
+            var counterRect = new Rectangle(rect.X, statRect.Y, rect.Width, rect.Bottom() - statRect.Y);
             bool selected = g.Any(d => ui.SelectedDivisions.Contains(d));
             bool mine = owner == player;
-            Counters.Add((rect, owner, g.ToList()));
-            Raylib.DrawRectangleRec(new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4 + 7 * scale), selected ? new Color(255, 230, 120, 255) : new Color(0, 0, 0, 200));
+            Counters.Add((counterRect, owner, g.ToList()));
+            Raylib.DrawRectangleRec(new Rectangle(counterRect.X - 2, counterRect.Y - 2, counterRect.Width + 4, counterRect.Height + 4), selected ? new Color(255, 230, 120, 255) : new Color(0, 0, 0, 200));
+            float str = (float)g.Average(d => d.StrengthFraction), org = (float)g.Average(d => d.OrgFraction);
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y, statRect.Width, 3 * scale), str, new Color(90, 200, 90, 255));
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y + 3.5f * scale, statRect.Width, 3 * scale), org, new Color(80, 160, 240, 255));
             Raylib.DrawRectangleRec(rect, C(owner.Color));
             int count = g.Count();
             string text = count.ToString();
@@ -163,27 +223,24 @@ public sealed class MapOverlay
             Raylib.DrawRectangleLinesEx(sym, 1.5f, Color.White);
             Raylib.DrawLineEx(new Vector2(sym.X, sym.Y), new Vector2(sym.X + sym.Width, sym.Y + sym.Height), 1.5f, Color.White);
             Raylib.DrawLineEx(new Vector2(sym.X + sym.Width, sym.Y), new Vector2(sym.X, sym.Y + sym.Height), 1.5f, Color.White);
-            float str = (float)g.Average(d => d.StrengthFraction), org = (float)g.Average(d => d.OrgFraction);
-            Gui.Bar(new Rectangle(rect.X, rect.Y + rect.Height + 1, rect.Width, 3 * scale), str, new Color(90, 200, 90, 255));
-            Gui.Bar(new Rectangle(rect.X, rect.Y + rect.Height + 1 + 3.5f * scale, rect.Width, 3 * scale), org, new Color(80, 160, 240, 255));
             // out of supply: a small warning triangle
             double supply = g.Average(d => d.Supply);
             if (_game.Features.HasSupply && supply < 0.75 && (mine || _game.IsVisible(loc)))
             {
-                var tp = new Vector2(rect.X + rect.Width + 6 * scale, rect.Y + 2 * scale);
+                var tp = new Vector2(counterRect.X + counterRect.Width + 6 * scale, counterRect.Y + 2 * scale);
                 var tcol = supply < 0.4 ? new Color(230, 70, 50, 255) : new Color(240, 190, 60, 255);
                 Raylib.DrawTriangle(tp + new Vector2(0, -6 * scale), tp + new Vector2(-6 * scale, 5 * scale), tp + new Vector2(6 * scale, 5 * scale), tcol);
             }
 
             string statecraft = DrawStatecraftBadges(g.ToList(), first, rect, scale, loc, mine);
-            if (!mouseOverUi && Gui.Hover(rect))
+            if (!mouseOverUi && Gui.Hover(counterRect))
             {
                 string army = string.Join(", ", g.Where(d => d.Army != null).Select(d => d.Army!.Name).Distinct());
                 Gui.Tooltip($"[icon:army][state:value] {owner.Name}: {count} division(s) in {loc.DisplayName}\n" + (army.Length > 0 ? $"Army: {army}\n" : "") + statecraft +
                             string.Join("\n", g.Take(8).Select(d => $"{d.Name}  str {d.StrengthFraction:P0}  org {d.OrgFraction:P0}" +
                                 (_game.Features.HasSupply ? $"  supply {d.Supply:P0}" : "") + (d.Retreating ? " (retreating)" : ""))) +
                             (count > 8 ? $"\n... and {count - 8} more" : ""));
-                if (mine && Gui.Clicked(rect))
+                if (mine && Gui.Clicked(counterRect))
                 {
                     if (!shift) ui.SelectedDivisions.Clear();
                     foreach (var d in g) if (!ui.SelectedDivisions.Contains(d)) ui.SelectedDivisions.Add(d);
@@ -317,6 +374,76 @@ public sealed class MapOverlay
         return tip.ToString();
     }
 
+    /// <summary>Recent trade paths shown while the ledger is open; route colours identify land, sea, and caravan traffic.</summary>
+    public void DrawTradeRoutes(Camera3D cam, bool enabled)
+    {
+        if (!enabled || !_game.TradeNetwork.Enabled) return;
+        float s = Gui.Scale;
+        foreach (var route in _game.TradeNetwork.BlockadedRoutes)
+        {
+            if (route.From.Locations.Count == 0 || route.To.Locations.Count == 0) continue;
+            var from = ProjectLocation(route.From.Locations.First(l => l.IsLand), 0.12f, cam);
+            var to = ProjectLocation(route.To.Locations.First(l => l.IsLand), 0.12f, cam);
+            Raylib.DrawLineEx(from, to, 3 * s, new Color(220, 75, 65, 190));
+            var mid = (from + to) * 0.5f;
+            Raylib.DrawLineEx(mid + new Vector2(-6, -6) * s, mid + new Vector2(6, 6) * s, 2 * s, Color.Red);
+            Raylib.DrawLineEx(mid + new Vector2(6, -6) * s, mid + new Vector2(-6, 6) * s, 2 * s, Color.Red);
+            var blockedBounds = new Rectangle(Math.Min(from.X, to.X) - 8 * s, Math.Min(from.Y, to.Y) - 8 * s,
+                Math.Abs(to.X - from.X) + 16 * s, Math.Abs(to.Y - from.Y) + 16 * s);
+            if (Gui.Hover(blockedBounds) && !Gui.MouseOverUi)
+                Gui.Tooltip($"Blocked sea route\n{route.From.DisplayName} → {route.To.DisplayName}\n{route.DistanceKm:0.#} km · capacity {route.Capacity:0.#}");
+        }
+        foreach (var transaction in _game.TradeNetwork.RecentHistory(24).Where(t => t.From.Locations.Count > 0 && t.To.Locations.Count > 0))
+        {
+            var fromLocation = transaction.From.Locations.FirstOrDefault(l => l.IsLand) ?? transaction.From.Locations[0];
+            var toLocation = transaction.To.Locations.FirstOrDefault(l => l.IsLand) ?? transaction.To.Locations[0];
+            var from = ProjectLocation(fromLocation, 0.12f, cam);
+            var to = ProjectLocation(toLocation, 0.12f, cam);
+            bool selected = ReferenceEquals(_selectedTrade, transaction);
+            var color = selected ? Gui.Gold : transaction.RouteKind switch
+            {
+                Burger.Core.Production.TradeRouteKind.Sea => new Color(80, 170, 245, 185),
+                Burger.Core.Production.TradeRouteKind.Caravan => new Color(205, 155, 70, 185),
+                _ => new Color(100, 210, 130, 185),
+            };
+            Raylib.DrawLineEx(from, to, Math.Max(1.5f, (selected ? 3 : 2) * s), color);
+            Raylib.DrawCircleV(from, 3 * s, color);
+            var bounds = new Rectangle(Math.Min(from.X, to.X) - 8 * s, Math.Min(from.Y, to.Y) - 8 * s,
+                Math.Abs(to.X - from.X) + 16 * s, Math.Abs(to.Y - from.Y) + 16 * s);
+            if (Gui.Hover(bounds) && !Gui.MouseOverUi)
+            {
+                Gui.Tooltip($"{transaction.Commodity}: {transaction.Quantity:0.#} units\n" +
+                            $"{transaction.Seller.Name} → {transaction.Buyer.Name}\n" +
+                            $"{transaction.RouteKind} · {transaction.DistanceKm:0.#} km · transport {transaction.TransportCost:0.##}\n" +
+                            $"price {transaction.Price:0.##} · tariff {transaction.Tariff:0.##}");
+                if (Gui.Clicked(bounds)) _selectedTrade = transaction;
+            }
+            var delta = to - from;
+            if (delta.LengthSquared() > 25)
+            {
+                delta = Vector2.Normalize(delta);
+                var side = new Vector2(-delta.Y, delta.X);
+                var tip = to;
+                Raylib.DrawTriangle(tip, tip - delta * 10 * Gui.Scale + side * 4 * Gui.Scale, tip - delta * 10 * Gui.Scale - side * 4 * Gui.Scale, color);
+            }
+        }
+        if (_selectedTrade != null && !_game.TradeNetwork.History.Contains(_selectedTrade)) _selectedTrade = null;
+        if (_selectedTrade != null) DrawSelectedTrade(_selectedTrade);
+    }
+
+    private void DrawSelectedTrade(Burger.Core.Production.TradeTransaction trade)
+    {
+        float s = Gui.Scale;
+        var panel = new Rectangle(12 * s, 78 * s, 285 * s, 104 * s);
+        Raylib.DrawRectangleRec(panel, new Color(11, 14, 20, 235));
+        Raylib.DrawRectangleLinesEx(panel, 1 * s, Gui.Gold);
+        Gui.Label("TRADE ROUTE", panel.X + 10 * s, panel.Y + 8 * s, 12, Gui.Gold, FontKind.Bold);
+        Gui.Label(Gui.Fit($"{trade.Seller.Name} → {trade.Buyer.Name}", panel.Width - 20 * s, 13, FontKind.Bold), panel.X + 10 * s, panel.Y + 27 * s, 13, Gui.Text, FontKind.Bold);
+        Gui.Label($"{trade.Commodity} · {trade.Quantity:0.#} units · {trade.RouteKind}", panel.X + 10 * s, panel.Y + 47 * s, 12, Gui.TextDim);
+        Gui.Label($"{trade.DistanceKm:0.#} km · transport {trade.TransportCost:0.##}", panel.X + 10 * s, panel.Y + 64 * s, 12, Gui.TextDim);
+        Gui.Label($"price {trade.Price:0.##} · tariff {trade.Tariff:0.##}", panel.X + 10 * s, panel.Y + 81 * s, 12, trade.Tariff > 0 ? Gui.Gold : Gui.TextDim);
+    }
+
     /// <summary>Fleets (navy feature): a ship counter per fleet, naval battles and the selected fleet's route. Returns true if a fleet was clicked.</summary>
     public bool DrawFleets(Camera3D cam, UiState ui, bool mouseOverUi)
     {
@@ -330,10 +457,10 @@ public sealed class MapOverlay
         // route of the selected fleet
         if (ui.SelectedFleet is { Path.Count: > 0 } sf)
         {
-            var from = Viewport.SnapToScreen(_map.LocationPos(sf.Location, 0.3f), cam);
+            var from = ProjectLocation(sf.Location, 0.3f, cam);
             foreach (var l in sf.Path)
             {
-                var to = Viewport.SnapToScreen(_map.LocationPos(l, 0.3f), cam);
+                var to = ProjectLocation(l, 0.3f, cam);
                 Raylib.DrawLineEx(from, to, 3, new Color(120, 200, 250, 230));
                 from = to;
             }
@@ -346,9 +473,9 @@ public sealed class MapOverlay
             if (f.Owner != player && !_game.IsVisible(f.Location)) continue;
             int slot = perLocation.TryGetValue(f.Location, out var k) ? k : 0;
             perLocation[f.Location] = slot + 1;
-            var s = Viewport.SnapToScreen(_map.LocationPos(f.Location, 0.35f), cam);
+            var s = ProjectLocation(f.Location, 0.35f, cam);
             if (f.Path.Count > 0)
-                s = Vector2.Lerp(s, Viewport.SnapToScreen(_map.LocationPos(f.Path[0], 0.35f), cam), (float)Math.Clamp(f.MoveProgress, 0, 1) * 0.8f);
+                s = Vector2.Lerp(s, ProjectLocation(f.Path[0], 0.35f, cam), (float)Math.Clamp(f.MoveProgress, 0, 1) * 0.8f);
             if (!OnScreen(s)) continue;
             float cw = 46 * scale, ch = 20 * scale;
             var rect = new Rectangle(s.X - cw / 2, s.Y + 16 * scale + slot * (ch + 8 * scale), cw, ch);
@@ -402,7 +529,7 @@ public sealed class MapOverlay
             var st = g.Key;
             if (st.Locations.Count == 0) continue;
             var loc = st.Locations.OrderByDescending(l => l.PixelCount).First();
-            var s = Viewport.SnapToScreen(_map.LocationPos(loc, 0.35f), cam);
+            var s = ProjectLocation(loc, 0.35f, cam);
             if (!OnScreen(s)) continue;
             float cw = 46 * scale, ch = 18 * scale;
             var rect = new Rectangle(s.X - cw / 2, s.Y - 34 * scale, cw, ch);
@@ -464,7 +591,7 @@ public sealed class MapOverlay
                 var pts = army.FrontPairs.Count > 0 ? army.FrontPairs.Select(p => p.Own).Distinct().ToList() : army.Divisions.Select(d => d.Location).ToList();
                 var start3 = new Vector2(pts.Average(l => l.CenterX), pts.Average(l => l.CenterY));
                 var a = Viewport.SnapToScreen(_map.WorldPos(start3.X, start3.Y, 0.4f), cam);
-                var b = Viewport.SnapToScreen(_map.LocationPos(army.Objective, 0.4f), cam);
+                var b = ProjectLocation(army.Objective, 0.4f, cam);
                 if (OnScreen(a, 2000) && OnScreen(b, 2000) && Vector2.Distance(a, b) > 8)
                 {
                     var col = army.Mode == ArmyMode.Offensive ? new Color(225, 55, 45, sel ? 245 : 190) : new Color(225, 160, 60, sel ? 230 : 160);
@@ -500,7 +627,7 @@ public sealed class MapOverlay
                 Vector2? prev = null;
                 foreach (var l in line)
                 {
-                    var p = Viewport.SnapToScreen(_map.LocationPos(l, 0.3f), cam);
+                    var p = ProjectLocation(l, 0.3f, cam);
                     if (prev != null)
                     {
                         // dashed segment
@@ -516,7 +643,7 @@ public sealed class MapOverlay
             if (sel && army.FrontLimit.Count > 0)
                 foreach (var l in army.FrontLimit)
                 {
-                    var p = Viewport.SnapToScreen(_map.LocationPos(l, 0.3f), cam);
+                    var p = ProjectLocation(l, 0.3f, cam);
                     Raylib.DrawCircleLines((int)p.X, (int)p.Y, 7, new Color(120, 230, 120, 230));
                     Raylib.DrawCircleLines((int)p.X, (int)p.Y, 8, new Color(0, 0, 0, 160));
                 }
@@ -525,10 +652,10 @@ public sealed class MapOverlay
         foreach (var d in ui.SelectedDivisions)
         {
             if (d.Path.Count == 0) continue;
-            var from = Viewport.SnapToScreen(_map.LocationPos(d.Location, 0.3f), cam);
+            var from = ProjectLocation(d.Location, 0.3f, cam);
             foreach (var l in d.Path)
             {
-                var to = Viewport.SnapToScreen(_map.LocationPos(l, 0.3f), cam);
+                var to = ProjectLocation(l, 0.3f, cam);
                 Raylib.DrawLineEx(from, to, 3, d.AttackTarget == l ? new Color(230, 60, 60, 230) : new Color(250, 220, 90, 220));
                 from = to;
             }

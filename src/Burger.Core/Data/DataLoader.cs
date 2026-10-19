@@ -373,14 +373,23 @@ public static class DataLoader
                     Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key),
                     Description = n.GetString("desc", "")!,
                     Cost = Math.Max(1, n.GetDouble("cost", 5000)),
+                    Method = n.GetString("construction_method", "")!,
+                    RequiresTech = n.GetList("requires_tech").Concat(n.GetList("construction_requires_tech")).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                    LabourRequired = n.GetDouble("labour_required", n.GetDouble("labor_required", 0)),
+                    CapacityOutput = n.GetDouble("construction_capacity", 0),
                     MaxLevel = n.GetInt("max_level", 10),
                     Category = n.GetString("category", "other")!,
+                    StartYear = n.GetInt("start_year", int.MinValue),
+                    EndYear = n.GetInt("end_year", int.MaxValue),
                     SharesSlots = n.GetBool("shares_slots"),
                     Potential = n.Get("potential"),
                     Definition = n,
                 };
+                if (n.Get("construction_inputs") is { Children: not null } constructionInputs)
+                    foreach (var input in constructionInputs.All)
+                        if (input.Value != null) b.ConstructionInputs[input.Key] = input.AsDouble();
                 foreach (var c in n.All)
-                    if (c.Value != null && c.Key is not ("name" or "desc" or "cost" or "max_level" or "category" or "shares_slots") && Node.TryParseDouble(c.Value, out var v))
+                    if (c.Value != null && c.Key is not ("name" or "desc" or "cost" or "construction_method" or "requires_tech" or "construction_requires_tech" or "labour_required" or "labor_required" or "construction_capacity" or "construction_inputs" or "max_level" or "category" or "start_year" or "end_year" or "shares_slots") && Node.TryParseDouble(c.Value, out var v))
                         b.Stats[c.Key] = v;
                 if (data.BuildingTypes.ContainsKey(b.Key)) Log.Warn($"Building '{b.Key}' redefined", n.Location);
                 data.BuildingTypes[b.Key] = b;

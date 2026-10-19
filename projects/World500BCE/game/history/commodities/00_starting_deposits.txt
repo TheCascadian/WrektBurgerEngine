@@ -1,0 +1,48 @@
+# Regional deposits create real exporter/importer pairs in the first 500 BCE market.
+# Values are annual output units; the engine converts them to monthly extraction.
+nile_delta_1 = {
+	salt = 60000
+	grain = 18000
+}
+nile_delta_2 = {
+	salt = 40000
+}
+anatolia_m9_1 = {
+	textiles = 50000
+	luxury_goods = 15000
+}
+anatolia_m9_2 = {
+	textiles = 30000
+}
+anatolia_m9_3 = {
+	iron_ore = 18000
+	clay = 12000
+}
+thrace_1 = {
+	iron_ore = 16000
+	gold = 900
+}
+southern_iberia_1 = {
+	copper = 22000
+	silver = 1200
+}
+iranian_plateau_persians_and_medes_1 = {
+	iron_ore = 14000
+	horses = 6000
+}
+mesopotamia_3 = {
+	grain = 14000
+	clay = 14000
+}
+phoenician_coast_1 = {
+	timber = 8000
+	ships = 1200
+}
+indus_lands_1 = {
+	grain = 16000
+	textiles = 5000
+}
+ganges_plain_1 = {
+	grain = 18000
+	animal_products = 5000
+}

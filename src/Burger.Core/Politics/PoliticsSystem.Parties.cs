@@ -100,7 +100,7 @@ public sealed partial class PoliticsSystem
     /// <summary>Initialize independent support by splitting each ideology's support across its named parties.</summary>
     public void InitializePartyPopularity(Country country, CountryPolitics state)
     {
-        var keys = PartyKeysOf(country).ToList();
+        var keys = PartyKeysOf(country).OrderBy(k => k, StringComparer.Ordinal).ToList();
         state.PartyPopularity.Clear();
         foreach (var group in keys.GroupBy(k => IdeologyKeyOfParty(k), StringComparer.OrdinalIgnoreCase))
         {
@@ -116,7 +116,7 @@ public sealed partial class PoliticsSystem
     /// <summary>Keep ideology drift compatible by scaling its member parties proportionally after aggregate support changes.</summary>
     public void SyncPartyPopularityToIdeologies(Country country, CountryPolitics state)
     {
-        var keys = PartyKeysOf(country).ToList();
+        var keys = PartyKeysOf(country).OrderBy(k => k, StringComparer.Ordinal).ToList();
         var valid = new HashSet<string>(keys, StringComparer.OrdinalIgnoreCase);
         foreach (var old in state.PartyPopularity.Keys.Where(k => !valid.Contains(k)).ToList()) state.PartyPopularity.Remove(old);
         foreach (var group in keys.GroupBy(k => IdeologyKeyOfParty(k), StringComparer.OrdinalIgnoreCase))
@@ -138,17 +138,18 @@ public sealed partial class PoliticsSystem
 
     private static void NormalizePartySupport(CountryPolitics state)
     {
-        foreach (var key in state.PartyPopularity.Keys.ToList())
+        foreach (var key in state.PartyPopularity.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList())
             if (!double.IsFinite(state.PartyPopularity[key]) || state.PartyPopularity[key] < 0) state.PartyPopularity[key] = 0;
-        double sum = state.PartyPopularity.Values.Sum();
+        var ordered = state.PartyPopularity.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
+        double sum = ordered.Sum(k => state.PartyPopularity[k]);
         if (sum <= 1e-12) return;
-        foreach (var key in state.PartyPopularity.Keys.ToList()) state.PartyPopularity[key] /= sum;
+        foreach (var key in ordered) state.PartyPopularity[key] /= sum;
     }
 
     private void RebuildIdeologyPopularityFromParties(Country country, CountryPolitics state)
     {
         foreach (var ideology in Ideologies) state.Popularity[ideology.Key] = 0;
-        foreach (var kv in state.PartyPopularity)
+        foreach (var kv in state.PartyPopularity.OrderBy(k => k.Key, StringComparer.Ordinal))
             if (IdeologyKeyOfParty(kv.Key) is { } ideology && state.Popularity.ContainsKey(ideology))
                 state.Popularity[ideology] += kv.Value;
         Normalize(state);
@@ -188,7 +189,7 @@ public sealed partial class PoliticsSystem
         if (state.PartyPopularity.Count == 0) InitializePartyPopularity(country, state);
         double noise = _game.Data.Defines.Get("election_noise", 0.03);
         var votes = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in PartyKeysOf(country))
+        foreach (var key in PartyKeysOf(country).OrderBy(k => k, StringComparer.Ordinal))
             votes[key] = Math.Max(0, state.PartyPopularity.GetValueOrDefault(key) * CohesionVoteFactor(key) + (_game.Rngs.Politics.NextDouble() * 2 - 1) * noise);
         double sum = votes.Values.Sum();
         if (sum > 0) foreach (var key in votes.Keys.ToList()) votes[key] /= sum;

@@ -10,6 +10,34 @@ namespace Burger.Tools;
 /// </summary>
 public static partial class Program
 {
+    private static string StateDigestDiff(Game a, Game b)
+    {
+        foreach (var c in a.World.Countries.OrderBy(c => c.Tag, StringComparer.Ordinal))
+        {
+            var d = b.World.GetCountry(c.Tag);
+            if (d == null || c.Gold != d.Gold || c.Manpower != d.Manpower) return $"country {c.Tag} gold/manpower";
+        }
+        var bd = b.World.Divisions.ToDictionary(d => d.Id);
+        foreach (var d in a.World.Divisions)
+            if (!bd.TryGetValue(d.Id, out var x) || d.Strength != x.Strength || d.Org != x.Org || d.Location.Key != x.Location.Key) return $"division {d.Id} strength/org/location";
+        var bw = b.World.Wars.ToDictionary(w => w.Name, StringComparer.Ordinal);
+        foreach (var w in a.World.Wars)
+            if (!bw.TryGetValue(w.Name, out var x) || w.WarScore != x.WarScore) return $"war {w.Name} score";
+        if (a.World.Relations.Alliances.Count != b.World.Relations.Alliances.Count) return "alliances";
+        if (a.World.Relations.Subjects.Count != b.World.Relations.Subjects.Count) return "subjects";
+        foreach (var c in a.World.Countries.Where(c => c.Exists).OrderBy(c => c.Tag, StringComparer.Ordinal))
+        {
+            var d = b.World.GetCountry(c.Tag);
+            if (d == null) continue;
+            var ap = a.Politics.Of(c); var bp = b.Politics.Of(d);
+            if (ap.Ruling != bp.Ruling) return $"politics {c.Tag} ruling {ap.Ruling} vs {bp.Ruling}";
+            if (ap.Popularity.Count != bp.Popularity.Count) return $"politics {c.Tag} popularity-count {ap.Popularity.Count} vs {bp.Popularity.Count}";
+            foreach (var kv in ap.Popularity.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+                if (bp.Popularity.GetValueOrDefault(kv.Key) != kv.Value) return $"politics {c.Tag}/{kv.Key} {kv.Value:R} vs {bp.Popularity.GetValueOrDefault(kv.Key):R}";
+        }
+        return "unknown digest component";
+    }
+
     private static int MultiplayerTest(List<string> args)
     {
         string project = ResolveProject(RequireProjectArg(args, "burger mp-test <project> [--days N] [--seed S]"));
@@ -41,11 +69,17 @@ public static partial class Program
             { var cl = clients[^1]; cl.Toast += t => Console.WriteLine($"    [{cl.Me?.Name}] {t}"); }
         }
         var watched = new HashSet<LockstepSession>();
+        int observedResyncs = 0;
         void Frame(double dt = 0.05)
         {
             while (listener.TryAccept(out var t)) host.AddPeer(t);
             host.Update(dt);
             foreach (var c in clients) c.Update(dt);
+            if (args.Contains("--diag") && host.Resyncs > observedResyncs)
+            {
+                observedResyncs = host.Resyncs;
+                foreach (var c in clients) Console.WriteLine($"    resync diff {c.Me?.Name}: " + string.Join(" | ", StateChecksum.Diff(hostGame, c.Game).Take(12)));
+            }
             if (args.Contains("--watch")) foreach (var c in clients) if (c.Disconnected && !watched.Contains(c)) { watched.Add(c); Console.WriteLine($"    WATCH {c.Me?.Name} disconnected at host tick {host.Tick}, its tick {c.Tick}, host sees {string.Join(",", host.Players.Select(p => p.Name + (p.Active ? "+" : "-")))}"); }
         }
         void Frames(int n) { for (int i = 0; i < n; i++) Frame(); }
@@ -132,6 +166,8 @@ public static partial class Program
         Check(host.Players.First(p => p.Name == "Cy").IsAi, "leaving player shows as AI in the list");
         Check(!hostGame.World.GetCountry(tags[3])!.IsPlayer && !clients[0].Game.World.GetCountry(tags[3])!.IsPlayer, "left country is AI-run on host and clients");
         Check(toasts.Any(t => t.Contains("left")), "toast on leave");
+        if (args.Contains("--diag"))
+            foreach (var c in clients) Console.WriteLine($"    after leave diff {c.Me?.Name}: " + string.Join(" | ", StateChecksum.Diff(hostGame, c.Game).Take(12)) + $"; player {hostGame.World.GetCountry(tags[3])?.IsPlayer}/{c.Game.World.GetCountry(tags[3])?.IsPlayer}");
         clients.RemoveAt(2);
 
         Until(() => Days() >= start + days);
@@ -140,11 +176,15 @@ public static partial class Program
         foreach (var c in clients) Console.WriteLine($"    tick {c.Me!.Name} {c.Tick} host {host.Tick} resyncs {c.Resyncs}");
         Check(clients.All(c => c.Tick == host.Tick), "clients caught up with the host at tick " + host.Tick);
         ulong hs = StateChecksum.Compute(hostGame);
-        foreach (var c in clients) Check(StateChecksum.Compute(c.Game) == hs, $"{c.Me!.Name} checksum equals the host's ({hs:x16})");
+        foreach (var c in clients)
+        {
+            bool equal = StateChecksum.Compute(c.Game) == hs;
+            Check(equal, $"{c.Me!.Name} checksum equals the host's ({hs:x16})" + (equal ? "" : $" [{string.Join(" | ", StateChecksum.Diff(hostGame, c.Game).Take(12))}]"));
+        }
         Check(host.Players.Any(p => p.Id > 0 && p.Active && p.PingMs >= 0), "ping tracked");
         Check(host.Resyncs == 1, "no resync other than the injected one by the end");
         string hd = StateDigest(hostGame);
-        foreach (var c in clients) Check(StateDigest(c.Game) == hd, $"{c.Me!.Name} full state digest equals the host's ({hd}; covers states, characters, wars, politics)");
+        foreach (var c in clients) Check(StateDigest(c.Game) == hd, $"{c.Me!.Name} full state digest equals the host's ({hd}; covers states, characters, wars, politics)" + (StateDigest(c.Game) == hd ? "" : $" [{StateDigestDiff(hostGame, c.Game)}]"));
         if (battleMode) Console.WriteLine($"    battles at the end on host {hostGame.World.Battles.Count}, battle score total {hostGame.World.Wars.Sum(w => w.BattleScore):0.##}");
         Console.WriteLine($"Ran {host.Tick} ticks ({hostGame.World.Date.ToDisplay()}), resyncs {host.Resyncs} (1 injected on purpose)");
         Console.WriteLine($"    pending proposals host {hostGame.PendingProposals.Count}: " + string.Join(", ", hostGame.PendingProposals.Select(p => p.Kind + ":" + p.From.Tag + ">" + p.To.Tag)));

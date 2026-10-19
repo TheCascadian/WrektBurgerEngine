@@ -281,16 +281,19 @@ public sealed partial class PopulationSystem
 
     /// <summary>Buildings that can be bought with gold (they have gold_cost) - only without the production feature.</summary>
     public IEnumerable<BuildingType> GoldBuildings()
-        => _game.Features.Has(FeatureSet.Production) || !_game.Features.Has(FeatureSet.Economy)
+        => !_game.Features.Has(FeatureSet.Economy)
             ? Enumerable.Empty<BuildingType>()
-            : _game.Data.BuildingTypes.Values.Where(b => GoldCost(b) > 0);
+            : _game.Data.BuildingTypes.Values.Where(b => GoldCost(b) > 0 && b.Active(_game.World.Date)
+                && (!_game.Features.Has(FeatureSet.Production) || b.Category != "factory"));
 
     public string? CannotGoldBuild(Country c, BuildingType b, State s)
     {
         if (!Enabled) return "Needs the population feature";
-        if (_game.Features.Has(FeatureSet.Production)) return "Built with factories (Production menu)";
+        if (_game.Features.Has(FeatureSet.Production) && b.Category == "factory" && _game.Production.CivilianFactories(c) > 0)
+            return "Built with factories (Production menu)";
         if (!_game.Features.Has(FeatureSet.Economy)) return "Needs the economy feature";
         if (GoldCost(b) <= 0) return "Cannot be bought with gold";
+        if (!b.Active(_game.World.Date)) return "This building belongs to another era";
         if (s.Owner != c) return "You must own the state";
         if (s.ControlledShare(c) < 0.5) return "Most of the state is occupied";
         int level = s.Buildings.GetValueOrDefault(b.Key) + GoldProjects.Count(p => p.State == s && p.Building == b);
@@ -326,6 +329,7 @@ public sealed partial class PopulationSystem
 
     private void AiBuild(Country c)
     {
+        if (_game.Features.Has(FeatureSet.Commodities)) return; // TradeNetworkSystem owns shortage-driven construction.
         var options = GoldBuildings().ToList();
         if (options.Count == 0 || GoldProjects.Count(p => p.Country == c) >= 2) return;
         double reserve = 100;
