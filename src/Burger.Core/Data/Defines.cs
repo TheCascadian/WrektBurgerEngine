@@ -13,6 +13,7 @@ public sealed class Defines
     // --- general ---------------------------------------------------------------------------------
     public GameDate StartDate = new(1900, 1, 1);
     public GameDate EndDate = new(2100, 1, 1);
+    public GameDate LatestStartDate = new(1, 1, 1);
     public bool PauseOnEvent = true;
     /// <summary>Hide enemy armies and darken land the player cannot see.</summary>
     public bool FogOfWar = true;
@@ -74,6 +75,7 @@ public sealed class Defines
     public static readonly (string Key, string Default, string Help)[] Known =
     {
         ("start_date", "1900.1.1", "Date the game starts"),
+        ("latest_start_date", "", "Last date a game may start on: the start screen offers a slider from start_date to this date (history/timeline replays what happened)"),
         ("end_date", "2100.1.1", "Date the game ends"),
         ("pause_on_event", "yes", "Pause when an event window opens for the player (an event can override it with pause = yes/no or pause = { trigger })"),
         ("fog_of_war", "yes", "Hide enemy armies and darken land the player cannot see (C#: Game.Rules.Vision)"),
@@ -210,6 +212,7 @@ public sealed class Defines
 
         StartDate = GameDate.Parse(Str("start_date", StartDate.ToScript()), StartDate);
         EndDate = GameDate.Parse(Str("end_date", EndDate.ToScript()), EndDate);
+        LatestStartDate = GameDate.Parse(Str("latest_start_date", ""), StartDate);
         PauseOnEvent = Bool("pause_on_event", PauseOnEvent);
         FogOfWar = Bool("fog_of_war", FogOfWar);
         EventTimeoutDays = Int("event_timeout_days", EventTimeoutDays);

@@ -36,6 +36,12 @@ public sealed class MapOverlay
         _countryLabels = new CountryLabels(game, map);
     }
 
+    /// <summary>The names are laid out again at once (the map changed under the same game).</summary>
+    public void RelayoutLabels(Burger.Core.GameDate? snapshotDate = null) => _countryLabels.RelayoutNow(snapshotDate);
+
+    /// <summary>On the start screen: the names of the other start dates are laid out in the background.</summary>
+    public void PrecomputeLabels(Burger.Core.History.TimelineSystem tl) => _countryLabels.PrecomputeStep(tl);
+
     private static Color C(Rgb c, int a = 255) => new(c.R, c.G, c.B, (byte)a);
 
     private bool OnScreen(Vector2 p, float margin = 50)

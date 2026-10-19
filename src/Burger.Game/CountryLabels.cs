@@ -22,6 +22,7 @@ public sealed class CountryLabels
         public float LengthPx;
         public string Kind = "";                        // how the line was found (debugging)
         public float Coverage = 1;                        // share of the land's length the name runs along
+        public bool Quick;                                // laid out by the fast first pass (one direction, no coast-following lines); the full pass replaces it
         // identity of what the label was fitted to: the same owner, name and land gives the same label (no refit, no movement)
         public int Owner = -1;
         public long Key;
@@ -32,7 +33,7 @@ public sealed class CountryLabels
         public double MorphAt = -1;
         public Label Rekeyed(long key, int[] locs) => new Label
         {
-            Text = Text, Points = Points, FontPx = FontPx, Heights = Heights, LengthPx = LengthPx, Kind = Kind, Coverage = Coverage,
+            Text = Text, Points = Points, FontPx = FontPx, Heights = Heights, LengthPx = LengthPx, Kind = Kind, Coverage = Coverage, Quick = Quick,
             Owner = Owner, Key = key, Locs = locs,
         };
     }
@@ -41,8 +42,14 @@ public sealed class CountryLabels
         float CenterX, float CenterY, int MinX, int MinY, int MaxX, int MaxY, int[] LandNeighbors);
     private sealed record CountryInput(int Index, string Tag, string Name, int CapitalIndex);
     private sealed record BuildInput(int Version, int Width, int Height, int[] PixelLocation,
-        LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex, Label[] Previous);
+        LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex, Label[] Previous, bool Quick);
     private sealed record BuildResult(int Version, Label[] Labels);
+    private sealed class Job
+    {
+        public readonly CountryInput Country; public readonly int Group; public readonly List<LocationInput> Locs; public readonly int[] Idx; public readonly long Key; public readonly Label? Same;
+        public Label? Fitted;
+        public Job(CountryInput country, int group, List<LocationInput> locs, int[] idx, long key, Label? same) { Country = country; Group = group; Locs = locs; Idx = idx; Key = key; Same = same; }
+    }
 
     private const double BuildDebounceSeconds = 0.4;
     private const double MinBuildIntervalSeconds = 1.0;
@@ -58,12 +65,215 @@ public sealed class CountryLabels
     private long _lastInvalidationTicks = Stopwatch.GetTimestamp();
     private double _lastBuildStartedAt = double.NegativeInfinity;
     private Task<BuildResult>? _buildTask;
+    private bool _needFull;
 
     public CountryLabels(Game game, MapRenderer map)
     {
         _game = game;
         _map = map;
         game.MapChanged += MarkDirty;
+        // the names of the date the world was made for (read from the cache of an earlier run when there is one)
+        if (game.Timeline.Enabled) PrecomputeStep(game.Timeline);
+        RelayoutNow(game.Timeline.Enabled ? game.Timeline.SnapshotFor(game.World.Date)?.Date : null);
+    }
+
+    /// <summary>
+    /// The names are there at once (a new game, or another start date shown on the loaded world): a quick layout is made now, on every core,
+    /// and the full one follows in the background.
+    /// </summary>
+    public void RelayoutNow(Burger.Core.GameDate? snapshotDate = null)
+    {
+        _buildTask = null;   // a layout still running belongs to the map as it was: its result is dropped
+        _version++;
+        try
+        {
+            Label[] labels;
+            if (snapshotDate is { } d && _cache.TryGetValue(d, out var cached))
+            {
+                // laid out earlier (in the background, or in an earlier run): at once
+                labels = cached.Select(l => l.Rekeyed(l.Key, l.Locs)).ToArray();
+                if (labels.Any(l => l.Heights.Length != l.Points.Length)) ApplyHeights(labels);
+            }
+            else
+            {
+                { labels = BuildLabels(CaptureInput(_version, true));
+                ApplyHeights(labels); }
+            }
+            _labels.Clear();
+            _labels.AddRange(labels);
+            _needFull = true;
+            _lastBuildStartedAt = Raylib.GetTime();
+            _dirty = true;
+        }
+        catch (Exception ex) { Log.Error($"Country-label first layout failed: {ex.GetType().Name}: {ex.Message}"); }
+    }
+
+    // ------------------------------------------------------------------------------------- every start date, laid out ahead of time
+    private readonly Dictionary<Burger.Core.GameDate, Label[]> _cache = new();
+    private Queue<Burger.Core.History.Snapshot>? _ahead;
+    private Task<Label[]>? _aheadTask;
+    private Burger.Core.GameDate _aheadDate;
+    private int[][]? _landNeighbors;
+    private List<State>? _statesByKey;
+
+    /// <summary>
+    /// While the start screen is up, the names of every start date are laid out one date after another in the background (suggested dates first),
+    /// so that picking a date shows them at once. Call every frame of the start screen.
+    /// </summary>
+    public void PrecomputeStep(Burger.Core.History.TimelineSystem tl)
+    {
+        if (!tl.Enabled) return;
+        if (!_diskTried) { _diskTried = true; LoadDiskCache(tl); }
+        if (_aheadTask is { IsCompleted: true } done)
+        {
+            try
+            {
+                var labels = done.GetAwaiter().GetResult();
+                ApplyHeights(labels);
+                _cache[_aheadDate] = labels;
+            }
+            catch (Exception ex) { Log.Error($"Country-label layout of a start date failed: {ex.GetType().Name}: {ex.Message}"); }
+            _aheadTask = null;
+        }
+        if (_aheadTask != null || _diskComplete) return;
+        // first every date quickly (so that all of them show at once soon), then every date in full; the full layouts are kept for the next run
+        if (_ahead == null || _ahead.Count == 0)
+        {
+            if (_aheadFull) { SaveDiskCache(tl); _diskComplete = true; return; }
+            _aheadFull = _ahead != null;
+            var first = tl.Eras.SelectMany(e => e.Suggested).Distinct().Select(tl.SnapshotFor).Where(sn => sn != null).Select(sn => sn!);
+            _ahead = new Queue<Burger.Core.History.Snapshot>(first.Concat(tl.Snapshots).DistinctBy(sn => sn.Date));
+        }
+        while (_ahead.Count > 0 && !_aheadFull && _cache.ContainsKey(_ahead.Peek().Date)) _ahead.Dequeue();
+        if (_ahead.Count == 0) return;
+        var snap = _ahead.Dequeue();
+        BuildInput input;
+        try { input = CaptureSnapshotInput(tl, snap, !_aheadFull); }
+        catch (Exception ex) { Log.Error($"Could not snapshot the names of a start date: {ex.GetType().Name}: {ex.Message}"); return; }
+        _aheadDate = snap.Date;
+        _aheadTask = Task.Run(() => BuildLabels(input));
+    }
+
+    private bool _diskTried, _diskComplete, _aheadFull;
+    private const int DiskVersion = 1;
+
+    private string? DiskPath(Burger.Core.History.TimelineSystem tl)
+    {
+        if (!Burger.Core.Map.MapCache.Enabled) return null;
+        string key = Burger.Core.Map.MapCache.Key("labels" + DiskVersion, "file:" + Path.Combine(_game.Data.Root, "history", "timeline", "snapshots.txt"), _game.World.Map.ContentKey,
+            _game.World.Countries.Count.ToString(), tl.Snapshots.Count.ToString());
+        return Path.Combine(Burger.Core.Map.MapCache.Dir(_game.Data), $"labels_{key}.bin");
+    }
+
+    /// <summary>The layouts of an earlier run (every start date, in full): nothing has to be laid out before a date shows.</summary>
+    private void LoadDiskCache(Burger.Core.History.TimelineSystem tl)
+    {
+        try
+        {
+            string? path = DiskPath(tl);
+            if (path == null || !File.Exists(path)) return;
+            using var r = new BinaryReader(File.OpenRead(path));
+            int dates = r.ReadInt32();
+            var loaded = new Dictionary<Burger.Core.GameDate, Label[]>();
+            for (int d = 0; d < dates; d++)
+            {
+                var date = new Burger.Core.GameDate(r.ReadInt32());
+                int count = r.ReadInt32();
+                var labels = new Label[count];
+                for (int i = 0; i < count; i++)
+                {
+                    var l = new Label { Text = r.ReadString(), FontPx = r.ReadSingle(), LengthPx = r.ReadSingle(), Coverage = r.ReadSingle() };
+                    string tag = r.ReadString();
+                    l.Owner = _game.World.GetCountry(tag)?.Index ?? -1;
+                    l.Points = new Vector2[r.ReadInt32()];
+                    for (int k = 0; k < l.Points.Length; k++) l.Points[k] = new Vector2(r.ReadSingle(), r.ReadSingle());
+                    l.Locs = new int[r.ReadInt32()];
+                    for (int k = 0; k < l.Locs.Length; k++) l.Locs[k] = r.ReadInt32();
+                    l.Key = LabelKey(l.Owner, NameAt(l.Owner, tl, date), l.Locs);
+                    labels[i] = l;
+                }
+                loaded[date] = labels;
+            }
+            foreach (var kv in loaded) _cache[kv.Key] = kv.Value;
+            _diskComplete = true;
+            Log.Info($"Country labels: {loaded.Count} start dates read from the cache");
+        }
+        catch (Exception ex) { Log.Warn($"Country-label cache not read: {ex.Message}"); }
+    }
+
+    // the name a country is laid out with at a snapshot (its Key hashes it): the snapshot's name, else its name in the project data
+    private string NameAt(int owner, Burger.Core.History.TimelineSystem tl, Burger.Core.GameDate date)
+    {
+        if (owner < 0) return "";
+        var c = _game.World.Countries[owner];
+        var snap = tl.Snapshots.FirstOrDefault(sn => sn.Date == date);
+        return snap != null && snap.Names.TryGetValue(c.Tag, out var n) ? n : tl.BaseNameOf(c);
+    }
+
+    private void SaveDiskCache(Burger.Core.History.TimelineSystem tl)
+    {
+        try
+        {
+            string? path = DiskPath(tl);
+            if (path == null) return;
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            string tmp = path + ".tmp";
+            using (var w = new BinaryWriter(File.Create(tmp)))
+            {
+                w.Write(_cache.Count);
+                foreach (var (date, labels) in _cache)
+                {
+                    w.Write(date.TotalDays);
+                    w.Write(labels.Length);
+                    foreach (var l in labels)
+                    {
+                        w.Write(l.Text); w.Write(l.FontPx); w.Write(l.LengthPx); w.Write(l.Coverage);
+                        w.Write(l.Owner >= 0 ? _game.World.Countries[l.Owner].Tag : "");
+                        w.Write(l.Points.Length);
+                        foreach (var p in l.Points) { w.Write(p.X); w.Write(p.Y); }
+                        w.Write(l.Locs.Length);
+                        foreach (int i in l.Locs) w.Write(i);
+                    }
+                }
+            }
+            File.Move(tmp, path, true);
+            Log.Info($"Country labels: {_cache.Count} start dates laid out and kept for the next run");
+        }
+        catch (Exception ex) { Log.Warn($"Country-label cache not written: {ex.Message}"); }
+    }
+
+    /// <summary>What the layout needs to know about the world of a snapshot, without changing the world.</summary>
+    private BuildInput CaptureSnapshotInput(Burger.Core.History.TimelineSystem tl, Burger.Core.History.Snapshot snap, bool quick)
+    {
+        var world = _game.World;
+        _statesByKey ??= world.States.OrderBy(s => s.Key, StringComparer.Ordinal).ToList();
+        if (snap.Owners.Length != _statesByKey.Count) throw new InvalidOperationException("the snapshot is for other states");
+        _landNeighbors ??= world.Locations.Select(l => l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray()).ToArray();
+        var ownerOf = new int[world.Locations.Count];
+        Array.Fill(ownerOf, -1);
+        var tagIndex = new Dictionary<string, int>(StringComparer.Ordinal);
+        var holds = new HashSet<int>();
+        for (int i = 0; i < _statesByKey.Count; i++)
+        {
+            string tag = snap.Owners[i];
+            if (tag == "_") continue;
+            if (!tagIndex.TryGetValue(tag, out int ci)) { ci = world.GetCountry(tag)?.Index ?? -1; tagIndex[tag] = ci; }
+            if (ci < 0) continue;
+            holds.Add(ci);
+            foreach (var l in _statesByKey[i].Locations) ownerOf[l.Index] = ci;
+        }
+        var locations = new LocationInput[world.Locations.Count];
+        foreach (var l in world.Locations)
+            locations[l.Index] = new LocationInput(l.Index, ownerOf[l.Index], l.IsWater, l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, _landNeighbors[l.Index]);
+        var countries = new Dictionary<int, CountryInput>();
+        foreach (var c in world.Countries)
+        {
+            if (!holds.Contains(c.Index)) continue;
+            string name = snap.Names.TryGetValue(c.Tag, out var n) ? n : tl.BaseNameOf(c);
+            int cap = tl.BaseCapitalOf(c)?.Index ?? -1;
+            countries[c.Index] = new CountryInput(c.Index, c.Tag, name, cap >= 0 && ownerOf[cap] == c.Index ? cap : -1);
+        }
+        return new BuildInput(0, world.Map.Width, world.Map.Height, world.Map.PixelLocation, locations, countries, Array.Empty<Label>(), quick);
     }
 
     public void MarkDirty()
@@ -75,7 +285,7 @@ public sealed class CountryLabels
     }
 
     // ------------------------------------------------------------------------------------- immutable snapshot + background layout
-    private BuildInput CaptureInput(int version)
+    private BuildInput CaptureInput(int version, bool quick)
     {
         var world = _game.World;
         var map = world.Map;
@@ -91,7 +301,7 @@ public sealed class CountryLabels
         var countries = world.Countries.Where(c => c.Exists)
             .Select(c => new CountryInput(c.Index, c.Tag, c.Name, c.Capital?.Index ?? -1)).ToArray();
         return new BuildInput(version, map.Width, map.Height, map.PixelLocation, locations,
-            countries.ToDictionary(c => c.Index), _labels.ToArray());
+            countries.ToDictionary(c => c.Index), _labels.ToArray(), quick);
     }
 
     private void RefreshLabels()
@@ -109,7 +319,7 @@ public sealed class CountryLabels
                 _labels.AddRange(result.Labels);
                 // Publish the most recent completed snapshot even if newer map changes arrived while
                 // it was being built; retain it until a coalesced follow-up is ready.
-                _dirty = result.Version != _version;
+                _dirty = result.Version != _version || _needFull;
                 if (_dirty) _firstDirtyTicks = Stopwatch.GetTimestamp();
             }
             catch (Exception ex)
@@ -123,12 +333,15 @@ public sealed class CountryLabels
         if (_tiSeen != _game.Exploration.Version) { _tiSeen = _game.Exploration.Version; MarkDirty(); }
         if (!_dirty || _buildTask != null) return;
         double now = Raylib.GetTime();
-        if (now - _lastBuildStartedAt < MinBuildIntervalSeconds ||
+        // the first layout of a game (a new map, a new start date) is built at once: there is nothing on screen to keep still
+        bool first = double.IsNegativeInfinity(_lastBuildStartedAt);
+        bool refine = _needFull;
+        if (!first && !refine && (now - _lastBuildStartedAt < MinBuildIntervalSeconds ||
             Stopwatch.GetElapsedTime(_lastInvalidationTicks).TotalSeconds < BuildDebounceSeconds &&
-            Stopwatch.GetElapsedTime(_firstDirtyTicks).TotalSeconds < MaxDebounceSeconds) return;
+            Stopwatch.GetElapsedTime(_firstDirtyTicks).TotalSeconds < MaxDebounceSeconds)) return;
 
         BuildInput input;
-        try { input = CaptureInput(_version); }
+        try { input = CaptureInput(_version, first); }
         catch (Exception ex)
         {
             _lastBuildStartedAt = now;
@@ -136,7 +349,14 @@ public sealed class CountryLabels
             return;
         }
         _lastBuildStartedAt = now;
-        _buildTask = Task.Run(() => new BuildResult(input.Version, BuildLabels(input)));
+        _needFull = first;       // the first pass is quick; the full layout follows at once
+        _buildTask = Task.Run(() =>
+        {
+            var sw = Stopwatch.StartNew();
+            var labels = BuildLabels(input);
+            if (first) Log.Info($"Country labels: {labels.Length} names laid out in {sw.ElapsedMilliseconds} ms (first pass)");
+            return new BuildResult(input.Version, labels);
+        });
     }
 
     private void ApplyHeights(Label[] labels)
@@ -229,6 +449,7 @@ public sealed class CountryLabels
         }
         for (int i = 0; i < groupOf.Length; i++) groupOf[i] = Find(i);
         var blockGroup = groupOf;
+        var jobs = new List<Job>();
         foreach (var g in Enumerable.Range(0, blocks.Count).GroupBy(i => blocks[i].OwnerIndex))
         {
             if (!input.CountryByIndex.TryGetValue(g.Key, out var country)) continue;
@@ -244,35 +465,42 @@ public sealed class CountryLabels
                 if (!wanted) continue;
                 int[] idx = locs.Select(l => l.Index).OrderBy(i => i).ToArray();
                 long key = LabelKey(country.Index, country.Name, idx);
-                var same = input.Previous.FirstOrDefault(pl => pl.Key == key);
-                if (same != null) { labels.Add(same); continue; }   // nothing this name depends on changed: it stays exactly where it is
-                var label = Fit(country, locs, grp.Key, block, blockGroup, input);
-                if (label == null) continue;
-                label.Owner = country.Index; label.Key = key; label.Locs = idx;
-                var old = BestPrevious(input.Previous, country.Index, label.Text, idx);
-                if (old != null)
-                {
-                    // a small change in the land (a province gained or lost elsewhere) must not shuffle the name: keep the old
-                    // curve while it still lies inside the land and its letters are not much smaller than a fresh fit would give
-                    int gid = grp.Key, inside = 0, total = 0;
-                    bool In(Vector2 q)
-                    {
-                        int x = (int)q.X, y = (int)q.Y;
-                        if (x < 0 || y < 0 || x >= input.Width || y >= input.Height) return false;
-                        int li = input.PixelLocation[y * input.Width + x];
-                        return li >= 0 && block[li] >= 0 && blockGroup[block[li]] == gid;
-                    }
-                    for (int i = 0; i < old.Points.Length; i++)
-                    {
-                        total++; if (In(old.Points[i])) inside++;
-                        if (i > 0) { total++; if (In((old.Points[i] + old.Points[i - 1]) / 2)) inside++; }
-                    }
-                    if (inside >= total * 0.9f && old.FontPx >= label.FontPx * 0.75f) { labels.Add(old.Rekeyed(key, idx)); continue; }
-                    label.FromPoints = Resample(old.Points, label.Points.Length);
-                    label.FromFontPx = old.FontPx; label.FromLengthPx = old.LengthPx;
-                }
-                labels.Add(label);
+                jobs.Add(new Job(country, grp.Key, locs, idx, key, input.Previous.FirstOrDefault(pl => pl.Key == key && (input.Quick || !pl.Quick))));
             }
+        }
+        // the fits are independent of each other: lay them out on every core
+        Parallel.ForEach(jobs.Where(j => j.Same == null), j => j.Fitted = Fit(j.Country, j.Locs, j.Group, block, blockGroup, input, input.Quick));
+        foreach (var job in jobs)
+        {
+            var country = job.Country; var idx = job.Idx; long key = job.Key;
+            if (job.Same != null) { labels.Add(job.Same); continue; }   // nothing this name depends on changed: it stays exactly where it is
+            var label = job.Fitted;
+            if (label == null) continue;
+            label.Quick = input.Quick;
+            label.Owner = country.Index; label.Key = key; label.Locs = idx;
+            var old = BestPrevious(input.Previous, country.Index, label.Text, idx);
+            if (old != null)
+            {
+                // a small change in the land (a province gained or lost elsewhere) must not shuffle the name: keep the old
+                // curve while it still lies inside the land and its letters are not much smaller than a fresh fit would give
+                int gid = job.Group, inside = 0, total = 0;
+                bool In(Vector2 q)
+                {
+                    int x = (int)q.X, y = (int)q.Y;
+                    if (x < 0 || y < 0 || x >= input.Width || y >= input.Height) return false;
+                    int li = input.PixelLocation[y * input.Width + x];
+                    return li >= 0 && block[li] >= 0 && blockGroup[block[li]] == gid;
+                }
+                for (int i = 0; i < old.Points.Length; i++)
+                {
+                    total++; if (In(old.Points[i])) inside++;
+                    if (i > 0) { total++; if (In((old.Points[i] + old.Points[i - 1]) / 2)) inside++; }
+                }
+                if (inside >= total * 0.9f && old.FontPx >= label.FontPx * 0.75f) { labels.Add(old.Rekeyed(key, idx)); continue; }
+                label.FromPoints = Resample(old.Points, label.Points.Length);
+                label.FromFontPx = old.FontPx; label.FromLengthPx = old.LengthPx;
+            }
+            labels.Add(label);
         }
         return labels.ToArray();
     }
@@ -326,12 +554,12 @@ public sealed class CountryLabels
         return res;
     }
 
-    private static Label? Fit(CountryInput c, List<LocationInput> locs, int groupId, int[] block, int[] blockGroup, BuildInput md)
+    private static Label? Fit(CountryInput c, List<LocationInput> locs, int groupId, int[] block, int[] blockGroup, BuildInput md, bool quick)
     {
         int minX = int.MaxValue, minY = int.MaxValue, maxX = 0, maxY = 0;
         foreach (var l in locs) { minX = Math.Min(minX, l.MinX); minY = Math.Min(minY, l.MinY); maxX = Math.Max(maxX, l.MaxX); maxY = Math.Max(maxY, l.MaxY); }
         long area = (long)(maxX - minX + 1) * (maxY - minY + 1);
-        int step = Math.Max(1, (int)Math.Sqrt(area / 25000.0));
+        int step = Math.Max(1, (int)Math.Sqrt(area / (quick ? 5000.0 : 25000.0)));
         var xs = new List<float>();
         var ys = new List<float>();
         bool Inside(int x, int y)
@@ -368,7 +596,7 @@ public sealed class CountryLabels
         Label? best = null;
         double bestScore = 0;
         var angles = new List<double> { ang };
-        for (int deg = -60; deg <= 60; deg += 15) angles.Add(deg * Math.PI / 180);
+        if (!quick) for (int deg = -60; deg <= 60; deg += 15) angles.Add(deg * Math.PI / 180);
         Label? fallback = null;
         // BURGER_LABEL_DEBUG=TAG writes every candidate line of that country to label_debug.txt
         bool debug = Environment.GetEnvironmentVariable("BURGER_LABEL_DEBUG") is { } dbgTag && dbgTag == c.Tag;
@@ -489,7 +717,7 @@ public sealed class CountryLabels
 
         // two ways to lay the name, each on a thick part (35% of the widest) or also thinner parts (18%):
         // a gentle arc, and a line through the middle of the land that bends with it (coasts, peninsulas)
-        foreach (double thr in new[] { 0.35, 0.18 })
+        foreach (double thr in quick ? new[] { 0.35 } : new[] { 0.35, 0.18 })
         {
             int bestStart = 0, bestLen = 0;
             for (int b = 0; b < bins;)
@@ -506,12 +734,12 @@ public sealed class CountryLabels
             if (arc != null) { var l = Finish(arc, rigid: true, extent); if (l != null) { l.Kind = $"arc{thr}"; result.Add(l); } }
             var spine = Spine(bestStart, bestLen);
             if (spine != null) { var l = Finish(spine, rigid: false, extent); if (l != null) { l.Kind = $"spine{thr}"; result.Add(l); } }
-            var ridge = Ridge(thr);
+            var ridge = quick ? null : Ridge(thr);
             if (ridge != null) { var l = Finish(ridge, rigid: false, extent); if (l != null) { l.Kind = $"ridge{thr}"; result.Add(l); } }
         }
         // and down the whole length of long, thin land (Norway's coast, Chile), however narrow it gets
         {
-            var ridge = Ridge(0.06);
+            var ridge = quick ? null : Ridge(0.06);
             if (ridge != null) { var l = Finish(ridge, rigid: false, u1 - u0); if (l != null) { l.Kind = "ridgeAll"; result.Add(l); } }
         }
         return result;

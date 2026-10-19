@@ -114,6 +114,8 @@ public sealed class Game
     public Burger.Core.Air.AirSystem Air { get; }
     /// <summary>Lend-lease and volunteers (lend_lease feature).</summary>
     public Burger.Core.Warfare.SupportSystem Support { get; }
+    /// <summary>Dated history between the first start date and the latest one (history/timeline).</summary>
+    public Burger.Core.History.TimelineSystem Timeline { get; }
     /// <summary>Ideologies, elections, laws, ministers, movements and civil wars (politics features).</summary>
     public Burger.Core.Politics.PoliticsSystem Politics { get; }
     /// <summary>Pops, cultures, religions, social classes, cores and claims, colonies (population features).</summary>
@@ -229,6 +231,7 @@ public sealed class Game
         Navy = new Burger.Core.Navy.NavySystem(this);
         Air = new Burger.Core.Air.AirSystem(this);
         Support = new Burger.Core.Warfare.SupportSystem(this);
+        Timeline = new Burger.Core.History.TimelineSystem(this);
         Politics = new Burger.Core.Politics.PoliticsSystem(this);
         Population = new Burger.Core.Population.PopulationSystem(this);
         GeoDynamics = new Burger.Core.Geography.GeoDynamics(this);
@@ -317,7 +320,7 @@ public sealed class Game
     public static event Action<Game>? MapLoaded;
     internal void RaiseMapLoaded() => MapLoaded?.Invoke(this);
 
-    public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null)
+    public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null, GameDate? startDate = null)
     {
         var game = new Game();
         game.Seed = seed ?? Environment.TickCount;
@@ -349,6 +352,10 @@ public sealed class Game
         game.Sites.Load(game.Data.Root);
         game.Titles.Build();
         game.Diplomacy.LoadDemilitarized();
+        game.Timeline.Load();
+        game.Timeline.CaptureBase();
+        var wanted = startDate ?? game.Data.Defines.StartDate;
+        if (wanted > game.Data.Defines.StartDate || game.Timeline.Snapshots.Any(s => s.Date == wanted && s.Keep)) game.Timeline.Apply(wanted);
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);
         for (int i = 0; i < 5; i++) game.Clock.DaysPerSecond[i + 1] = game.Data.Defines.GameSpeeds[i];

@@ -29,6 +29,10 @@ public sealed partial class App
     private AppScreen _screen = AppScreen.Menu;
     private string _errorMessage = "";
     private Country? _menuSelection;
+    /// <summary>The start date picked on the start screen (null = the first start date); the game is reloaded with the history up to it.</summary>
+    private GameDate? _menuDate;
+    private bool _menuDateDirty;
+    private bool _previewing;   // the start screen shows a date the loaded world is not made for
     private bool _quit;
     private int _frame;
     private Action? _pending;
@@ -68,6 +72,7 @@ public sealed partial class App
         if (_opt.Perf || _opt.Bench) _renderPerf = new RenderPerf();
         if (_opt.Bench) { _bench = new Bench(); _opt.Observe = true; }
 
+        if (_opt.StartDate is { } sd && sd.TotalDays != 0) _menuDate = sd;
         LoadGame();
         if (Game != null && _opt.LoadSave != null) DoLoadSave(_opt.LoadSave);
         else if (Game != null && _opt.HostTag != null) { HostMultiplayer(_opt.HostTag); Console.WriteLine("host: lan " + _mpc.LanCode); if (!SteamService.Available) { Console.WriteLine("host: steam off: " + SteamService.Problem); foreach (var l in SteamService.LogLines) Console.WriteLine("steam log: " + l); } }
@@ -163,6 +168,8 @@ public sealed partial class App
     private void LoadGame(bool keepMap = false, Burger.Core.Game? adopt = null, int? seed = null)
     {
         DrawLoading("Loading...");
+        _previewing = false;
+        string? keepTag = _menuSelection?.Tag;
         var keptRenderer = keepMap ? Renderer : null;
         if (keptRenderer == null) Renderer?.Dispose();
         Renderer = null;
@@ -183,7 +190,7 @@ public sealed partial class App
             Action<Burger.Core.Game> prewarm = MapRenderer.Prewarm;
             if (keptRenderer == null) Burger.Core.Game.MapLoaded += prewarm; // the renderer's CPU work runs while the rest of the game loads
             Burger.Core.Game game;
-            try { game = adopt ?? Burger.Core.Game.Load(_gameRoot, compileScripts: true, seed: seed); }
+            try { game = adopt ?? Burger.Core.Game.Load(_gameRoot, compileScripts: true, seed: seed, startDate: seed == null ? _menuDate : null); }
             finally { Burger.Core.Game.MapLoaded -= prewarm; }
             Game = game;
             if (adopt == null && seed == null) // multiplayer games use the same settings on every machine
@@ -300,9 +307,10 @@ public sealed partial class App
                 return $"{args[0]} x{n}";
             });
             _hud = new Hud(this);
-            _menuSelection = game.World.GetCountry(game.Data.Info.DefaultTag) ?? game.World.Countries.FirstOrDefault(c => c.Playable && c.Exists);
+            _menuSelection = game.World.GetCountry(keepTag) is { Exists: true } kept ? kept : game.World.GetCountry(game.Data.Info.DefaultTag) is { Exists: true } def ? def : game.World.Countries.Where(c => c.Playable && c.Exists).OrderByDescending(c => c.OwnedStates.Count).FirstOrDefault();
             if (_menuSelection?.Capital != null) Camera.LookAt(Renderer.LocationPos(_menuSelection.Capital), Camera.MaxDistance * 0.5f);
             _screen = AppScreen.Menu;
+            if (_opt.Open == "play") _menuPage = MenuPage.Play; // --open play: the start screen of a new game (screenshots)
         }
         catch (Exception ex)
         {
@@ -490,6 +498,7 @@ public sealed partial class App
 
     private void DoLoadSave(string path)
     {
+        _menuDate = null;
         LoadGame(keepMap: true);
         if (Game == null) return;
         try
@@ -731,6 +740,7 @@ public sealed partial class App
         Raylib.BeginDrawing();
         DrawWorld(cam.Camera);
         Overlay!.DrawLabels(cam.Camera);
+        Overlay.PrecomputeLabels(game.Timeline);
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Left) && hovered?.Owner != null && hovered.Owner.Playable)
         {
             _menuSelection = hovered.Owner;

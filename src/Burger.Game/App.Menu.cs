@@ -89,8 +89,7 @@ public sealed partial class App
     private void DrawPagePlay(Game game, MapRenderer map, CameraController cam, float x, float y, float w, Rectangle panel)
     {
         float s = Gui.Scale;
-        Gui.Label($"Start date: {game.World.Date.ToDisplay()}", x, y, 15, Gui.TextDim);
-        y += 26 * s;
+        DrawStartDate(game, x, ref y, w);
         bool terra = game.Exploration.Allowed;
         DrawCountryPicker(game, map, cam, x, ref y, w, panel, (terra ? 198 : 160) * s);
         if (terra)
@@ -107,12 +106,12 @@ public sealed partial class App
         float bh = 40 * s;
         if (Gui.Button(new Rectangle(x, y, w, bh), _menuSelection != null ? $"Play as {_menuSelection.Name}" : "Select a country", _menuSelection != null, null, false, 18))
         {
-            StartGame(_menuSelection!.Tag);
+            RequestStart(_menuSelection!.Tag);
             Gui.EndFrame(); Raylib.EndDrawing();
             return;
         }
         y += bh + 6 * s;
-        if (Gui.Button(new Rectangle(x, y, w, 32 * s), "Observe: watch the AI play", true, null, false, 15)) { StartGame(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
+        if (Gui.Button(new Rectangle(x, y, w, 32 * s), "Observe: watch the AI play", true, null, false, 15)) { RequestStart(null); Gui.EndFrame(); Raylib.EndDrawing(); return; }
         y += 38 * s;
         if (Back(x, y, w, "main menu")) _menuPage = MenuPage.Home;
     }
@@ -201,6 +200,7 @@ public sealed partial class App
         float s = Gui.Scale;
         Gui.Label("Host a game as " + UserSettings.EffectiveName + " (change the name in Settings)", x, y, 14, Gui.TextDim);
         y += 24 * s;
+        DrawStartDate(game, x, ref y, w);
         DrawCountryPicker(game, map, cam, x, ref y, w, panel, 120 * s);
         float bh = 40 * s;
         if (Gui.Button(new Rectangle(x, y, w, bh), _menuSelection != null ? $"Host as {_menuSelection.Name}" : "Select a country", _menuSelection != null, "Starts the game paused and gives you the join code to share", false, 18))
