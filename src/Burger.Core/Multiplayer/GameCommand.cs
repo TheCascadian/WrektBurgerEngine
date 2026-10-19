@@ -20,6 +20,11 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>A custom message of a mod (args: message key, then the typed fields of its schema).</summary>
     public const string ModMessage = "mod_message";
     public const string QueueProduction = "queue_production";
+    public const string SetTradePolicy = "set_trade_policy";
+    public const string NegotiateTrade = "negotiate_trade";
+    public const string SetTradeBlockade = "set_trade_blockade";
+    public const string BuildIndustry = "build_industry";
+    public const string SetIndustryMethod = "set_industry_method";
     /// <summary>Spends points on a state's development (args: state key).</summary>
     public const string Develop = "develop";
     /// <summary>Adopts (1) or drops (0) a government reform (args: reform key, 1 or 0).</summary>
@@ -31,7 +36,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or Develop or Reform or EventOption or Respond or ModMessage;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or SetTradePolicy or NegotiateTrade or SetTradeBlockade or BuildIndustry or SetIndustryMethod or Develop or Reform or EventOption or Respond or ModMessage;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -115,6 +120,44 @@ public static class CommandExecutor
                 g.Production.AddLine(country, eq, factories);
                 return true;
             }
+            case GameCommand.SetTradePolicy:
+            {
+                if (c.Args.Length is < 1 or > 3) return false;
+                if (!double.TryParse(A(0), NumberStyles.Float, CultureInfo.InvariantCulture, out var tariff) || tariff is < 0 or > 0.50) return false;
+                var policy = g.TradeNetwork.PolicyOf(country);
+                policy.TariffRate = tariff;
+                if (c.Args.Length > 1 && double.TryParse(A(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var priority)) policy.ImportPriority = Math.Clamp(priority, 0.1, 4);
+                if (c.Args.Length > 2 && double.TryParse(A(2), NumberStyles.Float, CultureInfo.InvariantCulture, out var protection)) policy.Protectionism = Math.Clamp(protection, 0, 0.9);
+                return true;
+            }
+            case GameCommand.NegotiateTrade:
+            {
+                var target = w.GetCountry(A(0));
+                double discount = double.TryParse(A(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var d) ? d : 0.5;
+                double quantity = double.TryParse(A(3), NumberStyles.Float, CultureInfo.InvariantCulture, out var q) ? Math.Max(0, q) : 0;
+                return target != null && g.TradeNetwork.Negotiate(country, target, discount, 12, A(2), quantity);
+            }
+            case GameCommand.SetTradeBlockade:
+            {
+                var target = w.GetCountry(A(0));
+                if (target == null || target == country || !w.AtWar(country, target) || (A(1) != "0" && A(1) != "1")) return false;
+                g.TradeNetwork.SetBlockade(country, target, A(1) == "1");
+                return true;
+            }
+            case GameCommand.BuildIndustry:
+            {
+                var building = g.Data.BuildingTypes.GetValueOrDefault(A(0));
+                var state = w.GetState(A(1));
+                if (c.Args.Length != 2 || building == null || state == null) return false;
+                if (g.Production.Enabled)
+                    return g.Production.QueueBuilding(country, building, state) == null;
+                return g.Population.GoldBuild(country, building, state) == null;
+            }
+            case GameCommand.SetIndustryMethod:
+            {
+                var state = w.GetState(A(0));
+                return state != null && g.TradeNetwork.SetMethod(country, state, A(1), A(2));
+            }
         }
         return false;
     }
@@ -169,6 +212,43 @@ public static class CommandValidator
             case GameCommand.QueueProduction:
                 if (args.Length != 2 || !g.Data.Equipment.ContainsKey(A(0)) || !Sanitize.Int(A(1), 0, 50, out _)) return "bad production order";
                 return null;
+            case GameCommand.SetTradePolicy:
+                if (args.Length is < 1 or > 3 || !double.TryParse(A(0), NumberStyles.Float, CultureInfo.InvariantCulture, out var tariff) || tariff is < 0 or > 0.50) return "tariff must be between 0 and 0.50";
+                if (args.Length > 1 && (!double.TryParse(A(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var ip) || ip is < 0.1 or > 4)) return "import priority must be between 0.1 and 4";
+                if (args.Length > 2 && (!double.TryParse(A(2), NumberStyles.Float, CultureInfo.InvariantCulture, out var protection) || protection is < 0 or > 0.9)) return "protectionism must be between 0 and 0.9";
+                return null;
+            case GameCommand.NegotiateTrade:
+            {
+                if (args.Length is < 1 or > 4) return "bad trade agreement";
+                var target = w.GetCountry(A(0));
+                if (target == null || target == country || w.AtWar(country, target)) return "invalid trade partner";
+                if (args.Length == 2 && (!double.TryParse(A(1), NumberStyles.Float, CultureInfo.InvariantCulture, out var discount) || discount is < 0 or > 1)) return "bad tariff discount";
+                if (args.Length > 2 && A(2).Length > 64) return "bad commodity lane";
+                if (args.Length > 3 && (!double.TryParse(A(3), NumberStyles.Float, CultureInfo.InvariantCulture, out var quantity) || quantity < 0)) return "bad commodity quantity";
+                return g.TradeNetwork.Agreements.Any(a => a.From == country && a.To == target && a.Active(g.World.Date) && (args.Length < 3 || a.Commodity.Equals(A(2), StringComparison.OrdinalIgnoreCase))) ? "agreement already active" : null;
+            }
+            case GameCommand.SetTradeBlockade:
+            {
+                if (args.Length != 2 || (A(1) != "0" && A(1) != "1")) return "bad blockade command";
+                var target = w.GetCountry(A(0));
+                return target != null && target != country && w.AtWar(country, target) ? null : "blockade requires a country at war";
+            }
+            case GameCommand.BuildIndustry:
+            {
+                var building = g.Data.BuildingTypes.GetValueOrDefault(A(0));
+                var state = w.GetState(A(1));
+                if (args.Length != 2 || building == null || state == null || state.Owner != country) return "invalid industry project";
+                return g.Production.Enabled
+                    ? g.Production.CannotBuildReason(country, building, state)
+                    : g.Population.CannotGoldBuild(country, building, state);
+            }
+            case GameCommand.SetIndustryMethod:
+            {
+                if (args.Length != 3) return "bad production method";
+                var state = w.GetState(A(0));
+                if (state == null || state.Owner != country) return "invalid method state";
+                return g.TradeNetwork.MethodsFor(country, state, A(1)).Any(r => r.Key.Equals(A(2), StringComparison.OrdinalIgnoreCase)) ? null : "method unavailable";
+            }
             case GameCommand.EventOption:
             {
                 var pe = args.Length == 2 ? g.Events.PlayerQueue.FirstOrDefault(x => x.Def.Id == A(0) && Scripting.ScopeHelpers.CountryOf(x.Context.Root) == country) : null;

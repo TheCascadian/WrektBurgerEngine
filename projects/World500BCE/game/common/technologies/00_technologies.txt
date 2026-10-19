@@ -6,6 +6,7 @@ agriculture_irrigation = {
 	category = agriculture
 	year = -2000
 	cost = 120
+	unlocks = { construction_irrigation }
 	modifier = { income = 0.03 }
 }
 bronze_working = {
@@ -33,6 +34,15 @@ chariot_warfare = {
 	requires = { bronze_working }
 	modifier = { breakthrough_factor = 0.08 }
 }
+masonry = {
+	name = "Masonry"
+	desc = "Cut stone, fired brick and durable mortar for public buildings."
+	category = construction
+	year = -1500
+	cost = 220
+	requires = { bronze_working }
+	unlocks = { construction_masonry }
+}
 iron_working = {
 	name = "Iron Working"
 	desc = "Smelting and forging iron, cheaper than bronze."
@@ -41,8 +51,10 @@ iron_working = {
 	cost = 240
 	requires = { bronze_working }
 	institution = iron_working
+	unlocks = { construction_iron_tools }
 	modifier = { soft_attack_factor = 0.08 manpower = 0.03 }
 }
+
 fortification = {
 	name = "Fortification"
 	desc = "Walls, towers and citadels."
@@ -90,6 +102,15 @@ iron_plough = {
 	institution = iron_working
 	modifier = { income = 0.05 manpower = 0.05 }
 }
+surveying = {
+	name = "Surveying"
+	desc = "Measured boundaries, gradients and quantities for canals, roads and works."
+	category = construction
+	year = -800
+	cost = 300
+	requires = { writing_systems agriculture_irrigation }
+	unlocks = { construction_surveying }
+}
 mounted_archery = {
 	name = "Mounted Archery"
 	desc = "Horse archers of the steppe."
@@ -116,6 +137,15 @@ standing_bureaucracy = {
 	cost = 320
 	requires = { writing_systems }
 	modifier = { political_power_gain = 0.5 stability_target = 2 }
+}
+administrative_accounting = {
+	name = "Administrative Accounting"
+	desc = "Tax rolls, labour registers and stores for organised public works."
+	category = administration
+	year = -650
+	cost = 360
+	requires = { writing_systems standing_bureaucracy }
+	unlocks = { construction_public_works }
 }
 trireme = {
 	name = "Trireme"
@@ -172,6 +202,7 @@ royal_roads = {
 	cost = 380
 	requires = { standing_bureaucracy }
 	institution = imperial_roads
+	unlocks = { construction_public_works }
 	modifier = { income = 0.05 stability_target = 2 }
 }
 steel_working = {
@@ -208,5 +239,61 @@ engineering = {
 	year = -400
 	cost = 560
 	requires = { siegecraft mathematics }
+	unlocks = { construction_engineering }
 	modifier = { income = 0.05 }
+}
+
+water_power = {
+	name = "Water Power"
+	desc = "Waterwheels turn flowing water into dependable mechanical work."
+	category = industry
+	year = -100
+	cost = 620
+	requires = { mathematics engineering }
+	unlocks = { construction_water_power water_mills }
+}
+mechanical_power = {
+	name = "Mechanical Power"
+	desc = "Gears, cams and transmissions combine power with specialised tools."
+	category = industry
+	year = 1450
+	cost = 900
+	requires = { water_power engineering }
+	unlocks = { construction_mechanical_power mechanised_workshops }
+}
+steam_power = {
+	name = "Steam Power"
+	desc = "Engines convert heat into continuous mechanical work."
+	category = industry
+	year = 1712
+	cost = 1100
+	requires = { mechanical_power steel_working }
+	unlocks = { construction_steam_power mechanised_factories }
+}
+railways = {
+	name = "Railways"
+	desc = "Steam locomotives move bulk materials, workers and goods overland."
+	category = transport
+	year = 1825
+	cost = 1250
+	requires = { steam_power engineering }
+	unlocks = { construction_railways rail_infrastructure }
+}
+reinforced_concrete = {
+	name = "Reinforced Concrete"
+	desc = "Concrete strengthened with steel for durable large-scale structures."
+	category = construction
+	year = 1867
+	cost = 1350
+	requires = { engineering steam_power }
+	unlocks = { construction_reinforced_concrete modern_infrastructure }
+}
+electrification = {
+	name = "Electrification"
+	desc = "Generated electricity distributes flexible power to industry and cities."
+	category = industry
+	year = 1880
+	cost = 1450
+	requires = { steam_power mathematics }
+	unlocks = { construction_electrification electric_industry }
 }

@@ -17,9 +17,11 @@ features = {
 	civil_wars
 	independence
 	ai_profiles
+	production
 	navy
 	technology
 	development
+	commodities
 	colonization
 	culture_traditions
 	government_reforms

@@ -546,6 +546,7 @@ public sealed partial class App
         _renderPerf?.Mark(2);
         Overlay!.DrawLabels(cam.Camera);
         _renderPerf?.Mark(3);
+        Overlay.DrawTradeRoutes(cam.Camera, Ui.Right == RightPanel.Ledger);
         Overlay.DrawOrders(cam.Camera, Ui);
         _renderPerf?.Mark(4);
         Overlay.DrawUnits(cam.Camera, Ui, Gui.MouseOverUi);

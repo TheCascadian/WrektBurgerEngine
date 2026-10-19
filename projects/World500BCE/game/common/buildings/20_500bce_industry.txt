@@ -1,0 +1,125 @@
+# Era-aware construction and industry buildings. Preindustrial projects use manual, artisan or public-works capacity;
+# modern factories retain date and technology gates and use the civilian-factory construction path.
+infrastructure = {
+	name = "Roads and Canals"
+	desc = "Improves the movement of goods and raises the output of local producers."
+	gold_cost = 55
+	build_months = 6
+	cost = 1800
+	max_level = 5
+	category = infrastructure
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { stone = 0.40 timber = 0.10 tools = 0.05 }
+}
+farm = {
+	name = "Farms"
+	desc = "Expands food, livestock and cash-crop production."
+	gold_cost = 60
+	build_months = 12
+	cost = 2400
+	max_level = 5
+	category = civil
+	start_year = -500
+	construction_method = manual
+	construction_inputs = { timber = 0.15 tools = 0.03 }
+}
+workshop = {
+	name = "Workshops"
+	desc = "Artisan industry turns local and imported inputs into useful goods."
+	gold_cost = 85
+	build_months = 12
+	cost = 2600
+	max_level = 5
+	category = civil
+	start_year = -500
+	# A first workshop must be bootstrap-able without an existing workshop; artisan production is defined separately in industry methods.
+	construction_method = manual
+	construction_inputs = { timber = 0.20 stone = 0.10 tools = 0.06 }
+}
+market = {
+	name = "Markets"
+	desc = "Organises local exchange and gives traders a place to clear imported goods."
+	gold_cost = 80
+	build_months = 10
+	cost = 2200
+	max_level = 3
+	category = civil
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { timber = 0.20 stone = 0.15 tools = 0.04 }
+}
+school = {
+	name = "Schools and Archives"
+	desc = "Provides education and preserves technical knowledge."
+	gold_cost = 75
+	build_months = 14
+	cost = 2200
+	max_level = 3
+	category = service
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { timber = 0.25 stone = 0.15 tools = 0.03 }
+}
+clinic = {
+	name = "Healers and Clinics"
+	desc = "Provides basic healthcare and improves labour participation."
+	gold_cost = 70
+	build_months = 12
+	cost = 2000
+	max_level = 3
+	category = service
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { timber = 0.20 stone = 0.10 tools = 0.03 }
+}
+bureaucracy = {
+	name = "Administrative Offices"
+	desc = "Provides administration for taxation and public works."
+	gold_cost = 85
+	build_months = 12
+	cost = 2400
+	max_level = 3
+	category = service
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { timber = 0.25 stone = 0.20 tools = 0.04 }
+}
+caravanserai = {
+	name = "Caravanserai"
+	desc = "Supports long-distance transport and lowers trade friction."
+	gold_cost = 80
+	build_months = 10
+	cost = 2200
+	max_level = 3
+	category = service
+	start_year = -500
+	construction_method = public_works
+	construction_inputs = { timber = 0.30 stone = 0.25 tools = 0.05 }
+}
+civilian_factory = {
+	name = "Mechanised Factory"
+	desc = "A modern production line for civilian goods."
+	gold_cost = 260
+	build_months = 24
+	cost = 10800
+	max_level = 20
+	category = factory
+	start_year = 1750
+	construction_method = civilian_factory
+	construction_requires_tech = { steam_power }
+	construction_inputs = { stone = 0.50 iron_ore = 0.80 tools = 0.25 }
+}
+military_factory = {
+	name = "Armaments Factory"
+	desc = "A modern production line for equipment."
+	gold_cost = 300
+	build_months = 24
+	cost = 7200
+	max_level = 20
+	category = factory
+	start_year = 1750
+	construction_method = civilian_factory
+	construction_requires_tech = { steam_power }
+	construction_inputs = { stone = 0.40 iron_ore = 0.90 tools = 0.30 }
+}

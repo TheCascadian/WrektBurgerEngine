@@ -438,6 +438,7 @@ public sealed partial class PopulationSystem
         foreach (var p in sp.Pops)
         {
             double rate = Rules.YearlyGrowth(_game, s, p);
+            if (s.Owner != null) rate *= _game.Commodities.PopulationGrowthFactor(s.Owner);
             p.Size = Math.Max(0, p.Size * (1 + Rules.MonthlyGrowth(_game, s, p, rate, room)));
         }
     }

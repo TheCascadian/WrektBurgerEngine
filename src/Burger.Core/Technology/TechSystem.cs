@@ -306,6 +306,10 @@ public sealed class TechSystem
             n.Add("tag", c.Tag);
             var k = n.AddBlock("known");
             foreach (var t in set) k.AddItem(t);
+            // Army quality follows wealth at the monthly update. Recomputing it
+            // mid-month on load changes military power and political drift.
+            var factors = n.AddBlock("stat_factors");
+            foreach (var (key, value) in c.StatFactors) factors.Add(key, F(value));
             if (Research.TryGetValue(c, out var slots))
                 foreach (var s in slots)
                 {
@@ -325,9 +329,14 @@ public sealed class TechSystem
             var c = _game.World.GetCountry(n.GetString("tag"));
             if (c == null) continue;
             var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var t in n.Get("known")?.GetList("") ?? n.GetList("known")) if (Defs.ContainsKey(t)) set.Add(t);
+            foreach (var t in n.Get("known")?.Items() ?? n.GetList("known")) if (Defs.ContainsKey(t)) set.Add(t);
             Known[c] = set;
-            UpdateFactors(c);
+            if (n.Get("stat_factors") is { } factors)
+            {
+                c.StatFactors.Clear();
+                foreach (var value in factors.All) c.StatFactors[value.Key] = value.AsDouble();
+            }
+            else UpdateFactors(c); // Legacy saves did not retain the monthly snapshot.
             var list = new List<ResearchSlot>();
             foreach (var r in n.GetAll("research"))
                 if (Defs.TryGetValue(r.GetString("tech") ?? "", out var td)) list.Add(new ResearchSlot { Tech = td, Progress = r.GetDouble("progress") });

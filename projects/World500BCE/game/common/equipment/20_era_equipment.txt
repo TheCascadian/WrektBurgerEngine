@@ -1,0 +1,26 @@
+# Equipment inputs for projects that enable the modern production feature in this timeline.
+# CommoditySystem reads the commodities block when production lines are active.
+infantry_equipment = {
+	name = "Infantry Equipment"
+	cost = 0.5
+	category = army
+	default_for = { infantry cavalry }
+	default_amount = 100
+	commodities = { bronze = 0.12 textiles = 0.08 tools = 0.04 }
+}
+support_equipment = {
+	name = "Support Equipment"
+	cost = 2
+	category = army
+	default_for = { support }
+	default_amount = 25
+	commodities = { iron_tools = 0.16 textiles = 0.10 timber = 0.04 }
+}
+artillery_equipment = {
+	name = "Artillery"
+	cost = 3.5
+	category = army
+	default_for = { support artillery }
+	default_amount = 12
+	commodities = { iron_ore = 0.22 bronze = 0.10 charcoal = 0.12 }
+}

@@ -54,6 +54,7 @@ public static partial class Program
                 "sec-test" => SecurityTest(rest),
                 "selftest" => Validate(rest.Append("--selftest").ToList()),
                 "society-test" => SocietyTest(rest),
+                "trade-test" => TradeTest(rest),
                 "run" => Run(rest),
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
@@ -87,6 +88,7 @@ public static partial class Program
   burger features <project> remove <id...>  remove features (changed files go to removed_features/)
   burger list                               list projects
   burger validate <project> [--days 60] [--profile]  load everything, report errors, simulate N days headless (--profile: time per system)
+      --max-tick-ms N --max-ms-per-day N    optional measured performance limits (fail validation if exceeded)
   burger validate <project> --days 36500 --seeds 1,2,3  play several worlds at the same time (--seed N: one other world)
   burger run <project> [--tag TAG]          play the project
   burger export <project> [--name Game] [--out folder] [--rid win-x64]
@@ -99,6 +101,7 @@ public static partial class Program
   burger figure list [--project <project>]  the animated bodies of Game.Figures: triangles, joints, clips
   burger figure export [key] [--out f.glb]  write a body with its rig and animations as .glb (for Blender)
   burger figure test                        check the built-in human body and its idle / walk / run
+  burger trade-test <project>              check the commodity and population-needs prototype
 
 <project> is a name in the projects folder (e.g. SampleGame) or a path.
 ");
@@ -551,7 +554,10 @@ public static partial class Program
         if (scorecard) { recorder = new ScorecardRecorder(game); game.Mods.Add(recorder); }
         game.Profiling = args.Contains("--profile");
         int warsAtDecade = 0;
-        bool tickStats = args.Contains("--tick-stats");
+        double? TickLimit(string option) => Opt(args, option) is { } value
+            ? double.Parse(value, System.Globalization.CultureInfo.InvariantCulture) : null;
+        double? maxTickMs = TickLimit("--max-tick-ms"), maxMsPerDay = TickLimit("--max-ms-per-day");
+        bool tickStats = args.Contains("--tick-stats") || maxTickMs.HasValue || maxMsPerDay.HasValue;
         var tickMs = tickStats ? new List<double>(days * 24) : null;
         for (int d = 0; d < days; d++)
         {
@@ -576,6 +582,11 @@ public static partial class Program
                 if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
             }
             if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"DIGEST|{d + 1}|{StateDigest(game)}");
+            if (reloaded != null && (d + 1 == days || (digestEvery > 0 && (d + 1) % digestEvery == 0)))
+            {
+                Check(StateDigest(game) == StateDigest(reloaded), $"save/load: matching simulation at day {d + 1}");
+                if (StateDigest(game) != StateDigest(reloaded)) Console.WriteLine("  first difference: " + StateDigestDiff(game, reloaded));
+            }
             if (watchTags.Length > 0 && game.World.Date.Day == 1 && game.World.Date.Month % 6 == 1 && game.World.Date.Hour == 0 && game.Politics.Enabled)
                 foreach (var wt in watchTags.Select(t => game.World.GetCountry(t)).Where(c => c != null))
                     Console.WriteLine($"  watch {game.World.Date.ToDisplay()} {wt!.Tag} {game.Politics.Of(wt).Ruling} stab {game.Rules.Politics.StabilityOf(game, wt):0} " +
@@ -617,6 +628,8 @@ public static partial class Program
             var fs = frames.OrderBy(x => x).ToList();
             double low1 = 1000.0 / fs[Math.Min(fs.Count - 1, (int)(0.99 * fs.Count))];
             Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
+            if (maxTickMs.HasValue) Check(sorted[^1] <= maxTickMs.Value, $"performance: worst tick <= {maxTickMs.Value} ms");
+            if (maxMsPerDay.HasValue) Check(tickMs.Sum() / days <= maxMsPerDay.Value, $"performance: simulation <= {maxMsPerDay.Value} ms/day");
         }
         foreach (var w in game.World.Wars) Console.WriteLine($"    {w.Name}: war score {w.WarScore:0}");
         Console.WriteLine("  memory: " + string.Join(", ", game.Memory.All.GroupBy(e => $"{e.Actor.Type}/{e.Kind}").OrderByDescending(g => g.Count()).Take(14).Select(g => $"{g.Key} {g.Count()}")));
@@ -641,8 +654,12 @@ public static partial class Program
             foreach (var (name, result) in recorder.EvaluateAll(lines)) Console.WriteLine($"SCORE|{name}|{(result.HasValue ? result.Value.ToString() : "NA")}");
         }
         if (game.Profiling)
+        {
             Console.WriteLine("  time per system (ms per simulated day): " + string.Join(", ", game.ProfileMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
             Console.WriteLine("  longest single call (ms): " + string.Join(", ", game.ProfileMaxMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value:0.0}")));
+            foreach (var (name, stat) in game.ProfileSnapshot().Where(x => !x.Key.Contains('[')).OrderByDescending(x => x.Value.TotalMilliseconds).Take(30))
+                Console.WriteLine($"PROFILE|{name}|total_ms={stat.TotalMilliseconds:0.00}|max_daily_ms={stat.MaxMilliseconds:0.00}|calls={stat.Calls}");
+        }
 
         if (selftest)
         {
@@ -798,6 +815,7 @@ public static partial class Program
             if (game.Features.Has(FeatureSet.Politics)) PoliticsFeatureTests(project);
             if (game.Features.Has(FeatureSet.Politics)) PoliticalDepthTests(project);
             if (game.Features.Has(FeatureSet.Population)) PopulationFeatureTests(project);
+            if (game.Features.Has(FeatureSet.Commodities)) TradeIndustryFeatureTests(game);
             HistoricalFeatureTests(project);
         }
         int simErrors = Log.ErrorCount - errorsBefore - expectedSelfTestErrors;
@@ -807,12 +825,98 @@ public static partial class Program
             foreach (var e in Log.Entries.Where(e => e.Level == LogLevel.Error).TakeLast(simErrors)) Console.WriteLine("  " + e);
         }
         int unexpectedErrors = Log.ErrorCount - expectedSelfTestErrors;
-        if (unexpectedErrors == 0) Ok($"OK - no errors ({Log.WarningCount} warnings)");
-        else Console.WriteLine($"{unexpectedErrors} errors ({loadErrors} while loading), {Log.WarningCount} warnings");
+        if (unexpectedErrors == 0 && _failedChecks == 0) Ok($"OK - no errors ({Log.WarningCount} warnings)");
+        else Console.WriteLine($"{unexpectedErrors} errors ({loadErrors} while loading), {_failedChecks} failed checks, {Log.WarningCount} warnings");
         return unexpectedErrors == 0 && _failedChecks == 0 ? 0 : 1;
     }
 
     private static Burger.Core.Population.PopulationSystem Pop(Game g) => g.Population;
+
+    private static void TradeIndustryFeatureTests(Game game)
+    {
+        var active = game.Commodities.Defs.Values.Where(k => k.IsActive(game.World.Date)).ToList();
+        var needs = active.Where(k => k.PopulationUse > 0).ToList();
+        var country = game.World.Countries.FirstOrDefault(c => c.Exists && game.Population.TotalOf(c) > 0);
+        Check(active.Count >= 20, $"trade/industry: 500 BCE catalogue loaded ({active.Count} active commodities)");
+        Check(needs.Count >= 4, $"trade/industry: population needs loaded ({needs.Count} goods)");
+        Check(active.Any(k => k.Category.Equals("service", StringComparison.OrdinalIgnoreCase)), "trade/industry: services are market commodities");
+        if (country == null) return;
+        Check(needs.All(k => game.Commodities.BalanceOf(country, k.Key).Demand > 0), "trade/industry: population demand reaches the country market");
+        Check(needs.All(k =>
+        {
+            var b = game.Commodities.BalanceOf(country, k.Key);
+            return b.Output >= 0 && b.Stockpile >= 0 && b.Price >= k.Price * 0.5 - 1e-9 && b.Price <= k.Price * 3 + 1e-9 && b.Satisfied is >= 0 and <= 1;
+        }), "trade/industry: output, stockpiles, prices and satisfaction stay within rules");
+        Check(game.Commodities.BalanceOf(country, "grain").Output > 0, "trade/industry: 500 BCE agriculture produces grain");
+        double imports = game.Commodities.Books.Values.SelectMany(b => b.Values).Sum(b => b.Import);
+        double exports = game.Commodities.Books.Values.SelectMany(b => b.Values).Sum(b => b.Export);
+        Check(imports > 0 && exports > 0, $"trade/industry: countries exchange goods ({imports:0.#} in / {exports:0.#} out)");
+        int projects = game.Population.GoldProjects.Count;
+        int buildings = game.World.States.Sum(s => s.Buildings.GetValueOrDefault("farm")
+            + s.Buildings.GetValueOrDefault("workshop")
+            + s.Buildings.GetValueOrDefault("infrastructure")
+            + s.Buildings.GetValueOrDefault("market"));
+        int productionLines = game.World.Countries.Sum(c => c.ProductionLines.Count);
+        Check(projects > 0 || buildings > 0 || productionLines > 0, $"trade/industry: AI invests in productive capacity ({projects} projects, {buildings} levels, {productionLines} equipment lines)");
+        Check(game.TradeNetwork.Markets.Count > 0, $"trade/industry: state markets active ({game.TradeNetwork.Markets.Count} states)");
+        Check(game.TradeNetwork.ActiveRoutes.Any(r => r.DistanceKm > 0 && r.Capacity > 0), $"trade/industry: routes have distance and capacity ({game.TradeNetwork.ActiveRoutes.Count} routes)");
+        Check(game.TradeNetwork.History.Count > 0 && game.TradeNetwork.History.All(t => t.DistanceKm >= 0 && t.Quantity > 0), $"trade/industry: routed trade history active ({game.TradeNetwork.History.Count} transactions)");
+        Check(game.TradeNetwork.History.Any(t => t.TransportCost > 0), "trade/industry: transport costs enter landed trade");
+        Check(game.TradeNetwork.Recipes.Count >= 3 && game.TradeNetwork.Workforce.Count > 0, $"trade/industry: recipes and workforce allocations active ({game.TradeNetwork.Recipes.Count} recipes, {game.TradeNetwork.Workforce.Count} allocations)");
+        Check(game.TradeNetwork.Recipes.Values.Any(r => r.Inputs.Count > 0), "trade/industry: production recipes consume industrial inputs");
+        Check(game.TradeNetwork.Recipes.Values.Any(r => r.StartYear >= 1750 && r.Building == "civilian_factory"), "trade/industry: later-era factory methods are date-gated");
+        var methodState = country.OwnedStates.FirstOrDefault();
+        Check(methodState != null && game.TradeNetwork.Recipes.Values.Any(r => game.TradeNetwork.MethodsFor(country, methodState, r.Output).Count > 0), "trade/industry: available production methods resolve per state");
+        Check(game.TradeNetwork.Policies.Count > 0 && game.TradeNetwork.Policies.Values.Any(p => p.CustomsRevenue >= 0), "trade/industry: tariffs and customs ledgers active");
+        Check(game.TradeNetwork.Agreements.Count > 0, $"trade/industry: AI trade agreements active ({game.TradeNetwork.Agreements.Count})");
+        Check(game.TradeNetwork.Plans.Values.Any(p => p.LastDecision.StartsWith("import", StringComparison.OrdinalIgnoreCase) || p.LastDecision.StartsWith("build", StringComparison.OrdinalIgnoreCase) || p.ImportsOrdered > 0 || p.BuildsOrdered > 0), "trade/industry: AI chooses import versus build");
+        Check(game.TradeNetwork.Plans.Values.Any(p => p.LastDecision.StartsWith("import", StringComparison.OrdinalIgnoreCase)
+            || p.LastDecision.StartsWith("build", StringComparison.OrdinalIgnoreCase)
+            || p.LastDecision.StartsWith("research", StringComparison.OrdinalIgnoreCase)
+            || p.LastDecision.StartsWith("wait", StringComparison.OrdinalIgnoreCase)), "trade/industry: AI exposes import, build, research or wait plan");
+
+        var farm = game.Data.BuildingTypes.GetValueOrDefault("farm");
+        var preindustrial = game.World.Countries.Where(c => c.Exists && c.OwnedStates.Count > 0 && game.Production.CivilianFactories(c) == 0)
+            .OrderBy(c => c.Index).FirstOrDefault();
+        var constructionState = preindustrial?.OwnedStates.OrderByDescending(s => s.Tax).FirstOrDefault();
+        if (farm != null && preindustrial != null && constructionState != null && farm.Active(game.World.Date))
+        {
+            var reason = game.Production.CannotBuildReason(preindustrial, farm, constructionState);
+            Check(reason == null, $"construction: 500 BCE farm is queueable without civilian factories{(reason == null ? "" : $" ({reason})")}");
+            if (reason == null)
+            {
+                var method = game.Rules.Production.ResolveConstructionMethod(game, farm);
+                var constructionInput = method.Inputs
+                    .Where(x => double.IsFinite(x.Value) && x.Value > 0)
+                    .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.Key)
+                    .FirstOrDefault();
+                Check(constructionInput != null, "construction: farm exposes a deterministic input requirement");
+                double demandBefore = constructionInput == null
+                    ? 0
+                    : game.TradeNetwork.IndustryInputDemand(preindustrial, constructionState, constructionInput);
+                int beforeLevel = constructionState.Buildings.GetValueOrDefault(farm.Key);
+                int beforeProjects = preindustrial.Construction.Count;
+                var queueReason = game.Production.QueueBuilding(preindustrial, farm, constructionState);
+                Check(queueReason == null, "construction: manual farm project queued");
+                var queuedProject = preindustrial.Construction.LastOrDefault(p => p.Building == farm && p.State == constructionState);
+                if (queueReason == null && constructionInput != null)
+                {
+                    double demandAfter = game.TradeNetwork.IndustryInputDemand(preindustrial, constructionState, constructionInput);
+                    double expectedInput = method.Inputs[constructionInput];
+                    game.TradeNetwork.AddMarket(constructionState, constructionInput, Math.Max(1000, demandAfter * 2 + 1), 0, 0, 1);
+                    double marketDemand = game.TradeNetwork.MarketOf(constructionState, constructionInput).Demand;
+                    Check(demandAfter >= demandBefore + expectedInput - 1e-9 && marketDemand >= demandAfter - 1e-9,
+                        $"construction: queued inputs enter the state market demand ({constructionInput} {demandBefore:0.###}->{marketDemand:0.###})");
+                }
+                game.Production.DailyTick();
+                bool progressed = constructionState.Buildings.GetValueOrDefault(farm.Key) > beforeLevel
+                    || preindustrial.Construction.Skip(beforeProjects).Any(p => p.Building == farm && p.Progress > 0);
+                Check(progressed, "construction: manual farm receives labour capacity with zero civilian factories");
+                Check(queuedProject != null && queuedProject.InputsConsumed.Values.Any(v => v > 0), "construction: applied capacity records consumed inputs");
+            }
+        }
+    }
 
     /// <summary>Runs only the culture, government, succession and dynasty checks of the self-test.</summary>
     private static int SocietyTest(List<string> args)
@@ -825,7 +929,56 @@ public static partial class Program
         return _failedChecks == 0 ? 0 : 1;
     }
 
+    private static int TradeTest(List<string> args)
+    {
+        string project = ResolveProject(RequireProjectArg(args, "burger trade-test <project>"));
+        Log.EchoToConsole = false;
+        var game = Game.Load(GameDir(project), compileScripts: true, seed: 21);
+        game.StartNewGame(null);
+        for (int h = 0; h < 24 * 31; h++) game.Tick();
+        TradeIndustryFeatureTests(game);
+        TradeRouteCacheTests(game);
+        Console.WriteLine(_failedChecks == 0 ? "trade checks passed" : $"{_failedChecks} trade checks FAILED");
+        return _failedChecks == 0 ? 0 : 1;
+    }
+
     private static int _failedChecks;
+
+    private static void TradeRouteCacheTests(Game game)
+    {
+        int firstIndex = game.World.States.Max(s => s.Index) + 1;
+        var states = Enumerable.Range(0, 5).Select(i => new State { Index = firstIndex + i, Key = "route_test_" + i }).ToArray();
+        var terrain = game.World.Locations.First(l => l.IsLand).Terrain;
+        foreach (var state in states) state.Locations.Add(new Location { State = state, Terrain = terrain });
+        void Edge(int from, int to, double distance) => states[from].Locations[0].Neighbors.Add(
+            new Adjacency { From = states[from].Locations[0], To = states[to].Locations[0], Kind = AdjacencyKind.Land, DistanceKm = distance });
+        Edge(0, 1, 7); Edge(0, 1, 1); Edge(0, 2, 2); Edge(1, 3, 3); Edge(2, 3, 1);
+        game.World.States.AddRange(states);
+        game.RaiseMapChanged();
+        try
+        {
+            var route = game.TradeNetwork.RouteBetween(states[0], states[3]);
+            Check(route != null && route.DistanceKm == 10 && route.Path.SequenceEqual(new[] { states[0], states[1], states[3] }),
+                "trade routes: cached graph preserves first-edge distance and equal-hop ordering");
+            Check(ReferenceEquals(route, game.TradeNetwork.RouteBetween(states[0], states[3])), "trade routes: repeated lookup reuses route");
+            Check(game.TradeNetwork.RouteBetween(states[0], states[4])?.Kind == Burger.Core.Production.TradeRouteKind.Caravan,
+                "trade routes: disconnected destination retains caravan fallback");
+            states[0].Locations[0].Neighbors.Clear();
+            Edge(0, 3, 4);
+            game.RaiseMapChanged();
+            Check(game.TradeNetwork.RouteBetween(states[0], states[3])?.DistanceKm == 4,
+                "trade routes: map changes invalidate cached graph and paths");
+            game.TradeNetwork.LoadWorld();
+            Check(game.TradeNetwork.RouteBetween(states[0], states[3])?.DistanceKm == 4,
+                "trade routes: world reload rebuilds derived paths");
+        }
+        finally
+        {
+            foreach (var state in states) game.World.States.Remove(state);
+            game.TradeNetwork.LoadWorld();
+            game.RaiseMapChanged();
+        }
+    }
 
     private static void ScopeHierarchySelfTest(Game game)
     {

@@ -16,7 +16,21 @@ public sealed class CommodityDef
     public double Price = 1;
     /// <summary>Monthly use of each civilian factory (industry and construction need it too).</summary>
     public double CivilianUse;
+    /// <summary>Monthly use per 1,000 people. This is the first population-needs layer.</summary>
+    public double PopulationUse;
+    /// <summary>Storage class used by the market when it rolls surplus into next month's stockpile.</summary>
+    public string Category = "industrial";
+    /// <summary>Maximum number of months of demand that can be stored. Zero means no storage.</summary>
+    public double StorageMonths;
+    /// <summary>First astronomical year in which the commodity is available.</summary>
+    public int StartYear = int.MinValue;
+    /// <summary>Last astronomical year in which the commodity is available.</summary>
+    public int EndYear = int.MaxValue;
+    /// <summary>Optional monthly use per 1,000 people of a social class (farmers, nobles, clergy...).</summary>
+    public Dictionary<string, double> ClassPopulationUse = new(StringComparer.OrdinalIgnoreCase);
     public Node Definition = Node.Root("");
+
+    public bool IsActive(GameDate date) => date.Year >= StartYear && date.Year <= EndYear;
 }
 
 /// <summary>
@@ -31,6 +45,14 @@ public class CommodityRules
     /// <summary>Monthly use of a country besides its military lines: its civilian factories (industry, consumer goods, construction).</summary>
     public virtual double BaseDemand(Game game, Country c, CommodityDef k)
         => game.Production.Enabled ? game.Production.CivilianFactories(c) * k.CivilianUse : 0;
+
+    /// <summary>Monthly population demand for a commodity, in abstract market units.</summary>
+    public virtual double PopulationDemand(Game game, Country c, CommodityDef k)
+        => game.Population.Enabled ? game.Population.TotalOf(c) / 1000.0 * k.PopulationUse : 0;
+
+    /// <summary>Maximum number of months of demand held after local consumption.</summary>
+    public virtual double StorageMonths(Game game, CommodityDef k)
+        => k.StorageMonths > 0 ? k.StorageMonths : k.Category.Equals("food", StringComparison.OrdinalIgnoreCase) ? 6 : 12;
 
     /// <summary>May the seller sell to the buyer? Not at war, not hated, and not a country that has put an embargo on it (flag embargo_TAG).</summary>
     public virtual bool WillTrade(Game game, Country seller, Country buyer)
@@ -66,11 +88,40 @@ public sealed class CommoditySystem
     private readonly Dictionary<string, Dictionary<string, double>> _equipUse = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Per country and commodity: what it digs, imports, needs, and the share of its need it got last month.</summary>
-    public sealed class Balance { public double Output, Import, Export, Demand, MilitaryUse, Satisfied = 1; }
+    public sealed class Balance
+    {
+        public double Output, Import, Export, Demand, PopulationUse, MilitaryUse;
+        public double Stockpile, Price = 1, Satisfied = 1;
+    }
     public readonly Dictionary<Country, Dictionary<string, Balance>> Books = new();
     private readonly Dictionary<Country, Dictionary<string, double>> _usedThisMonth = new();
+    private const int SettlementBatchSize = 2;
+    private readonly List<string> _settlementCommodities = new();
+    private readonly List<Country> _settlementCountries = new();
+    private int _settlementIndex;
+    private bool _settlementStarted;
+    private bool _settlementComplete;
 
-    public CommoditySystem(Game game) { _game = game; game.SaveSections.Add(new SaveSection { Name = "commodities", Write = Save, Read = Load, Reset = () => { Books.Clear(); _usedThisMonth.Clear(); } }); }
+    public CommoditySystem(Game game)
+    {
+        _game = game;
+        game.SaveSections.Add(new SaveSection
+        {
+            Name = "commodities",
+            Write = Save,
+            Read = Load,
+            Reset = () =>
+            {
+                Books.Clear();
+                _usedThisMonth.Clear();
+                _settlementCommodities.Clear();
+                _settlementCountries.Clear();
+                _settlementIndex = 0;
+                _settlementStarted = false;
+                _settlementComplete = false;
+            }
+        });
+    }
 
     public bool Enabled => _game.Features.Has(FeatureSet.Commodities) && Defs.Count > 0;
     private CommodityRules Rules => _game.Rules.Commodities;
@@ -83,8 +134,22 @@ public sealed class CommoditySystem
             foreach (var n in root.All)
             {
                 if (n.Children == null) continue;
-                var k = new CommodityDef { Key = n.Key, Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key), Price = n.GetDouble("price", 1), CivilianUse = n.GetDouble("civilian_use"), Definition = n };
+                var k = new CommodityDef
+                {
+                    Key = n.Key,
+                    Name = n.GetString("name") ?? Localisation.GetOrPretty(n.Key),
+                    Price = n.GetDouble("price", 1),
+                    CivilianUse = n.GetDouble("civilian_use"),
+                    PopulationUse = n.GetDouble("population_use"),
+                    Category = n.GetString("category") ?? "industrial",
+                    StorageMonths = n.GetDouble("storage_months"),
+                    StartYear = n.GetInt("start_year", int.MinValue),
+                    EndYear = n.GetInt("end_year", int.MaxValue),
+                    Definition = n,
+                };
                 if (Rgb.TryParse(n.Get("color"), out var col)) k.Color = col;
+                if (n.Get("class_use") is { Children: not null } classUse)
+                    foreach (var classEntry in classUse.All) k.ClassPopulationUse[classEntry.Key] = classEntry.AsDouble();
                 Defs[k.Key] = k;
             }
     }
@@ -137,7 +202,9 @@ public sealed class CommoditySystem
     {
         if (!Enabled || !_equipUse.TryGetValue(e.Key, out var use)) return 1;
         double f = 1;
-        foreach (var k in use.Keys) f = Math.Min(f, BalanceOf(c, k).Satisfied);
+        foreach (var k in use.Keys)
+            if (Defs.TryGetValue(k, out var def) && def.IsActive(_game.World.Date))
+                f = Math.Min(f, Math.Min(BalanceOf(c, k).Satisfied, _game.TradeNetwork.CountrySatisfaction(c, k)));
         return Rules.Speed(_game, f);
     }
 
@@ -159,7 +226,17 @@ public sealed class CommoditySystem
 
     /// <summary>Commodities the country is short of (satisfied under 85%), worst first.</summary>
     public List<(string Commodity, double Satisfied)> Shortages(Country c)
-        => Defs.Keys.Select(k => (k, BalanceOf(c, k).Satisfied)).Where(x => x.Item2 < 0.85).OrderBy(x => x.Item2).ToList();
+        => Defs.Values.Where(k => k.IsActive(_game.World.Date)).Select(k => (k.Key, Balance: BalanceOf(c, k.Key)))
+                     .Where(x => x.Balance.Demand > 0.0001 && x.Balance.Satisfied < 0.85)
+                     .Select(x => (x.Key, x.Balance.Satisfied)).OrderBy(x => x.Satisfied).ToList();
+
+    /// <summary>Food shortage factor used by population growth in the following month.</summary>
+    public double PopulationGrowthFactor(Country c)
+    {
+        if (!Enabled || !Defs.TryGetValue("grain", out var grain) || !grain.IsActive(_game.World.Date)) return 1;
+        double satisfied = BalanceOf(c, grain.Key).Satisfied;
+        return satisfied >= 0.75 ? 1 : Math.Clamp(0.25 + satisfied, 0.25, 1);
+    }
 
     /// <summary>
     /// How much the state's deposits would help a country that is short of commodities (0 when it is not): the summed share of its
@@ -182,57 +259,141 @@ public sealed class CommoditySystem
     /// <summary>Need score of everything a country owns (the AI's wish to take, or make friends with, its owner).</summary>
     public double NeedScore(Country c, Country owner) => owner.OwnedStates.Sum(s => NeedScore(c, s));
 
+    /// <summary>AI investment hook for pre-production economies: queue a farm, workshop, market or road project when the market says it is needed.</summary>
+    public void AiMonthly(Country c)
+    {
+        if (!Enabled || c.IsPlayer || !c.Exists || !_game.Features.Has(FeatureSet.Economy) || c.OwnedStates.Count == 0) return;
+        _game.TradeNetwork.AiMonthly(c);
+    }
+
     // ------------------------------------------------------------------------------------- monthly market
-    public void MonthlyTick()
+    public void MonthlyTick() => MonthlyTick(streamEconomicWork: false);
+
+    /// <summary>
+    /// Starts this month's settlement. Headless and direct callers drain it to completion; the live clock
+    /// initializes the work and lets subsequent daily ticks process the bounded commodity batches.
+    /// </summary>
+    public void MonthlyTick(bool streamEconomicWork)
     {
         if (!Enabled) return;
-        var alive = _game.World.Countries.Where(c => c.Exists).ToList();
-        foreach (var k in Defs.Values)
+        // A bounded settlement may still be in flight when the calendar reaches the next month.
+        // Finish that snapshot before replacing its commodity and country lists, otherwise pending
+        // commodities would be discarded and the new month would mix economic periods.
+        if (_settlementStarted && !_settlementComplete)
+            ProcessSettlementToCompletion();
+        BeginSettlement();
+        if (!streamEconomicWork)
+            ProcessSettlementToCompletion();
+    }
+
+    /// <summary>Processes the next deterministic commodity batch after the month has started.</summary>
+    public void DailyTick()
+    {
+        if (!Enabled || !_settlementStarted || _settlementComplete) return;
+        ProcessSettlementBatch();
+    }
+
+    private void BeginSettlement()
+    {
+        if (_settlementStarted && !_settlementComplete)
+            throw new InvalidOperationException("Cannot begin a new commodity settlement while the previous settlement is incomplete.");
+        _game.TradeNetwork.BeginMonth();
+        _settlementCommodities.Clear();
+        _settlementCommodities.AddRange(Defs.Values
+            .Where(k => k.IsActive(_game.World.Date))
+            .OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(k => k.Key));
+        _settlementCountries.Clear();
+        _settlementCountries.AddRange(_game.World.Countries.Where(c => c.Exists));
+        _settlementIndex = 0;
+        _settlementStarted = true;
+        _settlementComplete = false;
+    }
+
+    private void ProcessSettlementBatch()
+    {
+        int processed = 0;
+        while (processed < SettlementBatchSize && _settlementIndex < _settlementCommodities.Count)
         {
-            var sellers = new List<(Country C, double Surplus)>();
-            var buyers = new List<(Country C, double Deficit)>();
-            foreach (var c in alive)
+            string key = _settlementCommodities[_settlementIndex++];
+            if (Defs.TryGetValue(key, out var commodity))
+                ProcessCommodity(commodity);
+            processed++;
+        }
+
+        if (_settlementIndex >= _settlementCommodities.Count)
+        {
+            _settlementIndex = _settlementCommodities.Count;
+            _settlementComplete = true;
+            _usedThisMonth.Clear();
+        }
+    }
+
+    private void ProcessSettlementToCompletion()
+    {
+        while (_settlementIndex < _settlementCommodities.Count)
+            ProcessSettlementBatch();
+    }
+
+    private void ProcessCommodity(CommodityDef k)
+    {
+        _game.TradeNetwork.BeginCommodity(k.Key);
+        foreach (var c in _settlementCountries)
+        {
+            var b = BalanceOf(c, k.Key);
+            double output = 0;
+            var stateOutputs = new List<(State State, double Output)>();
+            foreach (var s in c.OwnedStates)
             {
-                var b = BalanceOf(c, k.Key);
-                double output = 0;
-                foreach (var s in c.OwnedStates) if (Deposits.TryGetValue(s, out var d) && d.TryGetValue(k.Key, out var yearly)) output += Rules.Output(_game, c, s, k, yearly);
-                double military = _usedThisMonth.TryGetValue(c, out var u) ? u.GetValueOrDefault(k.Key) : 0;
-                b.Output = output;
-                b.MilitaryUse = military;
-                b.Demand = Rules.BaseDemand(_game, c, k) + military;
-                b.Import = 0;
-                b.Export = 0;
-                if (output > b.Demand) sellers.Add((c, output - b.Demand));
-                else if (b.Demand > output) buyers.Add((c, b.Demand - output));
+                double deposit = Deposits.TryGetValue(s, out var d) ? d.GetValueOrDefault(k.Key) : 0;
+                double stateOutput = _game.TradeNetwork.ProductionOutput(c, s, k, Rules.Output(_game, c, s, k, deposit));
+                stateOutputs.Add((s, stateOutput));
+                output += stateOutput;
             }
-            // buyers in order of how much they lack, each takes from the sellers that like them most
-            var left = sellers.ToDictionary(x => x.C, x => x.Surplus);
-            foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Deficit))
+            double military = _usedThisMonth.TryGetValue(c, out var u) ? u.GetValueOrDefault(k.Key) : 0;
+            b.Output = output;
+            b.MilitaryUse = military;
+            b.PopulationUse = PopulationDemand(c, k);
+            b.Demand = Rules.BaseDemand(_game, c, k) + b.PopulationUse + military;
+            b.Import = 0;
+            b.Export = 0;
+            double opening = Math.Max(0, b.Stockpile);
+            double population = c.OwnedStates.Sum(s => _game.Population.Enabled && _game.Population.HasPops(s) ? _game.Population.Of(s).Total : Math.Max(1, s.Manpower * 1000));
+            double demandWithoutMilitary = Math.Max(0, b.Demand);
+            double outputWeight = Math.Max(0.0001, output);
+            foreach (var (state, stateOutput) in stateOutputs)
             {
-                double need = deficit;
-                foreach (var seller in left.Keys.Where(s => left[s] > 0.001 && Rules.WillTrade(_game, s, buyer)).OrderByDescending(s => Rules.TradePriority(_game, s, buyer)).ToList())
-                {
-                    double take = Math.Min(need, left[seller]);
-                    left[seller] -= take;
-                    need -= take;
-                    BalanceOf(buyer, k.Key).Import += take;
-                    BalanceOf(seller, k.Key).Export += take;
-                    if (_game.Features.Has(FeatureSet.Economy) && take > 0)
-                    {
-                        double gold = take * k.Price * _game.Data.Defines.Get("commodity_trade_price", 0.5);
-                        buyer.Gold -= gold;
-                        seller.Gold += gold;
-                    }
-                    if (need <= 0.001) break;
-                }
-            }
-            foreach (var c in alive)
-            {
-                var b = BalanceOf(c, k.Key);
-                b.Satisfied = b.Demand <= 0.0001 ? 1 : Math.Clamp((b.Output + b.Import) / b.Demand, 0, 1);
+                double statePopulation = _game.Population.Enabled && _game.Population.HasPops(state) ? _game.Population.Of(state).Total : Math.Max(1, state.Manpower * 1000);
+                double demandShare = population <= 0 ? 1.0 / Math.Max(1, stateOutputs.Count) : statePopulation / population;
+                double outputShare = output <= 0 ? demandShare : stateOutput / outputWeight;
+                _game.TradeNetwork.AddMarket(state, k.Key, stateOutput, demandWithoutMilitary * demandShare, opening * demandShare, Rules.StorageMonths(_game, k));
             }
         }
-        _usedThisMonth.Clear();
+        _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+        foreach (var c in _settlementCountries)
+        {
+            var b = BalanceOf(c, k.Key);
+            var totals = _game.TradeNetwork.Totals(c, k.Key);
+            b.Output = totals.Output;
+            b.Demand = totals.Demand;
+            b.Import = totals.Import;
+            b.Export = totals.Export;
+            b.Stockpile = totals.Stockpile;
+            b.Satisfied = totals.Satisfied;
+            b.Price = totals.Price;
+        }
+    }
+
+    private double PopulationDemand(Country country, CommodityDef commodity)
+    {
+        if (!_game.Population.Enabled || commodity.ClassPopulationUse.Count == 0)
+            return Rules.PopulationDemand(_game, country, commodity);
+        double demand = 0;
+        foreach (var state in country.OwnedStates)
+            if (_game.Population.HasPops(state))
+                foreach (var pop in _game.Population.Of(state).Pops)
+                    demand += pop.Size / 1000.0 * commodity.ClassPopulationUse.GetValueOrDefault(pop.Type ?? "", commodity.PopulationUse);
+        return demand;
     }
 
     // ------------------------------------------------------------------------------------- save
@@ -240,22 +401,72 @@ public sealed class CommoditySystem
 
     private void Save(Node root)
     {
+        root.Add("settlement_started", _settlementStarted ? "1" : "0");
+        root.Add("settlement_complete", _settlementComplete ? "1" : "0");
+        root.Add("settlement_index", _settlementIndex.ToString(CultureInfo.InvariantCulture));
         foreach (var (c, books) in Books)
         {
             var n = root.AddBlock("country");
             n.Add("tag", c.Tag);
-            foreach (var (k, b) in books) n.Add(k, F(b.Satisfied));
+            foreach (var (k, b) in books)
+            {
+                n.Add("output_" + k, F(b.Output));
+                n.Add("import_" + k, F(b.Import));
+                n.Add("export_" + k, F(b.Export));
+                n.Add("demand_" + k, F(b.Demand));
+                n.Add("population_use_" + k, F(b.PopulationUse));
+                n.Add("military_use_" + k, F(b.MilitaryUse));
+                n.Add("stockpile_" + k, F(b.Stockpile));
+                n.Add("price_" + k, F(b.Price));
+                n.Add("satisfied_" + k, F(b.Satisfied));
+            }
         }
     }
 
     private void Load(Node root)
     {
         Books.Clear();
+        _usedThisMonth.Clear();
+        _settlementCommodities.Clear();
+        _settlementCountries.Clear();
+        _settlementStarted = root.GetInt("settlement_started") != 0;
+        _settlementComplete = root.GetInt("settlement_complete") != 0;
+        _settlementIndex = Math.Max(0, root.GetInt("settlement_index"));
+        if (_settlementStarted || _settlementComplete)
+        {
+            _settlementCommodities.AddRange(Defs.Values
+                .Where(k => k.IsActive(_game.World.Date))
+                .OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(k => k.Key));
+            _settlementCountries.AddRange(_game.World.Countries.Where(c => c.Exists));
+            _settlementIndex = Math.Min(_settlementIndex, _settlementCommodities.Count);
+            // Older saves had no explicit completion flag. Their terminal index is equivalent.
+            if (_settlementIndex >= _settlementCommodities.Count)
+                _settlementComplete = true;
+        }
         foreach (var n in root.GetAll("country"))
         {
             var c = _game.World.GetCountry(n.GetString("tag"));
             if (c == null) continue;
-            foreach (var kv in n.All) if (Defs.ContainsKey(kv.Key)) BalanceOf(c, kv.Key).Satisfied = kv.AsDouble(1);
+            foreach (var kv in n.All)
+            {
+                string? key = null;
+                Action<Balance, double>? set = null;
+                if (kv.Key.StartsWith("output_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[7..]; set = (b, v) => b.Output = v; }
+                else if (kv.Key.StartsWith("import_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[7..]; set = (b, v) => b.Import = v; }
+                else if (kv.Key.StartsWith("export_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[7..]; set = (b, v) => b.Export = v; }
+                else if (kv.Key.StartsWith("demand_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[7..]; set = (b, v) => b.Demand = v; }
+                else if (kv.Key.StartsWith("population_use_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[15..]; set = (b, v) => b.PopulationUse = v; }
+                else if (kv.Key.StartsWith("military_use_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[13..]; set = (b, v) => b.MilitaryUse = v; }
+                else if (kv.Key.StartsWith("stockpile_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[10..]; set = (b, v) => b.Stockpile = v; }
+                else if (kv.Key.StartsWith("price_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[6..]; set = (b, v) => b.Price = v; }
+                else if (kv.Key.StartsWith("satisfied_", StringComparison.OrdinalIgnoreCase)) { key = kv.Key[10..]; set = (b, v) => b.Satisfied = v; }
+                else if (Defs.ContainsKey(kv.Key)) { key = kv.Key; set = (b, v) => b.Satisfied = v; }
+                if (set != null && key != null && Defs.ContainsKey(key))
+                {
+                    set(BalanceOf(c, key), kv.AsDouble());
+                }
+            }
         }
     }
 }

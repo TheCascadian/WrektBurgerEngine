@@ -1,0 +1,51 @@
+# Era-gated production recipes. Workforce is abstract people per 1,000 population per building.
+# Inputs are consumed conceptually through the commodity satisfaction factor; the market still carries the goods.
+
+farm_grain = {
+	output = grain
+	building = farm
+	method = ox_plough
+	requires_tech = agriculture_irrigation
+	amount = 1.0
+	workforce_per_thousand = 0.35
+	capacity_per_building = 10
+	output_per_workforce = 0.20
+	start_year = -500
+	inputs = { tools = 0.05 }
+}
+workshop_textiles = {
+	output = textiles
+	building = workshop
+	method = hand_loom
+	requires_tech = writing_systems
+	amount = 1.0
+	workforce_per_thousand = 0.25
+	capacity_per_building = 8
+	output_per_workforce = 0.12
+	start_year = -500
+	inputs = { wool = 0.40 tools = 0.05 }
+}
+workshop_pottery = {
+	output = pottery
+	building = workshop
+	method = wheel_and_kiln
+	requires_tech = bronze_working
+	amount = 1.0
+	workforce_per_thousand = 0.20
+	capacity_per_building = 8
+	output_per_workforce = 0.10
+	start_year = -500
+	inputs = { clay = 0.50 charcoal = 0.15 }
+}
+workshop_bronze = {
+	output = bronze
+	building = workshop
+	method = bronze_furnace
+	requires_tech = bronze_working
+	amount = 1.0
+	workforce_per_thousand = 0.16
+	capacity_per_building = 6
+	output_per_workforce = 0.08
+	start_year = -500
+	inputs = { copper = 0.50 tin = 0.20 charcoal = 0.20 }
+}

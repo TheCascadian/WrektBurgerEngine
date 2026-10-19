@@ -308,6 +308,8 @@ public sealed partial class PoliticsSystem
         _unlocked.Clear(); _pendingUnlocks.Clear(); RebuildActive();
         lock (_wealth) { _wealth.Clear(); _wealthDay = int.MinValue; }
         _state.Clear();
+        _monthsTicked = 0;
+        _aiCalled = false;
         Movements.Clear();
         CivilWars.Clear();
         _revolts.Clear();
@@ -317,10 +319,25 @@ public sealed partial class PoliticsSystem
 
     private static void Normalize(CountryPolitics p)
     {
-        foreach (var k in p.Popularity.Keys.ToList()) if (p.Popularity[k] < 0 || double.IsNaN(p.Popularity[k])) p.Popularity[k] = 0;
-        double sum = p.Popularity.Values.Sum();
-        if (sum <= 0 || Math.Abs(sum - 1) < 1e-12) return; // already 100%: dividing again only shifts the last bits (and a reloaded save would then differ from the game it came from)
-        foreach (var k in p.Popularity.Keys.ToList()) p.Popularity[k] /= sum;
+        var ordered = p.Popularity.Keys.OrderBy(k => k, StringComparer.Ordinal).ToList();
+        foreach (var k in ordered) if (p.Popularity[k] < 0 || double.IsNaN(p.Popularity[k])) p.Popularity[k] = 0;
+        double sum = ordered.Sum(k => p.Popularity[k]);
+        if (sum <= 0) return;
+        if (Math.Abs(sum - 1) >= 1e-12)
+            foreach (var k in ordered) p.Popularity[k] /= sum;
+        // Save/resync can rebuild an otherwise identical dictionary with a different
+        // floating-point accumulation order. Political support is not meaningful below
+        // a nanopercentage, so quantize it and put the rounding remainder in one stable key.
+        // Store fixed-point units rather than a floating remainder. The same
+        // fraction then has the same binary representation after save/resync,
+        // regardless of dictionary insertion order or prior summation order.
+        const long scale = 1_000_000_000;
+        var units = ordered.ToDictionary(k => k, k => (long)Math.Round((decimal)p.Popularity[k] * scale, MidpointRounding.ToEven), StringComparer.Ordinal);
+        if (ordered.Count > 0)
+        {
+            units[ordered[^1]] += scale - ordered.Sum(k => units[k]);
+            foreach (var k in ordered) p.Popularity[k] = (double)units[k] / scale;
+        }
     }
 
     public IdeologyDef? RulingIdeology(Country c) => Enabled ? Ideology(Of(c).Ruling) : null;
@@ -835,6 +852,9 @@ public sealed partial class PoliticsSystem
     public void MonthlyTick()
     {
         if (!Enabled) return;
+        // Population changes run before politics each month. Do not reuse last month's derived mood summary:
+        // a save/resync has no reason to preserve that cache, and stale versus recomputed summaries can alter drift.
+        _popSummary.Clear();
         CheckUnlocks();
         if (!_aiCalled && _monthsTicked > 0 && _game.Features.Has(FeatureSet.Ai) && _game.Ai.Enabled)
             foreach (var ac in _game.World.Countries.Where(x => x.Exists && !x.IsPlayer).ToList()) AiMonthly(ac);
@@ -865,6 +885,17 @@ public sealed partial class PoliticsSystem
         if (CivilWarsEnabled) MonthlyUnrest();
     }
 
+    /// <summary>Canonicalizes floating-point political support after all monthly systems and events have run.</summary>
+    public void CanonicalizeForSync()
+    {
+        foreach (var c in _game.World.Countries.Where(c => c.Exists).OrderBy(c => c.Tag, StringComparer.Ordinal))
+            if (_state.TryGetValue(c, out var p))
+            {
+                Normalize(p);
+                SyncPartyPopularityToIdeologies(c, p);
+            }
+    }
+
     // =============================================================================================
     // Save
     // =============================================================================================
@@ -873,6 +904,10 @@ public sealed partial class PoliticsSystem
 
     private void Save(Node root)
     {
+        // These counters control whether the compatibility AI fallback runs on the next monthly tick.
+        // They must survive save/load and multiplayer resync or peers can take different political paths.
+        root.Add("months_ticked", _monthsTicked.ToString(CultureInfo.InvariantCulture));
+        root.Add("ai_called", _aiCalled ? "yes" : "no");
         // the daily wealth ranking is counted at the first request of a day, so a loaded game would count it at another hour: keep it
         lock (_wealth)
             if (_wealthDay != int.MinValue)
@@ -882,7 +917,8 @@ public sealed partial class PoliticsSystem
                 var items = wn.AddBlock("values");
                 foreach (var (wc, wv) in _wealth.OrderBy(k => k.Key.Tag, StringComparer.Ordinal)) { items.AddItem(wc.Tag); items.AddItem(F(wv)); }
             }
-        foreach (var (c, p) in _state)
+        foreach (var key in _pendingUnlocks.OrderBy(k => k, StringComparer.Ordinal)) root.Add("pending_unlock", key);
+        foreach (var (c, p) in _state.OrderBy(k => k.Key.Tag, StringComparer.Ordinal))
         {
             if (!c.Exists && !c.Dynamic) continue;
             var n = root.AddBlock("country");
@@ -894,21 +930,22 @@ public sealed partial class PoliticsSystem
             var govOrgs = n.AddBlock("government_organizations");
             foreach (var g in p.GovernmentOrganizations) govOrgs.AddItem(g);
             var partyPop = n.AddBlock("party_popularity");
-            foreach (var kv in p.PartyPopularity) partyPop.Add(kv.Key, F(kv.Value));
+            foreach (var kv in p.PartyPopularity.OrderBy(k => k.Key, StringComparer.Ordinal)) partyPop.Add(kv.Key, F(kv.Value));
             var partySeats = n.AddBlock("party_seats");
-            foreach (var kv in p.PartySeats) partySeats.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
+            foreach (var kv in p.PartySeats.OrderBy(k => k.Key, StringComparer.Ordinal)) partySeats.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
             var pop = n.AddBlock("popularity");
-            foreach (var kv in p.Popularity) pop.Add(kv.Key, F(kv.Value));
+            foreach (var kv in p.Popularity.OrderBy(k => k.Key, StringComparer.Ordinal)) pop.Add(kv.Key, F(kv.Value));
             var seats = n.AddBlock("seats");
-            foreach (var kv in p.Seats) seats.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
+            foreach (var kv in p.Seats.OrderBy(k => k.Key, StringComparer.Ordinal)) seats.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
             n.Add("total_seats", p.TotalSeats.ToString(CultureInfo.InvariantCulture));
             if (p.LastElection is { } le) n.Add("last_election", le.ToScript());
             if (p.NextElection is { } ne) n.Add("next_election", ne.ToScript());
+            if (p.RegimeChangedDay != int.MinValue / 2) n.Add("regime_changed", p.RegimeChangedDay.ToString(CultureInfo.InvariantCulture));
             if (p.CalmUntilDay != int.MinValue) n.Add("calm_until", p.CalmUntilDay.ToString(CultureInfo.InvariantCulture));
             var laws = n.AddBlock("laws");
-            foreach (var kv in p.Laws) laws.Add(kv.Key, kv.Value);
+            foreach (var kv in p.Laws.OrderBy(k => k.Key, StringComparer.Ordinal)) laws.Add(kv.Key, kv.Value);
             var changed = n.AddBlock("law_changed");
-            foreach (var kv in p.LawChangedDay) changed.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
+            foreach (var kv in p.LawChangedDay.OrderBy(k => k.Key, StringComparer.Ordinal)) changed.Add(kv.Key, kv.Value.ToString(CultureInfo.InvariantCulture));
             var min = n.AddBlock("ministers");
             foreach (var kv in p.Ministers) min.Add(kv.Key, kv.Value.Key);
             var parties = n.AddBlock("parties");
@@ -950,6 +987,14 @@ public sealed partial class PoliticsSystem
     private void LoadSave(Node root)
     {
         var w = _game.World;
+        _monthsTicked = Math.Max(0, root.GetInt("months_ticked", 0));
+        _aiCalled = root.GetBool("ai_called");
+        _pendingUnlocks.Clear();
+        foreach (var n in root.GetAll("pending_unlock"))
+        {
+            string key = n.Value ?? n.GetString("key", "");
+            if (key.Length > 0 && (IdeologyByKey.ContainsKey(key) || key.StartsWith("law:", StringComparison.OrdinalIgnoreCase))) _pendingUnlocks.Add(key);
+        }
         lock (_wealth)
             if (root.Get("wealth") is { } wn)
             {
@@ -975,6 +1020,7 @@ public sealed partial class PoliticsSystem
             foreach (var s in n.Get("seats")?.All ?? Enumerable.Empty<Node>()) if (IdeologyByKey.ContainsKey(s.Key) || IsMinorityParty(s.Key)) p.Seats[s.Key] = (int)s.AsDouble();
             if (GameDate.TryParse(n.GetString("last_election"), out var le)) p.LastElection = le;
             if (GameDate.TryParse(n.GetString("next_election"), out var ne)) p.NextElection = ne;
+            p.RegimeChangedDay = n.GetInt("regime_changed", int.MinValue / 2);
             if (n.Get("calm_until") != null) p.CalmUntilDay = n.GetInt("calm_until", int.MinValue);
             foreach (var grp in LawGroups) p.Laws[grp.Key] = grp.Default;
             foreach (var l in n.Get("laws")?.All ?? Enumerable.Empty<Node>())

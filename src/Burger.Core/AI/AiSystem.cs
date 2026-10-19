@@ -1,6 +1,10 @@
 using System.Collections.Concurrent;
+using Burger.Core.Economy;
 using Burger.Core.Modding;
 using Burger.Core.Model;
+using Burger.Core.Production;
+using Burger.Core.Script;
+using Burger.Core.Technology;
 
 namespace Burger.Core.AI;
 
@@ -16,7 +20,17 @@ public class AiSystem
 {
     protected readonly Game Game;
 
-    public AiSystem(Game game) { Game = game; }
+    public AiSystem(Game game)
+    {
+        Game = game;
+        game.SaveSections.Add(new SaveSection
+        {
+            Name = "ai_industry_work",
+            Write = SaveIndustryWork,
+            Read = LoadIndustryWork,
+            Reset = ResetIndustryWork
+        });
+    }
 
     /// <summary>Set to false to freeze all AI decisions (debugging).</summary>
     public bool Enabled { get; set; } = true;
@@ -32,6 +46,38 @@ public class AiSystem
     // rebuild membership each time to observe existence/player changes while
     // preserving the deterministic order of World.Countries.
     private readonly List<Country> _activeAiCountries = new();
+    private readonly Dictionary<Country, int> _economicReviewDay = new();
+    // The existing queue carries the complete monthly action bundle. Keep the save section name
+    // unchanged for compatibility with saves written by the earlier industry-only slice.
+    private readonly EconomicWorkScheduler<Country> _industryWork = new();
+    private readonly HashSet<int> _queuedIndustryCountries = new();
+    private const int IndustryWorkPerDay = 2;
+
+    private enum EconomicActionKind { Import, ExpandConstruction, UpgradeIndustry, Research, Wait }
+
+    private sealed class EconomicAction
+    {
+        public EconomicActionKind Kind;
+        public double Score;
+        public string Commodity = "";
+        public Country? Partner;
+        public BuildingType? Building;
+        public State? State;
+        public TechDef? Technology;
+        public double Quantity;
+        public double Cost;
+    }
+
+    private sealed class ImportOpportunity
+    {
+        public Country Seller = null!;
+        public TradeRoute Route = null!;
+        public double Missing;
+        public double Surplus;
+    }
+
+    private static readonly string[] ConstructionCapacityBuildings =
+        { "workshop", "infrastructure", "bureaucracy", "market", "civilian_factory" };
 
     /// <summary>Kept for mods that call it; the AI streams now live in <see cref="Game.Rngs"/>.</summary>
     public void ResetRng(int seed) { }
@@ -112,9 +158,78 @@ public class AiSystem
         return list;
     }
 
+    private void QueueIndustryWork(IEnumerable<Country> countries)
+    {
+        foreach (var c in countries.OrderBy(c => c.Index))
+            if (_queuedIndustryCountries.Add(c.Index)) _industryWork.Enqueue(c.Index, c);
+    }
+
+    private void DrainIndustryWork()
+    {
+        _industryWork.Drain(IndustryWorkPerDay, c =>
+        {
+            _queuedIndustryCountries.Remove(c.Index);
+            if (!c.Exists || c.IsPlayer) return;
+            WithAiStream(c, _ => RunMonthlyActionBundle(c, includeIndustry: true));
+        });
+    }
+
+    private void SaveIndustryWork(Node root)
+    {
+        foreach (var c in _industryWork.Snapshot())
+        {
+            if (!c.Exists || c.IsPlayer) continue;
+            var n = root.AddBlock("country");
+            n.Add("tag", c.Tag, true);
+        }
+    }
+
+    private void LoadIndustryWork(Node root)
+    {
+        ResetIndustryWork();
+        var restored = new List<Country>();
+        foreach (var n in root.GetAll("country"))
+        {
+            var tag = n.GetString("tag");
+            if (string.IsNullOrWhiteSpace(tag)) continue;
+            var c = Game.World.GetCountry(tag);
+            if (c is not { Exists: true, IsPlayer: false } || !_queuedIndustryCountries.Add(c.Index)) continue;
+            restored.Add(c);
+        }
+        _industryWork.Restore(restored, c => c.Index);
+    }
+
+    private void ResetIndustryWork()
+    {
+        _industryWork.Clear();
+        _queuedIndustryCountries.Clear();
+        _economicReviewDay.Clear();
+    }
+
+    private void RunMonthlyActionBundle(Country c, bool includeIndustry)
+    {
+        var F = Game.Features;
+        bool diplomacy = F.Has(FeatureSet.Diplomacy);
+        if (includeIndustry && (F.Has(FeatureSet.Commodities) || F.Has(FeatureSet.Production) || F.Has(FeatureSet.Technology)))
+            Game.P("Ai.MonthlyTick.ManageIndustry", c.Tag, () => ManageIndustry(c));
+
+        if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", c.Tag, () => Recruit(c));
+        if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", c.Tag, () => ManageAir(c));
+        if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.HelpFriends", c.Tag, () => HelpFriends(c));
+        if (F.Has(FeatureSet.Production)) Game.P("Ai.MonthlyTick.ManageProduction", c.Tag, () => ManageProduction(c));
+        if (F.Has(FeatureSet.Navy)) Game.P("Ai.MonthlyTick.ManageNavy", c.Tag, () => ManageNavy(c));
+        Game.P("Ai.MonthlyTick.Decisions", c.Tag, () => Game.Decisions.AiMonthly(c));
+        if (F.Has(FeatureSet.Politics)) Game.P("Ai.MonthlyTick.ManagePolitics", c.Tag, () => ManagePolitics(c));
+        if (F.Has(FeatureSet.Population)) Game.P("Ai.MonthlyTick.ManagePopulation", c.Tag, () => ManagePopulation(c));
+        if (!diplomacy) return;
+        Game.P("Ai.Diplomacy", () => Diplomacy(c));
+        Game.P("Ai.Peace", () => Peace(c));
+    }
+
     public virtual void DailyTick()
     {
         if (!Enabled) return;
+        DrainIndustryWork();
         int day = Game.World.Date.TotalDays;
         var military = Game.Features.Has(FeatureSet.Military);
         var navy = Game.Features.Has(FeatureSet.Navy);
@@ -130,31 +245,32 @@ public class AiSystem
         });
     }
 
-    public virtual void MonthlyTick()
+    /// <summary>Runs the monthly AI pass synchronously for direct/headless callers.</summary>
+    public virtual void MonthlyTick() => MonthlyTick(streamEconomicWork: false);
+
+    /// <summary>Runs the monthly AI pass, optionally streaming industry work to the daily budget.</summary>
+    internal void MonthlyTick(bool streamEconomicWork)
     {
         if (!Enabled) return;
         var F = Game.Features;
         bool diplomacy = F.Has(FeatureSet.Diplomacy);
         var countries = ActiveAiCountries();
+        if (streamEconomicWork)
+        {
+            QueueIndustryWork(countries);
+            // The live clock drains the complete bundle from the existing bounded queue in DailyTick.
+            // This month-boundary hand-off must not execute per-country actions inline.
+            if (diplomacy) _ = BorderCache;
+            return;
+        }
+        if (F.Has(FeatureSet.Commodities) || F.Has(FeatureSet.Production) || F.Has(FeatureSet.Technology))
+            foreach (var c in countries.OrderBy(c => c.Index))
+                WithAiStream(c, _ => Game.P("Ai.MonthlyTick.ManageIndustry", c.Tag, () => ManageIndustry(c)));
         // warm the border cache on this thread before workers read it
         if (diplomacy) _ = BorderCache;
         ForEachAi(countries, c =>
         {
-            var rng = Game.Rngs.Ai(c);
-            var ar = new AiRng(Game, rng);
-            if (F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.Recruit", c.Tag, () => Recruit(c));
-            if (F.Has(FeatureSet.Air)) Game.P("Ai.MonthlyTick.ManageAir", c.Tag, () => ManageAir(c));
-            if (F.Has(FeatureSet.LendLease) && F.Has(FeatureSet.Military)) Game.P("Ai.MonthlyTick.HelpFriends", c.Tag, () => HelpFriends(c));
-            if (F.Has(FeatureSet.Production)) Game.P("Ai.MonthlyTick.ManageProduction", c.Tag, () => ManageProduction(c));
-            if (F.Has(FeatureSet.Navy)) Game.P("Ai.MonthlyTick.ManageNavy", c.Tag, () => ManageNavy(c));
-            Game.P("Ai.MonthlyTick.Decisions", c.Tag, () => Game.Decisions.AiMonthly(c));
-            if (F.Has(FeatureSet.Politics)) Game.P("Ai.MonthlyTick.ManagePolitics", c.Tag, () => ManagePolitics(c));
-            if (F.Has(FeatureSet.Population)) Game.P("Ai.MonthlyTick.ManagePopulation", c.Tag, () => ManagePopulation(c));
-            if (diplomacy)
-            {
-                Game.P("Ai.Diplomacy", () => Diplomacy(c));
-                Game.P("Ai.Peace", () => Peace(c));
-            }
+            RunMonthlyActionBundle(c, includeIndustry: false);
         });
     }
 
@@ -324,6 +440,294 @@ public class AiSystem
 
     /// <summary>Colonies and buildings for its people (population features).</summary>
     public virtual void ManagePopulation(Country c) => Game.Population.AiMonthly(c);
+
+    /// <summary>Chooses one deterministic economic action at the monthly strategic review.</summary>
+    public virtual void ManageIndustry(Country c)
+    {
+        if (!BeginEconomicReview(c)) return;
+
+        // Preserve the established shortage-driven import/build planner. The strategic layer below
+        // only adds a second action when this baseline planner did not already act this month.
+        int agreementsBefore = Game.TradeNetwork.Agreements.Count;
+        int constructionBefore = c.Construction.Count;
+        int goldProjectsBefore = Game.Population.GoldProjects.Count;
+        if (Game.Commodities.Enabled) Game.Commodities.AiMonthly(c);
+        bool baselineActed = Game.TradeNetwork.Agreements.Count > agreementsBefore
+            || c.Construction.Count > constructionBefore
+            || Game.Population.GoldProjects.Count > goldProjectsBefore;
+        PlanEconomicStrategy(c, !baselineActed, baselineActed, false);
+    }
+
+    /// <summary>
+    /// Chooses between importing a shortage, expanding construction capacity, upgrading an industry, researching an
+    /// enabling technology, and waiting. The review is monthly and guarded by the simulation date so repeated callers
+    /// cannot recompute or enqueue the plan more than once in the same month.
+    /// </summary>
+    public virtual void ManageEconomicStrategy(Country c)
+    {
+        if (!BeginEconomicReview(c)) return;
+        PlanEconomicStrategy(c, true, false, true);
+    }
+
+    private bool BeginEconomicReview(Country c)
+    {
+        if (!Enabled || c.IsPlayer || !c.Exists) return false;
+        int day = Game.World.Date.TotalDays;
+        if (_economicReviewDay.TryGetValue(c, out var lastDay) && lastDay == day) return false;
+        _economicReviewDay[c] = day;
+        return true;
+    }
+
+    private void PlanEconomicStrategy(Country c, bool allowTradeAndConstruction, bool preserveBaselineDecision, bool allowImport)
+    {
+        if (!Game.Commodities.Enabled && !Game.Production.Enabled && !Game.Tech.Enabled) return;
+
+        var shortage = Game.Commodities.Enabled
+            ? Game.Commodities.Shortages(c).FirstOrDefault()
+            : (Commodity: "", Satisfied: 1.0);
+        double budget = EconomicBudget(c);
+        var actions = new List<EconomicAction>();
+
+        if (allowImport && allowTradeAndConstruction && !string.IsNullOrEmpty(shortage.Commodity) && Game.TradeNetwork.Enabled)
+            if (ImportAction(c, shortage, budget) is { } import) actions.Add(import);
+
+        if (allowTradeAndConstruction && ConstructionAction(c, shortage, budget, true) is { } capacity) actions.Add(capacity);
+        if (allowTradeAndConstruction && ConstructionAction(c, shortage, budget, false) is { } industry) actions.Add(industry);
+        if (ResearchAction(c, shortage) is { } research) actions.Add(research);
+        actions.Add(new EconomicAction { Kind = EconomicActionKind.Wait, Score = budget > 0 ? 0.25 : 1.0 });
+
+        var chosen = actions
+            .OrderByDescending(a => a.Score)
+            .ThenBy(a => ActionOrder(a.Kind))
+            .ThenBy(a => a.Commodity, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(a => a.Building?.Key ?? "", StringComparer.OrdinalIgnoreCase)
+            .ThenBy(a => a.Technology?.Order ?? int.MaxValue)
+            .First();
+
+        RecordEconomicPlan(c, shortage, budget, actions, preserveBaselineDecision);
+        ExecuteEconomicAction(c, chosen, preserveBaselineDecision);
+    }
+
+    private static int ActionOrder(EconomicActionKind kind) => kind switch
+    {
+        EconomicActionKind.Import => 0,
+        EconomicActionKind.UpgradeIndustry => 1,
+        EconomicActionKind.ExpandConstruction => 2,
+        EconomicActionKind.Research => 3,
+        _ => 4,
+    };
+
+    private double EconomicBudget(Country c)
+    {
+        double reserve = Math.Max(20, Math.Max(0, c.LastExpenses) * 2);
+        double monthlySurplus = Math.Max(0, c.LastIncome - c.LastExpenses);
+        return Math.Max(0, c.Gold - reserve) + monthlySurplus;
+    }
+
+    private EconomicAction? ImportAction(Country c, (string Commodity, double Satisfied) shortage, double budget)
+    {
+        var balance = Game.Commodities.BalanceOf(c, shortage.Commodity);
+        double missing = Math.Max(0.1, balance.Demand - balance.Output - balance.Import);
+        if (missing <= 0.1) return null;
+
+        var buyerState = c.OwnedStates
+            .OrderByDescending(s => Game.Population.TotalOf(s))
+            .ThenBy(s => s.Index)
+            .FirstOrDefault();
+        if (buyerState == null) return null;
+
+        var best = new List<ImportOpportunity>();
+        var general = new List<ImportOpportunity>();
+        foreach (var seller in Game.World.Countries.Where(x => x.Exists && x != c).OrderBy(x => x.Index))
+        {
+            if (!Game.Rules.Commodities.WillTrade(Game, seller, c)) continue;
+            var sellerBalance = Game.Commodities.BalanceOf(seller, shortage.Commodity);
+            double surplus = sellerBalance.Output - sellerBalance.Demand - sellerBalance.Export;
+            bool anySurplus = Game.Commodities.Defs.Values.Any(def => def.IsActive(Game.World.Date)
+                && Game.Commodities.BalanceOf(seller, def.Key).Output > Game.Commodities.BalanceOf(seller, def.Key).Demand);
+            if (surplus <= 0.1 && !anySurplus) continue;
+            var route = seller.OwnedStates
+                .OrderBy(s => s.Index)
+                .Select(s => Game.TradeNetwork.RouteBetween(s, buyerState))
+                .Where(r => r != null && !Game.TradeNetwork.IsRouteBlocked(r!))
+                .OrderBy(r => r!.DistanceKm)
+                .ThenBy(r => r!.Key, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (route == null) continue;
+            if (Game.TradeNetwork.Agreements.Any(a => a.Active(Game.World.Date)
+                && a.From == c && a.To == seller
+                && (a.Commodity.Length == 0 || a.Commodity.Equals(shortage.Commodity, StringComparison.OrdinalIgnoreCase)))) continue;
+            var candidate = new ImportOpportunity { Seller = seller, Route = route, Missing = missing, Surplus = Math.Max(0.1, surplus) };
+            if (surplus > 0.1) best.Add(candidate);
+            else general.Add(candidate);
+        }
+
+        var opportunity = best
+            .OrderByDescending(x => x.Surplus / Math.Max(1, x.Route.DistanceKm))
+            .ThenBy(x => x.Seller.Index)
+            .ThenBy(x => x.Route.Key, StringComparer.Ordinal)
+            .FirstOrDefault();
+        if (opportunity == null)
+            opportunity = general.OrderBy(x => x.Seller.Index).ThenBy(x => x.Route.Key, StringComparer.Ordinal).FirstOrDefault();
+        if (opportunity == null) return null;
+
+        double pressure = Math.Clamp(1 - shortage.Satisfied, 0, 1);
+        double transport = 1 + opportunity.Route.DistanceKm / (opportunity.Route.Kind == TradeRouteKind.Sea ? 5000 : 1000);
+        double isolation = Game.AiProfiles.Enabled ? Math.Clamp(Game.AiProfiles.PersonalityOf(c).Trait("isolation"), 0.3, 2.5) : 1;
+        double priority = Game.TradeNetwork.PolicyOf(c).ImportPriority;
+        double score = 100 * pressure * Math.Min(2, opportunity.Surplus / opportunity.Missing) * priority / (transport * isolation);
+        return new EconomicAction
+        {
+            Kind = EconomicActionKind.Import,
+            Score = score,
+            Commodity = opportunity.Surplus <= 0.1 ? "" : shortage.Commodity,
+            Partner = opportunity.Seller,
+            Quantity = opportunity.Surplus <= 0.1 ? 0 : Math.Min(opportunity.Missing, opportunity.Surplus),
+        };
+    }
+
+    private EconomicAction? ConstructionAction(Country c, (string Commodity, double Satisfied) shortage, double budget, bool capacity)
+    {
+        if (c.Construction.Count >= ConstructionQueueLimit(c)) return null;
+        var candidates = new List<EconomicAction>();
+        string target = string.IsNullOrEmpty(shortage.Commodity) ? "" : IndustryBuildingFor(shortage.Commodity);
+        IEnumerable<string> keys = capacity
+            ? ConstructionCapacityBuildings
+            : new[] { target }.Where(x => x.Length > 0);
+        double pressure = string.IsNullOrEmpty(shortage.Commodity) ? 0.15 : Math.Clamp(1 - shortage.Satisfied, 0.05, 1);
+        double productionTrait = Game.AiProfiles.Enabled ? Math.Clamp(Game.AiProfiles.PersonalityOf(c).Trait("production"), 0.5, 2.5) : 1;
+
+        foreach (var key in keys.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var building = Game.Data.BuildingTypes.GetValueOrDefault(key);
+            if (building == null || !building.Active(Game.World.Date)) continue;
+            if (!capacity && Game.TradeNetwork.Enabled && !Game.TradeNetwork.Recipes.Values.Any(r => r.Active(Game.World.Date)
+                && r.Building.Equals(building.Key, StringComparison.OrdinalIgnoreCase)
+                && r.Output.Equals(shortage.Commodity, StringComparison.OrdinalIgnoreCase))) continue;
+            if (c.Construction.Any(p => p.Building == building)) continue;
+
+            var state = c.OwnedStates
+                .Where(s => Game.Production.CannotBuildReason(c, building, s) == null)
+                .OrderBy(s => c.Construction.Count(p => p.State == s))
+                .ThenByDescending(s => Game.Population.TotalOf(s))
+                .ThenByDescending(s => s.Tax)
+                .ThenBy(s => s.Index)
+                .FirstOrDefault();
+            if (state == null) continue;
+
+            double cost = Math.Max(1, Game.Population.GoldCost(building));
+            if (budget < cost) continue;
+            double capacityBenefit = key.Equals("workshop", StringComparison.OrdinalIgnoreCase) ? 2.5
+                : key.Equals("infrastructure", StringComparison.OrdinalIgnoreCase) ? 1.8
+                : key.Equals("bureaucracy", StringComparison.OrdinalIgnoreCase) ? 1.5
+                : key.Equals("market", StringComparison.OrdinalIgnoreCase) ? 1.2
+                : 1.0;
+            double benefit = capacity ? capacityBenefit * (1 + pressure) : 4 + pressure * 8;
+            double score = 100 * benefit * pressure * productionTrait / cost;
+            candidates.Add(new EconomicAction { Kind = capacity ? EconomicActionKind.ExpandConstruction : EconomicActionKind.UpgradeIndustry, Score = score, Building = building, State = state, Cost = cost, Commodity = shortage.Commodity });
+        }
+        return candidates.OrderByDescending(a => a.Score).ThenBy(a => a.Building!.Key, StringComparer.OrdinalIgnoreCase).FirstOrDefault();
+    }
+
+    private EconomicAction? ResearchAction(Country c, (string Commodity, double Satisfied) shortage)
+    {
+        if (!Game.Tech.Enabled) return null;
+        if (Game.Tech.SlotsOf(c).Count() >= Game.Rules.Tech.Slots(Game, c)) return null;
+        double currentYear = Game.World.Date.Year + Game.World.Date.Month / 12.0;
+        double productionTrait = Game.AiProfiles.Enabled ? Math.Clamp(Game.AiProfiles.PersonalityOf(c).Trait("production"), 0.5, 2.5) : 1;
+        var candidates = Game.Tech.Available(c)
+            .Where(t => IsEconomicTechnology(t))
+            .Select(t =>
+            {
+                bool construction = t.Unlocks.Any(u => u.StartsWith("construction_", StringComparison.OrdinalIgnoreCase));
+                bool industry = t.Category.Equals("industry", StringComparison.OrdinalIgnoreCase);
+                double category = Game.AiProfiles.Enabled ? Game.AiProfiles.CategoryWeight(c, t.Category) : 1;
+                double ahead = Math.Max(0, t.Year - currentYear);
+                double pressure = string.IsNullOrEmpty(shortage.Commodity) ? 0.5 : Math.Clamp(1 - shortage.Satisfied, 0.1, 1);
+                double score = (construction ? 30 : industry ? 16 : 8) * category * productionTrait * (0.75 + pressure)
+                    / Math.Max(1, t.Cost / 40.0) - ahead * 0.25;
+                return new EconomicAction { Kind = EconomicActionKind.Research, Score = score, Technology = t, Commodity = shortage.Commodity };
+            });
+        return candidates.OrderByDescending(a => a.Score).ThenBy(a => a.Technology!.Order).FirstOrDefault();
+    }
+
+    private bool IsEconomicTechnology(TechDef tech)
+    {
+        if (tech.Category.Equals("industry", StringComparison.OrdinalIgnoreCase)
+            || tech.Unlocks.Any(u => u.StartsWith("construction_", StringComparison.OrdinalIgnoreCase))) return true;
+        return Game.TradeNetwork.Recipes.Values.Any(r => r.RequiresTech.Equals(tech.Key, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static int ConstructionQueueLimit(Country c) => Math.Clamp(1 + c.OwnedStates.Count / 3, 1, 6);
+
+    private static string IndustryBuildingFor(string commodity) => commodity.ToLowerInvariant() switch
+    {
+        "grain" or "fish" or "animal_products" => "farm",
+        "salt" or "textiles" or "pottery" or "glass" => "workshop",
+        "education" => "school",
+        "healthcare" => "clinic",
+        "administration" => "bureaucracy",
+        "transport_services" => "caravanserai",
+        _ => "market",
+    };
+
+    private void RecordEconomicPlan(Country c, (string Commodity, double Satisfied) shortage, double budget, List<EconomicAction> actions, bool preserveBaselineDecision)
+    {
+        if (!Game.TradeNetwork.Enabled) return;
+        var plan = Game.TradeNetwork.Plans.TryGetValue(c, out var existing)
+            ? existing
+            : Game.TradeNetwork.Plans[c] = new AiEconomicPlan { Country = c };
+        plan.Budget = budget;
+        plan.TargetCommodity = shortage.Commodity ?? "";
+        plan.LastReviewDay = Game.World.Date.TotalDays;
+        if (!preserveBaselineDecision || actions.Any(a => a.Kind == EconomicActionKind.Import))
+            plan.ImportScore = actions.Where(a => a.Kind == EconomicActionKind.Import).Select(a => a.Score).DefaultIfEmpty(0).Max();
+        if (!preserveBaselineDecision || actions.Any(a => a.Kind is EconomicActionKind.ExpandConstruction or EconomicActionKind.UpgradeIndustry))
+            plan.BuildScore = actions.Where(a => a.Kind is EconomicActionKind.ExpandConstruction or EconomicActionKind.UpgradeIndustry).Select(a => a.Score).DefaultIfEmpty(0).Max();
+        plan.Priority = shortage.Satisfied < 0.5 ? "survival" : plan.BuildScore > plan.ImportScore ? "self-sufficiency" : "growth";
+    }
+
+    private void ExecuteEconomicAction(Country c, EconomicAction action, bool preserveBaselineDecision)
+    {
+        switch (action.Kind)
+        {
+            case EconomicActionKind.Import when action.Partner != null:
+                if (Game.TradeNetwork.Negotiate(c, action.Partner, 0.5, 12, action.Commodity, action.Quantity))
+                {
+                    if (Game.TradeNetwork.Plans.TryGetValue(c, out var plan)) { plan.ImportsOrdered++; plan.LastDecision = "import " + (action.Commodity.Length == 0 ? "trade agreement" : action.Commodity); }
+                }
+                return;
+            case EconomicActionKind.ExpandConstruction:
+            case EconomicActionKind.UpgradeIndustry:
+                if (action.Building == null || action.State == null) return;
+                if (Game.Production.Enabled)
+                {
+                    if (Game.Production.QueueBuilding(c, action.Building, action.State) == null
+                        && Game.TradeNetwork.Plans.TryGetValue(c, out var buildPlan))
+                    {
+                        buildPlan.BuildsOrdered++;
+                        buildPlan.LastDecision = action.Kind == EconomicActionKind.ExpandConstruction
+                            ? "build capacity " + action.Building.Key
+                            : "upgrade " + action.Building.Key;
+                    }
+                }
+                else if (Game.Population.GoldBuild(c, action.Building, action.State) == null
+                         && Game.TradeNetwork.Plans.TryGetValue(c, out var goldPlan))
+                {
+                    goldPlan.BuildsOrdered++;
+                    goldPlan.LastDecision = "build " + action.Building.Key;
+                }
+                return;
+            case EconomicActionKind.Research when action.Technology != null:
+                if (Game.Tech.Start(c, action.Technology) == null
+                    && Game.TradeNetwork.Plans.TryGetValue(c, out var researchPlan))
+                    researchPlan.LastDecision = "research " + action.Technology.Key;
+                return;
+            default:
+                if (!preserveBaselineDecision && Game.TradeNetwork.Plans.TryGetValue(c, out var waitPlan)) waitPlan.LastDecision = "wait";
+                return;
+        }
+    }
 
     // ------------------------------------------------------------------------------------------- diplomacy
     /// <summary>Legacy entry point (kept for mods that override it). Runs with the shared <see cref="Game.Rngs"/>.</summary>

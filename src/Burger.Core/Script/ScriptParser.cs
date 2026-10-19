@@ -72,7 +72,9 @@ public static class ScriptParser
         /// <summary>No limit but nesting: a depth beyond this would overflow the stack, which no handler can catch.</summary>
         public static readonly ParseLimits Trusted = new(256, int.MaxValue, long.MaxValue);
         /// <summary>Set from measured late-game saves (docs/multiplayer-security.md).</summary>
-        public static ParseLimits Save = new(40, 4096, 2L << 30);
+        // Presence vectors in large historical saves are single quoted values; World500BCE measures up to ~18 KB.
+        // Keep the bound finite while allowing legitimate late-game saves to pass multiplayer resync validation.
+        public static ParseLimits Save = new(40, 65536, 2L << 30);
     }
 
     [ThreadStatic] private static ParseLimits? _limits;

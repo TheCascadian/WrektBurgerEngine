@@ -1,0 +1,250 @@
+# The first 500 BCE market catalogue. Values are abstract monthly units.
+# Processed goods with zero population_use are present for industry and later production methods.
+
+grain = {
+	name = "Grain"
+	category = food
+	price = 1.0
+	population_use = 1.0
+	storage_months = 6
+	start_year = -500
+	class_use = { farmers = 1.05 herders = 0.95 foragers = 0.80 nobles = 0.70 clergy = 0.75 artisans = 0.90 slaves = 0.85 }
+}
+fish = {
+	name = "Fish"
+	category = food
+	price = 1.2
+	storage_months = 3
+	start_year = -500
+}
+animal_products = {
+	name = "Animal Products"
+	category = food
+	price = 1.3
+	storage_months = 3
+	start_year = -500
+}
+salt = {
+	name = "Salt"
+	category = basic
+	price = 1.4
+	population_use = 0.05
+	storage_months = 12
+	start_year = -500
+	class_use = { farmers = 0.05 herders = 0.06 foragers = 0.04 nobles = 0.04 clergy = 0.04 artisans = 0.05 slaves = 0.05 }
+}
+wool = {
+	name = "Wool"
+	category = basic
+	price = 1.1
+	storage_months = 12
+	start_year = -500
+}
+hides = {
+	name = "Hides"
+	category = basic
+	price = 1.0
+	storage_months = 12
+	start_year = -500
+}
+olive_oil = {
+	name = "Olive Oil"
+	category = basic
+	price = 1.5
+	storage_months = 12
+	start_year = -500
+}
+wine = {
+	name = "Wine"
+	category = luxury
+	price = 2.0
+	storage_months = 12
+	start_year = -500
+}
+timber = {
+	name = "Timber"
+	category = raw
+	price = 1.0
+	storage_months = 12
+	start_year = -500
+}
+charcoal = {
+	name = "Charcoal"
+	category = fuel
+	price = 1.1
+	population_use = 0.05
+	storage_months = 3
+	start_year = -500
+}
+clay = {
+	name = "Clay"
+	category = raw
+	price = 0.6
+	storage_months = 12
+	start_year = -500
+}
+stone = {
+	name = "Stone"
+	category = raw
+	price = 0.7
+	storage_months = 12
+	start_year = -500
+}
+copper = {
+	name = "Copper"
+	category = industrial
+	price = 2.0
+	storage_months = 12
+	start_year = -500
+}
+tin = {
+	name = "Tin"
+	category = industrial
+	price = 3.0
+	storage_months = 12
+	start_year = -500
+}
+iron_ore = {
+	name = "Iron Ore"
+	category = industrial
+	price = 1.7
+	storage_months = 12
+	start_year = -500
+}
+lead = {
+	name = "Lead"
+	category = industrial
+	price = 1.4
+	storage_months = 12
+	start_year = -500
+}
+alum = {
+	name = "Alum"
+	category = industrial
+	price = 2.1
+	storage_months = 12
+	start_year = -500
+}
+bronze = {
+	name = "Bronze"
+	category = intermediate
+	price = 3.2
+	storage_months = 12
+	start_year = -500
+}
+iron_tools = {
+	name = "Iron Tools"
+	category = intermediate
+	price = 3.0
+	storage_months = 12
+	start_year = -500
+}
+textiles = {
+	name = "Textiles"
+	category = basic
+	price = 1.8
+	population_use = 0.10
+	storage_months = 12
+	start_year = -500
+	class_use = { farmers = 0.08 herders = 0.08 foragers = 0.05 nobles = 0.18 clergy = 0.15 artisans = 0.14 slaves = 0.06 }
+}
+pottery = {
+	name = "Pottery"
+	category = basic
+	price = 1.0
+	storage_months = 12
+	start_year = -500
+}
+glass = {
+	name = "Glass"
+	category = luxury
+	price = 3.0
+	storage_months = 12
+	start_year = -500
+}
+horses = {
+	name = "Horses"
+	category = military
+	price = 4.0
+	storage_months = 12
+	start_year = -500
+}
+tools = {
+	name = "Tools"
+	category = industrial
+	price = 2.5
+	storage_months = 12
+	start_year = -500
+}
+weapons = {
+	name = "Weapons"
+	category = military
+	price = 3.5
+	storage_months = 12
+	start_year = -500
+}
+ships = {
+	name = "Ships"
+	category = military
+	price = 8.0
+	storage_months = 12
+	start_year = -500
+}
+luxury_goods = {
+	name = "Luxury Goods"
+	category = luxury
+	price = 4.0
+	population_use = 0.01
+	storage_months = 12
+	start_year = -500
+	class_use = { farmers = 0.002 herders = 0.002 foragers = 0.001 nobles = 0.04 clergy = 0.03 artisans = 0.02 slaves = 0.001 }
+}
+education = {
+	name = "Education"
+	category = service
+	price = 2.5
+	population_use = 0.015
+	storage_months = 0
+	start_year = -500
+	class_use = { farmers = 0.005 herders = 0.004 foragers = 0.002 nobles = 0.05 clergy = 0.08 artisans = 0.04 slaves = 0.001 }
+}
+healthcare = {
+	name = "Healthcare"
+	category = service
+	price = 2.0
+	population_use = 0.01
+	storage_months = 0
+	start_year = -500
+	class_use = { farmers = 0.01 herders = 0.008 foragers = 0.006 nobles = 0.02 clergy = 0.02 artisans = 0.015 slaves = 0.004 }
+}
+administration = {
+	name = "Administration"
+	category = service
+	price = 1.8
+	population_use = 0.008
+	storage_months = 0
+	start_year = -500
+	class_use = { farmers = 0.002 herders = 0.002 foragers = 0.001 nobles = 0.04 clergy = 0.03 artisans = 0.02 slaves = 0.001 }
+}
+transport_services = {
+	name = "Transport Services"
+	category = service
+	price = 1.6
+	population_use = 0.004
+	storage_months = 0
+	start_year = -500
+}
+gold = {
+	name = "Gold"
+	category = wealth
+	price = 10.0
+	storage_months = 12
+	start_year = -500
+}
+silver = {
+	name = "Silver"
+	category = wealth
+	price = 6.0
+	storage_months = 12
+	start_year = -500
+}

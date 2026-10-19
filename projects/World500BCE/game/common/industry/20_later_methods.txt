@@ -1,0 +1,96 @@
+# Later production methods are present in the same timeline but cannot activate before their era.
+# The buildings file supplies preindustrial manual/artisan/public-works construction methods; these recipes
+# describe the production methods that improve as research advances. Players may explicitly choose an available
+# method; otherwise the newest available method is selected.
+public_education = {
+	output = education
+	building = school
+	method = scribal_school
+	amount = 1.0
+	workforce_per_thousand = 0.18
+	capacity_per_building = 10
+	output_per_workforce = 0.08
+	start_year = -500
+	inputs = { timber = 0.03 }
+}
+temple_healthcare = {
+	output = healthcare
+	building = clinic
+	method = temple_healers
+	amount = 1.0
+	workforce_per_thousand = 0.16
+	capacity_per_building = 10
+	output_per_workforce = 0.07
+	start_year = -500
+	inputs = { olive_oil = 0.05 }
+}
+imperial_administration = {
+	output = administration
+	building = bureaucracy
+	method = imperial_bureaucracy
+	amount = 1.0
+	workforce_per_thousand = 0.14
+	capacity_per_building = 10
+	output_per_workforce = 0.08
+	start_year = -500
+	inputs = { timber = 0.04 }
+}
+caravan_network = {
+	output = transport_services
+	building = caravanserai
+	method = caravan_network
+	amount = 1.0
+	workforce_per_thousand = 0.12
+	capacity_per_building = 8
+	output_per_workforce = 0.06
+	start_year = -500
+	inputs = { horses = 0.02 }
+}
+mechanised_farming = {
+	output = grain
+	building = civilian_factory
+	method = mechanised
+	amount = 1.0
+	workforce_per_thousand = 0.08
+	capacity_per_building = 18
+	output_per_workforce = 1.2
+	start_year = 1850
+	requires_tech = steam_power
+	inputs = { tools = 0.12 charcoal = 0.08 }
+}
+industrial_textiles = {
+	output = textiles
+	building = civilian_factory
+	method = power_loom
+	amount = 1.0
+	workforce_per_thousand = 0.10
+	capacity_per_building = 20
+	output_per_workforce = 0.8
+	start_year = 1785
+	requires_tech = mechanical_power
+	inputs = { wool = 0.35 tools = 0.12 }
+}
+steel_tools = {
+	output = tools
+	building = military_factory
+	method = steel_forge
+	amount = 1.0
+	workforce_per_thousand = 0.08
+	capacity_per_building = 16
+	output_per_workforce = 0.6
+	start_year = 1750
+	requires_tech = steam_power
+	inputs = { iron_ore = 0.50 charcoal = 0.30 }
+}
+water_power_workshops = {
+	output = textiles
+	building = workshop
+	method = water_power_loom
+	amount = 1.0
+	workforce_per_thousand = 0.18
+	capacity_per_building = 12
+	output_per_workforce = 0.20
+	start_year = -100
+	requires_tech = water_power
+	inputs = { wool = 0.35 tools = 0.08 }
+}
