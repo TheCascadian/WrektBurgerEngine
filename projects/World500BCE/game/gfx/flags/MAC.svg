@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">Macedon red and gold Vergina Sun flag</title>
+  <desc id="desc">A red flag with a centered gold sixteen-rayed Vergina Sun.</desc>
+  <rect width="960" height="640" fill="#fb3100"/>
+  <g fill="#ffd21a" transform="translate(480 320)">
+    <polygon points="0,-274 -22,-74 22,-74"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(22.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(45)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(67.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(90)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(112.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(135)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(157.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(180)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(202.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(225)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(247.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(270)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(292.5)"/>
+    <polygon points="0,-274 -22,-74 22,-74" transform="rotate(315)"/>
+    <polygon points="0,-230 -16,-74 16,-74" transform="rotate(337.5)"/>
+    <circle r="64"/>
+  </g>
+</svg>

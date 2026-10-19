@@ -1,0 +1,28 @@
+# The scenario starts on 1 January 500 BCE. Exact birth years for these early
+# Argead figures are not securely known, so ages are explicit approximations.
+
+mac_amyntas_i = {
+	first_name = Amyntas
+	family = Argead
+	age = 60
+	female = no
+	country = MAC
+}
+
+mac_alexander_i = {
+	first_name = Alexander
+	family = Argead
+	age = 30
+	female = no
+	country = MAC
+	father = mac_amyntas_i
+}
+
+mac_gygaea = {
+	first_name = Gygaea
+	family = Argead
+	age = 22
+	female = yes
+	country = MAC
+	father = mac_amyntas_i
+}

@@ -1,6 +1,6 @@
 # The authored countries of the 500 BCE start
 
-This file covers the authored countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the 11 Greek city-states that replaced GRK) listed in `projects/World500BCE/game/common/countries/countries.txt`. Dynamic and generated countries (rebels, released nations, civil-war splits) are not covered.
+This file covers the authored countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the 11 separate Greek city-states that replaced GRK) listed in `projects/World500BCE/game/common/countries/countries.txt`. Dynamic and generated countries (rebels, released nations, civil-war splits) are not covered.
 
 Tags, names and colors are placeholders, as the countries file says: one country stands for each large power or people.
 
@@ -14,7 +14,7 @@ Every statement carries one of three labels. Do not mix them up.
 | **HIST** | Historical background from general scholarship, NOT stored in any game file. Dates are approximate (BCE) and several are disputed. Written from memory, not looked up while writing. Check before quoting. |
 | **OPEN** | Unknown, disputed, or a mismatch in the game data that needs a decision. |
 
-The game files hold no named rulers, no named factions, no rituals and no war doctrines. Everything under those headings is HIST and is background for future authoring (events, characters, uniforms, AI profiles), not a description of current behavior.
+Most game files hold no named rulers, no named factions, no rituals and no war doctrines. The MAC character layer is an exception: its starting ruler, heir and named royal family members are now defined in `history/characters/00_macedon.txt`. Everything else under those headings is HIST and is background for future authoring (events, characters, uniforms, AI profiles), not a description of current behavior.
 
 ## At a glance (GAME)
 
@@ -22,7 +22,7 @@ The game files hold no named rulers, no named factions, no rituals and no war do
 |---|---|---|---|---|---|---|---|---|---|
 | ACH | Achaemenid Empire | persian | mazdayasna | land_07110 (Mesopotamia) | 103 | 25,269,541 | 1,265 | 24 infantry divisions | Own set (`gear_*_ach.glb`) |
 | ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 10 (before the split) | 1,071,654 | 54 | 12 divisions in all | Own set (`gear_*_<tag>.glb`) |
-| MAC | Macedon | greek | hellenic_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Own set (`gear_*_mac.glb`) |
+| MAC | Macedon | ancient_macedonian | macedonian_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Own set (`gear_*_mac.glb`) |
 | CAR | Carthage | punic | canaanite_religion | land_09105 (Carthage and Tunisia) | 6 | 1,039,904 | 52 | 2 | Generic soldier |
 | NUB | Kush | kushite | kushite_religion | land_08279 (Nubia and Napata) | 3 | 633,812 | 32 | 2 | Generic soldier |
 | SAB | South Arabia | south_arabian | south_arabian_polytheism | land_09216 (South Arabia) | 6 | 1,583,519 | 80 | 2 | Generic soldier |
@@ -152,7 +152,7 @@ All popularity values are placeholders to be revisited when the political workin
 
 ### Soldier equipment, Greek and Roman (GAME and OPEN)
 
-Worn in the game for ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT MAC and ROM (`gear_<piece>_<tag>.glb`, one file per tag, built by `tools/assets/models/gear_greek_roman.py`; needs numpy and pygltflib; preview with `--figure-variants <dir>`). Pieces:
+Worn in the game for ATH SPA COR ARG THB THS CRT NAX CRO SYR PNT, MAC and ROM (`gear_<piece>_<tag>.glb`, one file per tag, built by `tools/assets/models/gear_greek_roman.py`; needs numpy and pygltflib; preview with `--figure-variants <dir>`). The shared asset generator is a visual placeholder and does not determine culture, religion, language or identity. Pieces:
 - **Greek hoplite:** linen linothorax with two layers of pteryges (hanging strips) and shoulder flaps; short chiton skirt; Corinthian-type bronze helmet with cheek guards, nasal bar and a horsehair crest; bronze greaves over sandals; xiphos in a scabbard on the left hip; dory spear (bronze butt spike, leaf head) held in the right hand; aspis (large round shield, bronze rim, boss) on the left forearm. No firearm.
 - **Roman (ROM), early Republic Italic hoplite:** red wool tunic, bronze breastplate with three round plates, lower helmet with a short red crest comb, bronze greaves over closed leather shoes, short sword on the right hip, hasta (shorter spear), clipeus (smaller round shield).
 - Colors: shield faces use each country's map color; chiton colors vary (Sparta crimson, Athens and most others undyed linen, Thessaly and Crete wool tones). OPEN: these are design choices. Real polis shield devices were painted; none are modeled. Sparta's crimson is historical, the rest are not sourced. The Roman set follows the Etruscan and Greek-influenced "hoplite phase" of the Roman army; I did not look up a source for it (OPEN).
@@ -326,16 +326,23 @@ Renders (male and female, from `--figure-variants`):
 
 ### In the game files (GAME)
 
-- Color 200/80/60. Capital land_05247 ("Macedon and Epirus"). Culture greek, religion hellenic_religion.
-- **1 state**, 179,496 people, all Greek culture and Hellenic religion. Classes: farmers 161,549, nobles 7,179, artisans 7,179, clergy 3,589. No slaves.
+- Color 200/80/60. Capital land_05247 ("Macedon and Epirus"). Culture `ancient_macedonian`, religion `macedonian_religion`.
+- **1 state**, 179,496 people. All starting pops use the distinct `ancient_macedonian` / `macedonian_religion` identifiers. Classes: farmers 161,549, nobles 7,179, artisans 7,179, clergy 3,589. No slaves.
 - Politics: ruling party neutrality. Popularity neutrality 42, **fascist 38**, democratic 12, communist 8. Law: restricted_parties.
 - AI profile "macedon" (parent: aggressive). "A rising kingdom with a warrior nobility." Rival ACH 1. Wants THS 2, awakening in -490.
 - Army: 2 infantry divisions. Fleet: 2 destroyers, 1 light cruiser, 1 transport (anachronistic).
 - Allied with THS (design choice). The AI profile of ACH lists MAC as a target (want 2, from -498).
+- The MAC soldier meshes still use the existing `gear_*_mac.glb` asset family; this is a visual placeholder, not a culture assignment.
+- Flag: `gfx/flags/MAC.png`, a red `#fb3100` field with a centered gold `#ffd21a` sixteen-rayed Vergina Sun based on the user's red/gold reference. The [Vergina Sun](https://en.wikipedia.org/wiki/Vergina_Sun) page records the sixteen-ray motif and its association with Macedonian royal archaeology; the asset is a scenario emblem, not a claim that the symbol was a modern national flag in 500 BCE.
+- Named characters: `mac_amyntas_i` is the starting ruler, `mac_alexander_i` is the starting heir, and `mac_gygaea` is a named daughter of Amyntas. The country definition explicitly uses `primogeniture` and an Argead name pool for future generated characters.
 
-### Rulers (HIST)
+### Ruler and succession (GAME / HIST)
 
-Amyntas I (r. c. 547 to 498) is king and dies about 498. His son **Alexander I "Philhellene"** (r. c. 498 to 454) follows. The dynasty is the Argeads, who claim descent from Argos and Heracles, with the old capital at Aegae (Vergina). Amyntas gave "earth and water" to Persia around 512 (after Megabazus's expedition); Alexander I keeps Macedon a Persian vassal and later helps and spies on both sides in the Greek wars.
+**GAME:** The 500 BCE start uses Amyntas I as ruler and Alexander I as heir, linked by `father = mac_amyntas_i`; Gygaea is also linked as Amyntas's daughter. The law is `primogeniture`, so the explicit heir and the historical father-child relationship agree with the intended succession path. The character ages are scenario approximations, not asserted birth dates.
+
+**HIST:** Amyntas I is the appropriate ruler for the 500 BCE start: sources place his reign roughly in the late sixth century BCE, ending around 498/497 BCE. Alexander I succeeds him and rules roughly to 454 BCE. Amyntas's attested children include Alexander and Gygaea; their mother's name is not securely established here. The Argead dynasty and Aegae/Vergina are retained as the royal-house context. Use [Amyntas I of Macedon](https://en.wikipedia.org/wiki/Amyntas_I_of_Macedon), [Alexander I of Macedon](https://en.wikipedia.org/wiki/Alexander_I_of_Macedon), and [Herodotus, Book 5](https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0126%3Abook%3D5) for the ruler sequence and Persian-alignment evidence; exact early dates remain approximate.
+
+The requested [Portal: North Macedonia](https://en.wikipedia.org/wiki/Portal:North_Macedonia) is useful for modern geographic and cultural-reference navigation, but it is not used to project modern identity categories backward into the 500 BCE character data. Ancient ruler chronology and relationships are kept separate from that modern portal context.
 
 ### Internal politics and factions (HIST)
 
@@ -344,13 +351,15 @@ Amyntas I (r. c. 547 to 498) is king and dies about 498. His son **Alexander I "
 - **Greek cities on the coast** and Illyrian, Thracian and Paeonian neighbors press the borders.
 - Succession by force or intrigue is common (HIST). There is no citizen assembly in the Athenian sense; the army-in-assembly acclaims kings.
 
-### Culture and traditions (HIST)
+### Culture and traditions (HIST / OPEN)
 
-Court Greek and Macedonian dialect; the Argead claim to Greekness, backed by the Olympic Games (Alexander I was admitted to compete). Hunting, heavy drinking at banquets, horse breeding. A young Macedonian noble must kill a wild boar without a net before he may recline at the banquet (a known custom, attested slightly later). Royal burial in tumulus tombs.
+Macedon's court, royal house and warrior aristocracy formed a regional political culture with its own institutions, elite customs and traditions: hunting, horse breeding, banquets, royal burial in tumulus tombs and the public authority of the king. A young Macedonian noble's boar-hunt initiation is attested in later evidence and should remain **OPEN** for exact dating. Ancient source terminology overlaps with the wider Aegean world, but that overlap is not a conclusive identity label.
 
-### Religion and ritual (HIST)
+**OPEN/HIST — language and identity.** The status and classification of Macedonian speech, the extent of contact with neighboring dialects, and the meaning of Argead descent claims are disputed. The game therefore uses `ancient_macedonian` as a scenario identity layer without presenting the data tag as proof of a modern ethnic or nationalist conclusion. Consult [Thucydides on Macedonian geography and rulers](https://www.perseus.tufts.edu/hopper/text?doc=urn%3Acts%3AgreekLit%3Atlg0003.tlg001.1st1K-eng1%3A2.99.6), [Herodotus, Book 8](https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0126%3Abook%3D8) and the modern overview [Macedonians and Greeks](https://onlinelibrary.wiley.com/doi/abs/10.1002/9781444327519.ch5); these sources should be read as evidence with competing interpretations, not as a single settled verdict.
 
-Greek gods, especially Zeus, Heracles (the royal ancestor) and Dionysus (with ecstatic rites for women); older mountain cults; Muses at Dion. The king acts as chief priest, leading sacrifices for the army.
+### Religion and ritual (HIST / OPEN)
+
+The Macedonian religious layer includes Zeus, Heracles as a royal ancestor, Dionysus and the Muses at Dion, alongside older mountain cults and royal/army sacrifice. Shared divine names and regional ritual forms show contact; they do not by themselves decide whether Macedonian religious practice should be classified as part of a wider tradition. The `macedonian_religion` identifier records this scenario distinction while leaving the historical classification **OPEN**. For institutional context, see the [Institutions of the Macedonian Kingdom](https://dev.eie.gr/en/institutes/ihr/research/sections/sgra/research/clusters/politics-institutions-and-power/political-structures-in-the-ancient-greco-roman-world/institutions-of-the-macedonian-kingdom/).
 
 ### Doctrine of war (HIST)
 
@@ -362,8 +371,20 @@ Cavalry: helmet, cloak (chlamys), the broad-brimmed hat (kausia), spear and swor
 
 ### OPEN
 
-- In 500 BCE Macedon is a Persian vassal (HIST), but the game does NOT list it as a subject of ACH; it is allied with THS.
-- Culture is "greek", the same as the Greek city-states; there is no separate Macedonian culture in `00_cultures.txt`.
+- **HIST/OPEN:** Some ancient sources place Macedon within Persian influence or tributary relations around this period. The game does NOT list MAC as a subject of ACH; it is allied with THS.
+- **GAME:** Macedon is represented separately from the Greek city-states with `ancient_macedonian` culture and `macedonian_religion`. **OPEN/HIST:** the language and identity evidence remains contested; the scenario label is not a nationalist conclusion.
+
+### Macedonian historical arc beyond the 500 BCE start (HIST / OPEN)
+
+This scenario begins before Macedon's later imperial phase. The following milestones are background for future events and characters, not current start-state data:
+
+- **Aegae and Pella:** Aegae remained the royal ancestral centre while Pella developed into the major administrative and court city. Archaeology records Pella as a Macedonian capital with a palace complex, civic planning and regional economic connections; the [Pella archaeological overview](https://culturalegnatia.culture.gov.gr/en/route-stops/pella/) is a useful starting reference.
+- **Philip II (359–336 BCE):** Philip consolidated the kingdom, brought the upper regions into a stronger royal framework, reorganized the army and expanded Macedonian diplomacy. His reforms created the conditions for the later imperial campaigns; the exact balance between older institutions and royal centralization remains **OPEN**.
+- **Alexander III (336–323 BCE):** Alexander inherited Philip's kingdom and conquered the Achaemenid imperial core before his death in Babylon. This was an expansion of a Macedonian monarchy and army into a wider empire; it should not be used to collapse every subject population into a single culture.
+- **Successor and Antigonid rule:** After the successor wars, Antigonid kings restored a Macedonian centre of power in the Aegean. Their kingdom remained a distinct monarchy with its own court, army and diplomacy while competing with neighboring powers.
+- **Roman conquest and reorganization:** Macedon was defeated at Pydna in 168 BCE, its monarchy was dismantled, and the territory was reorganized under Roman control in stages. The timing and administrative details belong to the later-history layer, not the 500 BCE starting setup; see the study of [Macedonia after Pydna](https://revistas.usal.es/uno/index.php/0213-2052/en/article/view/32209).
+
+These later periods are represented as **Macedonian history** in the scenario's narrative layer. The culture and religion identifiers are deliberately game-layer distinctions: they preserve Macedon's own political-cultural continuity without claiming that every question about language, cult classification, ancestry or modern identity has one uncontested answer.
 
 ---
 

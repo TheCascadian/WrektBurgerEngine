@@ -1153,10 +1153,10 @@ greek_mainland_and_aegean_m125_1 = {
 	pop = { culture = greek religion = hellenic_religion type = slaves size = 24951 }
 }
 macedon_and_epirus_1 = {
-	pop = { culture = greek religion = hellenic_religion type = farmers size = 161549 }
-	pop = { culture = greek religion = hellenic_religion type = nobles size = 7179 }
-	pop = { culture = greek religion = hellenic_religion type = clergy size = 3589 }
-	pop = { culture = greek religion = hellenic_religion type = artisans size = 7179 }
+	pop = { culture = ancient_macedonian religion = macedonian_religion type = farmers size = 161549 }
+	pop = { culture = ancient_macedonian religion = macedonian_religion type = nobles size = 7179 }
+	pop = { culture = ancient_macedonian religion = macedonian_religion type = clergy size = 3589 }
+	pop = { culture = ancient_macedonian religion = macedonian_religion type = artisans size = 7179 }
 }
 black_sea_greek_coast_1 = {
 	pop = { culture = pontic_greek religion = hellenic_religion type = farmers size = 7037 }
