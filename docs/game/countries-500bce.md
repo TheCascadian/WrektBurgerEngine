@@ -1,6 +1,6 @@
 # The authored countries of the 500 BCE start
 
-This file covers the authored countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the 11 Greek city-states that replaced GRK) listed in `projects/World500BCE/game/common/countries/countries.txt`. Dynamic and generated countries (rebels, released nations, civil-war splits) are not covered.
+This file covers all 58 countries that exist on 1.1.500 BCE in `projects/World500BCE/game/common/countries/countries.txt`: the 20 authored countries (ACH, MAC, CAR, NUB, SAB, OLM, CHV, IND, ZHO and the 11 Greek city-states that replaced GRK) and the 38 added countries (section "Sections for the added countries", near the end). Dynamic and generated countries (rebels, released nations, civil-war splits) are not covered.
 
 Tags, names and colors are placeholders, as the countries file says: one country stands for each large power or people.
 
@@ -20,16 +20,16 @@ The game files hold no named rulers, no named factions, no rituals and no war do
 
 | Tag | Country | Culture | Religion | Capital location | States | Population | Manpower (state sum) | Start armies | Gear models |
 |---|---|---|---|---|---|---|---|---|---|
-| ACH | Achaemenid Empire | persian | mazdayasna | land_07110 (Mesopotamia) | 103 | 25,269,541 | 1,265 | 24 infantry divisions | Own set (`gear_*_ach.glb`) |
-| ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 10 (before the split) | 1,071,654 | 54 | 12 divisions in all | Own set (`gear_*_<tag>.glb`) |
+| ACH | Achaemenid Empire | persian | mazdayasna | land_17558 | 65 | 16,371,758 | 820 | 10 infantry + 6 heavy infantry divisions | Own set (`gear_*_ach.glb`) |
+| ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 1 to 2 each (see the Greek table) | 1,071,654 | 54 | 12 divisions in all | Own set (`gear_*_<tag>.glb`) |
 | MAC | Macedon | greek | hellenic_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Own set (`gear_*_mac.glb`) |
 | CAR | Carthage | punic | canaanite_religion | land_09105 (Carthage and Tunisia) | 6 | 1,039,904 | 52 | 2 | Generic soldier |
 | NUB | Kush | kushite | kushite_religion | land_08279 (Nubia and Napata) | 3 | 633,812 | 32 | 2 | Generic soldier |
 | SAB | South Arabia | south_arabian | south_arabian_polytheism | land_09216 (South Arabia) | 6 | 1,583,519 | 80 | 2 | Generic soldier |
-| OLM | Olmec | maya | mesoamerican_religion | land_15261 (Olmec Gulf Coast) | 9 | 2,217,462 | 112 | 3 | Own set (`gear_*_olm.glb`) |
-| CHV | Chavin | chavin | andean_religion | land_11805 (Chavin Peru) | 5 | 1,361,269 | 68 | 2 | Generic soldier |
-| IND | Magadha and Ganges | indo_aryan | vedic_brahmanism | land_03808 (Magadha) | 66 | 17,570,032 | 879 | 22 | Generic soldier |
-| ZHO | Zhou | huaxia | zhou_ancestor_cult | land_01707 (Zhou states, Yellow River) | 146 | 36,723,283 | 1,842 | 24 | Generic soldier |
+| OLM | Olmec | olmec | mesoamerican_religion | land_15261 (Olmec Gulf Coast) | 3 | 699,971 | 36 | 1 | Own set (`gear_*_olm.glb`) |
+| CHV | Chavin | chavin | andean_religion | land_11805 (Chavin Peru) | 4 | 1,191,368 | 60 | 2 | Generic soldier |
+| IND | Magadha and Ganges | indo_aryan | vedic_brahmanism | land_03808 (Magadha) | 59 | 15,962,469 | 799 | 20 | Generic soldier |
+| ZHO | Zhou | huaxia | zhou_ancestor_cult | land_05578 (Zhou states, Yellow River) | 36 | 8,077,886 | 403 | 5 | Generic soldier |
 
 Shared start values: every country begins with 100 gold and 10,000 manpower. The default (player) country is ACH. The scenario uses these features: population, religion, social_classes, cores_claims, military, diplomacy, characters, economy, politics, ai, combat_imperator, laws, civil_wars, independence, ai_profiles, navy.
 
@@ -42,9 +42,9 @@ Population and manpower figures were computed from `map/states/00_states.txt` (o
 - SPA and COR are allied. MAC and THS are allied. (GRK no longer exists.)
 - CHV and OLM are allied.
 
-### The four ideologies, read as 500 BCE factions (GAME + interpretation)
+### The ideologies, read as 500 BCE factions (GAME + interpretation)
 
-The politics file says: democratic = citizen assemblies and republics; neutrality = kings and priests; fascist = warrior-nationalist factions; communist = commoner and slave levelers. Every country has a popularity for all four, so each always has a "shut-out" movement that can grow into unrest, coups or civil war. The ideology modifiers are GAME: democratic gives +5 stability target and opinion; neutrality gives +5 stability target; fascist and communist give +3 political power gain and extra manpower (+15% and +10%) and are marked extremist. The faction names below are HIST labels for what each bloc plausibly stands for.
+Six ideologies exist: the four below plus **oligarchic** (councils of elders; ruling in SPA, CAR, ROM) and **theocratic** (priest-kings; ruling in EGY, BAB, JDH). The politics file says: democratic = citizen assemblies and republics; neutrality = kings and priests; fascist = warrior-nationalist factions; communist = commoner and slave levelers. Every country has a popularity for all four, so each always has a "shut-out" movement that can grow into unrest, coups or civil war. The ideology modifiers are GAME: democratic gives +5 stability target and opinion; neutrality gives +5 stability target; fascist and communist give +3 political power gain and extra manpower (+15% and +10%) and are marked extremist. The faction names below are HIST labels for what each bloc plausibly stands for.
 
 Laws available (GAME): conscription (volunteer_only, limited, extensive, service_by_requirement), economy, press, political_parties (multi_party, restricted_parties, single_party) and culture policy (equal_rights, tolerance, discrimination, forced_assimilation). Every country except ATH, ARG, NAX and CAR starts with `restricted_parties`, which bans the communist and fascist parties from seats and government.
 
@@ -66,13 +66,13 @@ Unit types are infantry, artillery and cavalry; division templates are infantry_
 
 ### In the game files (GAME)
 
-- Color 120/60/150. Capital land_07110. Culture persian, religion mazdayasna.
-- 103 states, 25.3 million people. Culture mix: Persian 4.78M, Babylonian 3.89M, Indo-Aryan 3.82M, Anatolian 3.27M (more cultures further down). Religion mix: mazdayasna 7.8M, Mesopotamian polytheism 3.9M, Vedic Brahmanism 3.8M, others.
-- Classes: farmers 18.8M, slaves 3.0M, artisans 2.0M, nobles 0.77M, clergy 0.75M.
+- Color 120/60/150. Capital land_17558. Culture persian, religion mazdayasna.
+- 65 states, 16.4 million people (after Egypt, Babylon, Gandhara, Judah, Ionia and Thrace became ACH tributaries). Culture mix: Persian 4.78M, Anatolian 3.22M, Bactrian and Sogdian 2.35M, Indo-Aryan 2.24M. Religion mix: mazdayasna 7.8M, Anatolian polytheism 3.2M, Vedic Brahmanism 2.2M.
+- Classes: current figures are in the section's source files; the older class numbers (farmers 18.8M and so on) were for 103 states.
 - Politics: ruling party neutrality. Popularity neutrality 45, fascist 30, democratic 15, communist 10. Law: restricted_parties.
 - AI profile "persia" (parent: expansionist). Description: "A vast empire that wants Greece, Egypt and the steppe." Rivals ATH 2, SPA 1, MAC 1. Wants ATH 2.5, NAX 2, MAC 2, SPA 1.5, THB 1, IND 1.5, NUB 1.5. Timing: NAX -500, ATH -499, MAC -498, SPA -497.
-- Army: "1st Army", 24 infantry divisions at the capital. Fleet "Home Fleet" at land_09609.
-- Overlord of SAB (tributary) and NUB (client state).
+- Army: "1st Army", 10 infantry and 6 heavy infantry divisions at the capital. Fleet "Home Fleet" at land_09609.
+- Overlord of SAB and NUB (see the relations list) and of the added tributaries THR, ION, EGY, BAB, GAN and JDH.
 - The only country with its own soldier set. Uniform: saffron tunic (0.85/0.60/0.13), brown leather, soft cloth cap, soft boots, no firearm. Pieces: tunic, boots, headgear, wicker shield (`gear_shield_ach`), spear (`gear_spear_ach`). Soldiers carry the spear upright with the shield on a raised left forearm and have two spear attacks (thrust and deep lunge), picked at random in battle.
 
 ### Rulers (HIST)
@@ -137,7 +137,7 @@ The old single country GRK ("Greek Poleis") no longer exists. Its 10 states were
 | Tag | Country | Capital | States | Population | Manpower | Culture | Ruling party (popularity) | Parties law | Color |
 |---|---|---|---|---|---|---|---|---|---|
 | ATH | Athens | land_01113 | Attica | 98,105 | 4 | greek | democratic (dem 40, neu 22, fas 20, com 18) | multi_party | 70/120/200 |
-| SPA | Sparta | land_05800 | Laconia and Messenia | 116,500 | 5 | greek | neutrality (neu 44, fas 40, com 10, dem 6) | restricted | 170/40/50 |
+| SPA | Sparta | land_05800 | Laconia and Messenia | 116,500 | 5 | greek | oligarchic (olig 46, fas 30, neu 12, com 12) | restricted | 170/40/50 |
 | COR | Corinth | land_05412 | Corinthia, Ionian Islands | 56,998 | 4 | greek | neutrality (neu 44, dem 26, com 16, fas 14) | restricted | 90/170/225 |
 | ARG | Argos | land_08799 | Argolis | 45,986 | 3 | greek | democratic (dem 36, neu 28, fas 22, com 14) | multi_party | 55/85/160 |
 | THB | Thebes | land_07184 | Boeotia and Phocis | 102,426 | 5 | greek | neutrality (neu 46, fas 28, dem 14, com 12) | restricted | 150/110/200 |
@@ -373,7 +373,7 @@ Cavalry: helmet, cloak (chlamys), the broad-brimmed hat (kausia), spear and swor
 
 - Color 150/40/90. Capital land_09105 ("Carthage and Tunisia"). Culture punic, religion canaanite_religion.
 - 6 states, 1.04M people, all Punic and Canaanite. Classes: farmers 442k, slaves 298k, artisans 218k, nobles 50k, clergy 31k.
-- Politics: ruling party **democratic**. Popularity democratic 36, neutrality 30, communist 20, fascist 14. Law: **multi_party**.
+- Politics: ruling party **oligarchic**. Popularity oligarchic 38, democratic 24, neutrality 20, communist 18. Law: **multi_party**.
 - AI profile "carthage" (parent: imperial). "A trading power of ships." Rivals SYR 1.5, CRO 0.5. Imperial archetype favors colonies and navy (colonial 1.6, navy 1.5).
 - Army: 2 infantry divisions. Fleet of 4 destroyers, 1 light cruiser, 1 battleship, 2 transports (anachronistic).
 - Generic soldier.
@@ -509,12 +509,11 @@ Wrapped kilts or loincloths, daggers on belts, bows and spears, small shields. O
 
 ### In the game files (GAME)
 
-- Color 80/170/160. Capital land_15261 ("Olmec Gulf Coast"). Culture **maya**, religion mesoamerican_religion.
-- 9 states, 2,217,462 people. Cultures: Maya 1.28M, Maize Farming Peoples 383k, Olmec 317k, Zapotec 234k. Religion all mesoamerican_religion.
-- Classes: farmers 1.91M, artisans 111k, nobles 83k, slaves 66k, clergy 50k.
+- Color 80/170/160. Capital land_15261 ("Olmec Gulf Coast"). Culture **olmec**, religion mesoamerican_religion.
+- 3 states, 699,971 people. Cultures: maize farmers 383k, Olmec 317k. Religion all mesoamerican_religion. (The Maya, Zapotec states went to MAY and ZAP.)
 - Politics: ruling party neutrality. Popularity neutrality 38, **fascist 34**, communist 16, democratic 12. Law: restricted_parties.
 - No AI profile of its own.
-- Army: 3 infantry divisions. Fleet at land_12632.
+- Army: 1 infantry division. Fleet at land_12632.
 - **Allied with CHV.** Own soldier set (see Equipment).
 
 ### Rulers (HIST)
@@ -568,8 +567,7 @@ OPEN: the colors, the quilting, the shield and the obsidian blade are inferred, 
 ### In the game files (GAME)
 
 - Color 190/120/70. Capital land_11805 ("Chavin Peru 2"). Culture chavin, religion andean_religion.
-- 5 states, 1,361,269 people. Cultures: Chavin 619k, Chorrera 572k, Paracas 170k. All andean_religion.
-- Classes: farmers 1.01M, slaves 163k, artisans 109k, nobles 41k, clergy 41k.
+- 4 states, 1,191,368 people. Cultures: Chavin 619k, Chorrera 572k (Paracas went to PAR). All andean_religion.
 - Politics: ruling party neutrality. Popularity neutrality 41, **communist 27**, fascist 22, democratic 10. Law: restricted_parties.
 - No AI profile of its own (it was removed from the "china" profile in the Greek split, where it was a copy mistake).
 - Army: 2 infantry divisions. Fleet at land_12675.
@@ -613,11 +611,10 @@ Likely clubs, slings, spears and spear-throwers. Inference only.
 ### In the game files (GAME)
 
 - Color 230/140/40. Capital land_03808 ("Magadha"). Culture indo_aryan, religion vedic_brahmanism.
-- 66 states, 17.57M people. Cultures: Indo-Aryan 13.05M, Magadhan 4.52M. Religions: Vedic Brahmanism 13.05M, Shramana movements 4.52M.
-- Classes: farmers 13.2M, slaves 1.94M, artisans 1.35M, nobles 541k, clergy 513k.
+- 59 states, 15.96M people. Cultures: Indo-Aryan 11.45M, Magadhan 4.52M. Religions: Vedic Brahmanism 11.45M, Shramana movements 4.52M.
 - Politics: ruling party neutrality. Popularity neutrality 40, democratic 24, fascist 20, communist 16. Law: restricted_parties.
 - No AI profile of its own; ACH wants IND (1.5).
-- Army: 22 infantry divisions. Fleet at land_03726.
+- Army: 20 infantry divisions. Fleet at land_03726.
 - Generic soldier.
 
 ### Rulers (HIST)
@@ -658,12 +655,11 @@ Cotton clothing (dhoti and turban), long composite and bamboo bows, spears, swor
 
 ### In the game files (GAME)
 
-- Color 200/50/50. Capital land_01707 (Zhou states, Yellow River). Culture huaxia, religion zhou_ancestor_cult.
-- **146 states**, 36.7M people (the largest country). Cultures: Huaxia 28.5M, Chu 4.76M, Wu and Yue 3.46M. Religions: Zhou ancestor cult, Chu shamanism, Baiyue animism.
-- Classes: farmers 27.2M, slaves 4.4M, artisans 2.9M, nobles 1.10M, clergy 1.10M.
+- Color 200/50/50. Capital land_05578 (Zhou states, Yellow River). Culture huaxia, religion zhou_ancestor_cult.
+- 36 states, 8.08M people, all Huaxia. (Qi, Jin, Qin, Chu, Wu, Yue and Shu now have their own countries; see the added countries.)
 - Politics: ruling party neutrality. Popularity neutrality 43, fascist 27, communist 18, democratic 12. Law: restricted_parties.
 - AI profile "china" (parent: aggressive), no rivals or wants.
-- Army: 24 infantry divisions. Fleet at land_02615.
+- Army: 5 infantry divisions. Fleet at land_02615.
 - Generic soldier.
 
 ### Rulers (HIST)
@@ -698,7 +694,7 @@ Bronze weapons: dagger-axe (ge), halberd (ji), spear, jian sword, composite bow,
 
 ### OPEN
 
-- Zhou is a single game country with 146 states, standing for many warring states, while the AI profile gives it a rival within its own profile.
+- ZHO is the residual Zhou core (36 states); the great regional states are separate countries (QIQ, JIN, QIN, CHU, WUU, YUE, SHU).
 - Wu and Yue are separate cultures inside the Zhou country.
 
 ---
@@ -822,6 +818,1311 @@ Built by assigning owner and cores on existing states, so each keeps the culture
 | TML | Tamil south | 1,245,693 | dravidian | dravidian_folk | - |
 | IRR | Irrawaddy and mainland Southeast Asia | 4,490,485 | austroasiatic | austroasiatic_animism | - |
 
+
+
+## Sections for the added countries
+
+One section per added country, same layout as the sections above. GAME lines were computed from the scenario files (`countries.txt`, `00_states.txt`, `00_pops.txt`, `history/politics/countries.txt`, starting armies and fleets, `10_countries.txt` AI profiles) on the current branch. HIST lines are written from memory, not looked up; check before quoting. Rulers and facts for peoples with no written record are marked OPEN rather than guessed.
+
+---
+
+## QIQ: Qi
+
+### In the game files (GAME)
+
+- Color 148/221/64. Capital land_03741. Culture huaxia, religion zhou_ancestor_cult.
+- 26 states, 6,151,928 people, manpower (state sum) 310. Cultures: huaxia 6,151,928. Religions: zhou_ancestor_cult 6,151,928.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 40, fascist 26, communist 23, democratic 11. Law: restricted_parties.
+- Army: 5 infantry divisions. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with JIN, QIN, CHU, WUU, YUE, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Duke Jing of Qi (Jiang house, r. 547 to 490). The minister Yan Ying (died c. 500) is the famous adviser of his court. The Tian (Chen) clan is rising by buying popular support with generous grain measures; it takes the state in 481. Capital Linzi. Confucius visited Qi c. 517 and found no post.
+
+### Internal politics and factions (HIST)
+
+Ducal house against the Tian clan and other great ministerial families (Bao, Luan, Gao); the same ducal-versus-minister pattern as Jin and Lu. The 'communist' 23% fits the Tian clan's appeal to commoners. Qi is the old hegemon (Duke Huan, d. 643) and still the richest eastern state.
+
+### Culture and religion (HIST)
+
+Salt and iron from the coast, fish, silk, a large walled capital, ancestral rites of the Jiang house, the Taigong (Jiang Ziya) founding legend. Ritual and military texts later attributed to Qi (Sima Rangju) are of uncertain date.
+
+### Doctrine of war (HIST)
+
+Chariot-and-infantry armies; Qi holds the Shandong coast. Sunzi (born in Qi, serving Wu) comes from the same milieu.
+
+### OPEN
+
+- The 5 divisions at Linzi are a design number. Qi is a separate country from ZHO here, while the older doc text still calls ZHO 'the Zhou states'.
+
+---
+
+## JIN: Jin
+
+### In the game files (GAME)
+
+- Color 99/57/214. Capital land_01407. Culture huaxia, religion zhou_ancestor_cult.
+- 35 states, 9,736,975 people, manpower (state sum) 488. Cultures: huaxia 9,736,975. Religions: zhou_ancestor_cult 9,736,975.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 18, communist 35, democratic 9. Law: restricted_parties.
+- Army: 8 infantry divisions. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, QIN, CHU, WUU, YUE, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Duke Ding (r. 511 to 475). Real power: the six ministerial families (Zhi, Zhao, Han, Wei, Fan, Zhonghang). Zhao Jianzi (Zhao Yang) is the rising head of Zhao. Capital Xintian (Jiang earlier). In 513 Jin cast a penal code on iron tripods, which Confucius criticized.
+
+### Internal politics and factions (HIST)
+
+The duke is a figurehead. The families fight each other: the Fan and Zhonghang revolt against Zhao in 497 (after the start). The partition into Han, Zhao and Wei is formal only in 453 or 403 (disputed). The game gives Jin the highest 'communist' value among the new states (35%), standing for the commoner and slave pressure under heavy levies, and a ruling neutrality of only 38%.
+
+### Culture and religion (HIST)
+
+Jin is the former hegemon (Duke Wen, d. 628). Mixed Huaxia and Rong and Di border peoples; iron use is early; written law codes; bronze work from Houma foundries.
+
+### Doctrine of war (HIST)
+
+The largest army of the Zhou states: mass infantry plus chariots, formed into armies by the great families. Rival to Chu in the south and Qin in the west.
+
+### OPEN
+
+- The 8 divisions are a design number. The ruling-family split is not modeled; Jin is one country with one government.
+
+---
+
+## QIN: Qin
+
+### In the game files (GAME)
+
+- Color 196/221/104. Capital land_01707. Culture huaxia, religion zhou_ancestor_cult.
+- 16 states, 4,531,948 people, manpower (state sum) 228. Cultures: huaxia 4,531,948. Religions: zhou_ancestor_cult 4,531,948.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 36, communist 16, democratic 10. Law: restricted_parties.
+- Army: 4 infantry divisions. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, JIN, CHU, WUU, YUE, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Duke Ai (r. 536 to 501), then Duke Hui II (r. 500 to 492). Capital Yong. In 506 Qin sent troops to restore Chu after Wu took Ying, following the plea of the Chu envoy Shen Baoxu (tradition says he wept at the Qin court for seven days).
+
+### Internal politics and factions (HIST)
+
+Dukes against noble lineages (the Three Good Men burial of 621 is the old tradition). The 'fascist' 36% (the second highest among the new states) fits Qin as the warrior frontier state. Western Rong tribes are subjects and enemies.
+
+### Culture and religion (HIST)
+
+A border state of horse breeders and farmers, often treated as semi-barbarian by the central states. Human sacrifice at royal burials (practiced into the 5th century). The Legalist reforms of Shang Yang are a century and a half away.
+
+### Doctrine of war (HIST)
+
+Chariots and infantry, cavalry from the western steppe contact. Strong in the Wei valley with defensive mountain passes (Hangu).
+
+### OPEN
+
+- Capital land_01707 (the old ZHO capital) now belongs to Qin. The 4 divisions are a design number.
+
+---
+
+## CHU: Chu
+
+### In the game files (GAME)
+
+- Color 226/111/180. Capital land_09419. Culture chu, religion chu_shamanism.
+- 19 states, 4,761,183 people, manpower (state sum) 240. Cultures: chu 4,761,183. Religions: chu_shamanism 4,761,183.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 46, fascist 27, communist 17, democratic 10. Law: restricted_parties.
+- Army: 4 infantry divisions. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, JIN, QIN, WUU, YUE, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+King Zhao (r. 515 to 489). In 506 Wu took the capital Ying; Chu was restored with Qin help and moved the capital to Ruo (c. 504). Chu has claimed the royal title since c. 704. Leading men: Zixi, Ziqi, Shen Baoxu.
+
+### Internal politics and factions (HIST)
+
+Kings against the great lineages of the royal kin; defeat by Wu cost prestige. Chu's southern subjects (Man, Yue, Pu) and the Huai peoples are semi-independent. The 'communist' 17% is moderate.
+
+### Culture and religion (HIST)
+
+A distinct southern culture, 'chu' in the game files: shamanistic rites (songs later collected as the Chu Ci), lacquer, bronze, silk, bamboo texts, tomb-guarding creatures. Rivers and marshes shape life.
+
+### Doctrine of war (HIST)
+
+Large infantry armies, chariots, river fleets; the crossbow is already known in the region. Chu is the rival of Jin for the 'hegemon' role.
+
+### OPEN
+
+- Capital land_09419; the historical capital moves in 504 (Ying to Ruo), not modeled.
+
+---
+
+## WUU: Wu
+
+### In the game files (GAME)
+
+- Color 41/196/54. Capital land_03924. Culture wu_yue, religion baiyue_animism.
+- 7 states, 1,751,670 people, manpower (state sum) 87. Cultures: wu_yue 1,751,670. Religions: baiyue_animism 1,751,670.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 22, communist 24, democratic 16. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, JIN, QIN, CHU, YUE, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+King Helü (r. 514 to 496). The general Sunzi (tradition) and the exile Wu Zixu (from Chu) serve him. In 506 Wu defeated Chu and entered Ying. Helü dies in 496 fighting Yue (Zuili); Fuchai follows. Capital Gusu (near Suzhou).
+
+### Internal politics and factions (HIST)
+
+A young king with foreign advisers; the Wu nobility against Wu Zixu's party; a vengeful 'communist' 24% (labor on canals and walls). The central states treat Wu as semi-barbarian.
+
+### Culture and religion (HIST)
+
+Rice, boats, canals, famous bronze swords (Gan Jiang and Mo Ye legends), Yangtze delta culture ('wu_yue' in the game). Tattooed bodies and cut hair are reported of the Wu and Yue peoples.
+
+### Doctrine of war (HIST)
+
+Marine and river warfare; fast raids by water; fast marches (the 506 campaign); the Art of War tradition (Sunzi) is linked to Wu, though the text's date is disputed.
+
+### OPEN
+
+- Only 1 division at the start; Wu was a major power in 506. OPEN whether this is too low.
+
+---
+
+## YUE: Yue
+
+### In the game files (GAME)
+
+- Color 32/142/36. Capital land_04427. Culture wu_yue, religion baiyue_animism.
+- 7 states, 1,711,693 people, manpower (state sum) 86. Cultures: wu_yue 1,711,693. Religions: baiyue_animism 1,711,693.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 43, fascist 29, communist 13, democratic 15. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, JIN, QIN, CHU, WUU, SHU.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Yunchang (r. 510 to 497), then Goujian from 496. Capital Kuaiji (Shaoxing area). In 496 Yue defeats Wu at Zuili, and Helü dies. Goujian later loses to Fuchai (494) and returns to conquer Wu (473).
+
+### Internal politics and factions (HIST)
+
+Royal house with a weak central grip over tribal lords; the Yue are treated as barbarians by the central states. Rivalry with Wu across the Yangtze delta and Taihu.
+
+### Culture and religion (HIST)
+
+Famous swords (the Yue sword tradition, Ou Ye), boats, rice, tattoos; the 'baiyue_animism' religion in the game stands for the spirit cults of the many Yue peoples. Court at Kuaiji, which also holds the Yu the Great legend.
+
+### Doctrine of war (HIST)
+
+Naval and amphibious; suicidal-charge tactics are recorded at Zuili (convicts who cut their throats before the Wu line).
+
+### OPEN
+
+- 1 division only. The Goujian era (revenge on Wu) falls just after the start.
+
+---
+
+## SHU: Shu and Ba
+
+### In the game files (GAME)
+
+- Color 186/65/168. Capital land_05853. Culture shu_ba, religion chu_shamanism.
+- 7 states, 1,814,122 people, manpower (state sum) 92. Cultures: shu_ba 1,814,122. Religions: chu_shamanism 1,814,122.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 45, fascist 30, communist 12, democratic 13. Law: restricted_parties.
+- Army: 2 infantry divisions. Fleet: none.
+- AI profile "warring_states" (expansionist archetype), shared with QIQ, JIN, QIN, CHU, WUU, YUE.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Rulers of Shu are known only from late legend: the Kaiming dynasty (traditional start c. 666) followed the Cancong and Yufu. Sanxingdui (bronze masks, c. 1200 to 1000) is an earlier phase; the Shu capital at Chengdu area (Jinsha) rises later. The Ba people on the Yangtze (Chongqing area) have their own chiefs. Rulers in 500 are OPEN.
+
+### Internal politics and factions (HIST)
+
+Shu and Ba are merged into one country in the game (culture 'shu_ba'). Shu is a farming kingdom of the Sichuan basin; Ba is a river-and-salt people at war with Chu. Little internal political history can be written.
+
+### Culture and religion (HIST)
+
+Bronze casting, sacred trees and masks (earlier phase), rice, salt wells at Ba, a distinct script (Ba-Shu symbols, undeciphered), the Sichuan basin isolated from central states by mountains. Religion 'chu_shamanism' is a placeholder.
+
+### Doctrine of war (HIST)
+
+Mountain defense; Ba soldiers are described later as fierce infantry and archers. Almost no firm detail for 500.
+
+### OPEN
+
+- Almost everything is OPEN for Shu and Ba before the Qin conquest in 316. The religion is borrowed from Chu.
+
+---
+
+## LIB: Libyan and Berber Tribes
+
+### In the game files (GAME)
+
+- Color 173/90/122. Capital land_02972. Culture berber, religion berber_religion.
+- 8 states, 1,919,622 people, manpower (state sum) 94. Cultures: berber 1,672,096, libyan 247,526. Religions: berber_religion 1,919,622.
+- Class mix: farmers 78%, herders 12%, nobles 4%, artisans 3%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 36, fascist 20, communist 33, democratic 11. Law: restricted_parties.
+- Army: 2 infantry divisions. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, IBE, CIB, ETR, ROM, DEC.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers. Herodotus (book 4) lists many tribes along the coast: Adyrmachidae, Nasamones, Maces, Auschisae, Garamantes (own country here) and others. Chiefs of the tribes are unnamed. The Carthaginians held the coast west of the Greater Syrtis from Carthage and Leptis. Libyans served as soldiers in Egypt and later in Carthaginian armies.
+
+### Internal politics and factions (HIST)
+
+Tribal chiefs and assemblies; herders against farmers; the large 'communist' 33% stands for the poor herders and clients. No state exists.
+
+### Culture and religion (HIST)
+
+Languages ancestral to Berber ('berber' and 'libyan' cultures in the files); herding of cattle, goats and horses; chariots (attested for Libyans in Herodotus); tattoos; cattle-herder rock art of the Sahara earlier.
+
+### Doctrine of war (HIST)
+
+Light cavalry, javelins and light shields; raiding; Libyan mercenary service abroad.
+
+### OPEN
+
+- Capital land_02972 is a placeholder. Mix of berber and libyan cultures is a design choice.
+
+---
+
+## BAN: Bantu Homeland Peoples
+
+### In the game files (GAME)
+
+- Color 150/163/39. Capital land_00623. Culture bantu, religion bantu_traditional.
+- 3 states, 465,276 people, manpower (state sum) 24. Cultures: bantu 465,276. Religions: bantu_traditional 465,276.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 45, fascist 24, communist 19, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No known rulers. Bantu-speaking farmers in the Cameroon and Nigeria borderland begin their expansion c. 1000 to 500 (dates and routes debated). Iron smelting in West-Central Africa around this time is debated.
+
+### Internal politics and factions (HIST)
+
+Village heads and lineage elders; chiefdom-scale at most. The 'communist' 19% is a placeholder value from the generic pattern. Nothing firm is known.
+
+### Culture and religion (HIST)
+
+Yam, oil palm and later cereal farming; pottery styles; clan religion with ancestors and nature spirits ('bantu_traditional').
+
+### Doctrine of war (HIST)
+
+Bows, spears and shields; ambush; no armies of size.
+
+### OPEN
+
+- Nearly everything is OPEN. Treat the country as a placeholder for the Bantu homeland.
+
+---
+
+## NOK: Nok
+
+### In the game files (GAME)
+
+- Color 35/141/160. Capital land_06839. Culture nok, religion west_african_traditional.
+- 2 states, 470,400 people, manpower (state sum) 24. Cultures: nok 470,400. Religions: west_african_traditional 470,400.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 45, fascist 20, communist 26, democratic 9. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No known rulers. The Nok culture of the Jos Plateau (central Nigeria), c. 1000 BCE to 300 CE, is known for terracotta sculptures and early iron smelting (dating debated, perhaps from c. 500).
+
+### Internal politics and factions (HIST)
+
+No written record; a class of ritual specialists and smiths is plausible. The values are placeholders.
+
+### Culture and religion (HIST)
+
+Terracotta heads and figures with elaborate hair, farming of millet, early iron and stone tools, probable ancestor and fertility cults ('west_african_traditional').
+
+### Doctrine of war (HIST)
+
+Nothing firm. Iron spears and arrow points are plausible.
+
+### OPEN
+
+- Everything is OPEN beyond the existence of the culture.
+
+---
+
+## THR: Thracian Tribes
+
+### In the game files (GAME)
+
+- Color 224/109/113. Capital land_02349. Culture thracian, religion thracian_religion.
+- 2 states, 475,777 people, manpower (state sum) 24. Cultures: thracian 475,777. Religions: thracian_religion 475,777.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 27, communist 20, democratic 15. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with EGY, BAB, JDH, GAN, ION.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+The Odrysian kingdom (Teres I) comes c. 480; before it, many tribal kings (Getae, Odrysae, Thyni, Bessi). Darius's Scythian campaign (c. 513) put the Aegean coast and parts of the interior under Persian command (satrap Megabazus). The game makes THR an ACH tributary.
+
+### Internal politics and factions (HIST)
+
+Tribal kings and aristocracies; the Persian officials; the Greek colonies on the coast; the 'democratic' 15% is the highest among the new tribal states and is a placeholder. Persian tribute is the main cause of resentment.
+
+### Culture and religion (HIST)
+
+Warlike tribes famed for gold and horses, tattoos (reported), the cult of Dionysus-Sabazios, Orpheus legends, rich burials with gold and silver vessels, fortified hill sites.
+
+### Doctrine of war (HIST)
+
+Peltasts (javelin men with light crescent shields, the pelte), the rhomphaia (long curved blade, later), cavalry; raiding. Thracians fight in Xerxes's army (480).
+
+### OPEN
+
+- THR is an ACH tributary: a design choice with partial historical support (Persian control of the coast c. 513 to 479).
+
+---
+
+## ION: Ionian Greek Cities
+
+### In the game files (GAME)
+
+- Color 74/219/108. Capital land_08787. Culture anatolian, religion anatolian_polytheism.
+- 3 states, 44,432 people, manpower (state sum) 3. Cultures: anatolian 44,432. Religions: anatolian_polytheism 44,432.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 47, fascist 28, communist 16, democratic 9. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with EGY, BAB, JDH, GAN, THR.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No single ruler. Each city has a local tyrant or oligarch, often installed by Persia: for example Histiaeus of Miletus (taken to Susa c. 511) and Aristagoras (his deputy), Coes of Mytilene, Strattis of Chios, Aristagoras of Cyme. The Ionian Revolt begins in 499 (after the start), and the cities are Persian tributaries (satrapy of Sardis, Artaphernes).
+
+### Internal politics and factions (HIST)
+
+Tyrants against exiles and democratic factions; the 'democratic' 9% is low because tyranny is the rule at the start. Rivalry between Miletus and other cities. Strong ties with Athens (mother city, by tradition) and Eretria.
+
+### Culture and religion (HIST)
+
+Greek culture of Asia Minor: philosophers of Miletus (Thales, Anaximander, Anaximenes) and Ephesus (Heraclitus, c. 500), Hecataeus's map, coinage, the Panionion on Mycale, the temples of Artemis and of Hera.
+
+### Doctrine of war (HIST)
+
+Hoplite militia and the Ionian navy; they serve the Great King's fleet. Battle of Lade in 494 is after the start.
+
+### OPEN
+
+- **Mismatch (OPEN)**: the game gives ION culture 'anatolian' and religion 'anatolian_polytheism', not Greek and Hellenic. Population is only 44,432 in 3 states; the real Ionian cities were much larger. Both look like placeholders from the province data.
+
+---
+
+## YAY: Yaya-Mama
+
+### In the game files (GAME)
+
+- Color 44/211/161. Capital land_09811. Culture yaya_mama, religion andean_religion.
+- 1 state, 309,270 people, manpower (state sum) 15. Cultures: yaya_mama 309,270. Religions: andean_religion 309,270.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 42, fascist 21, communist 21, democratic 16. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No known rulers. The Yaya-Mama religious tradition (c. 1500 BCE to 200 CE) covers the Titicaca basin; Chiripa (a sunken court site) is a ceremonial center.
+
+### Internal politics and factions (HIST)
+
+Nothing written. Local lineage leaders and ritual specialists are plausible.
+
+### Culture and religion (HIST)
+
+Stone stelae with carved faces, sunken courts, llama and alpaca herding, potato and quinoa farming, shared iconography with the wider southern Andes.
+
+### Doctrine of war (HIST)
+
+Nothing firm.
+
+### OPEN
+
+- Everything is OPEN beyond the existence of the culture.
+
+---
+
+## YAO: Yayoi and Jomon Japan
+
+### In the game files (GAME)
+
+- Color 160/163/83. Capital land_15870. Culture jomon, religion jomon_animism.
+- 9 states, 386,125 people, manpower (state sum) 26. Cultures: jomon 386,125. Religions: jomon_animism 386,125.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 39, fascist 23, communist 21, democratic 17. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers. Japan: Jomon foragers; wet-rice farming arrives in northern Kyushu from Korea, starting the Yayoi culture. Its start is dated c. 900 to 800 by newer radiocarbon work and c. 300 by older work; 500 is inside the debate.
+
+### Internal politics and factions (HIST)
+
+Village headmen; nothing written. The game's 'jomon' culture and 'jomon_animism' religion treat the whole archipelago as foragers, with 9 states.
+
+### Culture and religion (HIST)
+
+Cord-marked pottery, shell mounds, dogu figurines, rice paddies at Itazuke and Nabatake, bronze and iron from the mainland (later).
+
+### Doctrine of war (HIST)
+
+Bows, spears and clubs; the first signs of war injuries appear with the Yayoi.
+
+### OPEN
+
+- The label 'Yayoi and Jomon' is combined; whether 500 is early Yayoi is OPEN. Culture 'jomon' only.
+
+---
+
+## ETR: Etruscan League
+
+### In the game files (GAME)
+
+- Color 216/54/216. Capital land_08505. Culture etruscan, religion etruscan_religion.
+- 1 state, 229,342 people, manpower (state sum) 11. Cultures: etruscan 229,342. Religions: etruscan_religion 229,342.
+- Class mix: farmers 40%, slaves 30%, artisans 22%, nobles 5%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 41, fascist 25, communist 17, democratic 17. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, IBE, CIB, LIB, ROM, DEC.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Etruscan cities are ruled by lucumones (kings, later replaced by annual magistrates). The Tarquin dynasty ruled Rome until it was expelled in 509 (traditional). Lars Porsenna of Clusium then tries to restore the Tarquins (c. 508 to 504). Others: Veii, Caere, Tarquinii, Vulci, Volsinii, Perusia, Populonia.
+
+### Internal politics and factions (HIST)
+
+The League of Twelve (the Dodecapolis) meets at the shrine of Voltumna; cities rival each other; aristocratic clans against clients and slaves. The game's 30% slave share is notable. Etruscans also hold Campania (Capua) and the Po valley (Felsina, Spina).
+
+### Culture and religion (HIST)
+
+Banquets and tomb painting, bucchero pottery, divination by the liver (haruspicy) and lightning, the Etruscan alphabet, the Etruscan trade with Greece and Carthage (the Pyrgi tablets, c. 500, in Phoenician and Etruscan), gladiatorial and funeral games, women dining with men (shocking to Greeks).
+
+### Doctrine of war (HIST)
+
+Hoplite phalanx adopted from Greece, naval power (Etruscan pirates), alliance with Carthage (battle of Alalia, c. 540). The defeat at Cumae (474) is later.
+
+### OPEN
+
+- No gear set exists (the Roman set follows the Etruscan-influenced hoplite phase). Only 1 state in the game for the whole league.
+
+---
+
+## CEL: Hallstatt Celts
+
+### In the game files (GAME)
+
+- Color 137/226/115. Capital land_07102. Culture hallstatt_celt, religion celtic_polytheism.
+- 7 states, 1,746,207 people, manpower (state sum) 87. Cultures: hallstatt_celt 1,746,207. Religions: celtic_polytheism 1,746,207.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 39, fascist 26, communist 23, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with IBE, CIB, LIB, ETR, ROM, DEC.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named kings in the Hallstatt world; local chiefs ('princes') buried in rich mounds with wagons (Hochdorf c. 530, Vix c. 500 with the great Greek bronze krater, the Heuneburg hillfort on the Danube). The La Tene culture starts c. 450.
+
+### Internal politics and factions (HIST)
+
+A warrior aristocracy at hillforts over farmers and craftsmen; trade with Massalia (founded c. 600) and Etruria. The 'communist' 23% stands for the commoner levels. Druids are attested later (not at 500).
+
+### Culture and religion (HIST)
+
+Hallstatt D: iron swords with bronze hilts, salt mining at Hallein and Hallstatt, horse gear, wagon burials, feasting vessels, Celtic languages in Gaul and Central Europe. Religion in the game is 'celtic_polytheism'.
+
+### Doctrine of war (HIST)
+
+Mounted nobles and spear-armed warriors; hillfort defense; mass raids later.
+
+### OPEN
+
+- Hallstatt D centers decline around 500 (Heuneburg burned c. 480, by older dating); the shift to La Tene is not modeled.
+
+---
+
+## MAY: Maya Lowlands
+
+### In the game files (GAME)
+
+- Color 150/92/54. Capital land_13895. Culture maya, religion mesoamerican_religion.
+- 5 states, 1,283,101 people, manpower (state sum) 64. Cultures: maya 1,283,101. Religions: mesoamerican_religion 1,283,101.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 22, communist 30, democratic 10. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers yet. In the Middle Preclassic, centers such as Nakbe and Tikal-area villages grow; El Mirador is growing; the first Maya writing is not firmly dated before about 300. Kings and dynasties come later.
+
+### Internal politics and factions (HIST)
+
+Lineage leaders and priest-chiefs. The 'communist' 30% is a placeholder. Nothing is known in detail.
+
+### Culture and religion (HIST)
+
+Maize farming, ceremonial platforms and early pyramids, jade, pottery, trade with the Olmec heartland and Pacific coast ('mesoamerican_religion').
+
+### Doctrine of war (HIST)
+
+Nothing firm. Spears, darts and the atlatl are plausible.
+
+### OPEN
+
+- The country has culture 'maya' while OLM is now 'olmec'. The Maya region is a separate country with 5 states, 1.28M people.
+
+---
+
+## PAR: Paracas
+
+### In the game files (GAME)
+
+- Color 219/59/125. Capital land_13222. Culture paracas, religion andean_religion.
+- 1 state, 169,901 people, manpower (state sum) 8. Cultures: paracas 169,901. Religions: andean_religion 169,901.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 42, fascist 28, communist 16, democratic 14. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers. Paracas culture on the south coast of Peru: the Cavernas phase (c. 700 to 200) has shaft tombs with mummy bundles; the better known Necropolis textiles are later. Chavin influence declines after c. 500.
+
+### Internal politics and factions (HIST)
+
+Nothing written. A priestly elite is plausible. The game gives 12% slaves, a design value.
+
+### Culture and religion (HIST)
+
+Excellent embroidered textiles, trepanned and deformed skulls, mummy bundles, desert agriculture with canals, fishing.
+
+### Doctrine of war (HIST)
+
+Nothing firm. Clubs and slings are plausible.
+
+### OPEN
+
+- Everything beyond the existence of the culture is OPEN.
+
+---
+
+## ROM: Rome and Latium
+
+### In the game files (GAME)
+
+- Color 95/140/32. Capital land_04924. Culture italic, religion italic_religion.
+- 1 state, 84,071 people, manpower (state sum) 4. Cultures: italic 84,071. Religions: italic_religion 84,071.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party oligarchic. Popularity: oligarchic 40, democratic 26, neutrality 14, fascist 12, communist 8. Law: multi_party.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, IBE, CIB, LIB, ETR, DEC.
+- Gear: Own set (`gear_*_rom.glb`).
+
+### Rulers (HIST)
+
+The monarchy ended in 509 (traditional): Tarquinius Superbus was expelled and the first consuls (Brutus and Collatinus by tradition) took office. In 500 two consuls are chosen each year; Lars Porsenna's war (c. 508 to 504) is just over; Tarquin is allied with the Latins and fights at Lake Regillus (c. 496, after the start).
+
+### Internal politics and factions (HIST)
+
+Patricians against plebeians (the first secession of the plebs is 494, after the start); the Senate, the comitia centuriata, the consuls. The game gives Rome ruling party 'oligarchic' (40%) and a 'democratic' bloc of 26%, with law multi_party. A treaty with Carthage is reported for 509.
+
+### Culture and religion (HIST)
+
+Household gods (lares and penates), Jupiter Optimus Maximus on the Capitoline (dedicated 509), augury, the Vestal Virgins, patron and client relations (clientela), farmers as citizen soldiers.
+
+### Doctrine of war (HIST)
+
+Citizen hoplite army in a phalanx (Etruscan-Greek model); the manipular legion comes in the 4th century. Own gear set in the game (see the Greek and Roman gear section).
+
+### OPEN
+
+- Population 84,071 in one province. The Latin League is not modeled.
+
+---
+
+## SCY: Scythians
+
+### In the game files (GAME)
+
+- Color 61/206/204. Capital land_01809. Culture scythian, religion scythian_faith.
+- 2 states, 378,778 people, manpower (state sum) 19. Cultures: scythian 378,778. Religions: scythian_faith 378,778.
+- Class mix: herders 96%, nobles 3%, clergy 1%.
+- Politics: ruling party fascist. Popularity: fascist 40, neutrality 32, communist 16, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "steppe_riders" (expansionist archetype), shared with SAK, SAR, KOS.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+The Scythian king Idanthyrsus faced Darius's campaign c. 513 (Herodotus book 4); Ariapeithes and Scyles come later. Royal Scythians rule the Pontic steppe; their kings' burials (kurgans) hold gold, horses and servants.
+
+### Internal politics and factions (HIST)
+
+The kings with a warrior aristocracy, the council of the royal clans; the game's ruling party is fascist (40%) with neutrality 32%: a warrior-nationalist state. Rivals: Persia, the Thracians, the Greek colonies on the coast (trade).
+
+### Culture and religion (HIST)
+
+Nomadic pastoralists of the steppe; the animal style in gold; the Targitaus origin myth; cannabis steam baths (Herodotus); scalping and drinking from skulls (reported); blood oaths.
+
+### Doctrine of war (HIST)
+
+Mounted archers with composite bows, the scorched-earth retreat that defeated Darius's invasion, quick raids. Gear: generic (no Scythian set yet).
+
+### OPEN
+
+- The country has no fleet and only 1 division at the start; mounted units are not modeled in the opening army.
+
+---
+
+## SAK: Saka and Massagetae
+
+### In the game files (GAME)
+
+- Color 57/40/186. Capital land_04112. Culture sakae, religion scythian_faith.
+- 4 states, 567,175 people, manpower (state sum) 28. Cultures: sakae 311,894, massagetae 255,281. Religions: scythian_faith 567,175.
+- Class mix: herders 96%, nobles 3%, clergy 1%.
+- Politics: ruling party fascist. Popularity: fascist 40, neutrality 32, communist 16, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "steppe_riders" (expansionist archetype), shared with SCY, SAR, KOS.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Tomyris, queen of the Massagetae, killed Cyrus in 530 (Herodotus). Under Darius the Saka are listed as subjects in the Behistun and later inscriptions (the Saka tigraxauda 'pointed hats' and Saka haumavarga). Rulers in 500 are OPEN.
+
+### Internal politics and factions (HIST)
+
+Tribal chiefs with a warrior elite; the game treats the Saka and Massagetae as one fascist-ruled country (same values as SCY and SAR). Persian claims of overlordship are not modeled.
+
+### Culture and religion (HIST)
+
+Nomads of the Central Asian steppe; pointed felt hats; the Arzhan kurgans (earlier, c. 700); animal style art; kurgans on the Pazyryk plateau; the Massagetae reportedly sacrificed old men and shared wives (Herodotus).
+
+### Doctrine of war (HIST)
+
+Mounted archers, battle axes (the sagaris), swift raids. Gear: generic.
+
+### OPEN
+
+- OPEN: Persian inscriptions list some Saka as subject, while the game has SAK independent.
+
+---
+
+## KOS: Kosala
+
+### In the game files (GAME)
+
+- Color 108/201/68. Capital land_01277. Culture indo_aryan, religion vedic_brahmanism.
+- 7 states, 1,607,563 people, manpower (state sum) 80. Cultures: indo_aryan 1,607,563. Religions: vedic_brahmanism 1,607,563.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 44, fascist 26, communist 14, democratic 16. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "steppe_riders" (expansionist archetype), shared with SCY, SAK, SAR.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+King of Kosala in 500 is OPEN: Mahakosala is the father of Prasenajit (Pasenadi), who reigns during the Buddha's mature years, on traditional dating after 500. Capital Shravasti (Savatthi), with Ayodhya and Saketa as other cities. Kosala has absorbed Kashi (c. 6th century).
+
+### Internal politics and factions (HIST)
+
+A monarchy contending with Magadha (marriage ties: Prasenajit's sister married Bimbisara) and the republics on its north (Shakya). The game gives KOS the 'steppe_riders' AI profile, which does not fit (see below).
+
+### Culture and religion (HIST)
+
+Brahmin-dominated Vedic culture, early urban centers, the Buddha and Mahavira active in Kosala's cities later; irrigation and rice farming.
+
+### Doctrine of war (HIST)
+
+Four-limbed army (chariots, cavalry, elephants, infantry), like IND.
+
+### OPEN
+
+- **AI mismatch (OPEN)**: `countries = { SCY SAK SAR KOS }` in the 'steppe_riders' profile puts Kosala among raiding steppe peoples. Likely a copy mistake, as with the CHV 'china' case fixed earlier.
+
+---
+
+## KOR: Gojoseon
+
+### In the game files (GAME)
+
+- Color 138/62/193. Capital land_02285. Culture korean, religion korean_shamanism.
+- 3 states, 790,592 people, manpower (state sum) 40. Cultures: korean 790,592. Religions: korean_shamanism 790,592.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 39, fascist 29, communist 20, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Gojoseon (Old Joseon) is known from later texts; the legend of Dangun (founded 2333) is not historical dating. The Liaoning bronze-dagger culture (mandolin-shaped daggers) is the archaeological basis. A ruler in 500 is OPEN.
+
+### Internal politics and factions (HIST)
+
+Tribal chiefs; the game has no information. Values are placeholders.
+
+### Culture and religion (HIST)
+
+Dolmens, bronze daggers and mirrors with fine lines, Mumun pottery, rice and millet farming, shamanism ('korean_shamanism').
+
+### Doctrine of war (HIST)
+
+Bows and bronze weapons; fortified settlements. Nothing detailed.
+
+### OPEN
+
+- Very uncertain: Gojoseon as a state in 500 BCE is debated; texts come from the 4th century and later.
+
+---
+
+## DMT: D'mt
+
+### In the game files (GAME)
+
+- Color 181/39/122. Capital land_08805. Culture ethiopian_highland, religion ethiopian_highland_cult.
+- 7 states, 1,722,253 people, manpower (state sum) 87. Cultures: ethiopian_highland 1,722,253. Religions: ethiopian_highland_cult 1,722,253.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 47, fascist 21, communist 19, democratic 13. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Rulers of D'mt are known from inscriptions naming a mukarrib or king (for example Rd'm and Lm'n are attested names). The temple at Yeha (c. 700 to 500) and the capital area in Tigray (Ethiopia) and Eritrea show Sabaean cultural influence (script, the god Almaqah).
+
+### Internal politics and factions (HIST)
+
+A king with a priestly class and a landowning elite; the 'neutrality' 47% is the highest among the new states. Contacts with Saba across the Red Sea.
+
+### Culture and religion (HIST)
+
+South Arabian script on stone, temples with massive dressed-stone walls (Yeha), plows and terraced highland farming, local pre-Aksumite culture, the language that becomes Ge'ez.
+
+### Doctrine of war (HIST)
+
+Nothing firm. Highland defensive sites.
+
+### OPEN
+
+- Heavy OPEN on rulers and chronology; the 'ethiopian_highland_cult' religion is a generic label.
+
+---
+
+## VAN: Van Lang
+
+### In the game files (GAME)
+
+- Color 73/47/145. Capital land_08685. Culture van_lang, religion austroasiatic_animism.
+- 1 state, 216,979 people, manpower (state sum) 11. Cultures: van_lang 216,979. Religions: austroasiatic_animism 216,979.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 38, fascist 21, communist 33, democratic 8. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+The Hung kings (Hung Vuong) of Van Lang are legendary and given a very early date in tradition (c. 2879 BCE on), not supported archaeologically. The real culture is the Dong Son culture of the Red River delta (c. 700 BCE on).
+
+### Internal politics and factions (HIST)
+
+A chiefly society with lords (lac hau) and ordinary farmers; the 'communist' 33% is a placeholder. Nothing is documented.
+
+### Culture and religion (HIST)
+
+Bronze drums (the Ngoc Lu and Dong Son drums), wet rice, boats, tattoos, 'austroasiatic_animism'.
+
+### Doctrine of war (HIST)
+
+Bronze spear and axe heads, longboats, crossbow is later. Nothing firm.
+
+### OPEN
+
+- Dates for Van Lang as a state are OPEN; Co Loa (Au Lac) is much later (3rd century).
+
+---
+
+## EGY: Egypt
+
+### In the game files (GAME)
+
+- Color 98/188/126. Capital land_05690. Culture egyptian, religion egyptian_religion.
+- 12 states, 3,001,569 people, manpower (state sum) 151. Cultures: egyptian 3,001,569. Religions: egyptian_religion 3,001,569.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party theocratic. Popularity: theocratic 40, neutrality 28, communist 22, fascist 10. Law: restricted_parties.
+- Army: 3 infantry divisions. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with BAB, JDH, GAN, ION, THR.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: Own set (`gear_*_egy.glb`).
+
+### Rulers (HIST)
+
+Persian satrapy since Cambyses (525). Darius I visited Egypt c. 518, ordered the codification of Egyptian law and finished the canal from the Nile to the Red Sea (stelae of Darius near Suez, c. 500). The satrap after Aryandes is OPEN (Aryandes was removed by Darius, date uncertain; Herodotus 4.166 tells of his coinage). Pharaoh titles go to the Persian king.
+
+### Internal politics and factions (HIST)
+
+Persian satrap with Egyptian clergy and the old nobility; the game gives the ruling party 'theocratic' (40%) beside neutrality 28 and 'communist' 22. Revolts follow (c. 486 and 460s). Greeks and Jews serve as garrisons (Elephantine).
+
+### Culture and religion (HIST)
+
+Temple cults of Amun, Ptah, Neith and others under Persian toleration (the Hibis temple at Kharga, built by Darius); funerary traditions; hieratic and demotic writing; the Apis bull burials.
+
+### Doctrine of war (HIST)
+
+The Persian garrison, Egyptian machimoi warriors, and Greek and Carian mercenaries. Own soldier set in the game (see the EGY equipment section).
+
+### OPEN
+
+- Tributary of ACH in the game, which fits history. The 3 divisions are a design number.
+
+---
+
+## BAB: Babylon
+
+### In the game files (GAME)
+
+- Color 41/173/131. Capital land_07110. Culture babylonian, religion mesopotamian_polytheism.
+- 17 states, 4,371,816 people, manpower (state sum) 218. Cultures: babylonian 4,371,816. Religions: mesopotamian_polytheism 4,371,816.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party theocratic. Popularity: theocratic 38, neutrality 28, communist 20, fascist 14. Law: restricted_parties.
+- Army: 4 infantry divisions. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with EGY, JDH, GAN, ION, THR.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Persian satrapy 'Babylonia' (with Assyria) since 539. Rebellions in 522 (Nidintu-Bel as 'Nebuchadnezzar III') and 521 (Arakha as 'Nebuchadnezzar IV') were crushed by Darius. The governor around 500 is OPEN. The satrapy Babylonia and Across the River (Abar-nahara) is a single unit in these years.
+
+### Internal politics and factions (HIST)
+
+The satrap and Persian officials, the temple of Marduk (Esagila) and the priests (Babylon's 'theocratic' 38% in the game), city assemblies, wealthy banking families (the Egibi), foreign deportees and slaves. Persian taxes are heavy; revolts return under Xerxes (484 and 482).
+
+### Culture and religion (HIST)
+
+The Akitu (new year) festival, cuneiform archives, astronomy and omen literature, the Ishtar Gate and the Hanging Gardens legend, canals and date orchards, the Aramaic language.
+
+### Doctrine of war (HIST)
+
+Levies serve the Great King. The city has great walls.
+
+### OPEN
+
+- ACH starting capital was moved to land_17558; the earlier ACH capital land_07110 is now BAB's capital.
+
+---
+
+## IBE: Iberians
+
+### In the game files (GAME)
+
+- Color 226/52/78. Capital land_04181. Culture iberian, religion iberian_religion.
+- 6 states, 669,770 people, manpower (state sum) 36. Cultures: iberian 669,770. Religions: iberian_religion 669,770.
+- Class mix: farmers 86%, artisans 5%, nobles 4%, slaves 3%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 45, fascist 19, communist 24, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, CIB, LIB, ETR, ROM, DEC.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named kings. Tartessos collapsed c. 550 to 500; Iberian peoples of the southeast and Levant coasts form chiefdoms with fortified towns (oppida). Gadir (Phoenician) and Emporion (Greek, c. 575) are on the coast. Carthage trades for silver and tin.
+
+### Internal politics and factions (HIST)
+
+Warrior aristocracies at hillforts; mercenary service abroad; the 'communist' 24% stands for dependants. Nothing written yet beyond the Tartessian script.
+
+### Culture and religion (HIST)
+
+Painted pottery, stone sculpture (the Lady of Baza, Elche are slightly later), cremation burials, silver and lead mining, metalwork.
+
+### Doctrine of war (HIST)
+
+The curved falcata sword (attested later), javelins, light cavalry; Iberian mercenaries serve Carthage.
+
+### OPEN
+
+- Dates and political shape OPEN. Tartessos is not a separate country.
+
+---
+
+## CIB: Celtiberians
+
+### In the game files (GAME)
+
+- Color 180/68/214. Capital land_06479. Culture celtiberian, religion celtic_polytheism.
+- 5 states, 679,491 people, manpower (state sum) 36. Cultures: celtiberian 679,491. Religions: celtic_polytheism 679,491.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 39, fascist 19, communist 34, democratic 8. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, IBE, LIB, ETR, ROM, DEC.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named kings. Celtiberians are Celtic-speaking peoples of the central Meseta (Arevaci, Belli, Titti, Lusones); later centers: Numantia, Segeda. The ethnic label is formed from contact with Iberians (c. 600 on).
+
+### Internal politics and factions (HIST)
+
+Clans of warriors in hill forts (castros); no states. The game gives the highest 'communist' value among the Spanish peoples (34%), a placeholder.
+
+### Culture and religion (HIST)
+
+Hillfort architecture, bronze and iron work, Celtic names recorded later, pastoralism and cereals ('celtic_polytheism').
+
+### Doctrine of war (HIST)
+
+Light infantry and cavalry; raiding between clans.
+
+### OPEN
+
+- Specific political structure is OPEN.
+
+---
+
+## SAR: Sarmatians
+
+### In the game files (GAME)
+
+- Color 107/219/206. Capital land_01486. Culture sarmatian, religion scythian_faith.
+- 3 states, 361,370 people, manpower (state sum) 18. Cultures: sarmatian 361,370. Religions: scythian_faith 361,370.
+- Class mix: herders 96%, nobles 3%, clergy 1%.
+- Politics: ruling party fascist. Popularity: fascist 40, neutrality 32, communist 16, democratic 12. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "steppe_riders" (expansionist archetype), shared with SCY, SAK, KOS.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Sauromatae in Herodotus, east of the Don; later called Sarmatians. No kings known for 500. Herodotus tells of the Amazon legend (Sauromatae born of Scythian men and Amazons), and burials with armed women are found.
+
+### Internal politics and factions (HIST)
+
+Tribal chiefs with armed aristocracy. Same values as SCY and SAK (fascist ruling). The southern Urals and lower Volga are the heartland.
+
+### Culture and religion (HIST)
+
+Mounted nomads, kurgans, horse and weapon burials, women's roles in war, 'scythian_faith' as a shared placeholder religion.
+
+### Doctrine of war (HIST)
+
+Mounted archers and later lancers.
+
+### OPEN
+
+- Placeholder values copied from SCY. Religion is shared with SCY and SAK by design.
+
+---
+
+## GAN: Gandhara
+
+### In the game files (GAME)
+
+- Color 211/159/110. Capital land_07241. Culture indo_aryan, religion vedic_brahmanism.
+- 6 states, 1,577,892 people, manpower (state sum) 79. Cultures: indo_aryan 1,577,892. Religions: vedic_brahmanism 1,577,892.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 43, fascist 21, communist 28, democratic 8. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with EGY, BAB, JDH, ION, THR.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Gandhara (Gandara in the Persian lists) and Hindush (the Indus lands) were annexed by Darius c. 518 to 515; Scylax of Caryanda explored the Indus for Darius (c. 515). Earlier Pukkusati, king of Gandhara (c. 550), sent a message to Bimbisara. A local ruler in 500 is OPEN. Capital area Taxila and Pushkalavati.
+
+### Internal politics and factions (HIST)
+
+The satrap, the local kshatriya lords, brahmin teachers at Taxila, merchant guilds. The game makes it an ACH tributary with a 28% 'communist' bloc, placeholder.
+
+### Culture and religion (HIST)
+
+The Indus lands under Persian administration, the Aramaic script spreading (leading to Kharosthi, later), trade routes to Bactria, gold dust paid as tribute (Herodotus 3.94: 360 talents).
+
+### Doctrine of war (HIST)
+
+Four-limbed army of the Indian type, Indian archers and infantry in the Persian army (Herodotus 7.65, 480).
+
+### OPEN
+
+- Tributary status in game is consistent with history.
+
+---
+
+## DEC: Deccan
+
+### In the game files (GAME)
+
+- Color 100/105/224. Capital land_06779. Culture dravidian, religion dravidian_folk.
+- 9 states, 2,196,015 people, manpower (state sum) 111. Cultures: dravidian 2,196,015. Religions: dravidian_folk 2,196,015.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 43, fascist 30, communist 17, democratic 10. Law: restricted_parties.
+- Army: 2 infantry divisions. Fleet: none.
+- AI profile "western_tribes" (status_quo archetype), shared with CEL, IBE, CIB, LIB, ETR, ROM.
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named kings. The southern Deccan has megalithic Iron Age cultures; Assaka (Asmaka) on the Godavari is among the 16 mahajanapadas in Buddhist lists (the date of the list is later than 500).
+
+### Internal politics and factions (HIST)
+
+Chiefdoms; nothing is known. The game's 'fascist' 30% is a placeholder.
+
+### Culture and religion (HIST)
+
+Megalithic cist and urn burials, iron tools, rice and millet farming, pottery, 'dravidian_folk' religion label.
+
+### Doctrine of war (HIST)
+
+Iron weapons; hill fort defense. Nothing detailed.
+
+### OPEN
+
+- Heavy OPEN for all political facts. DEC uses the 'western_tribes' AI profile (Celtic, Iberian and Italic peoples), which does not fit.
+
+---
+
+## JDH: Judah and Yehud
+
+### In the game files (GAME)
+
+- Color 213/111/219. Capital land_02221. Culture judean, religion yahwism.
+- 4 states, 1,044,829 people, manpower (state sum) 52. Cultures: judean 1,044,829. Religions: yahwism 1,044,829.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party theocratic. Popularity: theocratic 40, neutrality 30, communist 16, fascist 14. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- AI profile "persian_subjects" (defensive archetype), shared with EGY, BAB, GAN, ION, THR.
+- Subject: tributary of ACH (pays 25% of income, does not join ACH wars).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Judah (Yehud) is a Persian province. The governor c. 520 was Zerubbabel, of David's line; Joshua (Jeshua) son of Jehozadak was high priest. The Second Temple was completed in 516 to 515 (Ezra 6, Haggai, Zechariah). Rulers in 500 are OPEN. Exiles returned after Cyrus's decree (538).
+
+### Internal politics and factions (HIST)
+
+Governor, priests (Zadokite) and returned exiles against the 'people of the land' (those who stayed and Samarians); the game gives theocratic 40%. Jewish soldiers also garrison Elephantine in Egypt.
+
+### Culture and religion (HIST)
+
+Yahwism as one temple cult; the Torah and the prophets are in formation; Aramaic as the administrative language; Sabbath and purity rules.
+
+### Doctrine of war (HIST)
+
+Local garrison under Persian orders; walls of Jerusalem are not yet rebuilt (Nehemiah, 445).
+
+### OPEN
+
+- Tributary of ACH. Population 1.04M is high for Yehud (real numbers were much smaller); a design value. The country covers 4 states.
+
+---
+
+## ZAP: Zapotec
+
+### In the game files (GAME)
+
+- Color 185/98/188. Capital land_13277. Culture zapotec, religion mesoamerican_religion.
+- 1 state, 234,390 people, manpower (state sum) 12. Cultures: zapotec 234,390. Religions: mesoamerican_religion 234,390.
+- Class mix: farmers 74%, slaves 12%, artisans 8%, nobles 3%, clergy 3%.
+- Politics: ruling party neutrality. Popularity: neutrality 42, fascist 27, communist 14, democratic 17. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+Monte Alban, founded c. 500 on a leveled hilltop in Oaxaca, is the first Zapotec capital (Monte Alban I). San Jose Mogote is the earlier center. Rulers are not named. The Danzantes carvings and the earliest Mesoamerican writing signs (Rosario phase, c. 600 to 500) belong to this period.
+
+### Internal politics and factions (HIST)
+
+Elite lineages with conquered cities pictured on Monte Alban stones; the game's 'democratic' 17% is a placeholder.
+
+### Culture and religion (HIST)
+
+Calendar and writing in an early form, carved captives (Danzantes), maize farming, 'mesoamerican_religion' as a shared placeholder.
+
+### Doctrine of war (HIST)
+
+Warfare is shown in the carvings. Nothing detailed.
+
+### OPEN
+
+- Monte Alban's founding date (c. 500) falls on the start itself.
+
+---
+
+## GAR: Garamantes
+
+### In the game files (GAME)
+
+- Color 56/73/201. Capital land_01020. Culture garamantes, religion saharan_pastoral_faith.
+- 1 state, 286,743 people, manpower (state sum) 14. Cultures: garamantes 286,743. Religions: saharan_pastoral_faith 286,743.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 46, fascist 23, communist 14, democratic 17. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+The Garamantes of the Fezzan (Jarma, ancient Garama) are first named by Herodotus (4.174, 183). Kings are not named for 500. Settled farming at Garama starts c. 900 to 500 per the archaeology; the underground irrigation channels (foggaras) are probably later.
+
+### Internal politics and factions (HIST)
+
+Chiefs and kings with oasis farmers; slave raiding on neighbors (the 'Ethiopian troglodytes' hunted from four-horse chariots, says Herodotus). The game's values are placeholders.
+
+### Culture and religion (HIST)
+
+Desert oases, horse chariots (rock art), a Libyan-language culture, burials with grave goods ('saharan_pastoral_faith').
+
+### Doctrine of war (HIST)
+
+Chariots, javelins and raiding; guard of caravan routes.
+
+### OPEN
+
+- OPEN: all political facts; Herodotus is the only 5th-century source.
+
+---
+
+## SAH: Sahel and Mande Lands
+
+### In the game files (GAME)
+
+- Color 150/33/150. Capital land_02174. Culture west_african, religion west_african_traditional.
+- 10 states, 2,527,983 people, manpower (state sum) 126. Cultures: west_african 1,535,205, mande 992,778. Religions: west_african_traditional 2,527,983.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 40, fascist 23, communist 20, democratic 17. Law: restricted_parties.
+- Army: 2 infantry divisions. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers. The Sahel and Niger valley hold farming and iron-working communities (Dhar Tichitt earlier; Jenne-Jeno is founded later, c. 250). Mande-speaking peoples are the later heirs.
+
+### Internal politics and factions (HIST)
+
+Village and lineage leadership; nothing written. The game's numbers are placeholders.
+
+### Culture and religion (HIST)
+
+Millet and sorghum farming, cattle herding, early iron, pottery ('west_african_traditional').
+
+### Doctrine of war (HIST)
+
+Spears, bows, shields. Nothing firm.
+
+### OPEN
+
+- Everything is OPEN beyond existence. 10 states and 2.5M people is a large design number.
+
+---
+
+## TML: Tamil South
+
+### In the game files (GAME)
+
+- Color 163/75/85. Capital land_07873. Culture dravidian, religion dravidian_folk.
+- 5 states, 1,245,693 people, manpower (state sum) 63. Cultures: dravidian 1,245,693. Religions: dravidian_folk 1,245,693.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 47, fascist 28, communist 8, democratic 17. Law: restricted_parties.
+- Army: 1 infantry division. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named kings at 500. The Cheras, Cholas and Pandyas are named in Ashoka's edicts (3rd century); their earlier history is semi-legendary. Early urban phases at Keezhadi (Vaigai valley) have been dated by excavators to about the 6th century; the dating is disputed.
+
+### Internal politics and factions (HIST)
+
+Chiefs (velir) and warrior clans; the Sangam poems are later. The game's 'communist' 8% is the lowest, a placeholder.
+
+### Culture and religion (HIST)
+
+Megalithic burials, iron, Tamil-Brahmi script (earliest examples are placed in the 5th to 3rd centuries, debated), rice agriculture, pearl and spice trade, 'dravidian_folk'.
+
+### Doctrine of war (HIST)
+
+Spears, bows, war elephants appear later.
+
+### OPEN
+
+- OPEN on every political fact.
+
+---
+
+## IRR: Irrawaddy and Mainland Southeast Asia
+
+### In the game files (GAME)
+
+- Color 83/128/163. Capital land_07633. Culture austroasiatic, religion austroasiatic_animism.
+- 19 states, 4,490,485 people, manpower (state sum) 227. Cultures: austroasiatic 3,364,781, burmese 1,026,880, tai 98,824. Religions: austroasiatic_animism 3,463,605, tibeto_burman_animism 1,026,880.
+- Class mix: farmers 90%, nobles 4%, artisans 4%, clergy 2%.
+- Politics: ruling party neutrality. Popularity: neutrality 39, fascist 31, communist 13, democratic 17. Law: restricted_parties.
+- Army: 4 infantry divisions. Fleet: none.
+- No AI profile of its own (uses its ideology and rank archetype).
+- Gear: generic soldier.
+
+### Rulers (HIST)
+
+No named rulers. Mainland Southeast Asia in 500 has bronze and iron age farming communities (Ban Chiang, Non Nok Tha), Dong Son contacts, and rice states are later (Pyu cities from c. 200 BCE; Funan from c. 1st century CE).
+
+### Internal politics and factions (HIST)
+
+Chiefs and village leaders; the whole region (19 states, 4.49M people) is one placeholder country. A Burmese and Tai fringe is in the pop data.
+
+### Culture and religion (HIST)
+
+Rice farming, bronze drums and bells, boats, 'austroasiatic_animism' and 'tibeto_burman_animism' as folk-religion labels.
+
+### Doctrine of war (HIST)
+
+Nothing firm.
+
+### OPEN
+
+- OPEN everything. One country for a huge, diverse region is a design shortcut.
+
+---
 
 ## EGY equipment (GAME and OPEN)
 

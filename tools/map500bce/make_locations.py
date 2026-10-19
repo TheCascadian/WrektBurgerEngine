@@ -49,6 +49,10 @@ DENS_MIN = 0.12                                # density far from rivers and coa
 # the far Arctic). REL is 1 everywhere else. Nothing here claims a population number.
 REL_LOW = float(os.environ.get("LOC_REL_LOW", "0.2"))
 DROP_KM2 = float(os.environ.get("LOC_DROP_KM2", "150000"))   # landmasses below this inside a low-relevance region get no location
+# Antarctica (south of ANTARCTIC_LAT) is left out of the map: no land, no sea zones, id 0. Set LOC_EXCLUDE_ANTARCTICA=0 for the old one-cell behavior.
+EXCLUDE_ANT, ANTARCTIC_LAT = os.environ.get("LOC_EXCLUDE_ANTARCTICA", "1") != "0", -60.0
+# Optional detail-demand raster (detail_demand.npz from build_detail_demand.py, same coarse grid). LOC_DEMAND_MIX 0 = old density, 1 = demand only.
+DEMAND_PATH, DEMAND_MIX = os.environ.get("LOC_DEMAND"), float(os.environ.get("LOC_DEMAND_MIX", "1.0"))
 rng = np.random.default_rng(500)
 LAT = 90.0 - (np.arange(h) + 0.5) * 180.0 / h
 LON = (np.arange(w) + 0.5) * 360.0 / w - 180.0
@@ -318,11 +322,24 @@ def main():
     land_f, lake_f = d["land"].astype(bool), d["lake"].astype(bool)
     land, lake, river = blk(land_f), blk(lake_f), blk(d["river"].astype(bool))
     log(f"coarse grid {w}x{h} (S={S})")
+    ant = (LAT < ANTARCTIC_LAT)[:, None] & EXCLUDE_ANT
+    if EXCLUDE_ANT:
+        land[ant[:, 0]] = False; lake[ant[:, 0]] = False; river[ant[:, 0]] = False
+        ant_full = (90.0 - (np.arange(H) + 0.5) * 180.0 / H) < ANTARCTIC_LAT
+        land_f[ant_full] = False; lake_f[ant_full] = False
+        log(f"excluded Antarctica: {int(ant[:, 0].sum())} coarse rows south of {ANTARCTIC_LAT:g}")
     global DENS
     solidmask = land | lake
     global REL
     REL = make_rel(river)
     DENS = make_density(river, solidmask) * REL
+    if DEMAND_PATH:
+        dm = np.load(DEMAND_PATH)["demand"].astype(np.float32)
+        if dm.shape != (h, w):
+            raise SystemExit(f"demand raster {dm.shape} does not match coarse grid {(h, w)}")
+        dn = np.clip(dm / np.percentile(dm[land], 99), 0.05, 1.5)
+        DENS = np.where(solidmask, DENS ** (1 - DEMAND_MIX) * (dn * REL) ** DEMAND_MIX, DENS).astype(np.float32)
+        log(f"seed density blended with {DEMAND_PATH} (mix {DEMAND_MIX:g})")
     terrain = NOISE_AMP * noise()
     tpi = None
     if len(sys.argv) > 3:
@@ -385,7 +402,7 @@ def main():
     log(f"land cells  ({time.time() - t:.1f}s)")
 
     # sea: coastal belt denser than open water
-    sea_ok = ~solidmask
+    sea_ok = ~solidmask & ~ant
     sea_pts, sea_seeds = sea_voronoi_seeds(sea_ok)
     npr = len(sea_seeds)
     log(f"sea seeds {npr}  ({time.time() - t:.1f}s)")
@@ -437,6 +454,8 @@ def main():
     log(f"sea Voronoi at full resolution  ({time.time() - t:.1f}s)")
     damp = np.clip(ndimage.distance_transform_edt(~river) / 3.0, 0.05, 1.0).astype(np.float32)   # borders on rivers stay put
     full = warp(full, kept_f, damp, sea_first)
+    if EXCLUDE_ANT:
+        full[ant_full] = 0
     log(f"borders warped  ({time.time() - t:.1f}s)")
     fix_fragments(full, 1, n_land, "land (full resolution)")
     cnt = np.bincount(full.ravel(), minlength=total + 1)
@@ -449,7 +468,7 @@ def main():
     seeds_all = np.concatenate(seeds)
     seeds_all = np.concatenate([seeds_all[:1], seeds_all[1:][present[1:]]])
     log(f"{int((~present[1:]).sum())} empty cells dropped; {len(kinds) - 1} locations")
-    bad = int(((full >= 0) & kept_f & (np.array(kinds, np.uint8)[full] == 2)).sum()) + int((~kept_f & (np.array(kinds, np.uint8)[full] != 2)).sum())
+    bad = int(((full >= 0) & kept_f & (np.array(kinds, np.uint8)[full] == 2)).sum()) + int((~kept_f & (np.array(kinds, np.uint8)[full] != 2) & (full > 0)).sum())
     log(f"full-res pixels with the wrong kind of id: {bad}")
     np.savez_compressed(out, ids=full, kind=np.array(kinds, np.uint8), seeds=seeds_all)
     log("wrote", out, f"({time.time() - t:.1f}s)")

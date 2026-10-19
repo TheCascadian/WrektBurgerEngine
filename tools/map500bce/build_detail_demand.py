@@ -33,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from grid import H, W  # noqa: E402
 
 EARTH_RADIUS_KM = 6371.0088
+ANTARCTIC_LAT = -60.0  # Antarctica is excluded from the map; matches make_locations.py's polar rule
 CONFIDENCE_FACTOR = {"HIGH": 1.0, "MEDIUM": 0.65, "LOW": 0.35, "DISPUTED": 0.0}
 KIND_WEIGHT = {"settlement": 0.55, "political_complexity": 0.35, "strategic_corridor": 0.10}
 EVIDENCE_FIELDS = {
@@ -355,6 +356,10 @@ def main() -> int:
                 raise SystemExit(f"base raster '{key}' has shape {array.shape}; expected {expected}")
             full_masks[key] = coarse_any(array.astype(bool), factor)
             del array
+    antarctic_rows = (90.0 - (np.arange(shape[0]) + 0.5) * 180.0 / shape[0]) < ANTARCTIC_LAT
+    for key in full_masks:
+        full_masks[key][antarctic_rows, :] = False
+    log(f"excluded {int(antarctic_rows.sum())} coarse rows south of {ANTARCTIC_LAT:g} latitude (Antarctica)")
     land = full_masks["land"]
     lakes = full_masks["lake"]
     river = full_masks["river"] & land & ~lakes
