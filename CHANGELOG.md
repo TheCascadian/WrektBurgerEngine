@@ -3,6 +3,7 @@
 ## 2026-10-20
 - Month ends no longer stall: the 40 commodities of a market settlement were settled one a day, so about nine were still waiting when the next month started and were all settled in one 350 ms tick. Three batches a day (hours 2, 10 and 20) now finish the settlement within the month.
 - Faster simulation in worlds with hundreds of countries (a year of World 500 BCE: 130 s to about 50 s): the extraction multiplier is worked out once per country and commodity instead of per state, modifier lookups are remembered while one commodity is settled, trade pairs use flat arrays and a country-ordered seller list, colony lists are cached instead of scanning every state for every candidate, and the land trade search resumes where it stopped instead of covering a whole continent for the first destination.
+- Saves now keep the Great Powers ranking and campaigns, the war score and the attrition of divisions, so a loaded game plays on exactly like the one it was saved from. Trade matching looks up the agreements of a country pair in an index instead of scanning all of them (the order step of a settlement is about a quarter faster).
 - Tick-for-tick results are unchanged by these speed-ups (checked with `burger validate --digest`); only the settlement timing above moves the results.
 
 ## 2026-10-19

@@ -314,6 +314,27 @@ public sealed class TradeNetworkSystem
             _pairStampNow = 0;
         }
         int stamp = ++_pairStampNow;
+        // The agreements of each seller-to-buyer pair, so a pair does not scan all of them.
+        var agreementsOf = new Dictionary<int, List<TradeAgreement>>();
+        var matchDate = _game.World.Date;
+        foreach (var a in Agreements)
+        {
+            if (!a.Active(matchDate)) continue;
+            int pairKey = a.From.Index * countryCount + a.To.Index;
+            if (!agreementsOf.TryGetValue(pairKey, out var pairList)) agreementsOf[pairKey] = pairList = new();
+            pairList.Add(a);
+        }
+        TradeAgreement? AgreementOf(int pairKey, string commodity)
+        {
+            if (!agreementsOf.TryGetValue(pairKey, out var list)) return null;
+            TradeAgreement? generic = null;
+            foreach (var a in list)
+            {
+                if (a.Commodity.Length == 0) { generic ??= a; continue; }
+                if (a.Commodity.Equals(commodity, StringComparison.OrdinalIgnoreCase)) return a;
+            }
+            return generic;
+        }
         int candidateLimit = Math.Max(8, (int)_game.Data.Defines.Get("trade_seller_candidates", 24));
         double tradePriceScale = _game.Data.Defines.Get("commodity_trade_price", 0.5);
         // The sellers by country (their slots ascending), and for each buying country the seller countries best first. A buyer then walks the
@@ -344,7 +365,7 @@ public sealed class TradeNetworkSystem
                 if (_pairStamp[pairAt] != stamp)
                 {
                     var seller = _game.World.Countries[sc];
-                    _pairAgreement[pairAt] = Agreement(seller, buyerCountry, definition.Key);
+                    _pairAgreement[pairAt] = AgreementOf(sc * countryCount + buyerCountry.Index, definition.Key);
                     _pairPriority[pairAt] = priority(seller, buyerCountry);
                     _pairCanTrade[pairAt] = -1;
                     _pairStamp[pairAt] = stamp;
