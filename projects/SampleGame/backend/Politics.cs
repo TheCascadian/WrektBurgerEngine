@@ -306,15 +306,6 @@ public class GamePoliticsRules : PoliticsRules
     public override bool WillGovernWith(Game game, Country c, IdeologyDef a, IdeologyDef b)
         => a.Key == b.Key || (a.Coalition.Contains(b.Key) && b.Coalition.Contains(a.Key));
 
-    /// <summary>Monthly progress (points of 100) of a movement whose ideology has <paramref name="popularity"/> support.</summary>
-    public override double MovementProgress(Game game, Country c, Movement m, double popularity)
-    {
-        double threshold = game.Data.Defines.Get("movement_threshold", 0.25);
-        if (popularity < threshold) return -5;
-        double stability = StabilityOf(game, c);
-        return game.Data.Defines.Get("movement_speed", 0.5) * (popularity - threshold) * 100 * (1.5 - stability / 100.0);
-    }
-
     /// <summary>
     /// Monthly chance that a shut-out ideology with this much support takes power in a coup (no war).
     /// Likelier the more popular it is, the less popular the government is and the lower stability is.
@@ -331,8 +322,9 @@ public class GamePoliticsRules : PoliticsRules
         if (popularity < threshold) return 0;
         double ruling = game.Politics.Of(c).Popularity.GetValueOrDefault(game.Politics.Of(c).Ruling);
         double stability = StabilityOf(game, c);
+        double readiness = MovementReadiness(game, c, game.Politics.MovementOf(c, ideology.Key));
         // (where the country is poor and unstable, or worn out by war, the struggle is fought out in a civil war instead)
-        return (1 - hold) * d.Get("coup_chance", 0.06) * (1 + (popularity - threshold) * 5) * (1.5 - ruling) * (1.5 - stability / 100.0) * (1 - 0.7 * UnrestPressure(game, c));
+        return (1 - hold) * d.Get("coup_chance", 0.06) * (1 + (popularity - threshold) * 5) * (1.5 - ruling) * (1.5 - stability / 100.0) * (1 - 0.7 * UnrestPressure(game, c)) * readiness * readiness * 5;
     }
 
     /// <summary>
@@ -345,7 +337,11 @@ public class GamePoliticsRules : PoliticsRules
         double pressure = UnrestPressure(game, c);
         double threshold = game.Data.Defines.Get("civil_war_threshold", 0.5) - 0.3 * pressure;
         if (popularity < threshold) return 0;
-        return game.Data.Defines.Get("civil_war_chance", 0.08) * (0.5 + (popularity - threshold) * 2) * (0.5 + 3 * pressure);
+        // (a civil war needs an organisation to fight it and a region to fight from: scattered support cannot raise an army)
+        var summary = game.Population.Enabled ? game.Politics.PopSummaryOf(c) : null;
+        double region = summary != null && summary.Stronghold.TryGetValue(ideology.Key, out var sh) ? 0.5 + sh.Share : 1;
+        return game.Data.Defines.Get("civil_war_chance", 0.08) * (0.5 + (popularity - threshold) * 2) * (0.5 + 3 * pressure)
+               * Math.Pow(MovementReadiness(game, c, game.Politics.MovementOf(c, ideology.Key)), 2) * 5 * Math.Min(1.5, region);
     }
 
     /// <summary>

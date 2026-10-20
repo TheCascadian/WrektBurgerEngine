@@ -46,14 +46,14 @@ public static partial class Program
 
         // One run: an authoritarian state facing a popular shut-out ideology. `hold` pins stability (a regime that keeps order),
         // `act` is a decision taken at month 3.
-        Outcome Run(double? hold, Action<Game, Country, Movement>? act, int months = 48, double support = 0.5)
+        Outcome Run(double? hold, Action<Game, Country, Movement>? act, int months = 48, double support = 0.5, bool calm = false)
         {
             var g = Fresh();
             var P = g.Politics;
             var c = g.World.GetCountry(tag)!;
             P.SetRulingParty(c, dictKey, "test");
             P.AddPopularity(c, rivalKey, support - P.PopularityOf(c, rivalKey));
-            P.Of(c).CalmUntilDay = int.MinValue;
+            P.Of(c).CalmUntilDay = calm ? int.MaxValue : int.MinValue;   // (calm: no coup or revolt cuts the movement short)
             int revolutions = P.Revolutions;
             for (int m = 0; m < months; m++)
             {
@@ -100,9 +100,9 @@ public static partial class Program
         Check(big.Organization > small.Organization + 5 || big.Revolutions > 0, $"depth: wider support builds more organisation ({small.Organization:0} vs {big.Organization:0})");
 
         // ---- 3. identical starts diverge by player choice; decisions have delayed, competing consequences
-        var inaction = Run(70, null, 18);
-        var concede = Run(70, (g, c, m) => { Fund(g, c); g.Politics.Concede(m); }, 18);
-        var crack = Run(70, (g, c, m) => { Fund(g, c); g.Politics.Suppress(m); }, 18);
+        var inaction = Run(70, null, 18, calm: true);
+        var concede = Run(70, (g, c, m) => { Fund(g, c); g.Politics.Concede(m); }, 18, calm: true);
+        var crack = Run(70, (g, c, m) => { Fund(g, c); g.Politics.Suppress(m); }, 18, calm: true);
         Check(concede.Grievance < inaction.Grievance, $"depth: concessions ease grievance ({concede.Grievance:0} vs {inaction.Grievance:0} left alone)");
         Check(crack.Grievance > inaction.Grievance, $"depth: a crackdown is remembered and feeds grievance ({crack.Grievance:0} vs {inaction.Grievance:0})");
         Check(crack.Crackdowns > 0 && concede.Concessions > 0 && inaction.Crackdowns == 0, "depth: crackdowns and concessions leave a persistent memory");
@@ -250,7 +250,7 @@ public static partial class Program
             var c = g.World.GetCountry(tag)!;
             P.SetRulingParty(c, dictKey, "test");
             P.AddPopularity(c, rivalKey, 0.5 - P.PopularityOf(c, rivalKey));
-            P.Of(c).CalmUntilDay = int.MinValue;
+            P.Of(c).CalmUntilDay = int.MaxValue;   // (no coup before the movement forms)
             Check(!P.MovementsOf(c).Any(), "depth: no movement, no interest groups");
             for (int k = 0; k < 8 && P.MovementOf(c, rivalKey) == null; k++) { SetStability(g, c, 60); P.MonthlyTick(); }
             var born = P.MovementOf(c, rivalKey);
@@ -279,7 +279,7 @@ public static partial class Program
 
             // violence: incidents happen over time, cost stability and fade
             P.Movements.RemoveAll(x => x.Country == c); P.Movements.Add(denied);
-            denied.Progress = 60;
+            denied.Progress = 60; P.Of(c).CalmUntilDay = int.MaxValue;   // (no coup ends the movement before it turns violent)
             double maxHeat = 0; int months = 0;
             for (int k = 0; k < 36 && c.Exists && P.Movements.Contains(denied); k++, months++)
             {
@@ -322,6 +322,7 @@ public static partial class Program
             Check(P.Of(c).Ruling == dictKey && R.SubjectGovernment(g, c, lord, free) == SubjectControl.Free, "depth: a free subject keeps its own government");
             Check(!R.SubjectGrievanceSources(g, c).Any(x => x.Cause == "Puppet regime"), "depth: a free subject has no puppet-regime grievance");
 
+            P.Of(c).RegimeChangedDay = int.MinValue / 2;   // (the regime lock would hold the test country's fresh government in place)
             g.Diplomacy.MakeSubject(c, lord, imposed);
             Check(P.Of(c).Ruling == rivalKey && R.SubjectGovernment(g, c, lord, imposed) == SubjectControl.Imposed, "depth: an imposed subject gets its overlord's ideology");
             Check(R.SubjectGrievanceSources(g, c).Any(x => x.Cause == "Puppet regime" && x.Value > 0), "depth: an imposed regime breeds grievance");

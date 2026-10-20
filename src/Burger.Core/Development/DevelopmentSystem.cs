@@ -522,9 +522,13 @@ public sealed class DevelopmentSystem
             var n = root.AddBlock("institution");
             n.Add("key", key);
             n.Add("appeared", _appeared.Contains(key) ? "yes" : "no");
-            var sb = new System.Text.StringBuilder();
-            for (int k = 0; k < p.Length; k++) { if (k > 0) sb.Append(' '); sb.Append(F(p[k])); }
-            n.Add("presence", sb.ToString(), quoted: true);
+            // one string per 1000 states: a save reader refuses a single string above 64 KB
+            for (int from = 0; from < p.Length; from += 1000)
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int k = from; k < Math.Min(p.Length, from + 1000); k++) { if (k > from) sb.Append(' '); sb.Append(p[k].ToString("R", CultureInfo.InvariantCulture)); }
+                n.Add("presence", sb.ToString(), quoted: true);
+            }
         }
     }
 
@@ -545,7 +549,7 @@ public sealed class DevelopmentSystem
         {
             string key = b.GetString("key") ?? "";
             var p = new float[n];
-            var parts = (b.GetString("presence") ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var parts = string.Join(' ', b.GetAll("presence").Select(x => x.Value ?? "")).Split(' ', StringSplitOptions.RemoveEmptyEntries);
             for (int k = 0; k < Math.Min(n, parts.Length); k++) p[k] = float.Parse(parts[k], CultureInfo.InvariantCulture);
             _presence[key] = p;
             if (b.GetString("appeared") == "yes") _appeared.Add(key);

@@ -215,7 +215,7 @@ namespace Gift { public class GiftMod : GameScript {
   public override void OnLoad() {
     Network.Register(""gift"", ModMessageSchema.Create().Int(""amount"", 1, 100),
       m => m.Sender.Gold >= m.GetInt(""amount"") ? null : ""not enough gold"",
-      m => { m.Sender.Gold -= m.GetInt(""amount""); });
+      m => { m.Sender.Gold -= m.GetInt(""amount""); m.Sender.Vars.Set(""gifted"", m.Sender.Vars.Get(""gifted"") + m.GetInt(""amount"")); });
   } } }";
             File.WriteAllText(Path.Combine(good1, "scripts", "GiftMod.cs"), modSource);
             File.WriteAllText(Path.Combine(good1, "scripts", "mod.json"), "{\"permissions\":[\"network\"]}");
@@ -261,15 +261,15 @@ namespace Gift { public class GiftMod : GameScript {
             ra2.Send($"CMD|5|{tags[0]}|move|1,2");                                         // forging tick and country
             for (int i = 0; i < 60; i++) { Frame(); Drain(); }
             Check(victim.Location.Key == victimLoc || victim.Location.Key != other, "attacker cannot move another player's division");
-            Check(hostGame.World.GetCountry(tags[2])!.Gold == goldE, "out of range and unknown mod messages changed nothing");
+            Check(hostGame.World.GetCountry(tags[2])!.Vars.Get("gifted") == 0, "out of range and unknown mod messages changed nothing");
             Check(eve != null && !eve.Active, "attacker was removed after repeated violations");
             Check(hostGame.World.GetCountry(tags[2])!.IsPlayer == false, "attacker's country went back to the AI");
             // the legit client's mod message goes through the host and arrives everywhere
             client.Submit(GameCommand.ModMessage, key, "25");
-            Until(() => hostGame.World.GetCountry(tags[1])!.Gold != goldA, 600);
+            Until(() => hostGame.World.GetCountry(tags[1])!.Vars.Get("gifted") != 0, 600);
             Frame(); Until(() => client.Tick >= host.Tick - 2, 600);
-            Check(hostGame.World.GetCountry(tags[1])!.Gold == goldA - 25, "legit mod message applied by the host (gold " + goldA + " -> " + hostGame.World.GetCountry(tags[1])!.Gold + ")");
-            Check(client.Game!.World.GetCountry(tags[1])!.Gold == hostGame.World.GetCountry(tags[1])!.Gold, "same result on the client");
+            Check(hostGame.World.GetCountry(tags[1])!.Vars.Get("gifted") == 25, "legit mod message applied by the host (gifted " + hostGame.World.GetCountry(tags[1])!.Vars.Get("gifted") + ")");
+            Check(client.Game!.World.GetCountry(tags[1])!.Vars.Get("gifted") == 25 && client.Game!.World.GetCountry(tags[1])!.Gold == hostGame.World.GetCountry(tags[1])!.Gold, "same result on the client");
             host.SetPaused(true); Until(() => client.Tick == host.Tick && client.Paused, 600);
             Check(client.Tick == host.Tick && StateChecksum.Compute(hostGame) == StateChecksum.Compute(client.Game!), "checksums equal after the mod message");
             host.Leave(); client.Leave();

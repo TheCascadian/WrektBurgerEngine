@@ -1016,6 +1016,10 @@ public sealed class TradeNetworkSystem
         {
             var n = root.AddBlock("agreement"); n.Add("from", agreement.From.Tag); n.Add("to", agreement.To.Tag); n.Add("commodity", agreement.Commodity, true); n.Add("monthly_quantity", F(agreement.MonthlyQuantity)); n.Add("tariff_discount", F(agreement.TariffDiscount)); n.Add("transport_discount", F(agreement.TransportDiscount)); n.Add("expires", agreement.ExpiresDay.ToString(CultureInfo.InvariantCulture));
         }
+        // capacity the commodities settled so far this month already used up: the rest of the settlement must see the same
+        foreach (var (key, use) in _routeUse) { var n = root.AddBlock("route_use"); n.Add("key", key, true); n.Add("amount", F(use)); }
+        for (int i = 0; i < Agreements.Count; i++)
+            if (_agreementUse.TryGetValue(Agreements[i], out var au)) { var n = root.AddBlock("agreement_use"); n.Add("index", i.ToString(CultureInfo.InvariantCulture)); n.Add("amount", F(au)); }
         // Multiplayer join/resync saves have a bounded wire budget; keep a recent audit window,
         // while the live session retains the full bounded history for the ledger.
         foreach (var transaction in History.TakeLast(50))
@@ -1047,6 +1051,10 @@ public sealed class TradeNetworkSystem
         foreach (var n in root.GetAll("agreement"))
             if (_game.World.GetCountry(n.GetString("from")) is { } from && _game.World.GetCountry(n.GetString("to")) is { } to)
                 Agreements.Add(new TradeAgreement { From = from, To = to, Commodity = n.GetString("commodity", "")!, MonthlyQuantity = n.GetDouble("monthly_quantity"), TariffDiscount = n.GetDouble("tariff_discount", 0.5), TransportDiscount = n.GetDouble("transport_discount", 0.1), ExpiresDay = n.GetInt("expires", _game.World.Date.TotalDays) });
+        _routeUse.Clear(); _agreementUse.Clear();
+        foreach (var n in root.GetAll("route_use")) _routeUse[n.GetString("key", "")!] = n.GetDouble("amount");
+        foreach (var n in root.GetAll("agreement_use"))
+            if (n.GetInt("index", -1) is >= 0 and var ix && ix < Agreements.Count) _agreementUse[Agreements[ix]] = n.GetDouble("amount");
         foreach (var n in root.GetAll("transaction"))
             if (_game.World.GetCountry(n.GetString("seller")) is { } seller
                 && _game.World.GetCountry(n.GetString("buyer")) is { } buyer

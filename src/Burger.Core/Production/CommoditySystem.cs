@@ -462,6 +462,12 @@ public sealed class CommoditySystem
         root.Add("settlement_started", _settlementStarted ? "1" : "0");
         root.Add("settlement_complete", _settlementComplete ? "1" : "0");
         root.Add("settlement_index", _settlementIndex.ToString(CultureInfo.InvariantCulture));
+        foreach (var (c, used) in _usedThisMonth.OrderBy(x => x.Key.Tag, StringComparer.Ordinal))
+        {
+            var n = root.AddBlock("used");
+            n.Add("tag", c.Tag);
+            foreach (var (k, v) in used.OrderBy(x => x.Key, StringComparer.Ordinal)) n.Add("use_" + k, F(v));
+        }
         foreach (var (c, books) in Books)
         {
             var n = root.AddBlock("country");
@@ -502,6 +508,13 @@ public sealed class CommoditySystem
             if (_settlementIndex >= _settlementCommodities.Count)
                 _settlementComplete = true;
         }
+        foreach (var n in root.GetAll("used"))
+            if (_game.World.GetCountry(n.GetString("tag")) is { } uc)
+            {
+                var d = _usedThisMonth[uc] = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in n.All)
+                    if (kv.Key.StartsWith("use_", StringComparison.OrdinalIgnoreCase)) d[kv.Key[4..]] = kv.AsDouble();
+            }
         foreach (var n in root.GetAll("country"))
         {
             var c = _game.World.GetCountry(n.GetString("tag"));

@@ -18,7 +18,7 @@ public static class SaveGuard
     private static readonly HashSet<string> BaseBlocks = new(StringComparer.Ordinal)
     {
         "meta", "countries", "states", "locations", "characters", "armies", "divisions", "battles", "wars", "generic_scopes", "scope_hierarchy",
-        "relations", "modifiers", "scheduled_events",
+        "relations", "modifiers", "scheduled_events", "fused",
     };
 
     public const int MaxKeyLength = 128;
@@ -83,10 +83,9 @@ public static class SaveGuard
         if (n.Value != null)
         {
             CheckText(n.Value);
-            // numbers must be finite: NaN or infinity would poison every later sum
-            if (Node.TryParseDouble(n.Value, out double d) && !double.IsFinite(d)) throw new InvalidDataException("non-finite number");
-            string low = n.Value;
-            if (low.Length is >= 3 and <= 9 && (low.Equals("nan", StringComparison.OrdinalIgnoreCase) || low.Contains("infinity", StringComparison.OrdinalIgnoreCase) || low.Equals("-inf", StringComparison.OrdinalIgnoreCase)))
+            // numbers must be finite: NaN or infinity would poison every later sum. Only the exact spellings a game writes count,
+            // so a name such as "Nan" (a family) or the tag NAN passes
+            if (n.Value is "NaN" or "Infinity" or "-Infinity" or "+Infinity")
                 throw new InvalidDataException("non-finite number");
         }
         if (n.Children != null) foreach (var c in n.Children) Walk(c, depth + 1);

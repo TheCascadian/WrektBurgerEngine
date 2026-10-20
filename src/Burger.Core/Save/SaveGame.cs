@@ -76,7 +76,12 @@ public static class SaveGame
         }
 
         var fused = root.AddBlock("fused");
-        foreach (var g in game.Timeline.FusedGroups) fused.AddItem(string.Join("+", g));
+        foreach (var g in game.Timeline.FusedGroups)
+        {
+            // one block a group, one key an item: a joined key can pass the key length a save reader allows
+            var gb = fused.AddBlock("g");
+            foreach (var key in g) gb.AddItem(key);
+        }
         var states = root.AddBlock("states");
         foreach (var s in w.States)
         {
@@ -393,7 +398,10 @@ public static class SaveGame
     {
         var w = game.World;
         {   // the states that the start date of the saved game fused are fused first
-            var groups = (root.Get("fused")?.Items() ?? Enumerable.Empty<string>()).Select(x => x.Split('+')).Where(g => g.Length >= 2).ToList();
+            var fusedNode = root.Get("fused");
+            var groups = (fusedNode?.Items() ?? Enumerable.Empty<string>()).Select(x => x.Split('+'))
+                .Concat((fusedNode?.GetAll("g") ?? Enumerable.Empty<Node>()).Select(b => b.Items().ToArray()))
+                .Where(g => g.Length >= 2).ToList();
             if (groups.Count > 0) game.Timeline.FuseKeys(groups);
         }
         var data = game.Data;

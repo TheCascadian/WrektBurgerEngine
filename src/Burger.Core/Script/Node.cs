@@ -157,10 +157,14 @@ public sealed class Node
         s = s.Trim();
         if (s.EndsWith("%")) // allow 50% → 0.5
         {
-            if (double.TryParse(s[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out d)) { d /= 100.0; return true; }
+            if (double.TryParse(s[..^1], NumberStyles.Float, CultureInfo.InvariantCulture, out d) && double.IsFinite(d)) { d /= 100.0; return true; }
+            d = 0;
             return false;
         }
-        return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d);
+        // "NAN" is also a country tag, so the words nan and infinity are not numbers here, and neither is an overflow
+        if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out d) && double.IsFinite(d)) return true;
+        d = 0;
+        return false;
     }
 
     /// <summary>Deep copy.</summary>

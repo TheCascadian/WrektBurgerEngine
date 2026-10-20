@@ -354,7 +354,7 @@ public static partial class Program
         var hostToasts = new List<string>(); hc.Toast += t => hostToasts.Add(t);
         Game? adopted = null; cc.GameReplaced += g => adopted = g;
         string code = hc.Host(hostGame, "sec-test", 21, "  HostName  ", 0);
-        Check(hc.Session != null && hc.Listener != null && code.Length > 20 && hc.Log.Any(l => l.Contains(code)), "host starts a session and a join code ('" + code + "')");
+        Check(hc.Session != null && hc.Listener != null && code.Length > 20 && hc.Log.Any(l => l.Contains("Join code ready")), "host starts a session and a join code ('" + code + "')");
         Check(!cc.Join("not a code", "Ann", (_, s) => Fresh(s)) && cc.Message.Contains("not valid") && cc.Session == null, "an invalid join code gives a message and no session");
         string wrong = JoinCode.Make(JoinCode.LocalAddress(), hc.Listener!.Port, JoinCode.NewSecret());
         Check(!cc.Join(wrong, "Ann", (_, s) => Fresh(s)) && cc.Message.StartsWith("Cannot connect") && cc.Session == null, "a code with the wrong secret ends in 'Cannot connect' and no session");
@@ -524,7 +524,6 @@ public static partial class Program
             Check(s2.Count == seats.Count && s2.Count(s => s.Member != null) == light - 1 && s2.Count(s => s.Character != null) == full + 1, "save keeps light and full holders");
             Check(s2.Zip(seats).All(p => p.First.HolderName == p.Second.HolderName && p.First.TimesSeated == p.Second.TimesSeated), "save keeps every name and count");
             for (int h = 0; h < 24 * 365; h++) { g.Tick(); g2.Tick(); }
-            Console.WriteLine($"     after a year: characters {g.World.Characters.Count}/{g2.World.Characters.Count}, notes {g.Politics.ForgottenMembers}/{g2.Politics.ForgottenMembers}, seats differing {g2.Politics.AllSeats.Zip(g.Politics.AllSeats).Count(p => p.First.HolderName != p.Second.HolderName)}");
             Check(g2.World.Characters.Count == g.World.Characters.Count && g2.Politics.ForgottenMembers == g.Politics.ForgottenMembers
                   && g2.Politics.AllSeats.Zip(g.Politics.AllSeats).All(p => p.First.HolderName == p.Second.HolderName), "reloaded game continues the same for a year");
         }

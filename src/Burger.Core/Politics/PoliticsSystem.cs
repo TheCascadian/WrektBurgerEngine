@@ -952,7 +952,6 @@ public sealed partial class PoliticsSystem
         foreach (var key in _pendingUnlocks.OrderBy(k => k, StringComparer.Ordinal)) root.Add("pending_unlock", key);
         foreach (var (c, p) in _state.OrderBy(k => k.Key.Tag, StringComparer.Ordinal))
         {
-            if (!c.Exists && !c.Dynamic) continue;
             var n = root.AddBlock("country");
             n.Add("tag", c.Tag);
             n.Add("ruling_party", p.Ruling);

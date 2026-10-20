@@ -591,6 +591,16 @@ public static partial class Program
         long allocAtStart = GC.GetTotalAllocatedBytes(), gc0Start = GC.CollectionCount(0), gc2Start = GC.CollectionCount(2);
         bool streamed = args.Contains("--stream"); // tick the way the live clock does (monthly work streamed over days)
         bool traceDone = false;
+        if (args.Contains("--reload-start")) // a joining client loads the host's save at tick 0
+        {
+            string startPath = Path.Combine(Path.GetTempPath(), $"burger_reload_{Environment.ProcessId}.sav");
+            SaveGame.Save(game, startPath);
+            reloaded = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
+            reloaded.StartNewGame(null);
+            SaveGame.Load(reloaded, startPath);
+            try { File.Delete(startPath); } catch { }
+            Console.WriteLine($"RELOAD|0|{StateDigest(reloaded)} vs {StateDigest(game)}");
+        }
         for (int d = 0; d < days; d++)
         {
             if (reloaded != null && args.Contains("--reload-trace") && !(reloadAt > 0 && d + 1 == reloadAt))
@@ -598,7 +608,7 @@ public static partial class Program
                 // tick the original and the reloaded game hour by hour and report the first hour they part
                 for (int h = 0; h < 24; h++)
                 {
-                    game.Tick(); reloaded.Tick();
+                    if (streamed) { game.TickLive(); reloaded.TickLive(); } else { game.Tick(); reloaded.Tick(); }
                     if (traceDone || StateDigest(game) == StateDigest(reloaded)) continue;
                     Console.WriteLine($"TRACE|{game.World.Date.ToDisplay()} {game.World.Date.Hour}h|{StateDigestDiff(game, reloaded)}"); traceDone = true;
                 }
@@ -622,7 +632,7 @@ public static partial class Program
             }
             else if (reloaded != null)
             {
-                for (int h = 0; h < 24; h++) reloaded.Tick();
+                for (int h = 0; h < 24; h++) { if (streamed) reloaded.TickLive(); else reloaded.Tick(); }
                 if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
             }
             if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"DIGEST|{d + 1}|{StateDigest(game)}");
@@ -1306,7 +1316,7 @@ public static partial class Program
         Check(P.ModifierSources(country).Any(x => x.Source == "Party infighting" && x.Value < 0), "infighting shows up as a named stability source");
         state.LastElection = world.Date.AddMonths(-24);
         int heldAfter = P.ElectionsHeld;
-        if (P.HoldsElections(country)) { P.MonthlyTick(); Check(P.ElectionsHeld > heldAfter, "a collapsed government is sent back to the voters"); }
+        if (P.HoldsElections(country)) { state.RegimeChangedDay = int.MinValue / 2; P.MonthlyTick(); Check(P.ElectionsHeld > heldAfter, "a collapsed government is sent back to the voters"); }
         // ---- reshaping the party: favour, sideline, coalition, splintering
         state.RulingOrganization = pa.Key; state.GovernmentOrganizations = new() { pa.Key }; state.Government = new() { ideology };
         foreach (var f in new[] { fa1, fa2 }) { f.Vars.Set("loyalty", 60); f.Vars.Set("grievance", 0); f.Vars.Set("favoured_day", -9999); f.Attributes["weight"] = f == fa1 ? "3" : "1"; }

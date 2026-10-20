@@ -38,6 +38,7 @@ public sealed class CultureSystem
     private readonly Dictionary<string, List<string>> _baseTraditions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, int> _mixMonths = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
+    private long _modsHour = long.MinValue;
     /// <summary>Cultures that appeared during the game, newest last (for the culture card).</summary>
     public readonly List<string> Evolved = new();
 
@@ -102,7 +103,7 @@ public sealed class CultureSystem
     {
         var res = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         double total = 0;
-        foreach (var s in c.OwnedStates)
+        foreach (var s in c.OwnedStates.OrderBy(x => x.Key, StringComparer.Ordinal))
         {
             if (!_game.Population.HasPops(s)) continue;
             foreach (var p in _game.Population.Of(s).Pops) { res[p.Culture] = res.GetValueOrDefault(p.Culture) + p.Size; total += p.Size; }
@@ -129,7 +130,7 @@ public sealed class CultureSystem
     private Dictionary<string, double> ComputeFor(Country c)
     {
         var m = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (culture, share) in Shares(c)) SocietyData.Add(m, ModifiersOf(culture), share);
+        foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, ModifiersOf(culture), share);
         return m;
     }
 
@@ -137,6 +138,8 @@ public sealed class CultureSystem
     public double ModifierValue(IScope scope, string key)
     {
         if (!Enabled || scope is not Country c || !c.Exists) return 0;
+        long now = _game.World.Date.TotalHours;
+        if (now != _modsHour) { _mods.Clear(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
         if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);
         return m.GetValueOrDefault(key);
     }
