@@ -548,8 +548,11 @@ public sealed class Game
             ProfileBytes.AddOrUpdate(name, GC.GetAllocatedBytesForCurrentThread() - b0, (_, v) => v + GC.GetAllocatedBytesForCurrentThread() - b0);
             long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
             double ms = elapsed * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-            ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
-            if (ms > ProfileMaxMs.GetValueOrDefault(name)) ProfileMaxMs[name] = ms;
+            lock (ProfileMs)   // (the per-country AI may profile from several threads)
+            {
+                ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
+                if (ms > ProfileMaxMs.GetValueOrDefault(name)) ProfileMaxMs[name] = ms;
+            }
             _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsed);
         }
     }

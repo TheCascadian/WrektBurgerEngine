@@ -1,0 +1,9 @@
+# Parallelism determinism scorecard for World500BCE. Run: burger validate-par projects/World500BCE --seeds 1,2 --days 62 --every 31
+# Every band is 1.0-1.0: parallel AI must end in exactly the serial state.
+
+serial_eq_parallel_final = { kind = par_equal a = serial b = parallel at = final expect = 1.0-1.0 note = "serial = parallel at final" priority = 5 }
+parallel_eq_parallel2_final = { kind = par_equal a = parallel b = parallel2 at = final expect = 1.0-1.0 note = "parallel = parallel2 at final" priority = 5 }
+serial_eq_reload_final = { kind = par_equal a = serial b = reload at = final expect = 1.0-1.0 note = "serial = reload at final" priority = 5 }
+serial_eq_parallel_31 = { kind = par_equal a = serial b = parallel at = 31 expect = 1.0-1.0 note = "serial = parallel at 31" priority = 5 }
+parallel_eq_parallel2_31 = { kind = par_equal a = parallel b = parallel2 at = 31 expect = 1.0-1.0 note = "parallel = parallel2 at 31" priority = 5 }
+serial_eq_reload_31 = { kind = par_equal a = serial b = reload at = 31 expect = 1.0-1.0 note = "serial = reload at 31" priority = 5 }

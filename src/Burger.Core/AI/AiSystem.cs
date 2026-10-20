@@ -156,10 +156,10 @@ public class AiSystem
     }
 
     /// <summary>Runs <paramref name="work"/> over the given countries, in parallel unless <see cref="Parallelism"/> is 1.</summary>
-    private void ForEachAi(List<Country> countries, Action<Country> work)
+    private void ForEachAi(List<Country> countries, Action<Country> work, bool serialOnly = false)
     {
         if (countries.Count == 0) return;
-        if (Parallelism == 1 || countries.Count == 1)
+        if (serialOnly || Parallelism == 1 || countries.Count == 1)
         {
             foreach (var c in countries) WithAiStream(c, work);
             return;
@@ -285,7 +285,7 @@ public class AiSystem
             if ((day + c.Index) % 2 == 0 && military) Game.P("Ai.Military", () => ManageMilitary(c, new AiRng(Game, rng)));
             if ((day + c.Index) % 2 == 1 && navy) Game.P("Ai.Fleets", () => MoveFleets(c));
             if (air) Game.P("Ai.Air", () => AssignAirWings(c));
-        });
+        }, serialOnly: true);   // armies, fleets and air wings move shared divisions and location indexes: always in country order
     }
 
     private int _sliceDay = -1;

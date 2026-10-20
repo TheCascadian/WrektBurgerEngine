@@ -235,23 +235,34 @@ public sealed class WarfareSystem
     }
 
     // path finding scratch arrays (reused between calls; a generation number marks what this call has touched)
-    private double[] _pfCost = Array.Empty<double>();
-    private int[] _pfCame = Array.Empty<int>(), _pfGen = Array.Empty<int>(), _pfEnterGen = Array.Empty<int>();
-    private bool[] _pfEnter = Array.Empty<bool>();
-    private int _pfGeneration;
-    private readonly PriorityQueue<(Location Loc, double Cost), double> _pfOpen = new();
+    // one set per thread: the per-country AI may search paths in parallel
+    private sealed class PfScratch
+    {
+        public double[] Cost = Array.Empty<double>();
+        public int[] Came = Array.Empty<int>(), Gen = Array.Empty<int>(), EnterGen = Array.Empty<int>();
+        public bool[] Enter = Array.Empty<bool>();
+        public int Generation;
+        public readonly PriorityQueue<(Location Loc, double Cost), double> Open = new();
+        public readonly Queue<Location> ReachQueue = new();
+    }
+    [ThreadStatic] private static PfScratch? _pfScratch;
+    private static PfScratch Pf => _pfScratch ??= new PfScratch();
 
     // per country: connected regions of the land it may enter, found as asked (a region is flooded the first time a path starts in it) and kept for the day or until wars change.
     // Lets FindPath reject unreachable targets at once instead of searching the whole continent.
     private sealed class ReachInfo { public int Day, Wars, Next; public int[] Region = Array.Empty<int>(); public sbyte[] Enter = Array.Empty<sbyte>(); }
-    private readonly Dictionary<Country, ReachInfo> _reach = new();
-    private readonly Queue<Location> _reachQueue = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Country, ReachInfo> _reach = new();
 
     private bool Reachable(Country c, Location from, Location to)
     {
-        int day = _game.World.Date.TotalDays, wars = _game.World.Wars.Count;
+        int day = _game.World.Date.TotalDays;
         int n = _game.World.Locations.Count;
-        if (!_reach.TryGetValue(c, out var r)) _reach[c] = r = new ReachInfo();
+        var r = _reach.GetOrAdd(c, _ => new ReachInfo());
+        lock (r) return ReachableIn(r, c, from, to, day, _game.World.Wars.Count, n);
+    }
+
+    private bool ReachableIn(ReachInfo r, Country c, Location from, Location to, int day, int wars, int n)
+    {
         if (r.Day != day || r.Wars != wars || r.Region.Length != n)
         {
             if (r.Region.Length != n) { r.Region = new int[n]; r.Enter = new sbyte[n]; }
@@ -269,7 +280,7 @@ public sealed class WarfareSystem
         {
             int id = r.Next++;
             r.Region[from.Index] = id;
-            var q = _reachQueue;
+            var q = Pf.ReachQueue;
             q.Clear();
             q.Enqueue(from);
             while (q.Count > 0)
@@ -315,12 +326,14 @@ public sealed class WarfareSystem
             if (!reach) { if (_game.Profiling) _game.ProfileCall("Path.Rejected#"); return null; } // walled off by land we may not enter
         }
         int n0 = _game.World.Locations.Count;
-        if (_pfCost.Length != n0)
+        var pf = Pf;
+        if (pf.Cost.Length != n0)
         {
-            _pfCost = new double[n0]; _pfCame = new int[n0]; _pfGen = new int[n0]; _pfEnterGen = new int[n0]; _pfEnter = new bool[n0];
-            _pfGeneration = 0;
+            pf.Cost = new double[n0]; pf.Came = new int[n0]; pf.Gen = new int[n0]; pf.EnterGen = new int[n0]; pf.Enter = new bool[n0];
+            pf.Generation = 0;
         }
-        int gen = ++_pfGeneration;
+        var _pfCost = pf.Cost; var _pfCame = pf.Came; var _pfGen = pf.Gen; var _pfEnterGen = pf.EnterGen; var _pfEnter = pf.Enter;
+        int gen = ++pf.Generation;
         bool Enter(Location l)
         {
             if (_pfEnterGen[l.Index] != gen) { _pfEnterGen[l.Index] = gen; _pfEnter[l.Index] = CanEnter(c, l); }
@@ -330,7 +343,7 @@ public sealed class WarfareSystem
         // A* guidance: land steps cost about distance/speed (sea steps are faster). Weighted above 1 on land:
         // paths can be slightly longer than the very best one, but far fewer locations are searched.
         double heuristic = sea ? 0.3 : 1.5;
-        var open = _pfOpen;
+        var open = pf.Open;
         open.Clear();
         _pfGen[from.Index] = gen; _pfCost[from.Index] = 0; _pfCame[from.Index] = -1;
         open.Enqueue((from, 0), 0);
