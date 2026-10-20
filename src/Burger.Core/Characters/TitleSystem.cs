@@ -140,6 +140,21 @@ public sealed class TitleSystem
         pc.Parent?.Children.Add(t);
     }
 
+    /// <summary>States were fused into others: their counties go, and a capital that was one of them moves to the state it joined.</summary>
+    public void OnStatesFused(HashSet<State> gone)
+    {
+        if (!_built) return;
+        foreach (var o in gone)
+        {
+            if (!_county.Remove(o, out var t)) continue;
+            Titles.Remove(t.Key);
+            t.Parent?.Children.Remove(t);
+            _vassalOf.Remove(o);
+        }
+        foreach (var t in Titles.Values)
+            if (t.Capital != null && gone.Contains(t.Capital) && _game.World.StateByKey.TryGetValue(t.Capital.Key, out var keep)) t.Capital = keep;
+    }
+
     public void OnStateUnsplit(State parent, State child)
     {
         if (!_county.Remove(child, out var t)) return;

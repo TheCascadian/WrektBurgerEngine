@@ -224,7 +224,7 @@ public static partial class Program
                 var offer = new PeaceOffer { War = war, From = attackers[0], To = defenders[0], FromIsWinner = true };
                 g.Diplomacy.ApplyPeace(offer);
                 var conf = g.Conferences.Of(war);
-                Check(conf != null && war.Armistice && !g.World.AtWar(attackers[0], defenders[0]) && conf.Turns.Count == attackers.Count - 1, $"conference: the leaders' peace opens an armistice and a conference with {conf?.Turns.Count ?? 0} turns");
+                Check(conf != null && war.Armistice && !g.World.AtWar(attackers[0], defenders[0]) && conf.Turns.Count == war.SideOf(attackers[0]).Count(x => x != attackers[0] && x.Exists), $"conference: the leaders' peace opens an armistice and a conference with {conf?.Turns.Count ?? 0} turns");
                 Check(conf != null && conf.Turns.Zip(conf.Turns.Skip(1), (x, y) => g.Diplomacy.Strength(x.Winner) >= g.Diplomacy.Strength(y.Winner) && x.Day < y.Day).All(v => v), "conference: the largest winner goes first and turns are three days apart");
                 Check(conf != null && g.Diplomacy.InvalidReason(offer) != null, "conference: no new peace is made during the armistice");
                 if (conf != null)
@@ -302,7 +302,7 @@ public static partial class Program
             var g = Fresh();
             var T = g.Titles;
             var counties = T.TitlesOfTier(TitleTier.County).Count();
-            Check(counties == g.World.States.Count && T.TitlesOfTier(TitleTier.Duchy).Any() && T.TitlesOfTier(TitleTier.Kingdom).Any(), $"titles: {counties} counties, {T.TitlesOfTier(TitleTier.Duchy).Count()} duchies, {T.TitlesOfTier(TitleTier.Kingdom).Count()} kingdoms");
+            Check(counties == g.World.States.Count && T.TitlesOfTier(TitleTier.Duchy).Any() && T.TitlesOfTier(TitleTier.Kingdom).Any(), $"titles: {counties} counties of {g.World.States.Count} states, {T.TitlesOfTier(TitleTier.Duchy).Count()} duchies, {T.TitlesOfTier(TitleTier.Kingdom).Count()} kingdoms");
             var persia = g.World.GetCountry("ACH")!;
             Check(T.Titles.TryGetValue("e_persia", out var emp) && emp.Created && T.HolderOf(emp) == persia.Ruler && emp.Children.Any(c => c.Key == "k_ACH"), "titles: the explicit empire is held by its country's ruler");
             var kingdom = T.Titles["k_ACH"];
@@ -331,6 +331,7 @@ public static partial class Program
             var duchy = T.DuchyOf(county)!;
             var gov = g.Characters.Generate(c, false, 38);
             gov.Stats["finesse"] = 8;
+            T.DismissGovernor(c, duchy);
             double before = g.Modifiers.Sum(county, "tax");
             Check(T.AppointGovernor(c, duchy, gov) == null && T.GovernorOf(c, duchy)?.Governor == gov, "titles: a governor is appointed for a region");
             Check(g.Modifiers.Sum(county, "tax") - before > 0.07, $"titles: a governor adds 1% of tax a point of skill ({g.Modifiers.Sum(county, "tax") - before:+0.00})");

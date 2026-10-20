@@ -65,7 +65,14 @@ public static partial class Program
         int errors = issues.Count(i => i.Severity == GeoSeverity.Error);
         if (errors > 0) return Fail($"{errors} errors; nothing written");
 
-        WriteIfChanged(outFile, BorderCompiler.Geography(set, tl));
+        WriteIfChanged(outFile, BorderCompiler.Geography(set, tl, atoms =>
+        {
+            var locs = atoms.Select(a => g.World.GetLocation(a)).Where(l => l != null).Select(l => l!).ToList();
+            if (locs.Count != atoms.Length || locs.Any(l => l.IsWater)) return new List<string[]> { atoms };
+            var comps = GeoDynamics.Components(locs);
+            if (comps.Count == 1) return new List<string[]> { atoms };
+            return comps.OrderByDescending(c => c.Count).ThenBy(c => c[0].Key, StringComparer.Ordinal).Select(c => c.Select(l => l.Key).ToArray()).ToList();
+        }));
         Console.WriteLine($"{set.AreaOrder.Count} areas, {set.Claims.Count} claims -> {Path.GetRelativePath(project, outFile)}");
         if (snapshot is { } sd)
         {

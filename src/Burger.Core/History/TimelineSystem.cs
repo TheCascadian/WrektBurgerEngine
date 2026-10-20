@@ -280,7 +280,7 @@ public sealed class TimelineSystem
     private void FinishFusing()
     {
         var w = _game.World;
-        if (_gone.Count > 0) { w.States.RemoveAll(_gone.Contains); _gone.Clear(); }   // one pass: removing 30,000 states one by one from a list of 37,000 is slow
+        if (_gone.Count > 0) { _game.Titles.OnStatesFused(_gone); w.States.RemoveAll(_gone.Contains); _gone.Clear(); }   // one pass: removing 30,000 states one by one from a list of 37,000 is slow
         for (int i = 0; i < w.States.Count; i++) w.States[i].Index = i;
         _centre.Clear();
         w.RefreshOwnership();
