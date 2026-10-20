@@ -1,0 +1,24 @@
+# Greece and the Aegean in 500 BCE (and 399 BCE where nothing changed): the city-states and tribes of the mainland drawn as polygons (P name ; from ; to ; lon lat, ...; years astronomical). Where two overlap the smaller wins.
+# Sources: Barrington Atlas of the Greek and Roman World maps 54-61 (Greece), Hansen and Nielsen An Inventory of Archaic and Classical Poleis (territories of the poleis), Hammond A History of Greece to 322 BC, Hammond A History of Macedonia vol.1, Wikipedia articles of each polis and region (territory sections).
+# Sparta holds Laconia and Messenia (the Peloponnesian League is an alliance, not territory); Arcadia is a set of poleis led by Tegea and Mantinea.
+P Sparta ; -499 ; -399 ; 21.6 36.8, 21.65 37.3, 22.0 37.45, 22.3 37.3, 22.55 37.45, 22.85 37.5, 22.95 37.1, 23.2 36.55, 23.2 36.4, 22.5 36.35, 21.9 36.65
+P Argos ; -499 ; -399 ; 22.45 37.55, 22.65 37.8, 23.05 37.75, 23.45 37.55, 23.2 37.3, 22.85 37.3
+P Corinth ; -499 ; -399 ; 22.65 37.85, 22.65 38.05, 23.0 38.15, 23.1 37.9, 22.9 37.8
+P Megara ; -499 ; -399 ; 23.0 37.95, 23.25 38.1, 23.5 38.05, 23.35 37.95
+P Athens ; -499 ; -399 ; 23.25 38.0, 23.55 38.3, 24.0 38.2, 24.03 37.65, 23.6 37.8, 23.4 37.95
+P Thebes ; -499 ; -399 ; 22.6 38.35, 22.85 38.55, 23.4 38.6, 23.9 38.4, 23.7 38.25, 23.3 38.2, 22.9 38.3
+P Phocians ; -499 ; -399 ; 22.2 38.35, 22.45 38.65, 22.9 38.6, 22.9 38.4, 22.55 38.35
+P Locrians ; -499 ; -399 ; 22.5 38.65, 22.7 38.85, 23.3 38.85, 23.1 38.6, 22.9 38.6
+P Chalcis and Eretria ; -499 ; -399 ; 23.0 39.0, 23.7 38.55, 24.5 38.0, 24.6 38.15, 23.9 38.75, 23.3 39.2
+P Elis ; -499 ; -399 ; 21.1 37.55, 21.4 38.0, 21.75 38.0, 21.95 37.8, 21.85 37.4, 21.7 37.3, 21.5 37.35
+P Arcadians ; -499 ; -399 ; 21.9 37.35, 21.85 37.85, 22.4 37.95, 22.55 37.6, 22.4 37.45, 22.0 37.4
+P Achaeans ; -499 ; -399 ; 21.6 38.05, 22.0 38.3, 22.65 38.2, 22.65 38.0, 22.0 37.95
+P Aetolians ; -499 ; -399 ; 21.0 38.45, 21.3 38.95, 22.0 38.9, 22.2 38.45, 21.5 38.3
+P Acarnanians ; -499 ; -399 ; 20.55 38.35, 20.6 39.0, 21.2 39.0, 21.1 38.4
+P Thessalians ; -499 ; -399 ; 21.5 39.4, 21.6 39.9, 22.4 40.0, 22.9 39.7, 23.1 39.3, 22.8 39.0, 22.2 39.1, 21.7 39.1
+P Molossians and Chaonians ; -499 ; -399 ; 19.9 39.3, 20.0 40.3, 20.7 40.5, 21.2 40.0, 21.1 39.3, 20.5 39.1
+P Macedon ; -499 ; -399 ; 21.8 40.2, 21.9 40.7, 22.6 40.85, 23.0 40.65, 23.0 40.35, 22.6 40.1
+P Chalcidians ; -499 ; -399 ; 23.0 40.0, 23.0 40.6, 23.9 40.5, 24.1 40.2, 23.9 39.95, 23.4 40.1
+P Lyncestae and Upper Macedonians ; -499 ; -399 ; 20.9 40.4, 21.0 41.0, 21.9 41.0, 21.8 40.4
+P Paeonians ; -499 ; -399 ; 21.8 41.0, 22.0 41.9, 22.9 41.9, 23.2 41.2, 22.6 40.85
+P Edonians and Bisaltae ; -499 ; -399 ; 23.0 40.65, 23.2 41.2, 24.0 41.3, 24.3 40.8, 23.9 40.5

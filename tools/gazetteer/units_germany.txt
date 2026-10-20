@@ -1,0 +1,75 @@
+# Germany, Austria, the Low Countries and Switzerland, built from the states and provinces of Natural Earth (public domain). The later line wins where two overlap.
+# Sources: Putzger Historischer Weltatlas, Atlas of Medieval Europe, Spruner-Menke Handatlas, Wikipedia articles of each duchy, march, county and bishopric; each realm holds the units that cover its lands on 1 January.
+# --- 1000 to 1100: the stem duchies of the Kingdom of Germany
+U Bavaria ; 1000 ; 1100 ; DEU:Bavaria, AUT:Upper Austria, AUT:Salzburg, AUT:Tyrol
+U March of Austria ; 1000 ; 1100 ; AUT:Lower Austria
+U Duchy of Carinthia ; 1000 ; 1000 ; AUT:Carinthia, AUT:Styria
+U Duchy of Carinthia ; 1100 ; 1100 ; AUT:Carinthia
+U March of Styria ; 1100 ; 1100 ; AUT:Styria
+U Hungary ; 1000 ; 1100 ; AUT:Burgenland
+U Saxony ; 1000 ; 1100 ; DEU:Lower Saxony, DEU:Saxony-Anhalt, DEU:Schleswig-Holstein, DEU:Free Hanseatic Bremen, DEU:Mecklenburg-Western Pomerania, NLD:Groningen, NLD:Drenthe, NLD:Overijssel
+U Swabia ; 1000 ; 1100 ; DEU:Baden-Württemberg, CHE, AUT:Vorarlberg
+U Franconia ; 1000 ; 1100 ; DEU:Hesse, DEU:Rhineland-Palatinate, DEU:Saarland
+U Lorraine ; 1000 ; 1100 ; BEL:Liège, BEL:Namur, BEL:Hainaut, BEL:Luxembourg, BEL:Antwerp, BEL:Limburg, BEL:Flemish Brabant, BEL:Walloon Brabant, NLD:Limburg, NLD:North Brabant, NLD:Gelderland, NLD:Utrecht, DEU:North Rhine-Westphalia
+U Thuringia ; 1000 ; 1100 ; DEU:Thuringia
+U Flanders ; 1000 ; 1100 ; BEL:West Flanders, BEL:East Flanders, NLD:Zeeland
+U Holland ; 1000 ; 1100 ; NLD:North Holland, NLD:South Holland, NLD:Friesland, NLD:Flevoland
+U Saxony ; 1000 ; 1100 ; DEU:Saxony, DEU:Brandenburg, DEU:Berlin
+# --- 1200 and 1279
+U Duchy of Bavaria ; 1200 ; 1300 ; DEU:Bavaria, AUT:Upper Austria
+U Duchy of Austria ; 1200 ; 1300 ; AUT:Lower Austria, AUT:Styria, AUT:Burgenland
+U Carinthia ; 1200 ; 1300 ; AUT:Carinthia
+U Archbishopric of Salzburg ; 1200 ; 1300 ; AUT:Salzburg
+U Tyrol ; 1200 ; 1300 ; AUT:Tyrol, AUT:Vorarlberg
+U Swabia ; 1200 ; 1279 ; DEU:Baden-Württemberg
+U Swiss Confederacy ; 1300 ; 1492 ; CHE
+U Burgundy ; 1200 ; 1300 ; CHE:Geneva, CHE:Vaud, CHE:Valais, CHE:Fribourg, CHE:Neuchâtel
+U Palatinate ; 1200 ; 1492 ; DEU:Rhineland-Palatinate
+U Archbishopric of Cologne ; 1200 ; 1300 ; DEU:North Rhine-Westphalia
+U Landgraviate of Hesse ; 1200 ; 1492 ; DEU:Hesse
+U Thuringia ; 1200 ; 1300 ; DEU:Thuringia
+U Margraviate of Meissen ; 1200 ; 1300 ; DEU:Saxony
+U Saxony ; 1200 ; 1300 ; DEU:Saxony-Anhalt
+U Welf Lands ; 1200 ; 1300 ; DEU:Lower Saxony
+U Brandenburg ; 1200 ; 1492 ; DEU:Brandenburg, DEU:Berlin
+U Mecklenburg ; 1200 ; 1492 ; DEU:Mecklenburg-Western Pomerania
+U Holstein ; 1200 ; 1492 ; DEU:Schleswig-Holstein
+U Lorraine ; 1200 ; 1300 ; DEU:Saarland
+U Flanders ; 1200 ; 1300 ; BEL:West Flanders, BEL:East Flanders
+U Brabant ; 1200 ; 1400 ; BEL:Antwerp, BEL:Flemish Brabant, BEL:Walloon Brabant, NLD:North Brabant
+U Hainaut ; 1200 ; 1300 ; BEL:Hainaut, BEL:Namur
+U Prince-Bishopric of Liège ; 1200 ; 1492 ; BEL:Liège, BEL:Limburg
+U Luxembourg ; 1200 ; 1492 ; BEL:Luxembourg
+U Holland ; 1200 ; 1492 ; NLD:North Holland, NLD:South Holland, NLD:Zeeland
+U Guelders ; 1200 ; 1492 ; NLD:Gelderland, NLD:Limburg
+U Utrecht ; 1200 ; 1492 ; NLD:Utrecht, NLD:Overijssel
+U Frisians ; 1200 ; 1300 ; NLD:Friesland, NLD:Groningen, NLD:Drenthe, NLD:Flevoland
+# --- 1400 and 1492
+U Habsburg Austria ; 1400 ; 1492 ; AUT
+U Duchy of Bavaria ; 1400 ; 1492 ; DEU:Bavaria
+U Württemberg ; 1400 ; 1492 ; DEU:Baden-Württemberg
+U Electorate of Saxony ; 1400 ; 1492 ; DEU:Saxony, DEU:Saxony-Anhalt, DEU:Thuringia
+U Brunswick-Lüneburg ; 1400 ; 1492 ; DEU:Lower Saxony
+U Archbishopric of Cologne ; 1400 ; 1492 ; DEU:North Rhine-Westphalia
+U Burgundian Netherlands ; 1492 ; 1492 ; BEL:West Flanders, BEL:East Flanders, BEL:Hainaut, BEL:Namur, BEL:Antwerp, BEL:Flemish Brabant, BEL:Walloon Brabant, NLD:North Brabant, NLD:Zeeland, NLD:North Holland, NLD:South Holland, NLD:Gelderland, NLD:Utrecht, NLD:Friesland, NLD:Groningen, NLD:Overijssel, NLD:Drenthe, NLD:Flevoland, NLD:Limburg
+U Lorraine ; 1400 ; 1492 ; DEU:Saarland
+U Free Hanseatic Bremen ; 1400 ; 1492 ; DEU:Free Hanseatic Bremen
+U Flanders ; 1400 ; 1400 ; BEL:West Flanders, BEL:East Flanders
+U Brabant ; 1400 ; 1400 ; BEL:Antwerp, BEL:Flemish Brabant, BEL:Walloon Brabant, NLD:North Brabant
+U Hainaut ; 1400 ; 1400 ; BEL:Hainaut, BEL:Namur, NLD:Zeeland, NLD:North Holland, NLD:South Holland
+U Guelders ; 1400 ; 1400 ; NLD:Gelderland, NLD:Limburg
+U Utrecht ; 1400 ; 1400 ; NLD:Utrecht, NLD:Overijssel
+U Frisians ; 1400 ; 1400 ; NLD:Friesland, NLD:Groningen, NLD:Drenthe, NLD:Flevoland
+# --- the Habsburg lands before and after the Austrian Empire (1804); Salzburg was a prince-archbishopric until 1803
+U Archbishopric of Salzburg ; 1400 ; 1800 ; AUT:Salzburg
+U Archduchy of Austria ; 1500 ; 1600 ; AUT:Lower Austria, AUT:Upper Austria, AUT:Styria, AUT:Carinthia, AUT:Tyrol, AUT:Vorarlberg, AUT:Burgenland
+U Habsburg Monarchy ; 1650 ; 1800 ; AUT:Lower Austria, AUT:Upper Austria, AUT:Styria, AUT:Carinthia, AUT:Tyrol, AUT:Vorarlberg, AUT:Burgenland
+# 1938 began with Austria still independent (the Anschluss was in March) and 1945 with it still part of Germany (until April)
+U Austria ; 1938 ; 1938 ; AUT
+U Germany ; 1945 ; 1945 ; AUT
+# 1 January 1938: the dataset's map of 1938 is that of the end of the year (the Anschluss in March, the Sudetenland in October); at the start of the year Czechoslovakia is whole
+U Czechoslovakia ; 1938 ; 1938 ; CZE, SVK, UKR:Zakarpattia
+U Italy ; 1938 ; 1938 ; ITA
+U Hungary ; 1938 ; 1938 ; HUN
+U Switzerland ; 1938 ; 1938 ; CHE
+U Yugoslavia ; 1938 ; 1938 ; SVN

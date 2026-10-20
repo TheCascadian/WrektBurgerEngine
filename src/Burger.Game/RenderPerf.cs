@@ -16,11 +16,13 @@ internal sealed class RenderPerf
     private long _stageStart, _allocated;
     private TimeSpan _pauseStart;
     private int _stage;
+    private long _stageAlloc;
+    private readonly double[] _allocByStage = new double[Names.Length];
 
     public void Begin()
     {
         _stageStart = Stopwatch.GetTimestamp();
-        _allocated = GC.GetAllocatedBytesForCurrentThread();
+        _allocated = _stageAlloc = GC.GetAllocatedBytesForCurrentThread();
         _pauseStart = GC.GetTotalPauseDuration();
         _stage = 0;
     }
@@ -29,6 +31,7 @@ internal sealed class RenderPerf
     {
         long now = Stopwatch.GetTimestamp();
         _samples[_stage][_next] = (now - _stageStart) * 1000.0 / Stopwatch.Frequency;
+        long al = GC.GetAllocatedBytesForCurrentThread(); _allocByStage[_stage] += (al - _stageAlloc) / 1024.0; _stageAlloc = al;
         _stage = nextStage;
         _stageStart = now;
     }
@@ -37,6 +40,7 @@ internal sealed class RenderPerf
     {
         long now = Stopwatch.GetTimestamp();
         _samples[_stage][_next] = (now - _stageStart) * 1000.0 / Stopwatch.Frequency;
+        _allocByStage[_stage] += (GC.GetAllocatedBytesForCurrentThread() - _stageAlloc) / 1024.0;
         _frameMs[_next] = raylibFrameMs;
         _allocKb[_next] = (GC.GetAllocatedBytesForCurrentThread() - _allocated) / 1024.0;
         _gcPauseMs[_next] = (GC.GetTotalPauseDuration() - _pauseStart).TotalMilliseconds;
@@ -65,9 +69,10 @@ internal sealed class RenderPerf
             $"frame {P(_frameMs)} n={_count}", $"avg FPS {_count / windowSeconds:0.0}", $"alloc {Enumerable.Range(0, _count).Average(i => _allocKb[i]):0.0} KB/frame", $"GC Δ {gc0}/{gc1}/{gc2}, pause {Enumerable.Range(0, _count).Sum(i => _gcPauseMs[i]):0.0} ms"
         };
         for (int s = 0; s < Names.Length; s++) parts.Add($"{Names[s]} {P(_samples[s])}");
+        parts.Add("KB/frame by stage " + string.Join(" ", Names.Select((n, i) => $"{n} {_allocByStage[i] / Math.Max(1, _count):0}")));
         parts.Add($"simulation {simMs / Math.Max(1, simFrames):0.0} ms/frame");
         return string.Join("; ", parts);
     }
 
-    public void Clear() { _count = 0; _next = 0; }
+    public void Clear() { _count = 0; _next = 0; Array.Clear(_allocByStage); }
 }

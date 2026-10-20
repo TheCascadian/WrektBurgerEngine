@@ -105,7 +105,7 @@ public static class CommandExecutor
             }
             case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
             case GameCommand.Develop:
-                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } ds && g.Development.Develop(country, ds) == null;
+                return g.World.GetState(A(0)) is { } ds && g.Development.Develop(country, ds) == null;
             case GameCommand.Reform:
                 return g.Reforms.Reforms.TryGetValue(A(0), out var rf) && (A(1) == "0" ? g.Reforms.Drop(country, rf) : g.Reforms.Adopt(country, rf)) == null;
             case GameCommand.QueueProduction:
@@ -162,7 +162,7 @@ public static class CommandValidator
                 return enemy != null && w.WarBetween(country, enemy) != null ? null : "not at war with that country";
             }
             case GameCommand.Develop:
-                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
+                return args.Length == 1 && g.World.GetState(A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
             case GameCommand.Reform:
                 if (args.Length != 2 || (A(1) != "0" && A(1) != "1") || !g.Reforms.Reforms.TryGetValue(A(0), out var vr)) return "no such reform";
                 return A(1) == "0" ? g.Reforms.CannotDrop(country, vr) : g.Reforms.CannotAdopt(country, vr);

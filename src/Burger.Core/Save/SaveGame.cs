@@ -75,6 +75,8 @@ public static class SaveGame
             }
         }
 
+        var fused = root.AddBlock("fused");
+        foreach (var g in game.Timeline.FusedGroups) fused.AddItem(string.Join("+", g));
         var states = root.AddBlock("states");
         foreach (var s in w.States)
         {
@@ -387,6 +389,10 @@ public static class SaveGame
     public static void Load(Game game, Node root)
     {
         var w = game.World;
+        {   // the states that the start date of the saved game fused are fused first
+            var groups = (root.Get("fused")?.Items() ?? Enumerable.Empty<string>()).Select(x => x.Split('+')).Where(g => g.Length >= 2).ToList();
+            if (groups.Count > 0) game.Timeline.FuseKeys(groups);
+        }
         var data = game.Data;
         var meta = root.Get("meta") ?? throw new InvalidDataException("Not a BurgerEngine save (no meta block)");
 

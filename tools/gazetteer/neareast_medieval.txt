@@ -1,0 +1,174 @@
+# Anatolia, the Levant, Egypt, Mesopotamia, Iran, Arabia and the Caucasus 500-1492. Sources: Wikipedia articles on each state (Sasanian Empire, Rashidun/Umayyad/Abbasid caliphates, Tulunids, Ikhshidids, Fatimids, Buyids, Samanids, Ghaznavids, Seljuks, Sultanate of Rum,
+# Crusader states, Ayyubids, Khwarazmian Empire, Ilkhanate, Mamluk Sultanate, Anatolian beyliks, Ottoman Empire, Timurids, Qara Qoyunlu, Aq Qoyunlu, Kingdom of Georgia, Bagratid Armenia, Rasulids, Hormuz), Atlas of the Islamic World (Kennedy), Historical Atlas of Islam (Brice),
+# Cambridge History of Iran vols. 3-6, Cambridge History of Egypt, Oxford Atlas of the Middle East, Ostrogorsky History of the Byzantine State, Cahen Pre-Ottoman Turkey, Runciman History of the Crusades
+# --- 500 and 600
+@ Eastern Roman Empire ; 500 ; 600 ; 1.5 ; Constantinople, Nicomedia, Nicaea, Bursa, Ankara, Konya, Antalya, Smyrna, Ephesus, Sardis, Kayseri, Sivas, Amasya, Trebizond, Samsun, Sinope, Tarsus, Adana, Antioch, Aleppo, Apamea, Seleucia Pieria, Damascus, Beirut, Tyre, Sidon, Caesarea, Jerusalem, Gaza, Petra, Bosra, Homs, Edessa Urfa, Harran, Nisibis, Samosata, Melitene, Erzurum, Alexandria, Cairo, Memphis, Luxor, Aswan, Cyprus, Nicosia, Palmyra, Tripoli Levant, Dura Europos, Raqqa, Diyarbakir, Mardin, Erzincan, Malatya, Kars, Aqaba
+@ Sasanian Empire ; 500 ; 600 ; 2.0 ; Ctesiphon, Persepolis, Isfahan, Shiraz, Hamadan, Rayy, Susa, Gorgan, Merv, Nishapur, Herat, Kerman, Tabriz, Dvin, Ahvaz, Bushehr, Kashan, Qom, Qazvin, Yazd, Ardabil, Maragheh, Urmia, Zaranj, Kandahar, Bam, Mosul, Babylon, Kufa, Basra, Wasit, Hit
+@ Lakhmids ; 500 ; 600 ; 1.3 ; Kufa, Hit
+@ Ghassanids ; 500 ; 600 ; 1.3 ; Bosra, Amman, Damascus
+@ Kinda ; 500 ; 600 ; 2.0 ; Riyadh, Yamama
+@ Quraysh ; 500 ; 600 ; 1.5 ; Mecca, Medina, Taif
+@ Himyar ; 500 ; 500 ; 1.6 ; Zafar, Taiz, Zabid, Aden, Sanaa, Najran, Marib
+@ Yemen ; 600 ; 600 ; 1.6 ; Zafar, Taiz, Zabid, Aden, Sanaa, Najran, Marib, Shibam, Mukalla
+@ Hephthalites ; 500 ; 500 ; 2.2 ; Balkh, Bamiyan, Kabul, Termez, Bukhara, Samarkand, Merv, Herat, Penjikent, Kesh
+@ Western Turkic Khaganate ; 600 ; 700 ; 2.2 ; Tashkent, Taraz, Fergana, Kesh, Penjikent, Bukhara, Samarkand, Balkh, Termez, Almalik, Otrar
+@ Persarmenia ; 500 ; 600 ; 1.2 ; Dvin, Vagharshapat, Yerevan, Van
+@ Kartli ; 500 ; 600 ; 0.8 ; Mtskheta, Tbilisi
+@ Lazica ; 500 ; 600 ; 0.8 ; Phasis, Kutaisi, Sukhumi
+@ Albania ; 500 ; 700 ; 1.0 ; Ganja, Shamakhi, Baku, Derbent
+# --- 700 and 800
+@ Umayyad Caliphate ; 700 ; 700 ; 2.0 ; Damascus, Jerusalem, Homs, Aleppo, Antioch, Tarsus, Beirut, Gaza, Cairo, Alexandria, Memphis, Aswan, Medina, Mecca, Taif, Sanaa, Aden, Najran, Basra, Kufa, Wasit, Baghdad, Mosul, Raqqa, Harran, Edessa Urfa, Diyarbakir, Hamadan, Rayy, Isfahan, Shiraz, Kerman, Nishapur, Merv, Herat, Balkh, Bukhara, Samarkand, Zaranj, Tabriz, Dvin, Tbilisi, Derbent, Susa, Ahvaz, Qom, Yazd, Hofuf, Muscat, Sohar
+@ Byzantine Empire ; 700 ; 1000 ; 1.5 ; Constantinople, Nicomedia, Nicaea, Bursa, Ankara, Konya, Antalya, Smyrna, Ephesus, Sardis, Kayseri, Sivas, Amasya, Trebizond, Samsun, Sinope, Kastamonu, Afyon, Kutahya, Eskisehir
+@ Armenia ; 700 ; 700 ; 1.0 ; Dvin, Vagharshapat, Yerevan, Van, Erzurum, Kars
+@ Dabuyids ; 700 ; 800 ; 1.0 ; Amol, Gorgan
+@ Zunbil ; 700 ; 800 ; 1.2 ; Ghazni, Kandahar, Bust
+@ Turk Shahi ; 700 ; 800 ; 1.0 ; Kabul, Bamiyan
+@ Sogdiana ; 700 ; 700 ; 1.0 ; Samarkand, Bukhara, Penjikent, Kesh
+@ Khazar Khaganate ; 700 ; 900 ; 2.0 ; Derbent, Samandar
+@ Abbasid Caliphate ; 800 ; 800 ; 2.0 ; Baghdad, Kufa, Basra, Wasit, Mosul, Samarra, Raqqa, Harran, Edessa Urfa, Diyarbakir, Aleppo, Antioch, Tarsus, Damascus, Jerusalem, Homs, Beirut, Gaza, Cairo, Alexandria, Memphis, Aswan, Medina, Mecca, Taif, Sanaa, Aden, Najran, Hamadan, Rayy, Isfahan, Shiraz, Kerman, Nishapur, Merv, Herat, Balkh, Bukhara, Samarkand, Zaranj, Tabriz, Susa, Ahvaz, Qom, Yazd, Kashan, Qazvin, Gorgan, Ghazni, Kabul, Tashkent, Fergana, Aqaba, Muscat, Sohar, Hofuf, Bahrain, Qatif, Ardabil, Maragheh, Dvin, Tbilisi, Hit, Tikrit, Ctesiphon
+@ Tabaristan ; 800 ; 900 ; 1.0 ; Amol, Gorgan
+@ Arminiya ; 800 ; 800 ; 1.2 ; Dvin, Yerevan, Van, Erzurum, Kars
+@ Georgia ; 800 ; 900 ; 0.8 ; Tbilisi, Mtskheta, Kutaisi
+@ Tibetan Empire ; 800 ; 800 ; 2.0 ; Khotan
+# --- 900
+@ Abbasid Caliphate ; 900 ; 900 ; 1.5 ; Baghdad, Kufa, Basra, Wasit, Samarra, Hit, Tikrit, Ctesiphon, Babylon
+@ Tulunids ; 900 ; 900 ; 1.8 ; Cairo, Alexandria, Memphis, Damascus, Jerusalem, Homs, Aleppo, Gaza, Antioch, Tarsus, Beirut, Aswan, Luxor, Damietta
+@ Samanid Empire ; 900 ; 1000 ; 2.0 ; Bukhara, Samarkand, Nishapur, Merv, Herat, Balkh, Tashkent, Fergana, Termez, Kesh, Penjikent, Khujand
+@ Saffarids ; 900 ; 900 ; 1.6 ; Zaranj, Bust, Kandahar, Kerman, Shiraz, Bam
+@ Alids of Tabaristan ; 900 ; 900 ; 0.9 ; Amol, Gorgan
+@ Sajids ; 900 ; 900 ; 1.2 ; Maragheh, Tabriz, Ardabil, Dvin
+@ Daylamites ; 900 ; 1000 ; 1.2 ; Qazvin, Rayy
+@ Abbasid Jazira ; 900 ; 900 ; 1.4 ; Mosul, Nisibis, Raqqa, Harran, Edessa Urfa, Diyarbakir, Mardin
+@ Armenian Kingdom ; 900 ; 1000 ; 1.0 ; Ani, Kars, Dvin, Vagharshapat, Yerevan, Erzurum
+@ Vaspurakan ; 900 ; 1000 ; 0.8 ; Van
+@ Abkhazia ; 900 ; 1000 ; 0.9 ; Sukhumi, Kutaisi
+@ Tao-Klarjeti ; 900 ; 1000 ; 0.8 ; Akhaltsikhe, Batumi, Erzurum
+@ Qarmatians ; 900 ; 1000 ; 1.8 ; Hofuf, Bahrain, Qatif
+@ Ziyadids ; 900 ; 1000 ; 1.2 ; Zabid, Hodeida, Taiz
+@ Yufirids ; 900 ; 900 ; 1.0 ; Sanaa
+@ Zaydis ; 900 ; 1000 ; 1.0 ; Najran
+@ Imamate of Oman ; 900 ; 1000 ; 1.5 ; Nizwa, Muscat, Sohar
+@ Hamdanids ; 900 ; 900 ; 1.0 ; Mosul
+@ Emirate of Tarsus ; 900 ; 900 ; 0.7 ; Tarsus, Adana
+@ Emirate of Melitene ; 900 ; 900 ; 0.6 ; Malatya
+@ Crete ; 900 ; 900 ; 0.8 ; Crete
+@ Hejaz ; 900 ; 1500 ; 1.5 ; Mecca, Medina, Taif, Yanbu, Jeddah
+# --- 1000
+@ Byzantine Empire ; 1000 ; 1000 ; 1.5 ; Constantinople, Nicomedia, Nicaea, Bursa, Ankara, Konya, Antalya, Smyrna, Ephesus, Sardis, Kayseri, Sivas, Amasya, Trebizond, Samsun, Sinope, Kastamonu, Afyon, Kutahya, Eskisehir, Tarsus, Adana, Antioch, Edessa Urfa, Malatya, Diyarbakir, Erzurum, Kars, Ani, Van, Aleppo, Crete, Cyprus, Nicosia
+@ Fatimid Caliphate ; 1000 ; 1100 ; 1.8 ; Cairo, Alexandria, Memphis, Aswan, Luxor, Damascus, Jerusalem, Gaza, Ascalon, Beirut, Tyre, Sidon, Acre, Caesarea, Tripoli Levant, Homs, Medina, Mecca, Taif, Aqaba, Aleppo
+@ Buyids ; 1000 ; 1000 ; 1.8 ; Baghdad, Basra, Kufa, Wasit, Rayy, Hamadan, Isfahan, Shiraz, Kerman, Susa, Ahvaz, Qom, Kashan, Qazvin, Samarra, Hit, Tikrit
+@ Ghaznavids ; 1000 ; 1100 ; 2.0 ; Ghazni, Kabul, Kandahar, Bust, Zaranj, Herat, Balkh, Nishapur, Merv, Bamiyan, Gorgan
+@ Karakhanids ; 1000 ; 1100 ; 2.2 ; Bukhara, Samarkand, Tashkent, Fergana, Taraz, Kashgar, Khujand, Balasagun, Almalik, Termez, Otrar
+@ Uqaylids ; 1000 ; 1000 ; 1.0 ; Mosul, Nisibis
+@ Marwanids ; 1000 ; 1000 ; 0.9 ; Diyarbakir, Mardin
+@ Mirdasids ; 1000 ; 1000 ; 0.8 ; Aleppo
+@ Bavandids ; 1000 ; 1100 ; 0.9 ; Amol, Gorgan
+@ Rawadids ; 1000 ; 1000 ; 0.9 ; Tabriz, Maragheh
+@ Shaddadids ; 1000 ; 1100 ; 0.9 ; Ganja, Dvin
+@ Shirvanshahs ; 1000 ; 1492 ; 0.8 ; Shamakhi, Baku, Derbent
+@ Georgia ; 1000 ; 1100 ; 1.2 ; Tbilisi, Mtskheta, Kutaisi, Akhaltsikhe, Batumi, Sukhumi
+@ Armenian Kingdom ; 1100 ; 1100 ; 0.8 ; Ani, Kars
+@ Kingdom of Kars ; 1000 ; 1000 ; 0.7 ; Kars
+@ Khwarazm ; 1000 ; 1000 ; 1.0 ; Urgench, Khiva, Gurganj
+@ Khotan ; 1000 ; 1000 ; 1.0 ; Khotan
+@ Najahids ; 1000 ; 1100 ; 1.0 ; Zabid, Hodeida
+@ Sulayhids ; 1100 ; 1100 ; 1.3 ; Sanaa, Aden, Taiz, Zafar
+@ Hadramawt ; 1000 ; 1100 ; 1.2 ; Shibam, Tarim, Mukalla
+@ Banu Jabr ; 1100 ; 1200 ; 1.2 ; Hofuf, Bahrain, Qatif
+# --- 1100 and 1200
+@ Seljuk Empire ; 1100 ; 1100 ; 2.0 ; Isfahan, Rayy, Hamadan, Baghdad, Kufa, Basra, Wasit, Shiraz, Kerman, Qom, Kashan, Qazvin, Susa, Ahvaz, Tabriz, Maragheh, Ardabil, Urmia, Nishapur, Merv, Herat, Balkh, Gorgan, Mashhad, Zaranj, Samarra, Tikrit, Hit
+@ Sultanate of Rum ; 1100 ; 1300 ; 1.4 ; Konya, Ankara, Kutahya, Eskisehir, Afyon, Isparta, Antalya, Karaman, Aksaray, Nigde, Kayseri, Sivas, Tokat, Amasya, Erzurum, Erzincan
+@ Danishmends ; 1100 ; 1100 ; 1.0 ; Sivas, Amasya, Tokat, Kayseri, Malatya, Samsun
+@ Mengujekids ; 1100 ; 1200 ; 0.7 ; Erzincan
+@ Saltukids ; 1100 ; 1200 ; 0.7 ; Erzurum
+@ Artuqids ; 1100 ; 1200 ; 1.0 ; Diyarbakir, Mardin, Hisn Kayfa
+@ Zengids ; 1100 ; 1200 ; 1.2 ; Mosul, Aleppo, Raqqa, Harran, Nisibis
+@ Burids ; 1100 ; 1100 ; 0.8 ; Damascus
+@ Kingdom of Jerusalem ; 1100 ; 1300 ; 0.7 ; Jerusalem, Jaffa, Ascalon, Gaza, Acre, Tyre, Sidon, Beirut, Caesarea, Tiberias, Hebron, Kerak, Amman
+@ County of Tripoli ; 1100 ; 1300 ; 0.6 ; Tripoli Levant, Byblos
+@ Principality of Antioch ; 1100 ; 1279 ; 0.8 ; Antioch, Lattakia, Seleucia Pieria, Tarsus, Adana, Apamea
+@ County of Edessa ; 1100 ; 1100 ; 0.8 ; Edessa Urfa, Samosata, Gaziantep
+@ Aleppo ; 1100 ; 1100 ; 0.8 ; Aleppo, Hama
+@ Fatimid Caliphate ; 1100 ; 1100 ; 1.6 ; Cairo, Alexandria, Memphis, Aswan, Luxor, Damietta, Tinnis, Fayum, Asyut
+@ Armenian Cilicia ; 1100 ; 1400 ; 0.9 ; Sis, Tarsus, Adana, Mopsuestia
+@ Khwarazmshahs ; 1100 ; 1200 ; 1.5 ; Urgench, Khiva, Gurganj
+@ Ghurids ; 1100 ; 1200 ; 1.5 ; Firozkoh, Herat, Ghazni, Kabul, Kandahar
+@ Nizari Ismailis ; 1100 ; 1200 ; 0.8 ; Alamut, Lar
+@ Qara Khitai ; 1200 ; 1200 ; 2.0 ; Balasagun, Taraz, Kashgar, Khotan, Almalik, Tashkent, Fergana
+@ Kara-Khanid ; 1100 ; 1100 ; 1.8 ; Samarkand, Bukhara, Fergana, Kashgar, Taraz, Balasagun
+@ Byzantine Empire ; 1100 ; 1200 ; 1.4 ; Constantinople, Nicomedia, Nicaea, Bursa, Smyrna, Ephesus, Sardis, Pergamon, Trebizond, Cyprus
+@ Ayyubid Sultanate ; 1200 ; 1200 ; 1.8 ; Cairo, Alexandria, Memphis, Aswan, Luxor, Damietta, Damascus, Jerusalem, Aleppo, Hama, Homs, Gaza, Ascalon, Diyarbakir, Hisn Kayfa, Raqqa, Harran, Edessa Urfa, Sanaa, Aden, Zabid, Taiz, Aqaba, Mecca, Medina
+@ Georgian Empire ; 1200 ; 1200 ; 1.2 ; Tbilisi, Kutaisi, Ani, Dvin, Kars, Akhaltsikhe, Batumi, Telavi, Vardzia, Gandzak, Yerevan, Nakhchivan
+@ Eldiguzids ; 1200 ; 1200 ; 1.8 ; Tabriz, Hamadan, Maragheh, Ardabil, Urmia, Rayy, Isfahan, Qazvin, Nakhchivan
+@ Khwarazmian Empire ; 1200 ; 1200 ; 2.2 ; Urgench, Khiva, Gurganj, Merv, Nishapur, Herat, Balkh, Gorgan, Mashhad, Bukhara, Samarkand, Termez, Zaranj
+@ Abbasid Caliphate ; 1200 ; 1200 ; 1.5 ; Baghdad, Kufa, Wasit, Basra, Samarra, Hit, Tikrit
+@ Empire of Trebizond ; 1200 ; 1492 ; 0.9 ; Trebizond, Giresun, Rize, Samsun, Bayburt
+@ Sultanate of Rum ; 1200 ; 1200 ; 1.4 ; Konya, Ankara, Kutahya, Eskisehir, Afyon, Isparta, Karaman, Aksaray, Nigde, Kayseri, Sivas, Tokat, Amasya, Erzurum, Erzincan
+@ Zengids ; 1200 ; 1200 ; 1.2 ; Mosul, Nisibis
+@ Ghurid Sultanate ; 1200 ; 1200 ; 2.0 ; Firozkoh, Herat, Ghazni, Kabul, Kandahar, Bust, Balkh
+@ Rasulids ; 1200 ; 1492 ; 1.5 ; Zabid, Taiz, Aden, Sanaa
+@ Nizari State ; 1200 ; 1200 ; 0.8 ; Alamut, Lar
+# --- 1279 and 1300
+@ Mamluk Sultanate ; 1279 ; 1492 ; 1.8 ; Cairo, Alexandria, Memphis, Aswan, Luxor, Damietta, Damascus, Jerusalem, Aleppo, Hama, Homs, Gaza, Ascalon, Beirut, Tyre, Sidon, Tripoli Levant, Acre, Aqaba, Mecca, Medina, Antioch, Lattakia, Tarsus, Adana, Sis, Kerak, Tiberias, Caesarea, Jaffa, Hebron, Sinai, Asyut, Fayum, Tinnis, Qus, Berenice
+@ Ilkhanate ; 1279 ; 1300 ; 2.2 ; Tabriz, Maragheh, Hamadan, Rayy, Isfahan, Shiraz, Baghdad, Mosul, Kufa, Wasit, Basra, Ardabil, Urmia, Qazvin, Qom, Kashan, Susa, Ahvaz, Nishapur, Merv, Herat, Balkh, Mashhad, Gorgan, Diyarbakir, Mardin, Tbilisi, Yerevan, Ani, Kars, Van, Erzurum, Sivas, Kayseri, Konya, Ankara, Yazd, Kerman, Kutahya
+@ Georgia ; 1279 ; 1492 ; 1.0 ; Tbilisi, Mtskheta, Telavi, Akhaltsikhe, Gandzak, Kutaisi
+@ Imereti ; 1279 ; 1492 ; 0.8 ; Kutaisi, Batumi, Sukhumi
+@ Karamanids ; 1279 ; 1400 ; 1.0 ; Karaman, Konya
+@ Chagatai Khanate ; 1279 ; 1400 ; 2.2 ; Samarkand, Bukhara, Termez, Tashkent, Fergana, Khujand, Almalik, Kashgar, Khotan, Otrar, Taraz, Balasagun
+@ Kartids ; 1279 ; 1400 ; 1.4 ; Herat, Firozkoh, Balkh
+@ Qutlugh-Khanids ; 1279 ; 1300 ; 1.4 ; Kerman, Bam
+@ Salghurids ; 1279 ; 1279 ; 1.4 ; Shiraz, Persepolis
+@ Atabegs of Yazd ; 1279 ; 1300 ; 0.8 ; Yazd
+@ Hormuz ; 1279 ; 1492 ; 0.7 ; Hormuz, Bandar Abbas
+@ Rasulids ; 1279 ; 1492 ; 1.5 ; Zabid, Taiz, Aden, Sanaa
+@ Nabhanids ; 1279 ; 1492 ; 1.2 ; Nizwa, Muscat, Sohar
+@ Hejaz ; 1279 ; 1492 ; 1.5 ; Mecca, Medina, Taif, Yanbu, Jeddah
+@ Ottoman Beylik ; 1300 ; 1300 ; 0.5 ; Sogut, Bilecik
+@ Germiyan ; 1300 ; 1400 ; 0.8 ; Kutahya
+@ Aydinids ; 1300 ; 1400 ; 0.6 ; Birgi, Ephesus, Aydin
+@ Saruhan ; 1300 ; 1400 ; 0.6 ; Manisa
+@ Menteshe ; 1279 ; 1400 ; 0.7 ; Mugla, Milas
+@ Hamidids ; 1300 ; 1300 ; 0.6 ; Egirdir, Isparta
+@ Eshrefids ; 1300 ; 1400 ; 0.6 ; Sozopolis
+@ Candar ; 1300 ; 1492 ; 0.8 ; Kastamonu, Sinope
+@ Karasi ; 1300 ; 1400 ; 0.6 ; Balikesir
+@ Muzaffarids ; 1300 ; 1400 ; 1.5 ; Yazd, Shiraz, Kerman, Isfahan
+@ Chobanids ; 1300 ; 1400 ; 0.9 ; Kastamonu
+@ Ilkhanate ; 1300 ; 1300 ; 2.2 ; Tabriz, Maragheh, Hamadan, Rayy, Isfahan, Shiraz, Baghdad, Mosul, Kufa, Wasit, Basra, Ardabil, Urmia, Qazvin, Qom, Kashan, Susa, Ahvaz, Nishapur, Merv, Herat, Balkh, Mashhad, Gorgan, Diyarbakir, Mardin, Tbilisi, Yerevan, Ani, Kars, Van, Erzurum, Sivas, Kayseri, Konya, Ankara, Yazd, Kerman
+@ Byzantine Empire ; 1279 ; 1300 ; 1.2 ; Constantinople, Nicomedia, Nicaea, Bursa, Smyrna, Ephesus, Sardis, Pergamon, Balikesir
+@ Golden Horde ; 1279 ; 1300 ; 1.8 ; Derbent, Baku
+@ Cyprus ; 1200 ; 1492 ; 0.9 ; Nicosia, Famagusta, Paphos, Limassol, Kyrenia
+@ Hospitallers ; 1300 ; 1492 ; 0.3 ; Rhodes, Cos
+@ Genoese Chios ; 1400 ; 1492 ; 0.3 ; Chios
+# --- 1400 and 1492
+@ Ottoman Empire ; 1400 ; 1400 ; 1.4 ; Sogut, Bilecik, Bursa, Nicaea, Nicomedia, Eskisehir, Kutahya, Ankara, Konya, Karaman, Kayseri, Sivas, Amasya, Tokat, Balikesir, Manisa, Smyrna, Ephesus, Aydin, Mugla, Isparta, Antalya, Afyon, Corum, Aksaray, Nigde
+@ Timurid Empire ; 1400 ; 1400 ; 2.2 ; Samarkand, Bukhara, Tashkent, Termez, Kesh, Balkh, Herat, Nishapur, Merv, Mashhad, Gorgan, Rayy, Hamadan, Isfahan, Shiraz, Kerman, Yazd, Tabriz, Maragheh, Ardabil, Urmia, Baghdad, Susa, Ahvaz, Qazvin, Qom, Kashan, Zaranj, Kandahar, Ghazni, Kabul, Fergana, Khujand, Urgench, Khiva, Mosul, Dvin, Yerevan
+@ Jalayirids ; 1400 ; 1400 ; 1.2 ; Baghdad, Tabriz, Wasit, Basra
+@ Qara Qoyunlu ; 1400 ; 1400 ; 1.3 ; Van, Erzurum, Mosul, Urmia
+@ Aq Qoyunlu ; 1400 ; 1400 ; 1.0 ; Diyarbakir, Mardin, Hisn Kayfa, Erzincan, Malatya
+@ Despotate of Morea ; 1400 ; 1400 ; 0.8 ; Mystras
+@ Byzantine Empire ; 1400 ; 1400 ; 0.8 ; Constantinople, Selymbria
+@ Ottoman Empire ; 1492 ; 1492 ; 1.5 ; Constantinople, Sogut, Bilecik, Bursa, Nicaea, Nicomedia, Eskisehir, Kutahya, Ankara, Konya, Karaman, Kayseri, Sivas, Amasya, Tokat, Balikesir, Manisa, Smyrna, Ephesus, Aydin, Mugla, Isparta, Antalya, Afyon, Corum, Aksaray, Nigde, Kastamonu, Sinope, Samsun, Trebizond, Giresun, Rize, Bayburt, Erzurum, Erzincan, Malatya, Gaziantep, Marash, Sis, Tarsus, Adana
+@ Aq Qoyunlu ; 1492 ; 1492 ; 2.2 ; Diyarbakir, Mardin, Hisn Kayfa, Van, Tabriz, Maragheh, Ardabil, Urmia, Hamadan, Rayy, Isfahan, Shiraz, Yazd, Kerman, Baghdad, Mosul, Basra, Wasit, Kufa, Susa, Ahvaz, Qazvin, Qom, Kashan, Dvin, Yerevan, Nakhchivan, Ganja, Gorgan, Erzincan, Malatya
+@ Timurids of Herat ; 1492 ; 1492 ; 2.0 ; Herat, Balkh, Nishapur, Merv, Mashhad, Gorgan, Zaranj, Kandahar, Ghazni, Kabul, Bamiyan, Firozkoh, Termez
+@ Timurids of Samarkand ; 1492 ; 1492 ; 1.8 ; Samarkand, Bukhara, Kesh, Tashkent, Fergana, Khujand, Termez, Penjikent
+@ Khwarazm ; 1492 ; 1492 ; 1.4 ; Urgench, Khiva, Gurganj
+@ Tahirids ; 1492 ; 1492 ; 1.4 ; Zabid, Taiz, Aden, Sanaa
+@ Kingdom of Kartli ; 1492 ; 1492 ; 0.8 ; Tbilisi, Mtskheta
+@ Kakheti ; 1492 ; 1492 ; 0.7 ; Telavi
+@ Samtskhe ; 1492 ; 1492 ; 0.7 ; Akhaltsikhe
+@ Shirvan ; 1492 ; 1492 ; 0.8 ; Shamakhi, Baku, Derbent
+@ Safavid Order ; 1492 ; 1492 ; 0.4 ; Ardabil
+@ Ladik ; 1279 ; 1300 ; 0.6 ; Denizli Ladik
+@ Sahib Ataids ; 1279 ; 1300 ; 0.6 ; Afyon
+@ Pervaneids ; 1279 ; 1300 ; 0.5 ; Sinop Pervane
+@ Ahis of Ankara ; 1300 ; 1300 ; 0.6 ; Ankara
+@ Alaiye ; 1300 ; 1492 ; 0.4 ; Alanya
+@ Teke ; 1400 ; 1400 ; 0.7 ; Antalya
+@ Ramadanids ; 1400 ; 1492 ; 0.6 ; Adana, Tarsus
+@ Dulkadir ; 1400 ; 1492 ; 0.7 ; Elbistan, Marash
+@ Erzincan Beylik ; 1400 ; 1400 ; 0.6 ; Erzincan
+@ Canik ; 1400 ; 1400 ; 0.6 ; Samsun, Amasya
+@ Shah-Armens ; 1100 ; 1200 ; 0.6 ; Ahlat
+@ Dilmacoglu ; 1100 ; 1200 ; 0.5 ; Bitlis
+@ Inaloglu ; 1100 ; 1100 ; 0.5 ; Diyarbakir

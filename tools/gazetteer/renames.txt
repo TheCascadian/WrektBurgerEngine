@@ -1,0 +1,99 @@
+# What the historical-basemaps dataset calls a polity at a date, corrected (R old name ; from ; to ; new name; years are astronomical).
+# Sources: Lee A New History of Korea (Goryeo 918-1392), Sansom A History of Japan (Heian to 1185, Kamakura 1185-1333, Muromachi 1336-1573).
+R Korea ; 1000 ; 1100 ; Goryeo
+R Heian Japan ; 1200 ; 1200 ; Kamakura Japan
+R Kamakura Japan ; 1400 ; 1492 ; Muromachi Japan
+# --- the dataset names polities of 1700-1960 by what they became or by what they replaced; these are what they were called on 1 January of the year
+# Sources: Hammond Citizens' Atlas, Penguin Atlas of Modern History, Statesman's Year-Book (1880, 1900, 1914, 1938), Wikipedia articles of each state, colony and mandate.
+R Post-Ming Warlords ; 1700 ; 1700 ; Manchu Empire
+R Manchu Empire ; 1800 ; 1900 ; Qing Empire
+R Manchu Empire ; 1914 ; 1914 ; Republic of China
+R Chinese warlords ; 1938 ; 1938 ; Republic of China
+R United States Virgin Islands ; 1880 ; 1900 ; United States of America
+R Heian Japan ; 1880 ; 1900 ; Empire of Japan
+R Kingdom of Brazil ; 1880 ; 1880 ; Empire of Brazil
+R Kingdom of Brazil ; 1900 ; 1900 ; Brazil
+R Moravia ; 1914 ; 1914 ; Austria-Hungary
+R Croatia ; 1914 ; 1914 ; Austria-Hungary
+R Slovakia ; 1914 ; 1914 ; Austria-Hungary
+R Styria ; 1914 ; 1914 ; Austria-Hungary
+R Dalmatia ; 1914 ; 1914 ; Austria-Hungary
+R Silesia ; 1914 ; 1914 ; Austria-Hungary
+R Carinthia ; 1914 ; 1914 ; Austria-Hungary
+R Transylvania ; 1914 ; 1914 ; Austria-Hungary
+R Carniola ; 1914 ; 1914 ; Austria-Hungary
+R Bukovina ; 1914 ; 1914 ; Austria-Hungary
+R Tyrol ; 1914 ; 1914 ; Austria-Hungary
+R Galicia ; 1914 ; 1914 ; Austria-Hungary
+R Bosnia ; 1914 ; 1914 ; Austria-Hungary
+R Tanzania, United Republic of ; 1938 ; 1960 ; Tanganyika
+R Zaire ; 1945 ; 1945 ; Belgian Congo
+R Zaire ; 1960 ; 1960 ; Congo-Leopoldville
+R Zaire ; 2000 ; 2010 ; Democratic Republic of the Congo
+R Mali ; 1945 ; 1945 ; French West Africa
+R Burkina Faso ; 1945 ; 1945 ; French West Africa
+R Guinea ; 1945 ; 1945 ; French West Africa
+R Ivory Coast ; 1945 ; 1945 ; French West Africa
+R Senegal ; 1945 ; 1945 ; French West Africa
+R Niger ; 1945 ; 1945 ; French West Africa
+R Mauritania ; 1945 ; 1945 ; French West Africa
+R Benin ; 1945 ; 1945 ; French West Africa
+R Chad ; 1945 ; 1945 ; French Equatorial Africa
+R Central African Republic ; 1945 ; 1945 ; French Equatorial Africa
+R Gabon ; 1945 ; 1945 ; French Equatorial Africa
+R Congo ; 1945 ; 1945 ; French Equatorial Africa
+R Cameroon ; 1945 ; 1945 ; French Cameroons
+R Namibia ; 1945 ; 1960 ; South West Africa
+R Burma ; 1945 ; 1945 ; British Burma
+R Sudan ; 1945 ; 1945 ; Anglo-Egyptian Sudan
+R Sri Lanka ; 1945 ; 1945 ; Ceylon
+R India ; 1945 ; 1945 ; British Raj
+R Pakistan ; 1945 ; 1945 ; British Raj
+R Bangladesh ; 1945 ; 1945 ; British Raj
+R Jordan ; 1945 ; 1945 ; Transjordan
+R Indonesia ; 1945 ; 1945 ; Dutch East Indies
+R Malaysia ; 1945 ; 1945 ; British Malaya
+R Zimbabwe ; 1960 ; 1960 ; Southern Rhodesia
+R Zambia ; 1960 ; 1960 ; Northern Rhodesia
+R Malawi ; 1960 ; 1960 ; Nyasaland
+R Korea, Democratic People's Republic of ; 1960 ; 2010 ; North Korea
+R Korea, Republic of ; 1960 ; 2010 ; South Korea
+R Tanzania, United Republic of ; 1994 ; 2010 ; Tanzania
+# generic endings are not names of peoples
+R Mississippian Chiefdoms ; 700 ; 1492 ; Mississippians
+R Ato trading confederacy ; 1000 ; 1492 ; Ato
+# The Xiongnu are first heard of in the late 4th century BCE; before that the northern steppe holds the Hu of the Chinese sources.
+R Xiongnu ; -398 ; -321 ; Hu
+R Media Atropatene ; -398 ; 300 ; Atropatene
+R Kingdom of Antigonus ; -298 ; -298 ; Seleucid Kingdom
+R Srivijaya Empire ; 1400 ; 1400 ; Majapahit
+R Austro-Hungarian Empire ; 1914 ; 1914 ; Austria-Hungary
+R Austria Hungary ; 1880 ; 1900 ; Austria-Hungary
+R Papal States ; 1500 ; 1715 ; Papal States
+# 1900-1930: the colonial names of what the dataset calls by its modern name
+R Belgian Congo ; 1900 ; 1900 ; Congo Free State
+R Zaire ; 1920 ; 1930 ; Belgian Congo
+R Tanzania, United Republic of ; 1920 ; 1930 ; Tanganyika
+R Zambia ; 1920 ; 1930 ; Northern Rhodesia
+R Zimbabwe ; 1920 ; 1930 ; Southern Rhodesia
+R Malawi ; 1920 ; 1930 ; Nyasaland
+R Namibia ; 1920 ; 1930 ; South West Africa
+R Ghana ; 1920 ; 1930 ; Gold Coast
+R Kenya ; 1920 ; 1930 ; British East Africa
+R Sudan ; 1920 ; 1930 ; Anglo-Egyptian Sudan
+R Malaysia ; 1920 ; 1930 ; British Malaya
+R Burundi ; 1920 ; 1930 ; Ruanda-Urundi
+R Togo ; 1920 ; 1930 ; Togoland
+R Congo ; 1920 ; 1930 ; French Equatorial Africa
+R USSR ; 1920 ; 1920 ; Soviet Russia
+R White Russia ; 1930 ; 1930 ; USSR
+# the Habsburg lands were not an empire before 1804; Italy at 1914 is the kingdom with its colonies; the Romans at 300
+R Austrian Empire ; 1650 ; 1800 ; Habsburg Monarchy
+R Italian Somaliland ; 1914 ; 1914 ; Kingdom of Italy
+R Rome ; 300 ; 300 ; Roman Empire
+R Mauryan Empire ; -298 ; -298 ; Maurya Empire
+# New Guinea before its colonies, Madagascar before the Merina, New Zealand once it was a colony
+R Papua New Guinea ; 1492 ; 1880 ; Papuans of the Highlands
+R Madagascar ; 1000 ; 1783 ; Malagasy
+R Māori ; 1880 ; 1900 ; New Zealand
+R Maori ; 1880 ; 1900 ; New Zealand

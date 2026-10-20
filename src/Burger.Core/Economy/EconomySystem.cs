@@ -68,15 +68,20 @@ public sealed class EconomySystem
         c.LastManpowerGain = r.MonthlyManpower(_game, c);
     }
 
-    public void MonthlyTick()
+    public void MonthlyTick() { for (int part = 0; part < 24; part++) MonthlyTickPart(part, 24); }
+
+    /// <summary>One of <paramref name="parts"/> parts of the monthly economy (the game does one each hour of a day): the estimates of the countries with that number, and in the last part the gold and manpower they bring.</summary>
+    public void MonthlyTickPart(int part, int parts)
     {
         var rules = _game.Rules.Economy;
         var w = _game.World;
+        foreach (var c in w.Countries)
+            if (c.Exists && c.Index % parts == part) UpdateEstimates(c);
+        if (part != parts - 1) return;
         var income = new Dictionary<Country, double>();
         foreach (var c in w.Countries)
         {
             if (!c.Exists) continue;
-            UpdateEstimates(c);
             income[c] = c.LastIncome;
         }
         // subjects pay their overlord

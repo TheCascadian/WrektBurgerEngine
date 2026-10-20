@@ -1,0 +1,41 @@
+# Russia, the Volga and the steppe, 1000 to 1492. RUS@w/s/e/n = the part of the Russian province inside the box (degrees); the big oblasts do not follow the borders of the principalities, so the principalities are boxes drawn after the maps. The later line wins where two overlap.
+# Sources: Gumilev and Rybakov historical atlases, Pushkarev Atlas of Russian History, Atlas of Medieval Europe, Magocsi Historical Atlas of East Central Europe, Halperin Russia and the Golden Horde, Wikipedia articles of each principality, khanate and republic (borders sections).
+# --- Kievan Rus and its principalities
+U Kievan Rus ; 1000 ; 1100 ; RUS@28/50/42/60.5
+U Novgorod ; 1000 ; 1100 ; RUS@28/57.5/45/66
+U Kievan Rus ; 1000 ; 1100 ; RUS@41/52/45/58
+U Volga Bulgaria ; 1000 ; 1200 ; RUS@46/53.2/55.5/57.5
+U Khazar Khaganate ; 1000 ; 1000 ; RUS@40/43/50/49
+U Cumans ; 1100 ; 1200 ; RUS@35/44/60/51
+U Cumans ; 1000 ; 1000 ; RUS@40/46/60/52
+U Vladimir-Suzdal ; 1200 ; 1200 ; RUS@36/55/46/58.8
+U Principality of Chernigov ; 1200 ; 1279 ; RUS@31/51.5/38/54
+U Principality of Smolensk ; 1200 ; 1279 ; RUS@30/54/36.5/56.5
+U Principality of Ryazan ; 1200 ; 1492 ; RUS@38/52.5/42.5/55
+U Novgorod ; 1200 ; 1400 ; RUS@28/56.5/66/68.2
+U Pskov ; 1200 ; 1492 ; RUS@27.8/56.5/30.5/58.5
+U Principality of Murom ; 1200 ; 1279 ; RUS@41/54.5/44.5/56
+U Cumans ; 1200 ; 1200 ; RUS@36/44/60/51.5
+U Volga Bulgaria ; 1200 ; 1200 ; RUS@46/53.2/55.5/57.5
+# --- the Mongol yoke
+U Golden Horde ; 1279 ; 1400 ; RUS@36/44/66/54
+U Golden Horde ; 1279 ; 1300 ; RUS@41/54.5/55.5/57.5
+U Grand Duchy of Vladimir ; 1279 ; 1300 ; RUS@35/55/46/58.8
+U Principality of Smolensk ; 1279 ; 1300 ; RUS@30/54/36.5/56.5
+U Principality of Tver ; 1300 ; 1400 ; RUS@33/56.2/37.5/58.5
+U Grand Duchy of Moscow ; 1300 ; 1300 ; RUS@35.5/54.5/40/57
+U Grand Duchy of Moscow ; 1400 ; 1400 ; RUS@34.5/53/44/58.8
+U Nizhny Novgorod ; 1400 ; 1400 ; RUS@41/55.5/46.5/57.2
+U Lithuania ; 1400 ; 1492 ; RUS@29/53/36/56.5
+U Golden Horde ; 1400 ; 1400 ; RUS@36/44/66/54
+U Novgorod ; 1400 ; 1400 ; RUS@28/56.5/66/68.2
+U Kazan Khanate ; 1492 ; 1492 ; RUS@46/54/52.5/57.8
+U Grand Duchy of Moscow ; 1492 ; 1492 ; RUS@28/52.5/66/68.2
+U Lithuania ; 1492 ; 1492 ; RUS@31/52.5/36/56
+U Great Horde ; 1492 ; 1492 ; RUS@36/45/50/50.5
+U Astrakhan Khanate ; 1492 ; 1492 ; RUS@44/45.5/50/49
+U Nogai Horde ; 1492 ; 1492 ; RUS@50/45/66/52
+U Siberia Khanate ; 1492 ; 1492 ; RUS@60/55/73/60
+U Cherkess ; 1400 ; 1492 ; RUS@36.5/43.5/42/45.5
+U Crimean Khanate ; 1492 ; 1492 ; RUS:Autonomous Republic of Crimea
+# --- Caucasus

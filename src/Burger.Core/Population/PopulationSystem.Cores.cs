@@ -256,15 +256,58 @@ public sealed partial class PopulationSystem
         }
     }
 
+    private List<(State State, double X, double Y)> _free = new();
+    private long _freeStamp = long.MinValue;
+    private int _freeVersion = -1;
+
+    /// <summary>The states nobody owns and their middles, counted once per day and map change (every AI country looks at them).</summary>
+    private List<(State State, double X, double Y)> FreeStates()
+    {
+        long stamp = _game.World.Date.TotalDays;
+        lock (_free)
+        {
+            if (stamp != _freeStamp || _freeVersion != _game.MapVersion)
+            {
+                var list = new List<(State, double, double)>();
+                foreach (var s in _game.World.States)
+                    if (s.Owner == null) { var (x, y) = Center(s); list.Add((s, x, y)); }
+                _free = list; _freeStamp = stamp; _freeVersion = _game.MapVersion;
+            }
+            return _free;
+        }
+    }
+
     private void AiColonize(Country c)
     {
         if (!ColonizationEnabled) return;
         if (ColonizeCost > 0 && c.Gold < ColonizeCost * 3) return;
         State? best = null;
         double bestScore = double.NegativeInfinity;
-        foreach (var s in _game.World.States)
+        // nothing beyond the colony range of the land's bounding box can be settled: skip those states before the dearer checks (hundreds of countries each look at every free state)
+        double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+        foreach (var o in c.OwnedStates)
+            foreach (var l in o.Locations)
+            {
+                if (l.CenterX < minX) minX = l.CenterX; if (l.CenterX > maxX) maxX = l.CenterX;
+                if (l.CenterY < minY) minY = l.CenterY; if (l.CenterY > maxY) maxY = l.CenterY;
+            }
+        if (minX == double.MaxValue) return;
+        double rangeKm = Rules.ColonyRangeKm(_game, c), rangePx = rangeKm / _game.Data.Defines.KmPerPixel;
+        // the free states within range of the bounding box, nearest first; only the nearest few hundred are looked at in full (a big empire has thousands in its box)
+        var near = new List<(double Gap, State State)>();
+        foreach (var (s, cx, cy) in FreeStates())
         {
-            if (s.Owner != null || (_states.TryGetValue(s, out var sp) && sp.Colonizer != null)) continue;
+            if (s.Owner != null) continue;
+            double dx = cx < minX ? minX - cx : cx > maxX ? cx - maxX : 0, dy = cy < minY ? minY - cy : cy > maxY ? cy - maxY : 0;
+            double gap = dx * dx + dy * dy;
+            if (gap > rangePx * rangePx) continue;
+            near.Add((gap, s));
+        }
+        if (near.Count > 200) near = near.OrderBy(x => x.Gap).ThenBy(x => x.State.Index).Take(200).ToList();
+        foreach (var (_, s) in near)
+        {
+            if (DistanceKm(c, s) > rangeKm) continue;   // (the same test CannotColonize ends with, before its dearer ones)
+            if (_states.TryGetValue(s, out var sp) && sp.Colonizer != null) continue;
             if (CannotColonize(c, s) != null) continue;
             double score = Rules.AiColonyScore(_game, c, s);
             if (score > bestScore) { bestScore = score; best = s; }
@@ -358,10 +401,10 @@ public sealed partial class PopulationSystem
     {
         _aiCalled = true;
         if (!Enabled || c.IsPlayer || !c.Exists) return;
-        AiColonize(c);
-        AiIndependence(c);
-        AiBuild(c);
-        AiProductionBuild(c);
+        _game.P("Pop.AiColonize", c.Tag, () => AiColonize(c));
+        _game.P("Pop.AiIndependence", c.Tag, () => AiIndependence(c));
+        _game.P("Pop.AiBuild", c.Tag, () => AiBuild(c));
+        _game.P("Pop.AiProduction", c.Tag, () => AiProductionBuild(c));
     }
 
     private bool _aiCalled;

@@ -94,6 +94,11 @@ public static class StateWriter
     /// </summary>
     public static int Save(Game game, IEnumerable<(string Key, string File)>? deleted = null)
     {
+        if (game.Timeline.FusedGroups.Count > 0)
+        {
+            Log.Error("The states of this start date are fused for play: restart the game and edit the map from the first start date (nothing was written).");
+            return 0;
+        }
         var byFile = new Dictionary<string, List<State>>(StringComparer.OrdinalIgnoreCase);
         foreach (var s in game.World.States)
         {

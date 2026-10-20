@@ -1,0 +1,96 @@
+# Eastern Europe, the Pontic steppe, Scandinavia and the Baltic 500-1492. Sources: Wikipedia articles on Kievan Rus and its principalities, Novgorod Republic, Grand Duchy of Moscow, Grand Duchy of Lithuania, Golden Horde, Khazar Khaganate, Volga Bulgaria,
+# Pechenegs, Cumans, Teutonic State, Livonian Confederation, Kalmar Union, Kingdom of Norway, Kingdom of Sweden; Atlas of Medieval Europe, Putzger, Vernadsky Ancient Russia, Magocsi Historical Atlas of East Central Europe
+# --- 500-700
+@ Antes ; 500 ; 600 ; 2.0 ; Kiev, Cherkasy, Pereyaslavl, Chernigov, Bila Tserkva, Poltava, Zhytomyr, Kamianets
+@ Utigurs ; 500 ; 600 ; 2.0 ; Tana, Tmutarakan, Kerch, Kharkiv
+@ Kutrigurs ; 500 ; 600 ; 1.8 ; Cetatea Alba, Chilia, Odessos, Bilhorod, Iasi
+@ Goths of Crimea ; 500 ; 800 ; 0.7 ; Chufut Kale, Sudak
+@ Western Turkic Khaganate ; 600 ; 600 ; 2.5 ; Tana, Tmutarakan, Itil, Samandar, Kharkiv, Volgograd
+@ Great Bulgaria ; 700 ; 700 ; 2.0 ; Tana, Tmutarakan, Kerch, Kharkiv, Poltava
+@ Slavs ; 500 ; 700 ; 1.4 ; Lutsk, Vladimir Volynsky, Lviv, Przemysl, Minsk, Pinsk, Smolensk, Gomel, Kursk, Bryansk, Novgorod, Polotsk, Vitebsk
+@ Khazar Khaganate ; 700 ; 1000 ; 2.2 ; Itil, Samandar, Sarkel, Kerch, Tmutarakan, Tana, Bakhchisarai, Kaffa, Astrakhan, Volgograd
+@ Volga Bulgaria ; 700 ; 1300 ; 1.4 ; Bolgar, Bilyar, Suvar, Kazan
+# --- 800-900
+@ Polans ; 800 ; 900 ; 1.0 ; Kiev, Bila Tserkva, Vyshgorod
+@ Drevlians ; 800 ; 900 ; 1.0 ; Korosten, Zhytomyr, Vruchiy
+@ Severians ; 800 ; 900 ; 1.2 ; Chernigov, Putivl, Novgorod Seversky, Kursk, Pereyaslavl
+@ Radimichs ; 800 ; 900 ; 1.0 ; Gomel, Mstislavl, Bryansk
+@ Vyatichi ; 800 ; 1100 ; 1.2 ; Kaluga, Tula, Orel, Elets, Lipetsk
+@ Krivichs ; 800 ; 900 ; 1.4 ; Smolensk, Polotsk, Vitebsk, Pskov
+@ Dregovichs ; 800 ; 900 ; 1.0 ; Pinsk, Turov, Minsk, Borisov
+@ Ilmen Slavs ; 800 ; 900 ; 1.2 ; Novgorod, Ladoga, Pskov
+@ Volhynians ; 800 ; 900 ; 1.0 ; Vladimir Volynsky, Lutsk, Belz, Cherven
+@ White Croats ; 800 ; 900 ; 1.0 ; Przemysl, Lviv, Halych, Zvenigorod
+@ Tivertsi and Ulichs ; 800 ; 900 ; 1.2 ; Cetatea Alba, Chilia, Bilhorod, Kamianets
+@ Magyars ; 800 ; 800 ; 2.0 ; Kharkiv, Poltava, Cherkasy, Pereyaslavl, Tana
+@ Pechenegs ; 900 ; 1100 ; 2.4 ; Kharkiv, Poltava, Cherkasy, Tana, Bucharest, Iasi, Chilia, Bilhorod, Kerch, Volgograd
+@ Kievan Rus ; 900 ; 1000 ; 1.1 ; Kiev, Novgorod, Smolensk, Chernigov, Pereyaslavl, Lubech, Vyshgorod, Pskov, Ladoga, Rostov, Beloozero, Murom, Turov, Pinsk, Vladimir Volynsky, Belgorod, Kursk, Putivl
+@ Polotsk ; 900 ; 1500 ; 0.9 ; Polotsk, Vitebsk
+@ Alania ; 800 ; 1200 ; 1.0 ; Samandar
+@ Burtas ; 800 ; 1000 ; 1.2 ; Penza, Saratov
+@ Bashkirs ; 800 ; 1500 ; 2.2 ; Ufa, Orenburg
+@ Mordvins ; 800 ; 1500 ; 1.5 ; Penza, Tambov
+@ Merya ; 800 ; 1000 ; 1.3 ; Rostov, Yaroslavl, Kostroma
+@ Muroma ; 800 ; 1100 ; 1.0 ; Murom
+@ Gotland ; 800 ; 1280 ; 0.5 ; Visby
+# --- 1000-1200
+@ Kievan Rus ; 1000 ; 1000 ; 1.2 ; Kiev, Novgorod, Smolensk, Chernigov, Pereyaslavl, Lubech, Vyshgorod, Pskov, Ladoga, Rostov, Beloozero, Murom, Turov, Pinsk, Vladimir Volynsky, Belgorod, Kursk, Putivl, Cherven, Przemysl, Tmutarakan, Yaroslavl, Suzdal
+@ Kiev ; 1100 ; 1300 ; 1.0 ; Kiev, Vyshgorod, Belgorod, Bila Tserkva, Korosten
+@ Chernigov ; 1100 ; 1400 ; 1.0 ; Chernigov, Novgorod Seversky, Putivl, Kursk, Bryansk, Lubech
+@ Pereyaslavl ; 1100 ; 1300 ; 0.9 ; Pereyaslavl, Poltava
+@ Smolensk ; 1100 ; 1400 ; 0.9 ; Smolensk, Mstislavl
+@ Novgorod ; 1100 ; 1492 ; 1.2 ; Novgorod, Ladoga, Pskov, Ustyug, Vologda, Beloozero
+@ Turov ; 1100 ; 1300 ; 0.9 ; Turov, Pinsk
+@ Volhynia ; 1100 ; 1300 ; 0.9 ; Vladimir Volynsky, Lutsk, Belz, Chelm
+@ Galicia ; 1100 ; 1400 ; 0.9 ; Halych, Przemysl, Terebovlia, Zvenigorod, Lviv, Kamianets
+@ Rostov and Suzdal ; 1100 ; 1100 ; 1.2 ; Rostov, Suzdal, Vladimir, Yaroslavl, Kostroma, Murom
+@ Vladimir-Suzdal ; 1200 ; 1300 ; 1.2 ; Vladimir, Suzdal, Rostov, Yaroslavl, Kostroma, Nizhny Novgorod, Tver, Moscow, Kolomna
+@ Ryazan ; 1100 ; 1492 ; 0.9 ; Ryazan, Murom
+@ Cumans ; 1100 ; 1200 ; 2.4 ; Kharkiv, Poltava, Tana, Kerch, Cherkasy, Volgograd, Astrakhan, Bucharest, Iasi, Chilia
+@ Estonians ; 1100 ; 1200 ; 1.0 ; Tartu, Tallinn, Kuressaare, Haapsalu, Pernau
+@ Lithuanians ; 1100 ; 1279 ; 1.1 ; Vilnius, Kernave, Trakai, Kaunas
+@ Latgalians ; 1100 ; 1200 ; 0.8 ; Wenden
+@ Curonians ; 1100 ; 1300 ; 0.8 ; Memel, Mitau
+@ Semigallians ; 1100 ; 1300 ; 0.6 ; Mitau
+@ Prussians ; 1100 ; 1250 ; 1.0 ; Konigsberg, Elblag, Malbork
+@ Yotvingians ; 1100 ; 1300 ; 1.0 ; Grodno
+# --- 1279-1400
+@ Golden Horde ; 1279 ; 1400 ; 2.4 ; Sarai, Astrakhan, Volgograd, Bolgar, Kazan, Kharkiv, Poltava, Kerch, Bakhchisarai, Tana, Cherkasy, Saratov, Penza, Orenburg, Cetatea Alba, Chilia, Kiev, Pereyaslavl, Bila Tserkva, Bilhorod, Kursk
+@ Genoese Kaffa ; 1279 ; 1400 ; 0.5 ; Kaffa, Sudak
+@ Moscow ; 1279 ; 1300 ; 0.9 ; Moscow, Kolomna
+@ Vladimir-Suzdal ; 1279 ; 1300 ; 1.0 ; Vladimir, Suzdal, Rostov, Yaroslavl, Kostroma, Nizhny Novgorod
+@ Tver ; 1279 ; 1400 ; 0.9 ; Tver
+@ Lithuania ; 1300 ; 1492 ; 1.6 ; Vilnius, Kernave, Trakai, Kaunas, Grodno, Novogrudok, Minsk, Brest, Pinsk, Turov, Borisov, Vitebsk, Polotsk
+@ Galicia-Volhynia ; 1300 ; 1300 ; 1.1 ; Halych, Przemysl, Lviv, Lutsk, Vladimir Volynsky, Belz, Chelm, Terebovlia, Kamianets
+@ Muscovy ; 1400 ; 1400 ; 1.0 ; Moscow, Kolomna, Vladimir, Kostroma, Nizhny Novgorod, Suzdal, Yaroslavl
+@ Pskov ; 1400 ; 1492 ; 0.7 ; Pskov
+@ Lithuania ; 1400 ; 1492 ; 1.8 ; Kiev, Smolensk, Bryansk, Chernigov, Novgorod Seversky, Putivl, Pereyaslavl, Cherkasy, Bila Tserkva, Zhytomyr, Lutsk, Vladimir Volynsky, Kamianets, Mstislavl, Gomel, Bilhorod
+@ Poland ; 1400 ; 1492 ; 1.1 ; Lviv, Przemysl, Halych, Terebovlia, Zvenigorod
+@ Golden Horde ; 1400 ; 1400 ; 2.4 ; Sarai, Astrakhan, Volgograd, Bolgar, Kazan, Kharkiv, Poltava, Kerch, Bakhchisarai, Tana, Saratov, Penza, Orenburg, Cetatea Alba, Chilia, Voronezh, Tambov
+@ Genoese Kaffa ; 1400 ; 1400 ; 0.5 ; Kaffa, Sudak
+@ Grand Duchy of Moscow ; 1492 ; 1492 ; 1.1 ; Moscow, Kolomna, Vladimir, Kostroma, Nizhny Novgorod, Suzdal, Yaroslavl, Rostov, Tver, Novgorod, Ladoga, Ustyug, Vologda, Beloozero, Kaluga, Tula, Orel, Murom, Ryazan, Elets, Lipetsk, Voronezh, Tambov, Penza, Ufa, Perm, Cherdyn
+@ Crimean Khanate ; 1492 ; 1492 ; 1.0 ; Bakhchisarai, Kerch, Chufut Kale, Kaffa, Sudak, Cherkasy
+@ Great Horde ; 1492 ; 1492 ; 2.2 ; Sarai, Volgograd, Saratov, Tana, Kharkiv, Poltava
+@ Kazan Khanate ; 1492 ; 1492 ; 1.0 ; Kazan, Bolgar, Bilyar
+@ Astrakhan Khanate ; 1492 ; 1492 ; 1.2 ; Astrakhan
+@ Nogai Horde ; 1492 ; 1492 ; 2.0 ; Orenburg
+@ Pskov Republic ; 1492 ; 1492 ; 0.7 ; Pskov
+# --- Scandinavia and the Baltic
+@ Denmark ; 900 ; 1492 ; 1.1 ; Roskilde, Odense, Lund, Ribe, Aarhus, Aalborg, Viborg, Schleswig, Hedeby
+@ Norway ; 900 ; 1492 ; 1.4 ; Oslo, Tonsberg, Trondheim, Bergen, Stavanger, Kaupang, Hamar, Tromso, Bjarkoy
+@ Sweden ; 1000 ; 1492 ; 1.3 ; Uppsala, Sigtuna, Birka, Stockholm, Skara, Linkoping, Kalmar, Vaxjo, Lodose
+@ Gautar ; 900 ; 1000 ; 1.2 ; Skara, Lodose, Linkoping, Vaxjo, Kalmar, Gothenburg
+@ Svear ; 500 ; 1000 ; 1.3 ; Uppsala, Sigtuna, Birka, Stockholm
+@ Iceland ; 900 ; 1492 ; 1.5 ; Reykjavik, Thingvellir
+@ Norse Greenland ; 1000 ; 1400 ; 3.0 ; Brattahlid
+@ Faroes ; 900 ; 1492 ; 0.6 ; Torshavn
+@ Finns ; 1000 ; 1100 ; 1.2 ; Abo
+@ Tavastians ; 1000 ; 1200 ; 1.2 ; Tavastia
+@ Karelians ; 1000 ; 1300 ; 1.4 ; Korela, Vyborg
+@ Sweden ; 1200 ; 1492 ; 1.4 ; Abo, Tavastia, Vyborg
+@ Livonian Order ; 1200 ; 1492 ; 1.0 ; Riga, Wenden, Mitau, Dorpat, Tallinn, Pernau, Memel
+@ Teutonic State ; 1200 ; 1300 ; 1.0 ; Torun, Chelmno, Malbork, Elblag, Konigsberg
+@ Danish Estonia ; 1200 ; 1300 ; 0.9 ; Tallinn, Haapsalu
+@ Estonians ; 1200 ; 1200 ; 1.0 ; Dorpat, Kuressaare, Pernau
+@ Lithuania ; 1200 ; 1279 ; 1.4 ; Vilnius, Kernave, Trakai, Kaunas, Novogrudok, Grodno
+@ Kalmar Union ; 1400 ; 1400 ; 1.4 ; Oslo, Tonsberg, Trondheim, Bergen, Stavanger, Tromso, Roskilde, Odense, Lund, Ribe, Aarhus, Aalborg, Viborg, Schleswig, Uppsala, Sigtuna, Stockholm, Skara, Linkoping, Kalmar, Vaxjo, Lodose, Abo, Tavastia, Vyborg, Visby

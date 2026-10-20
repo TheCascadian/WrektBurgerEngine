@@ -1,0 +1,49 @@
+# Scandinavia, the Baltic, Poland, Bohemia, Hungary and the Balkans, built from the provinces of Natural Earth (public domain). The later line wins where two overlap.
+# Sources: Putzger Historischer Weltatlas, Magocsi Historical Atlas of East Central Europe, Atlas of Medieval Europe, Wikipedia articles of each realm; each realm holds the units that cover its lands on 1 January.
+# --- Scandinavia (1000 to 1492)
+U Sweden ; 1100 ; 1492 ; SWE
+U Denmark ; 1000 ; 1492 ; DNK, SWE:Skåne, SWE:Blekinge, SWE:Halland
+U Norway ; 1000 ; 1492 ; NOR, SWE:Jämtland
+U Gotland ; 1100 ; 1300 ; SWE:Gotland
+U Kalmar Union ; 1400 ; 1400 ; SWE, NOR, DNK, FIN, SWE:Jämtland
+U Sweden ; 1279 ; 1300 ; SWE, FIN:Finland Proper, FIN:Satakunta, FIN:Tavastia Proper, FIN:Päijänne Tavastia, FIN:Uusimaa, FIN:Pirkanmaa
+U Sweden ; 1492 ; 1492 ; FIN:Finland Proper, FIN:Satakunta, FIN:Tavastia Proper, FIN:Päijänne Tavastia, FIN:Uusimaa, FIN:Pirkanmaa, FIN:Kymenlaakso, FIN:Ostrobothnia, FIN:Central Ostrobothnia, FIN:Southern Ostrobothnia
+U Novgorod ; 1279 ; 1492 ; FIN:South Karelia, FIN:North Karelia
+# --- the Baltic
+U Estonians ; 1100 ; 1200 ; EST
+U Danish Estonia ; 1279 ; 1300 ; EST:Harju, EST:Lääne-Viru, EST:Ida-Viru, EST:Rapla, EST:Järva
+U Livonian Order ; 1279 ; 1492 ; EST, LVA
+U Lithuania ; 1279 ; 1492 ; LTU
+U Teutonic State ; 1279 ; 1492 ; LTU:Klaipėda
+# --- Poland, Bohemia, Hungary
+U Bohemia ; 1200 ; 1492 ; CZE
+U Silesian Piasts ; 1200 ; 1300 ; POL:Lower Silesian Voivodeship, POL:Opole Voivodeship, POL:Silesian Voivodeship
+U Greater Poland ; 1200 ; 1300 ; POL:Greater Poland Voivodeship, POL:Lubusz Voivodeship
+U Masovia ; 1200 ; 1300 ; POL:Masovian Voivodeship, POL:Podlaskie Voivodeship
+U Lesser Poland ; 1200 ; 1300 ; POL:Lesser Poland Voivodeship, POL:Świętokrzyskie Voivodeship, POL:Lublin Voivodeship, POL:Łódź Voivodeship
+U Kuyavia ; 1279 ; 1300 ; POL:Kuyavian-Pomeranian Voivodeship
+U Pomerania ; 1200 ; 1492 ; POL:West Pomeranian Voivodeship
+U Pomerelia ; 1200 ; 1300 ; POL:Pomeranian Voivodeship
+U Teutonic State ; 1400 ; 1492 ; POL:Pomeranian Voivodeship, POL:Warmian-Masurian Voivodeship, POL:Kuyavian-Pomeranian Voivodeship
+U Kingdom of Poland ; 1400 ; 1492 ; POL:Greater Poland Voivodeship, POL:Masovian Voivodeship, POL:Lesser Poland Voivodeship, POL:Świętokrzyskie Voivodeship, POL:Lublin Voivodeship, POL:Łódź Voivodeship, POL:Podkarpackie Voivodeship, POL:Podlaskie Voivodeship, POL:Lubusz Voivodeship
+U Silesia ; 1400 ; 1492 ; POL:Lower Silesian Voivodeship, POL:Opole Voivodeship, POL:Silesian Voivodeship
+U Hungary ; 1100 ; 1492 ; HUN, SVK
+U Hungary ; 1200 ; 1492 ; HRV
+U Venice ; 1400 ; 1492 ; HRV:Istria, HRV:Zadar, HRV:Šibenik-Knin, HRV:Split-Dalmatia
+U Ragusa ; 1200 ; 1492 ; HRV:Dubrovnik-Neretva
+# --- the Balkans
+U Serbia ; 1200 ; 1300 ; SRB:Raška, SRB:Rasina, SRB:Toplica, SRB:Nišava, SRB:Zlatibor, SRB:Moravica, SRB:Kolubara, SRB:Pirot
+U Second Bulgarian Empire ; 1200 ; 1300 ; BGR
+U Zeta ; 1200 ; 1300 ; MNE
+U Bosnia ; 1200 ; 1400 ; BIH
+U Serbian Despotate ; 1400 ; 1400 ; SRB:Raška, SRB:Rasina, SRB:Toplica, SRB:Nišava, SRB:Zlatibor, SRB:Moravica, SRB:Kolubara, SRB:Pirot, SRB:Šumadija, SRB:Podunavlje, SRB:Belgrade, SRB:Braničevo
+U Ottoman Empire ; 1400 ; 1400 ; BGR
+U Ottoman Empire ; 1492 ; 1492 ; BGR, SRB, BIH, ALB, MNE, GRC
+U Albanian Principalities ; 1400 ; 1400 ; ALB
+U Venice ; 1400 ; 1400 ; MNE:Kotor, MNE:Budva, MNE:Bar
+U Zeta ; 1492 ; 1492 ; MNE:Cetinje
+# 1500: Croatia and Dalmatia belonged to the Hungarian crown (the dataset gives a part of it to the Papal States)
+U Kingdom of Hungary ; 1500 ; 1500 ; HRV
+# Royal Hungary under the Habsburgs after Mohacs (1526): the north and west of the kingdom, Slovakia and the Croatian lands; the plain was Ottoman from 1541 and Transylvania was Szapolyai's (later the Principality of Transylvania)
+U Kingdom of Hungary ; 1530 ; 1700 ; SVK, HRV@13/44.5/19.5/46.6, HUN@16/46.4/22/49.1
+U Principality of Transylvania ; 1530 ; 1650 ; ROU:Bihor, ROU:Cluj, ROU:Alba, ROU:Hunedoara, ROU:Mureș, ROU:Bistrița-Năsăud, ROU:Maramureș, ROU:Harghita, ROU:Covasna, ROU:Brașov, ROU:Arad, ROU:Sălaj, ROU:Sibiu

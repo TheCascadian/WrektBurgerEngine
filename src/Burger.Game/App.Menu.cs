@@ -86,6 +86,10 @@ public sealed partial class App
         }
     }
 
+    private List<Country>? _pickerList;
+    private int _pickerVersion;
+    private Game? _pickerGame;
+
     private void DrawPagePlay(Game game, MapRenderer map, CameraController cam, float x, float y, float w, Rectangle panel)
     {
         float s = Gui.Scale;
@@ -122,7 +126,13 @@ public sealed partial class App
         float s = Gui.Scale;
         Gui.Label("Choose a country (or click it on the map):", x, y, 16);
         y += 26 * s;
-        var playable = game.World.Countries.Where(c => c.Playable && c.Exists).OrderBy(c => c.Name).ToList();
+        // (sorted once per map, not every frame: hundreds of countries at the early start dates)
+        if (_pickerList == null || _pickerVersion != game.MapVersion || _pickerGame != game)
+        {
+            _pickerList = game.World.Countries.Where(c => c.Playable && c.Exists).OrderBy(c => c.Name, StringComparer.CurrentCulture).ToList();
+            _pickerVersion = game.MapVersion; _pickerGame = game;
+        }
+        var playable = _pickerList;
         float listH = panel.Y + panel.Height - y - reserve - 66 * s;
         var area = new Rectangle(x, y, w, Math.Max(40 * s, listH));
         float top = Gui.BeginScroll("menu-countries", area, playable.Count * 40 * s);
@@ -130,6 +140,7 @@ public sealed partial class App
         foreach (var c in playable)
         {
             var row = new Rectangle(x, cy, w - 10 * s, 36 * s);
+            if (row.Y + row.Height < area.Y || row.Y > area.Y + area.Height) { cy += 40 * s; continue; }   // only the rows in view are drawn (their flags are made when first seen)
             bool sel = c == _menuSelection;
             Gui.ButtonFrame(row, true, Gui.Hover(row), sel);
             Gui.Flag(c, new Rectangle(row.X + 4, row.Y + 4, 42 * s, 28 * s));

@@ -1,0 +1,11 @@
+# The states of the Americas with known extents, from the countries and provinces of Natural Earth (public domain). Years are astronomical (0 = 1 BCE). ISO3@w/s/e/n = the part of the country inside the box (degrees). The peoples without states stay with the seeds of americas.txt. The later line wins where two overlap.
+# Sources: Handbook of Middle American Indians, Cambridge History of the Native Peoples of the Americas vols 2-3, Smith The Aztecs, D'Altroy The Incas, Moseley The Incas and Their Ancestors, Wikipedia articles of each state (territorial extent sections).
+U Chachapoyas ; 1000 ; 1492 ; PER@-78.3/-7.5/-77/-5.5
+U Muisca Confederation ; 1000 ; 1492 ; COL@-74.5/4/-72.5/7
+U Tairona ; 1000 ; 1492 ; COL@-74.5/10.3/-73/11.3
+U Kingdom of Quito ; 1000 ; 1400 ; ECU@-79/-1.5/-77.5/0.7
+U Cahokia ; 1000 ; 1200 ; USA@-91/37/-88.5/39.5
+# --- Greenland: the Norse held two small settlements on the south-west coast; the rest was Dorset, later Thule, and the ice sheet is empty
+U Dorset ; 1000 ; 1199 ; GRL, CAN@-125/62/-55/84
+U Thule Inuit ; 1200 ; 1492 ; GRL, CAN@-125/62/-55/84
+U Norse Greenland ; 1000 ; 1400 ; GRL@-47/60/-43/61.7, GRL@-52/63.5/-49/65

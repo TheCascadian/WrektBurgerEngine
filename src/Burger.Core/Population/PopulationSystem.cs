@@ -160,6 +160,22 @@ public sealed partial class PopulationSystem
         return cp;
     }
 
+    /// <summary>One state absorbs another (states fused for a start date): their people, base tax and manpower are added and the absorbed state is forgotten.</summary>
+    public void FuseStates(State keep, State gone)
+    {
+        if (!_states.TryGetValue(gone, out var g)) return;
+        var k = Of(keep);
+        foreach (var p in g.Pops)
+        {
+            var same = k.Pops.FirstOrDefault(x => x.Culture == p.Culture && x.Religion == p.Religion && x.Type == p.Type);
+            if (same != null) same.Size += p.Size; else k.Pops.Add(p);
+        }
+        k.BaseTax += g.BaseTax; k.BaseManpower += g.BaseManpower; k.InitialTotal += g.InitialTotal;
+        k.OwnedSinceDay = Math.Min(k.OwnedSinceDay, g.OwnedSinceDay);
+        _states.Remove(gone);
+        InvalidateMajorities();
+    }
+
     public bool HasPops(State s) => _states.TryGetValue(s, out var sp) && sp.Pops.Count > 0;
 
     /// <summary>Sets up cultures, religions and pops of the world (after states, countries and history are loaded).</summary>
@@ -406,28 +422,48 @@ public sealed partial class PopulationSystem
     // Monthly simulation
     // =============================================================================================
 
-    public void MonthlyTick()
+    public void MonthlyTick() { for (int part = 0; part < 24; part++) MonthlyTickPart(part, 24); }
+
+    /// <summary>
+    /// One of 24 parts of the monthly population (the game does one each hour of a day): parts 0 to 15 grow and assimilate a sixteenth of the states each, part 16 moves the people,
+    /// parts 17 to 22 merge a sixth of the states each and part 23 does what concerns all (cores, colonies, independence, projects).
+    /// </summary>
+    public void MonthlyTickPart(int part, int parts = 24)
     {
         if (!Enabled) return;
-        InvalidateMajorities();
         var w = _game.World;
-        foreach (var s in w.States)
+        var states = w.States;
+        if (part == 0) InvalidateMajorities();
+        if (part <= 15)
         {
-            if (!_states.TryGetValue(s, out var sp) || sp.Pops.Count == 0) continue;
-            if (sp.Owner != s.Owner) { sp.Owner = s.Owner; sp.OwnedSinceDay = w.Date.TotalDays; }
-            double before = sp.Total;
-            Grow(s, sp);
-            Assimilate(s, sp);
-            sp.LastGrowth = sp.Total - before;
+            for (int i = part; i < states.Count; i += 16)
+            {
+                var s = states[i];
+                if (!_states.TryGetValue(s, out var sp) || sp.Pops.Count == 0) continue;
+                if (sp.Owner != s.Owner) { sp.Owner = s.Owner; sp.OwnedSinceDay = w.Date.TotalDays; }
+                double before = sp.Total;
+                Grow(s, sp);
+                Assimilate(s, sp);
+                sp.LastGrowth = sp.Total - before;
+            }
         }
-        Migrate();
-        foreach (var s in w.States)
-            if (_states.TryGetValue(s, out var sp) && sp.Pops.Count > 0) { Merge(sp); ApplyOutput(s, sp); }
-        _countryModsDirty = true;
-        if (CoresEnabled) MonthlyCores();
-        if (ColonizationEnabled) MonthlyColonies();
-        if (IndependenceEnabled) MonthlyIndependence();
-        MonthlyGoldProjects();
+        else if (part == 16) Migrate();
+        else if (part <= 22)
+        {
+            for (int i = part - 17; i < states.Count; i += 6)
+            {
+                var s = states[i];
+                if (_states.TryGetValue(s, out var sp) && sp.Pops.Count > 0) { Merge(sp); ApplyOutput(s, sp); }
+            }
+        }
+        else
+        {
+            _countryModsDirty = true;
+            if (CoresEnabled) MonthlyCores();
+            if (ColonizationEnabled) MonthlyColonies();
+            if (IndependenceEnabled) MonthlyIndependence();
+            MonthlyGoldProjects();
+        }
     }
 
     private void Grow(State s, StatePopulation sp)

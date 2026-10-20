@@ -12,10 +12,13 @@ public sealed partial class App
     {
         var game = Game;
         if (game == null || _menuDate == null || Renderer == null) return;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         game.Timeline.Preview(_menuDate.Value);
+        long world = sw.ElapsedMilliseconds;
         _previewing = true;
         Renderer.Dirty = true;
         Overlay?.RelayoutLabels(game.Timeline.SnapshotFor(_menuDate.Value)?.Date);
+        Log.Info($"Start screen date {_menuDate.Value.ToDisplay()}: world {world} ms, names {sw.ElapsedMilliseconds - world} ms");
         if (_menuSelection == null || !_menuSelection.Exists)
             _menuSelection = game.World.GetCountry(game.Data.Info.DefaultTag) is { Exists: true } def ? def : game.World.Countries.Where(c => c.Playable && c.Exists).OrderByDescending(c => c.OwnedStates.Count).FirstOrDefault();
     }
@@ -25,12 +28,17 @@ public sealed partial class App
     {
         if (_previewing && Game != null && _menuDate != null && Renderer != null)
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             Game.Timeline.StartAt(_menuDate.Value);
             _previewing = false;
             Renderer.Dirty = true;
+            long world = sw.ElapsedMilliseconds;
             Overlay?.RelayoutLabels(Game.Timeline.SnapshotFor(_menuDate.Value)?.Date);
+            Log.Info($"Play: world of the date {world} ms, names {sw.ElapsedMilliseconds - world} ms");
         }
+        var swStart = System.Diagnostics.Stopwatch.StartNew();
         StartGame(tag);
+        Log.Info($"Play: game started and entered in {swStart.ElapsedMilliseconds} ms");
     }
 
     private void PickDate(GameDate date)

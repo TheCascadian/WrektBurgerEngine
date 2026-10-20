@@ -1,0 +1,71 @@
+# Italy 500-1492. Sources: Wikipedia articles on the Ostrogothic Kingdom, Lombard Kingdom, Exarchate of Ravenna, Papal States, Emirate of Sicily, Norman Italy, Kingdom of Sicily, Kingdom of Naples, Italian city-states, Duchy of Milan, Republic of Venice;
+# Atlas of Medieval Europe, Putzger Historischer Weltatlas, Shepherd Historical Atlas
+# --- 500-700
+@ Ostrogothic Kingdom ; 500 ; 500 ; 1.4 ; Ravenna, Rome, Milan, Pavia, Verona, Naples, Salona, Aquileia, Genoa, Turin, Florence, Bologna, Capua, Brindisi, Taranto, Bari, Reggio, Palermo, Syracuse, Venice, Spoleto, Ancona, Aosta, Trento, Ljubljana, Sirmium, Zagreb, Split, Zadar, Marsala, Cosenza, Salerno, Perugia
+@ Vandals ; 500 ; 500 ; 1.3 ; Cagliari, Oristano, Sassari, Ajaccio, Bastia
+@ Lombards ; 600 ; 700 ; 1.4 ; Pavia, Milan, Verona, Brescia, Bergamo, Cividale, Turin, Padua, Piacenza, Parma, Modena, Lucca, Florence, Siena, Spoleto, Perugia, Benevento, Capua, Salerno, Bologna, Trento, Mantua, Cremona, Novara, Como, Arezzo, Pisa, Melfi, Potenza, Aosta
+@ Byzantine Italy ; 600 ; 700 ; 1.2 ; Ravenna, Rimini, Ancona, Ferrara, Rome, Viterbo, Naples, Gaeta, Amalfi, Reggio, Otranto, Brindisi, Bari, Taranto, Cosenza, Catanzaro, Crotone, Palermo, Syracuse, Catania, Messina, Agrigento, Trapani, Cagliari, Oristano, Sassari, Venice, Genoa, Savona, Luni, Ventimiglia
+# --- 800
+@ Kingdom of Italy ; 800 ; 900 ; 1.3 ; Pavia, Milan, Verona, Brescia, Bergamo, Cividale, Turin, Padua, Piacenza, Parma, Modena, Lucca, Florence, Siena, Mantua, Cremona, Novara, Como, Arezzo, Pisa, Bologna, Trento, Aosta, Treviso, Udine, Genoa, Vercelli, Asti, Aquileia
+@ Papal States ; 800 ; 1500 ; 1.0 ; Rome, Viterbo, Orvieto, Ostia, Ravenna, Rimini, Ancona, Perugia, Ferrara
+@ Spoleto ; 800 ; 1000 ; 1.0 ; Spoleto, Perugia
+@ Benevento ; 800 ; 900 ; 1.2 ; Benevento, Capua, Salerno, Melfi, Potenza, Foggia, Cosenza
+@ Naples ; 800 ; 1100 ; 0.6 ; Naples, Gaeta
+@ Venice ; 800 ; 1500 ; 0.6 ; Venice
+@ Byzantine Sicily ; 800 ; 800 ; 1.2 ; Palermo, Syracuse, Catania, Messina, Agrigento, Trapani, Marsala
+@ Calabria ; 800 ; 1000 ; 1.0 ; Reggio, Otranto, Brindisi, Catanzaro, Crotone, Taranto, Lecce, Bari
+@ Sardinia ; 800 ; 900 ; 1.2 ; Cagliari, Oristano, Sassari
+@ Amalfi ; 900 ; 1100 ; 0.4 ; Amalfi
+@ Corsica ; 800 ; 1000 ; 0.9 ; Ajaccio, Bastia
+# --- 900-1000
+@ Emirate of Sicily ; 900 ; 1000 ; 1.0 ; Palermo, Syracuse, Catania, Messina, Agrigento, Trapani, Marsala, Taormina
+@ Byzantine Catepanate ; 900 ; 1000 ; 1.1 ; Bari, Otranto, Brindisi, Taranto, Lecce, Melfi, Potenza, Foggia, Reggio, Catanzaro, Crotone, Cosenza
+@ Capua ; 900 ; 1100 ; 0.8 ; Capua, Benevento
+@ Salerno ; 900 ; 1100 ; 0.8 ; Salerno, Melfi
+@ Kingdom of Italy ; 1000 ; 1000 ; 1.3 ; Pavia, Milan, Verona, Brescia, Bergamo, Cividale, Turin, Padua, Piacenza, Parma, Modena, Lucca, Florence, Siena, Mantua, Cremona, Novara, Como, Arezzo, Pisa, Bologna, Trento, Aosta, Treviso, Udine, Genoa, Vercelli, Asti, Aquileia
+@ Pisa ; 1000 ; 1300 ; 0.5 ; Pisa
+@ Genoa ; 1000 ; 1492 ; 0.6 ; Genoa, Savona, Luni
+@ Fraxinetum ; 900 ; 900 ; 0.8 ; La Garde-Freinet, Toulon
+@ Arborea ; 900 ; 1400 ; 0.7 ; Oristano
+@ Cagliari ; 900 ; 1300 ; 0.7 ; Cagliari
+@ Torres ; 900 ; 1300 ; 0.7 ; Sassari
+@ Gallura ; 1000 ; 1300 ; 0.6 ; Olbia
+# --- 1100 and 1200
+@ Norman Apulia ; 1100 ; 1100 ; 1.2 ; Bari, Melfi, Brindisi, Taranto, Otranto, Lecce, Foggia, Potenza, Salerno, Benevento, Catanzaro, Crotone, Cosenza, Reggio, Amalfi, Naples, Gaeta
+@ County of Sicily ; 1100 ; 1100 ; 1.0 ; Palermo, Messina, Catania, Syracuse, Agrigento, Trapani, Marsala, Taormina
+@ Capua ; 1100 ; 1100 ; 0.8 ; Capua
+@ Tuscany ; 1100 ; 1100 ; 1.0 ; Lucca, Florence, Siena, Arezzo, Pistoia, Pisa, Mantua, Modena, Parma, Piacenza
+@ Milan ; 1100 ; 1492 ; 0.9 ; Milan, Como, Novara
+@ Pavia ; 1100 ; 1300 ; 0.6 ; Pavia
+@ Verona ; 1100 ; 1492 ; 0.7 ; Verona, Vicenza
+@ Montferrat ; 1100 ; 1492 ; 0.8 ; Montferrat, Asti, Alessandria, Vercelli
+@ Savoy ; 1100 ; 1492 ; 1.0 ; Turin, Susa, Chambery
+@ Bologna ; 1100 ; 1492 ; 0.7 ; Bologna
+@ Ferrara ; 1100 ; 1492 ; 0.6 ; Ferrara, Modena
+@ Mantua ; 1100 ; 1492 ; 0.6 ; Mantua
+@ Parma ; 1100 ; 1300 ; 0.6 ; Parma
+@ Piacenza ; 1100 ; 1300 ; 0.6 ; Piacenza
+@ Cremona ; 1100 ; 1300 ; 0.6 ; Cremona
+@ Brescia ; 1100 ; 1300 ; 0.6 ; Brescia
+@ Bergamo ; 1100 ; 1300 ; 0.6 ; Bergamo
+@ Padua ; 1100 ; 1492 ; 0.7 ; Padua
+@ Treviso ; 1100 ; 1300 ; 0.6 ; Treviso
+@ Florence ; 1100 ; 1492 ; 0.8 ; Florence, Pistoia, Arezzo
+@ Siena ; 1100 ; 1492 ; 0.7 ; Siena
+@ Lucca ; 1100 ; 1492 ; 0.5 ; Lucca
+@ Aquileia ; 1100 ; 1400 ; 0.9 ; Aquileia, Cividale, Udine
+@ Kingdom of Sicily ; 1200 ; 1200 ; 1.2 ; Palermo, Messina, Catania, Syracuse, Agrigento, Trapani, Marsala, Taormina, Naples, Capua, Salerno, Benevento, Bari, Melfi, Brindisi, Taranto, Otranto, Lecce, Foggia, Potenza, Catanzaro, Crotone, Cosenza, Reggio, Amalfi, Gaeta
+# --- 1279 and 1300
+@ Kingdom of Naples ; 1279 ; 1492 ; 1.2 ; Naples, Capua, Salerno, Benevento, Bari, Melfi, Brindisi, Taranto, Otranto, Lecce, Foggia, Potenza, Catanzaro, Crotone, Cosenza, Reggio, Amalfi, Gaeta
+@ Kingdom of Sicily ; 1279 ; 1492 ; 1.2 ; Palermo, Messina, Catania, Syracuse, Agrigento, Trapani, Marsala, Taormina
+@ Visconti Milan ; 1300 ; 1400 ; 1.0 ; Milan, Como, Novara, Pavia, Bergamo, Brescia, Cremona, Parma, Piacenza, Vercelli
+@ Pisa ; 1279 ; 1300 ; 0.6 ; Pisa, Cagliari
+@ Sardinia ; 1279 ; 1300 ; 1.0 ; Sassari, Oristano, Olbia
+# --- 1400 and 1492
+@ Duchy of Milan ; 1400 ; 1492 ; 1.1 ; Milan, Como, Novara, Pavia, Bergamo, Brescia, Cremona, Parma, Piacenza, Vercelli, Alessandria
+@ Republic of Venice ; 1400 ; 1492 ; 1.0 ; Venice, Padua, Treviso, Verona, Vicenza, Udine, Brescia, Bergamo, Ravenna, Zadar, Split
+@ Florence ; 1400 ; 1492 ; 0.9 ; Florence, Pistoia, Arezzo, Pisa
+@ Kingdom of Sardinia ; 1400 ; 1492 ; 1.2 ; Cagliari, Sassari, Oristano, Olbia
+@ Corsica ; 1400 ; 1492 ; 0.9 ; Ajaccio, Bastia
+@ Modena ; 1400 ; 1492 ; 0.5 ; Modena
+@ Saluzzo ; 1400 ; 1492 ; 0.5 ; Saluzzo

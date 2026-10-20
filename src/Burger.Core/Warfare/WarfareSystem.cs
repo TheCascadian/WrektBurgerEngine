@@ -241,47 +241,53 @@ public sealed class WarfareSystem
     private int _pfGeneration;
     private readonly PriorityQueue<(Location Loc, double Cost), double> _pfOpen = new();
 
-    // per country: connected regions of the land it may enter, rebuilt daily or when wars change.
+    // per country: connected regions of the land it may enter, found as asked (a region is flooded the first time a path starts in it) and kept for the day or until wars change.
     // Lets FindPath reject unreachable targets at once instead of searching the whole continent.
-    private readonly Dictionary<Country, (int Day, int Wars, int[] Region)> _reach = new();
+    private sealed class ReachInfo { public int Day, Wars, Next; public int[] Region = Array.Empty<int>(); public sbyte[] Enter = Array.Empty<sbyte>(); }
+    private readonly Dictionary<Country, ReachInfo> _reach = new();
+    private readonly Queue<Location> _reachQueue = new();
 
     private bool Reachable(Country c, Location from, Location to)
     {
         int day = _game.World.Date.TotalDays, wars = _game.World.Wars.Count;
         int n = _game.World.Locations.Count;
-        if (!_reach.TryGetValue(c, out var r) || r.Day != day || r.Wars != wars || r.Region.Length != n)
+        if (!_reach.TryGetValue(c, out var r)) _reach[c] = r = new ReachInfo();
+        if (r.Day != day || r.Wars != wars || r.Region.Length != n)
         {
-            var region = r.Region != null && r.Region.Length == n ? r.Region : new int[n];
-            Array.Fill(region, -1);
-            var locs = _game.World.Locations;
-            var enter = new bool[n];
-            for (int i = 0; i < n; i++) enter[i] = locs[i].IsPassable && CanEnter(c, locs[i]);
-            var q = new Queue<Location>();
-            int next = 0;
-            foreach (var start in locs)
+            if (r.Region.Length != n) { r.Region = new int[n]; r.Enter = new sbyte[n]; }
+            Array.Fill(r.Region, -1);
+            Array.Clear(r.Enter);
+            r.Day = day; r.Wars = wars; r.Next = 0;
+        }
+        bool Enters(Location l)
+        {
+            ref sbyte e = ref r.Enter[l.Index];
+            if (e == 0) e = (sbyte)(l.IsPassable && CanEnter(c, l) ? 1 : 2);
+            return e == 1;
+        }
+        if (r.Region[from.Index] == -1 && Enters(from))
+        {
+            int id = r.Next++;
+            r.Region[from.Index] = id;
+            var q = _reachQueue;
+            q.Clear();
+            q.Enqueue(from);
+            while (q.Count > 0)
             {
-                if (region[start.Index] != -1 || !enter[start.Index]) continue;
-                int id = next++;
-                region[start.Index] = id;
-                q.Enqueue(start);
-                while (q.Count > 0)
+                var l = q.Dequeue();
+                foreach (var adj in l.Neighbors)
                 {
-                    var l = q.Dequeue();
-                    foreach (var adj in l.Neighbors)
-                    {
-                        var m = adj.To;
-                        if (adj.Kind == AdjacencyKind.Sea || region[m.Index] != -1 || !enter[m.Index]) continue;
-                        region[m.Index] = id;
-                        q.Enqueue(m);
-                    }
+                    var m = adj.To;
+                    if (adj.Kind == AdjacencyKind.Sea || r.Region[m.Index] != -1 || !Enters(m)) continue;
+                    r.Region[m.Index] = id;
+                    q.Enqueue(m);
                 }
             }
-            r = (day, wars, region);
-            _reach[c] = r;
         }
-        int a = r.Region[from.Index], b = r.Region[to.Index];
-        if (a < 0 || b < 0) return true; // standing on (or going to) land outside the regions: let the full search decide
-        return a == b;
+        int a = r.Region[from.Index];
+        if (a < 0) return true;                       // standing on land the country may not enter: let the full search decide
+        if (!Enters(to)) return true;                 // going to land outside the regions: the same
+        return r.Region[to.Index] == a;               // (a region is flooded whole, so a place not in it cannot be walked to)
     }
 
     /// <summary>A* path through locations the country may enter. Null if unreachable.</summary>
@@ -485,16 +491,23 @@ public sealed class WarfareSystem
         Occupation();
     }
 
-    public void DailyTick()
+    /// <summary>The daily work of the armies. With an hour (0 to 23) only the armies with that number (the game does each army in one hour of the day), and org recovery at hour 1; without, all of it.</summary>
+    public void DailyTick(int hour = -1)
     {
-        foreach (var d in _game.World.Divisions)
-        {
-            if (d.InBattle) continue;
-            d.Org = Math.Min(d.MaxOrg, d.Org + Rules.OrgRecovery(_game, d));
-        }
+        if (hour < 0 || hour == 1)
+            _game.P("Warfare.Org", () =>
+            {
+                foreach (var d in _game.World.Divisions)
+                {
+                    if (d.InBattle) continue;
+                    d.Org = Math.Min(d.MaxOrg, d.Org + Rules.OrgRecovery(_game, d));
+                }
+            });
+        if (_game.World.Armies.Count == 0) return;
         var alive = new HashSet<Division>(_game.World.Divisions);
         foreach (var army in _game.World.Armies.ToList())
         {
+            if (hour >= 0 && army.Id % 24 != hour) continue;
             army.Divisions.RemoveAll(d => !alive.Contains(d));
             _game.P("Warfare.Fronts", () => UpdateFront(army));
             if (army.FrontEnemy != null && army.Mode == ArmyMode.Offensive && IsHostile(army.Owner, army.FrontEnemy)) _game.P("Warfare.Offensive", () => Offensive(army));

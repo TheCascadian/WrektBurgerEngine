@@ -1,0 +1,29 @@
+# Eastern Europe, Greece, Anatolia, the Near East and North Africa, built from the provinces of Natural Earth (public domain). The later line wins where two overlap.
+# Sources: Putzger Historischer Weltatlas, Atlas of Medieval Europe, Hammond Atlas of the Islamic World, Cambridge History of Islam, Wikipedia articles of each state; each realm holds the units that cover its lands on 1 January.
+# --- Greece
+U Byzantine Empire ; 1000 ; 1100 ; GRC
+U Latin Empire ; 1200 ; 1200 ; GRC:Attica, GRC:Central Greece, GRC:Peloponnese, GRC:Centre Macedonia, GRC:West Macedonia, GRC:East Macedonia and Thrace, GRC:Thessalia
+U Despotate of Epirus ; 1200 ; 1279 ; GRC:Epirus, GRC:West Greece, GRC:Ionian Islands
+U Byzantine Empire ; 1279 ; 1300 ; GRC:Centre Macedonia, GRC:East Macedonia and Thrace, GRC:Peloponnese
+U Duchy of Athens ; 1279 ; 1400 ; GRC:Attica, GRC:Central Greece
+U Venice ; 1279 ; 1492 ; GRC:Crete, GRC:Ionian Islands
+U Ottoman Empire ; 1400 ; 1492 ; GRC:Centre Macedonia, GRC:West Macedonia, GRC:East Macedonia and Thrace, GRC:Thessalia, GRC:Central Greece, GRC:Attica, GRC:Epirus, GRC:Peloponnese, GRC:North Aegean
+U Venice ; 1492 ; 1492 ; GRC:Peloponnese
+# --- Romania, Moldova, Ukraine, Belarus
+U Hungary ; 1100 ; 1300 ; ROU:Bihor, ROU:Cluj, ROU:Alba, ROU:Hunedoara, ROU:Mureș, ROU:Bistrița-Năsăud, ROU:Maramureș, ROU:Harghita, ROU:Covasna, ROU:Brașov, ROU:Arad, ROU:Caraș-Severin
+U Wallachia ; 1400 ; 1492 ; ROU:Argeș, ROU:Dolj, ROU:Gorj, ROU:Olt, ROU:Mehedinți, ROU:Dâmbovița, ROU:Ilfov, ROU:Giurgiu, ROU:Buzău, ROU:Brăila, ROU:Ialomița, ROU:Călărași
+U Moldavia ; 1400 ; 1492 ; MDA, ROU:Iași, ROU:Neamț, ROU:Bacău, ROU:Botoșani, ROU:Galați
+U Hungary ; 1400 ; 1492 ; ROU:Bihor, ROU:Cluj, ROU:Alba, ROU:Hunedoara, ROU:Mureș, ROU:Bistrița-Năsăud, ROU:Maramureș, ROU:Harghita, ROU:Covasna, ROU:Brașov, ROU:Arad, ROU:Caraș-Severin
+U Kyivan Rus ; 1000 ; 1100 ; UKR:Kyiv, UKR:Chernihiv, UKR:Cherkasy, UKR:Poltava, UKR:Sumy, UKR:Zhytomyr, UKR:Vinnytsia, UKR:Volyn, UKR:Rivne, UKR:Lviv, UKR:Ternopil, UKR:Khmelnytskyi, UKR:Ivano-Frankivsk
+U Principality of Galicia-Volhynia ; 1200 ; 1300 ; UKR:Lviv, UKR:Volyn, UKR:Rivne, UKR:Ternopil, UKR:Ivano-Frankivsk, UKR:Khmelnytskyi, UKR:Zhytomyr
+U Principality of Kyiv ; 1200 ; 1279 ; UKR:Kyiv, UKR:Cherkasy, UKR:Vinnytsia
+U Principality of Chernigov ; 1200 ; 1279 ; UKR:Chernihiv, UKR:Poltava, UKR:Sumy
+U Golden Horde ; 1300 ; 1400 ; UKR:Kherson, UKR:Mykolaiv, UKR:Odessa, UKR:Zaporizhzhia, UKR:Dnipropetrovsk, UKR:Donetsk, UKR:Luhansk, UKR:Kharkiv, UKR:Kirovohrad, RUS:Autonomous Republic of Crimea
+U Lithuania ; 1400 ; 1492 ; UKR:Kyiv, UKR:Chernihiv, UKR:Cherkasy, UKR:Poltava, UKR:Zhytomyr, UKR:Vinnytsia, UKR:Volyn, UKR:Rivne, UKR:Khmelnytskyi, UKR:Sumy, BLR
+U Kingdom of Poland ; 1400 ; 1492 ; UKR:Lviv, UKR:Ternopil, UKR:Ivano-Frankivsk
+U Crimean Khanate ; 1492 ; 1492 ; RUS:Autonomous Republic of Crimea, UKR:Kherson, UKR:Zaporizhzhia
+U Lithuania ; 1279 ; 1300 ; BLR:Brest, BLR:Grodno, BLR:Minsk
+U Polotsk ; 1000 ; 1279 ; BLR:Vitebsk, BLR:Minsk
+# --- Anatolia
+# --- the Levant, Egypt, Iraq, Iran
+# --- Maghreb

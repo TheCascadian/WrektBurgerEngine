@@ -49,3 +49,4 @@ docs/SOURCES/pollen-and-biomes/Dugerdil, L et al. (2025)_ Holocene multi-proxy a
 
 # raw downloads of historical-basemaps (GPL-3.0), used by tools/import-history.py
 tools/historical-basemaps/*.geojson
+tools/historical-basemaps/owner_cache.pkl

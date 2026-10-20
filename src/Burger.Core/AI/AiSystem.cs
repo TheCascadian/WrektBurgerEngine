@@ -55,6 +55,7 @@ public class AiSystem
                     if (_borderStamp != stamp || _borderMapVersion != version)
                     {
                         _borders.Clear();
+                        _borderLists.Clear();
                         ComputeAllBorders();
                         _borderStamp = stamp;
                         _borderMapVersion = version;
@@ -65,22 +66,47 @@ public class AiSystem
         }
     }
 
+    private Location[]? _landPairA, _landPairB;
+
     private void ComputeAllBorders()
     {
+        // the land borders between locations (each once) are listed once; a day only looks at who controls the two ends of each
         var w = Game.World;
-        foreach (var l in w.Locations)
+        if (_landPairA == null || _landPairA.Length == 0 || _landPairLocations != w.Locations.Count)
         {
-            var a = l.Controller;
-            if (a == null) continue;
-            foreach (var adj in l.Neighbors)
-            {
-                if (adj.Kind == AdjacencyKind.Sea) continue;
-                var b = adj.To.Controller;
-                if (b == null || ReferenceEquals(b, a)) continue;
-                _borders[(a.Index, b.Index)] = true;
-                _borders[(b.Index, a.Index)] = true;
-            }
+            var a = new List<Location>(); var b = new List<Location>();
+            foreach (var l in w.Locations)
+                foreach (var adj in l.Neighbors)
+                    if (adj.Kind != AdjacencyKind.Sea && l.Index < adj.To.Index) { a.Add(l); b.Add(adj.To); }
+            _landPairA = a.ToArray(); _landPairB = b.ToArray(); _landPairLocations = w.Locations.Count;
         }
+        var seen = new HashSet<long>();
+        var pa = _landPairA!; var pb = _landPairB!;
+        for (int i = 0; i < pa.Length; i++)
+        {
+            var ca = pa[i].Controller; var cb = pb[i].Controller;
+            if (ca == null || cb == null || ReferenceEquals(ca, cb)) continue;
+            if (!seen.Add(((long)ca.Index << 32) | (uint)cb.Index)) continue;
+            _borders[(ca.Index, cb.Index)] = true;
+            _borders[(cb.Index, ca.Index)] = true;
+            AddBorderIndex(ca.Index, cb.Index); AddBorderIndex(cb.Index, ca.Index);
+        }
+        foreach (var list in _borderLists.Values) list.Sort();
+    }
+    private int _landPairLocations;
+
+    private readonly Dictionary<int, List<int>> _borderLists = new();
+    private void AddBorderIndex(int a, int b)
+    {
+        if (!_borderLists.TryGetValue(a, out var l)) _borderLists[a] = l = new List<int>();
+        l.Add(b);
+    }
+
+    /// <summary>The numbers of the countries that border a country (by controlled land, from the border cache), in order.</summary>
+    protected IReadOnlyList<int> BorderingIndices(Country c)
+    {
+        _ = BorderCache;
+        return _borderLists.TryGetValue(c.Index, out var l) ? l : Array.Empty<int>();
     }
 
     /// <summary>Runs <paramref name="work"/> over the given countries, in parallel unless <see cref="Parallelism"/> is 1.</summary>
@@ -112,6 +138,22 @@ public class AiSystem
         return list;
     }
 
+    private int _hourSlice = -1;
+    private bool? _overridesDaily;
+
+    /// <summary>
+    /// The daily AI of a country is done in one hour of the day (by the country's number) instead of all hundreds at midnight. A project whose AI overrides <see cref="DailyTick"/> still gets it once, at hour 0.
+    /// Call every hour.
+    /// </summary>
+    public void DailyTickSpread()
+    {
+        int hour = Game.World.Date.Hour;
+        _overridesDaily ??= GetType().GetMethod(nameof(DailyTick))?.DeclaringType != typeof(AiSystem);
+        if (_overridesDaily == true) { if (hour == 0) DailyTick(); return; }
+        _hourSlice = hour;
+        try { DailyTick(); } finally { _hourSlice = -1; }
+    }
+
     public virtual void DailyTick()
     {
         if (!Enabled) return;
@@ -121,6 +163,7 @@ public class AiSystem
         var air = Game.Features.Has(FeatureSet.Air) && day % 7 == 0;
         if (!military && !navy && !air) return;
         var countries = ActiveAiCountries();
+        if (_hourSlice >= 0) countries.RemoveAll(c => c.Index % 24 != _hourSlice);
         ForEachAi(countries, c =>
         {
             var rng = Game.Rngs.Ai(c);
@@ -130,12 +173,34 @@ public class AiSystem
         });
     }
 
+    private int _sliceDay = -1;
+    private bool? _overridesMonthly;
+
+    /// <summary>
+    /// The monthly AI of one country is done in one hour of the month (the first 28 days, by the country's number) instead of all hundreds at the turn of the month: no hitch on the first. Call every hour.
+    /// A project whose AI overrides <see cref="MonthlyTick"/> still gets it once, on day 1.
+    /// </summary>
+    public void MonthlyTickSpread()
+    {
+        int day = Game.World.Date.Day, hour = Game.World.Date.Hour;
+        _overridesMonthly ??= GetType().GetMethod(nameof(MonthlyTick))?.DeclaringType != typeof(AiSystem);
+        if (_overridesMonthly == true) { if (day == 1 && hour == 0) MonthlyTick(); return; }
+        if (day > 28) return;
+        _sliceDay = (day - 1) * 24 + hour;
+        try { MonthlyTick(); } finally { _sliceDay = -1; }
+    }
+
     public virtual void MonthlyTick()
     {
         if (!Enabled) return;
         var F = Game.Features;
         bool diplomacy = F.Has(FeatureSet.Diplomacy);
         var countries = ActiveAiCountries();
+        if (_sliceDay >= 0) countries.RemoveAll(c => c.Index % (28 * 24) != _sliceDay);
+        if (_sliceDay >= 0 && countries.Count == 0) return;   // (most hours of the month have no country of their own)
+        var pool = new List<Country>();
+        foreach (var x in Game.World.Countries) if (x.Exists) pool.Add(x);
+        _diplomacyPool = pool;   // read by the workers, built once here
         // warm the border cache on this thread before workers read it
         if (diplomacy) _ = BorderCache;
         ForEachAi(countries, c =>
@@ -184,14 +249,18 @@ public class AiSystem
             foreach (var d in biggest.Divisions.Skip(biggest.Divisions.Count / 2).ToList()) Game.Warfare.AssignToArmy(d, army);
             armies.Add(army);
         }
-        AssignGenerals(c, armies, rng);
+        Game.P("Mil.Generals", c.Tag, () => AssignGenerals(c, armies, rng));
 
         if (wars.Count == 0)
         {
             // at peace the armies garrison the borders with neighbours that are neither allies nor family, one neighbour per army
             var rel = Game.World.Relations;
-            var neighbours = Game.World.Countries.Where(e => e.Exists && e != c && BorderCache.ContainsKey((c.Index, e.Index))
-                && !rel.AreAllied(c, e) && !rel.AreOverlordAndSubject(c, e)).OrderBy(e => e.Index).ToList();
+            var neighbours = new List<Country>();
+            foreach (int ei in BorderingIndices(c))
+            {
+                var e = Game.World.Countries[ei];
+                if (e.Exists && e != c && !rel.AreAllied(c, e) && !rel.AreOverlordAndSubject(c, e)) neighbours.Add(e);
+            }
             for (int i = 0; i < armies.Count; i++)
             {
                 var a = armies[i];
@@ -203,11 +272,14 @@ public class AiSystem
                 else if (a.FrontEnemy != null) Game.Warfare.SetFront(a, null, ArmyMode.Hold);
             }
             // walk home from foreign land
+            Game.P("Mil.Home", c.Tag, () =>
+            {
             foreach (var d in divisions.Where(d => !d.IsMoving && d.Location.Controller != c && !d.InBattle))
             {
                 var home = Game.Warfare.NearestOwnLocation(c, d.Location);
                 if (home != null) Game.Warfare.OrderMove(d, home, manual: false);
             }
+            });
             return;
         }
 
@@ -335,6 +407,23 @@ public class AiSystem
     /// <summary>Set BURGER_AI_DEBUG=1 to log, for every AI diplomacy roll, how many targets passed per action, how many had weight &gt; 0, and what was chosen.</summary>
     private static readonly bool DebugDiplomacy = Environment.GetEnvironmentVariable("BURGER_AI_DEBUG") == "1";
 
+    /// <summary>With more countries than this the AI does not look at every one of them each month (hundreds of tribes would make the turn of the month take seconds): at its neighbours, enemies and a sample of the rest.</summary>
+    private const int FullDiplomacyBelow = 200, DiplomacySample = 40;
+    private List<Country>? _diplomacyPool;
+
+    private List<Country> DiplomacyTargets(Country c, AiRng rng)
+    {
+        var pool = _diplomacyPool;
+        if (pool == null) { pool = new List<Country>(); foreach (var x in Game.World.Countries) if (x.Exists) pool.Add(x); }
+        if (pool.Count <= FullDiplomacyBelow) return pool;
+        var pick = new HashSet<Country>(Burger.Core.Scripting.Builtins.NeighborCountries(Game, c));
+        foreach (var war in Game.World.WarsOf(c)) foreach (var e in war.EnemiesOf(c)) pick.Add(e);
+        for (int i = 0; i < DiplomacySample; i++) pick.Add(pool[rng.Next(pool.Count)]);
+        var list = new List<Country>(pick.Count);
+        foreach (var x in pool) if (pick.Contains(x)) list.Add(x);
+        return list;
+    }
+
     /// <summary>Per-country diplomatic actions. <paramref name="rng"/> is this country's private random stream.</summary>
     public virtual void Diplomacy(Country c, AiRng rng)
     {
@@ -347,17 +436,20 @@ public class AiSystem
         var personality = Game.AiProfiles.PersonalityOf(c);
         var profiles = Game.AiProfiles.Enabled ? Game.Rules.AiProfile : null;
         bool commodities = Game.Commodities.Enabled && Game.Commodities.Shortages(c).Count > 0;
+        var targets = DiplomacyTargets(c, rng);
+        var ctx = Game.Diplomacy.NewActorContext(c);   // one context for all the checks of this country (a new one per action and target was the monthly hitch with hundreds of countries)
         foreach (var a in Game.Data.DiplomaticActions.Values)
         {
             if (a.AiWillDo == null && profiles == null) continue;
-            foreach (var t in Game.World.Countries)
+            ctx.Where = a.Where;
+            foreach (var t in targets)
             {
                 if (t == c || !t.Exists) continue;
                 // cheap checks first: scripted weight, then the personality's reading of it
                 double weight = 0;
-                bool visible = Game.Diplomacy.IsVisible(a, c, t);
-                if (!visible) continue;
-                if (a.AiWillDo != null) weight = Game.Script.EvalWeight(a.AiWillDo, Game.Diplomacy.ActionContext(a, c, t), 0);
+                Game.Diplomacy.BindRecipient(ctx, t);
+                if (!Game.Script.EvalTrigger(a.Potential, ctx)) continue;
+                if (a.AiWillDo != null) weight = Game.Script.EvalWeight(a.AiWillDo, ctx, 0);
                 if (stats != null)
                 {
                     var s = stats.GetValueOrDefault(a.Key);
@@ -372,7 +464,7 @@ public class AiSystem
                 }
                 // what it lacks - oil, steel, rubber - is a reason to want the land that has it, or friends who sell it
                 if (commodities && profiles != null) weight += profiles.ResourceMotive(Game, c, a.Key, t, personality);
-                if (weight <= 0 || !Game.Diplomacy.CanUse(a, c, t)) continue;
+                if (weight <= 0 || !Game.Diplomacy.CanUseFast(a, c, t, ctx)) continue;
                 options.Add((a, t, weight));
             }
         }

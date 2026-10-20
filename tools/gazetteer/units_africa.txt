@@ -1,0 +1,10 @@
+# The kingdoms and empires of Africa with real borders, from the countries and provinces of Natural Earth (public domain). Years are astronomical (0 = 1 BCE). ISO3@w/s/e/n = the part of the country inside the box (degrees). The peoples without states stay with the seeds of the other files. The later line wins where two overlap.
+# Sources: UNESCO General History of Africa vols 2-5, Cambridge History of Africa vols 2-3, Oliver and Fage, Ajayi and Crowder History of West Africa, Pankhurst Ethiopian Borderlands, Hammond Atlas of the Islamic World, Barrington Atlas, Wikipedia articles of each state (territorial extent sections).
+# --- the Nile and the Horn
+# --- the Maghreb and Libya before the caliphates
+# --- West Africa
+# --- Central, East and Southern Africa
+# --- Madagascar: the island was never one realm before the Merina kingdom of the 19th century (the Merina of Imerina, the Sakalava of the west, the Betsimisaraka of the east)
+U Merina Kingdom ; 1600 ; 1800 ; MDG@46.5/-20.5/48/-18
+U Sakalava ; 1650 ; 1815 ; MDG@43/-24/46.5/-15
+U Betsimisaraka ; 1715 ; 1800 ; MDG@48/-19/50.5/-15

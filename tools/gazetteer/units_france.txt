@@ -1,0 +1,54 @@
+# France, the Low Countries and Switzerland built from the administrative units (departements, provinces, cantons) of Natural Earth (public domain). Where two lines overlap the later one wins.
+# FRA:Name = a departement. The historical provinces are matched to the departements that cover them (Brittany = the five Breton departements, and so on); Sources: Putzger, Atlas of Medieval Europe, Wikipedia articles of each realm and province.
+# --- 1200: the Angevin lands, the French crown and the great fiefs
+U Kingdom of France ; 1200 ; 1200 ; FRA, BEL:Hainaut
+U Angevin Empire ; 1200 ; 1200 ; FRA:Manche, FRA:Calvados, FRA:Orne, FRA:Seine-Maritime, FRA:Sarthe, FRA:Mayenne, FRA:Maine-et-Loire, FRA:Indre-et-Loire, FRA:Vienne, FRA:Deux-Sèvres, FRA:Vendée, FRA:Charente, FRA:Charente-Maritime, FRA:Gironde, FRA:Dordogne, FRA:Landes, FRA:Lot-et-Garonne, FRA:Gers, FRA:Pyrenees-Atlantics, FRA:Hautes-Pyrénées, FRA:Corrèze, FRA:Haute-Vienne, FRA:Creuse
+U Brittany ; 1200 ; 1492 ; FRA:Finistère, FRA:Côtes-d'Armor, FRA:Morbihan, FRA:Ille-et-Vilaine, FRA:Loire-Atlantique
+U Flanders ; 1200 ; 1300 ; FRA:Nord, BEL:West Flanders, BEL:East Flanders
+U Champagne ; 1200 ; 1300 ; FRA:Marne, FRA:Aube, FRA:Haute-Marne, FRA:Ardennes
+U Burgundy ; 1200 ; 1492 ; FRA:Côte-d’Or, FRA:Saône-et-Loire, FRA:Yonne
+U Toulouse ; 1200 ; 1200 ; FRA:Haute-Garonne, FRA:Tarn, FRA:Ariège, FRA:Tarn-et-Garonne, FRA:Lot, FRA:Aveyron, FRA:Gard, FRA:Hérault, FRA:Lozère, FRA:Aude, FRA:Ardèche
+U Aragon ; 1200 ; 1300 ; FRA:Pyrénées-Orientales
+U Provence ; 1200 ; 1400 ; FRA:Bouches-du-Rhône, FRA:Var, FRA:Alpes-de-Haute-Provence, FRA:Alpes-Maritimes, FRA:Vaucluse
+U Dauphine ; 1200 ; 1300 ; FRA:Isère, FRA:Drôme, FRA:Hautes-Alpes
+U Savoy ; 1200 ; 1492 ; FRA:Savoie, FRA:Haute-Savoie
+U Free County of Burgundy ; 1200 ; 1400 ; FRA:Doubs, FRA:Jura, FRA:Haute-Saône, FRA:Territoire de Belfort
+U Lorraine ; 1200 ; 1492 ; FRA:Meurthe-et-Moselle, FRA:Meuse, FRA:Moselle, FRA:Vosges
+U Strasbourg ; 1200 ; 1492 ; FRA:Bas-Rhin, FRA:Haut-Rhin
+U Brabant ; 1200 ; 1492 ; BEL:Antwerp, BEL:Flemish Brabant, BEL:Walloon Brabant, BEL:Brussels Capital, NLD:North Brabant
+U Liège ; 1200 ; 1492 ; BEL:Liège, BEL:Limburg, NLD:Limburg
+U Luxembourg ; 1200 ; 1492 ; BEL:Luxembourg, LUX
+U Namur ; 1200 ; 1492 ; BEL:Namur
+U Holland ; 1200 ; 1492 ; NLD:North Holland, NLD:South Holland, NLD:Zeeland
+U Utrecht ; 1200 ; 1492 ; NLD:Utrecht
+U Guelders ; 1200 ; 1492 ; NLD:Gelderland, NLD:Overijssel
+U Frisia ; 1200 ; 1492 ; NLD:Friesland, NLD:Groningen, NLD:Drenthe
+U Swiss Confederacy ; 1300 ; 1492 ; CHE:Uri, CHE:Schwyz, CHE:Obwalden, CHE:Nidwalden, CHE:Lucerne, CHE:Zug, CHE:Glarus, CHE:Bern, CHE:Fribourg, CHE:Solothurn, CHE:Basel-Stadt, CHE:Basel-Landschaft, CHE:Schaffhausen, CHE:Appenzell Innerrhoden, CHE:Appenzell Ausserrhoden, CHE:St. Gallen, CHE:Zürich
+# --- 1279 and 1300: Philip III and IV
+U Kingdom of France ; 1279 ; 1300 ; FRA
+U English Aquitaine ; 1279 ; 1300 ; FRA:Gironde, FRA:Landes, FRA:Lot-et-Garonne, FRA:Pyrenees-Atlantics, FRA:Dordogne, FRA:Gers
+U Dauphine ; 1279 ; 1300 ; FRA:Isère, FRA:Drôme, FRA:Hautes-Alpes
+U Burgundy ; 1279 ; 1300 ; FRA:Côte-d’Or, FRA:Saône-et-Loire
+U Brittany ; 1279 ; 1300 ; FRA:Finistère, FRA:Côtes-d'Armor, FRA:Morbihan, FRA:Ille-et-Vilaine, FRA:Loire-Atlantique
+U Provence ; 1279 ; 1300 ; FRA:Bouches-du-Rhône, FRA:Var, FRA:Alpes-de-Haute-Provence, FRA:Alpes-Maritimes
+U Papal States ; 1279 ; 1400 ; FRA:Vaucluse
+U Flanders ; 1279 ; 1300 ; FRA:Nord, BEL:West Flanders, BEL:East Flanders
+U Champagne ; 1279 ; 1300 ; FRA:Marne, FRA:Aube, FRA:Haute-Marne, FRA:Ardennes
+U Savoy ; 1279 ; 1400 ; FRA:Savoie, FRA:Haute-Savoie, FRA:Ain
+U Majorca ; 1279 ; 1300 ; FRA:Pyrénées-Orientales
+U Free County of Burgundy ; 1279 ; 1400 ; FRA:Doubs, FRA:Jura, FRA:Haute-Saône, FRA:Territoire de Belfort
+U Lorraine ; 1279 ; 1492 ; FRA:Meurthe-et-Moselle, FRA:Meuse, FRA:Moselle, FRA:Vosges
+# --- 1400: the Hundred Years War
+U Kingdom of France ; 1400 ; 1400 ; FRA
+U English Aquitaine ; 1400 ; 1400 ; FRA:Gironde, FRA:Landes, FRA:Pyrenees-Atlantics
+U Burgundy ; 1400 ; 1400 ; FRA:Côte-d’Or, FRA:Saône-et-Loire, FRA:Nord, FRA:Pas-de-Calais, FRA:Doubs, FRA:Jura, FRA:Haute-Saône, FRA:Territoire de Belfort, BEL:Hainaut, BEL:West Flanders, BEL:East Flanders
+U Brittany ; 1400 ; 1400 ; FRA:Finistère, FRA:Côtes-d'Armor, FRA:Morbihan, FRA:Ille-et-Vilaine, FRA:Loire-Atlantique
+U Savoy ; 1400 ; 1400 ; FRA:Savoie, FRA:Haute-Savoie, FRA:Ain, FRA:Alpes-Maritimes
+U Papal States ; 1400 ; 1400 ; FRA:Vaucluse
+U Provence ; 1400 ; 1400 ; FRA:Bouches-du-Rhône, FRA:Var, FRA:Alpes-de-Haute-Provence
+# --- 1492: Charles VIII
+U Kingdom of France ; 1492 ; 1492 ; FRA, FRA:Côte-d’Or, FRA:Saône-et-Loire
+U Burgundian State ; 1492 ; 1492 ; BEL:Hainaut, BEL:Antwerp, BEL:Flemish Brabant, BEL:Walloon Brabant, BEL:Brussels Capital, BEL:Namur, BEL:West Flanders, BEL:East Flanders, FRA:Doubs, FRA:Jura, FRA:Haute-Saône, FRA:Territoire de Belfort, FRA:Pas-de-Calais
+U Papal States ; 1492 ; 1492 ; FRA:Vaucluse
+U Savoy ; 1492 ; 1492 ; FRA:Savoie, FRA:Haute-Savoie, FRA:Ain
+U Aragon ; 1492 ; 1492 ; FRA:Pyrénées-Orientales

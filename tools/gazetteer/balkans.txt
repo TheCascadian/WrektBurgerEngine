@@ -1,0 +1,54 @@
+# The Balkans and the Danube 500-1492. Sources: Wikipedia articles on the Byzantine Empire (themes and territorial maps), First and Second Bulgarian Empires, Croatia, Serbia, Bosnia, Hungary, Wallachia, Moldavia, Despotate of Epirus, Principality of Achaea, Ottoman Rumelia, Venetian Dalmatia;
+# Atlas of Medieval Europe, Shepherd Historical Atlas, Historical Atlas of the Balkans (Magocsi), Ostrogorsky History of the Byzantine State
+@ Eastern Roman Empire ; 500 ; 600 ; 1.4 ; Constantinople, Thessalonica, Athens, Corinth, Sparta, Argos, Patras, Larissa, Volos, Adrianople, Philippopolis, Serdica, Nis, Ohrid, Dyrrachium, Ioannina, Arta, Selymbria, Varna, Tomis, Histria, Pliska, Preslav, Ruse, Nicopolis, Skopje, Prizren, Kastoria, Edessa, Veria, Serres, Kavala, Chalcis, Crete, Candia, Corfu, Thebes, Naupaktos, Salona, Split, Zadar, Pula, Kotor, Shkoder, Valona, Berat, Vidin, Craiova
+@ Avars ; 600 ; 700 ; 1.6 ; Sirmium, Belgrade, Novi Sad, Osijek, Pecs
+@ Sclaveni ; 600 ; 700 ; 1.5 ; Bucharest, Targoviste, Curtea de Arges, Craiova, Ruse, Vidin, Nicopolis, Nis, Skopje, Prizren, Bitola, Prespa, Kastoria, Veria, Serres, Sparta, Argos, Patras, Ioannina, Arta, Larissa
+@ Byzantine Empire ; 700 ; 700 ; 1.2 ; Constantinople, Selymbria, Adrianople, Thessalonica, Athens, Corinth, Patras, Larissa, Volos, Chalcis, Thebes, Crete, Candia, Corfu, Dyrrachium, Kavala
+@ First Bulgarian Empire ; 700 ; 900 ; 1.3 ; Pliska, Varna, Ruse, Preslav, Burgas, Mesembria, Sozopol, Nicopolis, Vidin
+@ Sklaviniai ; 700 ; 700 ; 1.4 ; Skopje, Prizren, Bitola, Prespa, Kastoria, Veria, Serres, Sparta, Argos, Ioannina, Arta, Nis, Ohrid
+@ Croats ; 700 ; 900 ; 1.0 ; Knin, Nin, Zagreb, Senj, Split, Salona
+@ Serbs ; 700 ; 1100 ; 1.0 ; Raska, Prizren, Pristina
+@ Byzantine Empire ; 800 ; 800 ; 1.3 ; Constantinople, Selymbria, Adrianople, Thessalonica, Athens, Corinth, Patras, Sparta, Larissa, Volos, Chalcis, Thebes, Crete, Candia, Corfu, Dyrrachium, Kavala, Ioannina, Arta, Veria, Edessa
+@ Pannonia ; 800 ; 800 ; 1.2 ; Zalavar, Pecs, Szekesfehervar, Gyor, Osijek, Sirmium
+@ Bulgaria ; 800 ; 900 ; 1.6 ; Sofia, Plovdiv, Ohrid, Skopje, Nis, Belgrade, Bitola, Prespa, Kastoria, Serres, Veria, Edessa
+# --- 900 and 1000
+@ Byzantine Empire ; 900 ; 1100 ; 1.4 ; Constantinople, Selymbria, Adrianople, Thessalonica, Athens, Corinth, Patras, Sparta, Larissa, Volos, Chalcis, Thebes, Crete, Candia, Corfu, Dyrrachium, Kavala, Ioannina, Arta, Veria, Edessa, Serres, Mystras, Argos, Naupaktos, Kastoria
+@ Emirate of Crete ; 900 ; 900 ; 0.8 ; Candia, Chania
+@ Kingdom of Croatia ; 900 ; 1100 ; 1.0 ; Knin, Nin, Zagreb, Senj, Split, Salona, Zadar, Jajce, Banja Luka
+@ Duklja ; 900 ; 1100 ; 0.9 ; Shkoder, Kotor, Cetinje
+@ Hungarians ; 900 ; 900 ; 2.0 ; Budapest, Szeged, Pecs, Szekesfehervar, Gyor, Eger, Debrecen
+@ Pechenegs ; 900 ; 1100 ; 2.2 ; Bucharest, Iasi, Cetatea Alba, Chilia, Constanta, Targoviste
+@ Bulgaria ; 900 ; 900 ; 1.5 ; Preslav, Pliska, Ohrid, Sofia, Plovdiv, Skopje, Nis, Belgrade, Prespa, Bitola, Varna, Burgas, Ruse, Vidin, Nicopolis
+@ Samuel's Bulgaria ; 1000 ; 1000 ; 1.4 ; Ohrid, Prespa, Skopje, Bitola, Sofia, Vidin, Nis, Belgrade, Kastoria, Berat, Prizren, Pristina
+@ Raska ; 1000 ; 1100 ; 0.9 ; Raska, Prizren
+# --- 1100 and 1200
+@ Hungary ; 1100 ; 1100 ; 1.6 ; Budapest, Szeged, Pecs, Szekesfehervar, Gyor, Eger, Debrecen, Esztergom, Sopron, Oradea, Cluj, Bratislava, Kosice, Banska Bystrica, Nitra, Zagreb, Osijek, Alba Iulia, Sibiu, Brasov, Timisoara, Knin, Nin, Split
+@ Cumans ; 1100 ; 1300 ; 2.2 ; Bucharest, Iasi, Cetatea Alba, Chilia, Constanta, Targoviste, Craiova
+@ Bulgaria ; 1100 ; 1100 ; 1.3 ; Sofia, Plovdiv, Tarnovo, Ruse, Varna, Preslav, Burgas, Vidin, Nis
+@ Second Bulgarian Empire ; 1200 ; 1400 ; 1.3 ; Tarnovo, Preslav, Varna, Ruse, Plovdiv, Sofia, Vidin, Burgas, Mesembria, Nicopolis, Skopje, Ohrid, Bitola
+@ Serbia ; 1200 ; 1400 ; 1.1 ; Raska, Prizren, Pristina, Nis, Skopje, Krusevac, Kragujevac, Smederevo
+@ Zeta ; 1200 ; 1400 ; 0.8 ; Shkoder, Kotor, Cetinje
+@ Bosnia ; 1200 ; 1492 ; 1.0 ; Sarajevo, Jajce, Banja Luka, Mostar
+@ Hungary ; 1200 ; 1300 ; 1.6 ; Budapest, Szeged, Pecs, Szekesfehervar, Gyor, Eger, Debrecen, Esztergom, Sopron, Oradea, Cluj, Bratislava, Kosice, Banska Bystrica, Nitra, Zagreb, Osijek, Alba Iulia, Sibiu, Brasov, Timisoara, Knin, Nin, Split, Vukovar
+@ Byzantine Empire ; 1200 ; 1200 ; 1.4 ; Constantinople, Selymbria, Adrianople, Thessalonica, Athens, Corinth, Patras, Sparta, Larissa, Volos, Chalcis, Thebes, Dyrrachium, Kavala, Ioannina, Arta, Veria, Edessa, Serres, Mystras, Argos, Naupaktos, Kastoria, Plovdiv, Skopje, Kruja, Valona, Berat
+@ Venice ; 1200 ; 1492 ; 0.8 ; Crete, Candia, Chania, Corfu, Negroponte, Modon, Kotor
+@ Ragusa ; 1200 ; 1492 ; 0.4 ; Ragusa
+# --- 1279, 1300
+@ Byzantine Empire ; 1279 ; 1300 ; 1.4 ; Constantinople, Selymbria, Adrianople, Thessalonica, Veria, Edessa, Serres, Kavala, Kastoria, Mystras, Philippopolis, Kallipolis
+@ Epirus ; 1279 ; 1400 ; 1.0 ; Arta, Ioannina, Naupaktos
+@ Thessaly ; 1279 ; 1400 ; 0.9 ; Larissa, Neopatras, Volos
+@ Achaea ; 1279 ; 1400 ; 1.0 ; Patras, Corinth, Argos, Sparta, Modon
+@ Duchy of Athens ; 1279 ; 1400 ; 0.9 ; Athens, Thebes, Chalcis
+@ Kingdom of Albania ; 1279 ; 1400 ; 0.9 ; Dyrrachium, Valona, Berat, Kruja
+@ Hungary ; 1300 ; 1492 ; 1.6 ; Budapest, Szeged, Pecs, Szekesfehervar, Gyor, Eger, Debrecen, Esztergom, Sopron, Oradea, Cluj, Bratislava, Kosice, Banska Bystrica, Nitra, Zagreb, Osijek, Alba Iulia, Sibiu, Brasov, Timisoara, Knin, Nin, Split, Vukovar, Senj
+@ Wallachia ; 1300 ; 1492 ; 1.2 ; Targoviste, Curtea de Arges, Craiova, Bucharest
+@ Moldavia ; 1400 ; 1492 ; 1.3 ; Suceava, Iasi, Cetatea Alba, Chilia
+# --- 1400 and 1492
+@ Ottoman Empire ; 1400 ; 1400 ; 1.3 ; Adrianople, Sofia, Plovdiv, Skopje, Serres, Veria, Philippopolis, Selymbria, Kallipolis, Tarnovo, Vidin, Nis, Ohrid, Bitola, Kastoria, Edessa, Thessalonica, Kavala, Ruse, Nicopolis, Varna, Burgas, Prespa
+@ Byzantine Empire ; 1400 ; 1400 ; 1.2 ; Constantinople, Mystras, Selymbria
+@ Serbian Despotate ; 1400 ; 1400 ; 1.2 ; Krusevac, Kragujevac, Belgrade, Smederevo, Pristina, Prizren, Raska
+@ Principality of Achaea ; 1400 ; 1400 ; 0.9 ; Patras, Corinth, Argos, Sparta
+@ Florentine Athens ; 1400 ; 1400 ; 0.9 ; Athens, Thebes
+@ Albanian Principalities ; 1400 ; 1492 ; 0.9 ; Dyrrachium, Kruja, Berat, Valona, Shkoder, Cetinje
+@ Ottoman Empire ; 1492 ; 1492 ; 1.4 ; Adrianople, Sofia, Plovdiv, Skopje, Serres, Veria, Philippopolis, Selymbria, Kallipolis, Tarnovo, Vidin, Nis, Ohrid, Bitola, Kastoria, Edessa, Thessalonica, Kavala, Ruse, Nicopolis, Varna, Burgas, Prespa, Constantinople, Athens, Thebes, Corinth, Patras, Sparta, Mystras, Argos, Chalcis, Larissa, Volos, Arta, Ioannina, Naupaktos, Kruja, Berat, Valona, Prizren, Pristina, Raska, Krusevac, Kragujevac, Smederevo, Sarajevo, Mostar, Jajce, Banja Luka, Shkoder, Dyrrachium, Neopatras
+@ Montenegro ; 1492 ; 1492 ; 0.5 ; Cetinje

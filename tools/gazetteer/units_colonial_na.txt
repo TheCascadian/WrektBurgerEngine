@@ -1,0 +1,28 @@
+# North America from 1600 to 1800: the colonies and the early United States, from the states of the USA and the provinces of Canada in Natural Earth (public domain). The US state lines are mostly the old colonial lines; boxes cover the Spanish and French posts. Years are astronomical. The later line wins where two overlap.
+# Sources: Paullin Atlas of the Historical Geography of the United States (plates 31-60: colonial grants and settlement 1650, 1700, 1750), Harris Historical Atlas of Canada vol.1, Weber The Spanish Frontier in North America, Meinig The Shaping of America vol.1, Wikipedia articles of each colony, intendancy and treaty (Paris 1783).
+U Spanish Florida ; 1600 ; 1800 ; USA:Florida
+U Santa Fe de Nuevo Mexico ; 1600 ; 1800 ; USA:New Mexico
+U Massachusetts Bay Colony ; 1650 ; 1715 ; USA:Massachusetts, USA:New Hampshire, USA:Maine
+U Connecticut Colony ; 1650 ; 1715 ; USA:Connecticut
+U Rhode Island Colony ; 1650 ; 1715 ; USA:Rhode Island
+U New Netherland ; 1650 ; 1650 ; USA:New York, USA:New Jersey, USA:Delaware
+U Province of New York ; 1700 ; 1715 ; USA:New York
+U Province of New Jersey ; 1700 ; 1715 ; USA:New Jersey
+U Province of Pennsylvania ; 1700 ; 1715 ; USA:Pennsylvania, USA:Delaware
+U Province of Maryland ; 1650 ; 1715 ; USA:Maryland
+U Virginia Colony ; 1650 ; 1715 ; USA:Virginia, USA:West Virginia
+U Carolina ; 1700 ; 1715 ; USA:North Carolina, USA:South Carolina
+U New France ; 1650 ; 1715 ; CAN@-75.5/44.8/-60/51.5
+U New France ; 1700 ; 1715 ; USA:Louisiana, USA:Arkansas, USA:Missouri, USA:Illinois, USA:Indiana, USA:Michigan, USA:Wisconsin, USA:Mississippi, USA:Alabama
+U Spanish Texas ; 1715 ; 1800 ; USA@-100/26/-93.5/34
+U Spanish California ; 1783 ; 1800 ; USA@-124/32.5/-117/38.5
+U Russian America ; 1800 ; 1800 ; USA@-160/55/-132/60.5
+U United States of America ; 1783 ; 1800 ; USA:Maine, USA:New Hampshire, USA:Vermont, USA:Massachusetts, USA:Rhode Island, USA:Connecticut, USA:New York, USA:New Jersey, USA:Pennsylvania, USA:Delaware, USA:Maryland, USA:Virginia, USA:West Virginia, USA:North Carolina, USA:South Carolina, USA:Georgia, USA:Ohio, USA:Indiana, USA:Illinois, USA:Michigan, USA:Wisconsin, USA:Kentucky, USA:Tennessee, USA:Alabama, USA:Mississippi
+# --- the Caribbean 1530-1715: the Spanish islands (Cuba, Puerto Rico, Santo Domingo and, until 1655, Jamaica); the dataset calls them by their Taino names at these dates
+U Spain ; 1530 ; 1715 ; CUB, PRI, DOM
+U Spain ; 1530 ; 1650 ; HTI, JAM
+U France ; 1650 ; 1715 ; HTI
+U England and Ireland ; 1650 ; 1700 ; JAM
+U United Kingdom ; 1715 ; 1715 ; JAM
+U France ; 1783 ; 1800 ; HTI
+U Spain ; 1783 ; 1800 ; CUB, PRI, DOM

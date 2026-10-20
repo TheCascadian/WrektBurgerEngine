@@ -1,0 +1,13 @@
+# The states of the Americas drawn as polygons (P name ; from ; to ; lon lat, ...; years astronomical), instead of whole modern countries or boxes: the Inca keep to the Andes and the coast and leave the Amazon rainforest to its peoples.
+# Sources: D'Altroy The Incas (map of Tawantinsuyu in 1525; Cusco heartland, the four suyus), Moseley The Incas and Their Ancestors, Isbell and Silverman Andean Archaeology, Smith The Aztecs (map of the Triple Alliance provinces in 1519), Pollard Taríacuri's Legacy (the Tarascan state), Millon Urbanization at Teotihuacan, Wikipedia articles of each state.
+P Tarascan State ; 1400 ; 1492 ; -103.5 19.8, -102.0 20.2, -100.6 19.8, -100.5 18.5, -102.0 18.0, -103.3 18.5
+P Triple Alliance ; 1492 ; 1492 ; -100.5 21.5, -97.5 22.0, -97.0 20.5, -96.0 19.0, -95.5 18.0, -94.8 16.2, -93.5 15.0, -95.5 16.0, -97.5 16.3, -100.5 17.0, -102.0 18.0, -101.5 19.8
+P Triple Alliance ; 1400 ; 1400 ; -99.6 19.0, -98.2 19.0, -98.2 20.0, -99.6 20.0
+P Teotihuacan ; 100 ; 600 ; -99.6 19.2, -98.2 19.2, -98.2 20.4, -99.6 20.4
+P Monte Alban ; 100 ; 700 ; -97.5 16.4, -96.0 16.4, -96.0 17.6, -97.5 17.6
+P Kingdom of Cusco ; 1300 ; 1400 ; -73.5 -15.0, -71.0 -15.0, -71.0 -12.5, -73.5 -12.5
+P Inca Empire ; 1492 ; 1492 ; -77.5 1.0, -79.0 1.2, -80.2 -0.5, -81.2 -4.5, -81.0 -6.0, -79.5 -8.5, -78.5 -12.0, -76.5 -14.5, -75.0 -15.8, -72.5 -17.5, -70.5 -19.0, -70.2 -25.0, -71.5 -30.0, -71.8 -34.5, -70.0 -35.0, -69.0 -33.0, -67.5 -30.0, -65.5 -27.0, -65.0 -23.0, -63.5 -20.0, -64.5 -17.5, -66.0 -14.5, -69.0 -13.0, -70.5 -11.0, -73.5 -8.0, -76.5 -6.0, -77.5 -3.5, -77.5 -1.0
+P Moche ; 100 ; 700 ; -80.0 -5.5, -78.5 -7.0, -78.3 -10.0, -79.5 -10.0, -80.0 -8.0
+P Wari Empire ; 600 ; 1000 ; -79.5 -8.0, -77.0 -8.0, -74.0 -10.0, -72.0 -13.5, -71.5 -16.5, -75.0 -16.5, -77.0 -14.0, -79.0 -11.0
+P Tiwanaku ; 600 ; 1000 ; -70.5 -14.5, -68.0 -14.5, -66.5 -17.0, -67.0 -19.5, -69.5 -19.0, -70.5 -17.5
+P Chimu Kingdom ; 1000 ; 1400 ; -80.2 -4.5, -78.8 -7.0, -78.5 -10.5, -79.5 -10.5, -80.5 -7.5
