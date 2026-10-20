@@ -431,9 +431,14 @@ public sealed partial class Hud
             foreach (var s in colonies)
             {
                 var sp = P.Of(s);
-                Gui.Label(Gui.Fit(s.DisplayName + (P.RegionOf(s) is { } rg ? " · " + rg.Name : ""), w * 0.45f, 14), x, y, 14);
-                Gui.Bar(new Rectangle(x + w * 0.47f, y + 4 * S, w * 0.3f, 10 * S), (float)(sp.ColonyProgress / 100), new Color(110, 190, 90, 255));
-                if (ActionButton(new Rectangle(x + w - 70 * S, y - 2 * S, 70 * S, 20 * S), "Abandon", true, "Call the colonists back", false, 12)) P.AbandonColony(s);
+                var party = sp.PartyOf(player)!;
+                string rival = sp.IsContested ? (sp.Main.Country == player ? sp.Counter.Country : sp.Main.Country)?.Name ?? "" : "";
+                Gui.Label(Gui.Fit(s.DisplayName + (rival.Length > 0 ? " · vs " + rival : P.RegionOf(s) is { } rg ? " · " + rg.Name : ""), w * 0.34f, 14), x, y, 14);
+                Gui.Bar(new Rectangle(x + w * 0.36f, y + 4 * S, w * 0.22f, 10 * S), (float)(party.Progress / 100), new Color(110, 190, 90, 255));
+                var why = P.CannotReinforce(player, s);
+                string rtip = why ?? $"Send another wave of settlers for {P.ReinforceGold(s, player):0} gold: +{G.Rules.Population.ReinforceProgress(G, s, player):0}% now, and it may stop the next native attack.";
+                if (ActionButton(new Rectangle(x + w * 0.6f, y - 2 * S, w * 0.19f, 20 * S), $"+{party.Reinforcements}", why == null, rtip, false, 12)) SettleCommand(GameCommand.Reinforce, s, () => P.Reinforce(player, s));
+                if (ActionButton(new Rectangle(x + w - 70 * S, y - 2 * S, 70 * S, 20 * S), "Abandon", true, "Call the colonists back", false, 12)) SettleCommand(GameCommand.AbandonColony, s, () => { P.AbandonColony(s, player); return null; });
                 y += 22 * S;
             }
             y += 6 * S;
@@ -586,24 +591,40 @@ public sealed partial class Hud
                 if (Gui.Hover(new Rectangle(x, y, w, 18 * S))) Gui.Tooltip($"Colonists settle a region under a limit per region. With {(int)G.Data.Defines.Get("colonial_nation_states", 5)} colonized states here, a colonial nation forms as your subject and pays you {region.TaxShare:P0} of its income.");
                 y += 20 * S;
             }
-            if (sp.Colonizer != null)
+            y = DrawNativePeoples(st, x, y, w);
+            var mine = sp.PartyOf(player);
+            foreach (var party in new[] { sp.Main, sp.Counter })
             {
-                Gui.Label($"Being settled by {sp.Colonizer.Name}", x, y, 14);
+                if (party.Country == null) continue;
+                Gui.Label($"{(party == sp.Counter ? "Counter-settled by" : "Being settled by")} {party.Country.Name}" + (party.Reinforcements > 0 ? $"  ({party.Reinforcements} guarding)" : ""), x, y, 14);
                 y += 20 * S;
-                Gui.Bar(new Rectangle(x, y, w, 10 * S), (float)(sp.ColonyProgress / 100), new Color(110, 190, 90, 255));
+                Gui.Bar(new Rectangle(x, y, w, 10 * S), (float)(party.Progress / 100), party == sp.Counter ? new Color(200, 150, 70, 255) : new Color(110, 190, 90, 255));
                 y += 16 * S;
             }
-            else
+            if (sp.IsContested)
             {
+                double lead = G.Rules.Population.CounterSettleMainShare(G, st, Math.Max(sp.Main.Progress, sp.Counter.Progress), Math.Min(sp.Main.Progress, sp.Counter.Progress));
+                Gui.Label($"When settled the leader keeps {lead:P0} of the land, the rival {1 - lead:P0}.", x, y, 13, Gui.TextDim);
+                y += 20 * S;
+            }
+            if (mine != null)
+            {
+                var why = P.CannotReinforce(player, st);
+                if (Gui.Button(new Rectangle(x, y, w, 26 * S), $"Reinforce ({P.ReinforceGold(st, player):0} gold)", why == null,
+                        why ?? $"Another wave of settlers: +{G.Rules.Population.ReinforceProgress(G, st, player):0}% now, and it may stop the next native attack (it is then spent).", false, 14))
+                    SettleCommand(GameCommand.Reinforce, st, () => P.Reinforce(player, st));
+                y += 32 * S;
+            }
+            else if (!sp.IsContested || sp.Counter.Country == null)
+            {
+                bool counter = sp.Main.Country != null;
                 var reason = G.Exploration.Enabled && !st.Locations.Any(l => l.IsLand && G.Exploration.IsCharted(l))
                     ? "Terra incognita: chart this land first (send a fleet or an army)" : P.CannotColonize(player, st);
                 string cost = P.ColonizeCost > 0 ? $" ({P.ColonizeCost:0} gold)" : "";
-                if (Gui.Button(new Rectangle(x, y, w, 26 * S), "Send colonists" + cost, reason == null,
-                        reason ?? "Colonists settle the land over the next years (they cost gold every month); natives may resist. Then it becomes your state.", false, 14))
-                {
-                    var err = P.Colonize(player, st);
-                    if (err != null) Ui.SetStatus(err);
-                }
+                if (Gui.Button(new Rectangle(x, y, w, 26 * S), (counter ? "Counter-settle" : "Send colonists") + cost, reason == null,
+                        reason ?? (counter ? $"Settle the same land: whoever is ahead when it is settled keeps the larger part, the other gets the rest as a state of its own. {NativeLine(st)}"
+                            : "Colonists settle the land over the next years (they cost gold every month); natives may resist. Then it becomes your state."), false, 14))
+                    SettleCommand(GameCommand.Colonize, st, () => P.Colonize(player, st));
                 y += 32 * S;
             }
         }
@@ -1328,4 +1349,33 @@ public sealed partial class Hud
     }
 
     private string LedgerFmt(double v) => _ledgerMetric is "population" or "manpower" or "war_dead" ? People(v) : v >= 1000 ? People(v) : v.ToString(v < 10 ? "0.#" : "0");
+
+    /// <summary>Routes a settlement action through the lockstep session when there is one.</summary>
+    private void SettleCommand(string command, State st, Func<string?> local)
+    {
+        if (Mp != null) { Mp.Submit(command, st.Key); return; }
+        var err = local();
+        if (err != null) Ui.SetStatus(err);
+    }
+
+    private string NativeLine(State st) => G.Population.NativePeoplesText(st).Trim();
+
+    /// <summary>The people who live on land being settled, largest first: the visible side of the natives (no country needed).</summary>
+    private float DrawNativePeoples(State st, float x, float y, float w)
+    {
+        var peoples = G.Population.NativePeoples(st);
+        if (peoples.Count == 0) return y;
+        Gui.Label("Native peoples", x, y, 14, Gui.Gold);
+        y += 20 * S;
+        foreach (var (culture, people, share) in peoples.Take(4))
+        {
+            Gui.Label(Gui.Fit(culture, w * 0.5f, 13), x, y, 13);
+            Gui.Bar(new Rectangle(x + w * 0.52f, y + 3 * S, w * 0.28f, 9 * S), (float)share, new Color(190, 120, 90, 255));
+            Gui.Label($"{people:N0}", x + w * 0.82f, y, 13, Gui.TextDim);
+            y += 18 * S;
+        }
+        if (G.Population.NativeShare(st, G.World.Player!) > 0.05)
+            Gui.Label($"They may attack settlers ({G.Rules.Population.NativeAttackChance(G, st, G.World.Player!, G.Population.NativeShare(st, G.World.Player!)):P0} a month).", x, y, 13, Gui.TextDim);
+        return y + 20 * S;
+    }
 }

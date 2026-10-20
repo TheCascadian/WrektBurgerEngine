@@ -36,6 +36,16 @@ colony_overextension = 70       # score lost per colony already held or being se
 colony_caution = 1              # scales both (divided by the profile's risk trait)
 colony_ai_min_score = -1100     # below this (x the profile's colonial trait) the AI settles nothing
 
+native_resistance = 0.05        # monthly chance of a native attack, times the natives' share
+native_setback = 15             # colony progress one native attack costs
+colony_reinforce_cost = 25      # gold for one more wave of settlers
+colony_reinforce_progress = 10  # progress a wave adds at once
+colony_reinforce_max = 3        # waves that can guard one state
+colony_reinforce_guard = 0.25   # chance per wave to stop a native attack (the wave is spent)
+counter_settle_main_floor = 0.55  # the leading settlers keep at least this share of a split state
+counter_settle_main_cap = 0.9     # ... and at most this
+counter_settle_ai_penalty = 300   # AI: score lost for settling land another country is settling
+
 colony_land_link = 1            # a colony target must border a state connected by land to the capital (no overseas colonies)
 
 # colonial regions and nations

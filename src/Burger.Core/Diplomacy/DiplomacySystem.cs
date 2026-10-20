@@ -723,9 +723,9 @@ public sealed partial class DiplomacySystem
 
     public void DailyTick()
     {
-        UpdateWarScores();
-        CheckEliminated();
-        CheckDemilitarizedAtWar();
+        _game.P("Diplomacy.WarScores", UpdateWarScores);
+        _game.P("Diplomacy.Eliminated", CheckEliminated);
+        _game.P("Diplomacy.Demilitarized", CheckDemilitarizedAtWar);
     }
 
     public void MonthlyTick()
@@ -744,13 +744,25 @@ public sealed partial class DiplomacySystem
     public void CheckEliminated()
     {
         var w = _game.World;
+        // Most of the roster is long gone; one pass over wars and forces beats a scan of each for every dead country.
+        HashSet<Country>? busy = null;
         foreach (var c in w.Countries)
         {
             if (c.Exists) { _aliveLastCheck.Add(c); continue; }
             // gone since the last check, or without land but still with forces, wars or a player (e.g. right after loading)
-            bool leftovers = c.IsPlayer || w.Wars.Any(x => x.Involves(c)) || w.Divisions.Any(d => d.Owner == c)
-                             || _game.Navy.FleetsOf(c).Any() || _game.Air.WingsOf(c).Any();
-            if (!_aliveLastCheck.Remove(c) && !leftovers) continue;
+            if (!_aliveLastCheck.Remove(c))
+            {
+                if (busy == null)
+                {
+                    busy = new HashSet<Country>();
+                    foreach (var x in w.Wars) { busy.UnionWith(x.Attackers); busy.UnionWith(x.Defenders); }
+                    foreach (var d in w.Divisions) busy.Add(d.Owner);
+                    foreach (var f in _game.Navy.Fleets) busy.Add(f.Owner);
+                    foreach (var x in _game.Air.Wings) busy.Add(x.Owner);
+                }
+                if (!c.IsPlayer && !busy.Contains(c)) continue;
+            }
+            busy = null; // eliminating c below changes wars and forces
             // c just ceased to exist
             foreach (var war in w.Wars.Where(x => x.Involves(c)).ToList()) LeaveWar(c, war);
             R.RemoveCountry(c);

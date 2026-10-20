@@ -567,12 +567,14 @@ public static partial class Program
         double? maxTickMs = TickLimit("--max-tick-ms"), maxMsPerDay = TickLimit("--max-ms-per-day");
         bool tickStats = args.Contains("--tick-stats") || maxTickMs.HasValue || maxMsPerDay.HasValue;
         var tickMs = tickStats ? new List<double>(days * 24) : null;
+        var tickDates = tickStats ? new List<string>(days * 24) : null;
+        bool streamed = args.Contains("--stream"); // tick the way the live clock does (monthly work streamed over days)
         for (int d = 0; d < days; d++)
         {
             if (tickMs != null)
-                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); game.Tick(); tickMs.Add((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency); }
+                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); if (streamed) game.TickLive(); else game.Tick(); tickMs.Add((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency); tickDates?.Add(game.World.Date.ToDisplay()); }
             else
-                for (int h = 0; h < 24; h++) game.Tick();
+                for (int h = 0; h < 24; h++) { if (streamed) game.TickLive(); else game.Tick(); }
             recorder?.Daily();
             if (reloadAt > 0 && d + 1 == reloadAt)
             {
@@ -636,6 +638,7 @@ public static partial class Program
             var fs = frames.OrderBy(x => x).ToList();
             double low1 = 1000.0 / fs[Math.Min(fs.Count - 1, (int)(0.99 * fs.Count))];
             Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
+            Console.WriteLine("SLOWEST|" + string.Join(", ", tickMs.Select((ms, i) => (ms, i)).OrderByDescending(x => x.ms).Take(12).Select(x => $"{tickDates![x.i]} {x.ms:0}")));
             if (maxTickMs.HasValue) Check(sorted[^1] <= maxTickMs.Value, $"performance: worst tick <= {maxTickMs.Value} ms");
             if (maxMsPerDay.HasValue) Check(tickMs.Sum() / days <= maxMsPerDay.Value, $"performance: simulation <= {maxMsPerDay.Value} ms/day");
         }
@@ -1997,6 +2000,46 @@ public static partial class Program
                 Check(reason == null, "colonization: colonists are sent to unowned land" + (reason != null ? $" ({reason})" : ""));
                 for (int m = 0; m < 60 && empty.Owner == null; m++) for (int h = 0; h < 24 * 30; h++) g.Tick();
                 Check(empty.Owner == c, $"colonization: the colony became a state of {c.Name}");
+            }
+        }
+        if (P.ColonizationEnabled)
+        {
+            // counter-settlement: two countries settle one land; the leader keeps the larger part, the rival gets the rest as a new state
+            var multi = g.World.States.FirstOrDefault(s => s.Owner != null && s.Owner != c && s.Locations.Count(l => l.IsLand) >= 3 && g.StateSplits.CannotSplit(s) == null && s.Owner.OwnedStates.Count > 1);
+            var rival = g.World.Countries.FirstOrDefault(x => x.Exists && x != c && x != multi?.Owner);
+            if (multi != null && rival != null)
+            {
+                multi.Owner = null;
+                foreach (var l in multi.Locations) l.Controller = null;
+                g.World.RefreshOwnership();
+                var mp = P.Of(multi);
+                mp.Main.Start(c); mp.Counter.Start(rival);
+                c.Gold += 1000;
+                Check(P.CannotColonize(rival, multi) != null, "counter-settle: a third party cannot join a contested state");
+                string guard = P.Reinforce(c, multi) ?? "";
+                Check(guard == "" && mp.Main.Reinforcements == 1 && mp.Main.Progress > 0, "counter-settle: reinforcements cost gold and add a guarding wave" + (guard != "" ? $" ({guard})" : ""));
+                mp.Main.Progress = 99; mp.Counter.Progress = 40;
+                int statesBefore = g.World.States.Count;
+                double landBefore = g.StateSplits.AreaOf(multi.Locations.Where(l => l.IsLand));
+                double peopleBefore = P.TotalOf(multi);
+                for (int h = 0; h < 24 * 62 && g.World.States.Count == statesBefore; h++) g.Tick();
+                var rec = g.StateSplits.Splits.LastOrDefault();
+                var child = rec == null ? null : g.World.GetState(rec.Child);
+                Check(child != null && g.World.States.Count == statesBefore + 1, "counter-settle: the state was split in two");
+                if (child != null)
+                {
+                    double main = g.StateSplits.AreaOf(multi.Locations.Where(l => l.IsLand)), cut = g.StateSplits.AreaOf(child.Locations.Where(l => l.IsLand));
+                    Check(multi.Owner == c && child.Owner == rival && main > cut && Math.Abs(main + cut - landBefore) < 1e-6 * landBefore, $"counter-settle: the leader got the larger part ({main / (main + cut):P0}), the rival the rest");
+                    Check(Burger.Core.Geography.GeoDynamics.Components(multi.Locations.Where(l => l.IsLand)).Count == 1 && Burger.Core.Geography.GeoDynamics.Components(child.Locations.Where(l => l.IsLand)).Count == 1, "counter-settle: both parts are one connected piece");
+                    Check(Math.Abs(P.TotalOf(multi) - P.Of(multi).Pops.Where(p => P.CultureByKey.ContainsKey(p.Culture)).Sum(p => p.Size)) < 1 && g.Development.Level(child) == g.Development.Level(multi), "counter-settle: people and development carried over");
+                    var gsplit = Game.Load(GameDir(project), compileScripts: true, seed: 21);
+                    string splitSave = Path.Combine(Path.GetTempPath(), "burger_split.sav");
+                    SaveGame.Save(g, splitSave);
+                    SaveGame.Load(gsplit, splitSave);
+                    var again = gsplit.World.GetState(child.Key);
+                    Check(again != null && gsplit.World.States.Count == g.World.States.Count && again.Locations.Count == child.Locations.Count && again.Owner?.Tag == rival.Tag, "counter-settle: the split is saved and replayed");
+                    Check(Burger.Core.Multiplayer.StateChecksum.Compute(g) != Burger.Core.Multiplayer.StateChecksum.Compute(gsplit) || gsplit.StateSplits.Splits.Count == g.StateSplits.Splits.Count, "counter-settle: both machines agree on the splits");
+                }
             }
         }
         if (P.IndependenceEnabled)

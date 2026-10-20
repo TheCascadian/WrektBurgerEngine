@@ -651,7 +651,8 @@ public sealed partial class PopulationSystem
             n.Add("base_manpower", F(sp.BaseManpower));
             n.Add("owned_since", sp.OwnedSinceDay.ToString(CultureInfo.InvariantCulture));
             if (sp.Owner != null) n.Add("owner", sp.Owner.Tag);
-            if (sp.Colonizer != null) { n.Add("colonizer", sp.Colonizer.Tag); n.Add("colony", F(sp.ColonyProgress)); }
+            if (sp.Main.Country != null) { n.Add("colonizer", sp.Main.Country.Tag); n.Add("colony", F(sp.Main.Progress)); n.Add("reinforcements", sp.Main.Reinforcements.ToString(CultureInfo.InvariantCulture)); }
+            if (sp.Counter.Country != null) { n.Add("counter_colonizer", sp.Counter.Country.Tag); n.Add("counter_colony", F(sp.Counter.Progress)); n.Add("counter_reinforcements", sp.Counter.Reinforcements.ToString(CultureInfo.InvariantCulture)); }
             foreach (var p in sp.Pops)
             {
                 var pn = n.AddBlock("pop");
@@ -698,11 +699,11 @@ public sealed partial class PopulationSystem
                 BaseManpower = n.GetDouble("base_manpower", s.Manpower),
                 OwnedSinceDay = n.GetInt("owned_since", w.Date.TotalDays),
                 Owner = w.GetCountry(n.GetString("owner")),
-                Colonizer = w.GetCountry(n.GetString("colonizer")),
-                ColonyProgress = n.GetDouble("colony"),
                 WrittenTax = s.Tax,
                 WrittenManpower = s.Manpower,
             };
+            if (w.GetCountry(n.GetString("colonizer")) is { } mc) { sp.Main.Start(mc); sp.Main.Progress = n.GetDouble("colony"); sp.Main.Reinforcements = n.GetInt("reinforcements"); }
+            if (w.GetCountry(n.GetString("counter_colonizer")) is { } cc) { sp.Counter.Start(cc); sp.Counter.Progress = n.GetDouble("counter_colony"); sp.Counter.Reinforcements = n.GetInt("counter_reinforcements"); }
             foreach (var pn in n.GetAll("pop"))
             {
                 string culture = pn.GetString("culture") ?? "";

@@ -268,6 +268,34 @@ public sealed class DevelopmentSystem
         return f;
     }
 
+    // ------------------------------------------------------------------------------------- state splits
+    /// <summary>A state was divided: the new state (the last index) starts with its parent's development (an intensive value: both halves keep it).</summary>
+    public void OnStateSplit(State parent, State child, double share)
+    {
+        _links = null;
+        if (_level.Length == 0 || child.Index < _level.Length) return;
+        int n = child.Index + 1;
+        Array.Resize(ref _level, n); Array.Resize(ref _start, n); Array.Resize(ref _literacy, n); Array.Resize(ref _urban, n);
+        _level[child.Index] = _level[parent.Index]; _start[child.Index] = _start[parent.Index];
+        _literacy[child.Index] = _literacy[parent.Index]; _urban[child.Index] = _urban[parent.Index];
+        foreach (var k in _presence.Keys.ToList())
+        {
+            var p = _presence[k];
+            Array.Resize(ref p, n);
+            p[child.Index] = p[parent.Index];
+            _presence[k] = p;
+        }
+    }
+
+    public void OnStateUnsplit(State parent, State child)
+    {
+        _links = null;
+        if (_level.Length == 0 || child.Index >= _level.Length) return;
+        int n = child.Index;
+        Array.Resize(ref _level, n); Array.Resize(ref _start, n); Array.Resize(ref _literacy, n); Array.Resize(ref _urban, n);
+        foreach (var k in _presence.Keys.ToList()) { var p = _presence[k]; Array.Resize(ref p, n); _presence[k] = p; }
+    }
+
     // ------------------------------------------------------------------------------------- start and monthly
     private List<State>[] Links()
     {

@@ -130,6 +130,24 @@ public sealed class TitleSystem
         }
     }
 
+    /// <summary>A state was divided: the new state is a county of its parent's duchy.</summary>
+    public void OnStateSplit(State parent, State child, double share)
+    {
+        if (!_built || !_county.TryGetValue(parent, out var pc)) return;
+        var t = new Title { Key = child.Key, Name = child.DisplayName, Tier = TitleTier.County, State = child, Capital = child, Created = true, StartOwner = pc.StartOwner, Parent = pc.Parent };
+        Titles[t.Key] = t;
+        _county[child] = t;
+        pc.Parent?.Children.Add(t);
+    }
+
+    public void OnStateUnsplit(State parent, State child)
+    {
+        if (!_county.Remove(child, out var t)) return;
+        Titles.Remove(t.Key);
+        t.Parent?.Children.Remove(t);
+        _vassalOf.Remove(child);
+    }
+
     private void EnsureBuilt() { if (!_built) Build(); }
 
     // ------------------------------------------------------------------------------------- the tree

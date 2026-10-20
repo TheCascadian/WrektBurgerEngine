@@ -20,6 +20,10 @@ public sealed class GameEvents
     public event Action<Country, string>? GovernmentChanged;
     /// <summary>A state changed owner (state, old owner, new owner).</summary>
     public event Action<State, Country?, Country>? StateTransferred;
+    /// <summary>A state was divided at run time: the parent, the new child state, and the child's share (0-1) of the parent's land. Systems carry their per-state data over.</summary>
+    public event Action<State, State, double>? StateSplit;
+    /// <summary>A split is being undone (a save is loading): the parent and the child about to go.</summary>
+    public event Action<State, State>? StateUnsplit;
 
     /// <summary>A war was declared (attacker, defender, war).</summary>
     public event Action<Country, Country, War>? WarDeclared;
@@ -61,5 +65,7 @@ public sealed class GameEvents
     public void RaiseSubjectMonthly(Country subject, Country overlord) => SubjectMonthly?.Invoke(subject, overlord);
     public void RaiseSubjectReleased(Country subject, Country? overlord) => SubjectReleased?.Invoke(subject, overlord);
     public void RaiseGovernmentChanged(Country c, string old) => GovernmentChanged?.Invoke(c, old);
+    public void RaiseStateSplit(State parent, State child, double share) => StateSplit?.Invoke(parent, child, share);
+    public void RaiseStateUnsplit(State parent, State child) => StateUnsplit?.Invoke(parent, child);
     public void RaiseStateTransferred(State s, Country? old, Country now) => StateTransferred?.Invoke(s, old, now);
 }

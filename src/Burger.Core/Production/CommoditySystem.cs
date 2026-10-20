@@ -95,7 +95,7 @@ public sealed class CommoditySystem
     }
     public readonly Dictionary<Country, Dictionary<string, Balance>> Books = new();
     private readonly Dictionary<Country, Dictionary<string, double>> _usedThisMonth = new();
-    private const int SettlementBatchSize = 2;
+    private const int SettlementBatchSize = 1;
     private readonly List<string> _settlementCommodities = new();
     private readonly List<Country> _settlementCountries = new();
     private int _settlementIndex;
@@ -337,6 +337,7 @@ public sealed class CommoditySystem
 
     private void ProcessCommodity(CommodityDef k)
     {
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         _game.TradeNetwork.BeginCommodity(k.Key);
         foreach (var c in _settlementCountries)
         {
@@ -369,7 +370,9 @@ public sealed class CommoditySystem
                 _game.TradeNetwork.AddMarket(state, k.Key, stateOutput, demandWithoutMilitary * demandShare, opening * demandShare, Rules.StorageMonths(_game, k));
             }
         }
+        long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
         _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+        long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
         foreach (var c in _settlementCountries)
         {
             var b = BalanceOf(c, k.Key);
@@ -381,6 +384,13 @@ public sealed class CommoditySystem
             b.Stockpile = totals.Stockpile;
             b.Satisfied = totals.Satisfied;
             b.Price = totals.Price;
+        }
+        if (_game.Profiling)
+        {
+            long t3 = System.Diagnostics.Stopwatch.GetTimestamp();
+            _game.ProfileElapsed("Settle.Markets", t1 - t0);
+            _game.ProfileElapsed("Settle.Match", t2 - t1);
+            _game.ProfileElapsed("Settle.Totals", t3 - t2);
         }
     }
 
@@ -394,6 +404,21 @@ public sealed class CommoditySystem
                 foreach (var pop in _game.Population.Of(state).Pops)
                     demand += pop.Size / 1000.0 * commodity.ClassPopulationUse.GetValueOrDefault(pop.Type ?? "", commodity.PopulationUse);
         return demand;
+    }
+
+    // ------------------------------------------------------------------------------------- state splits
+    /// <summary>Deposits are extensive: the child gets its share of each, the parent keeps the rest.</summary>
+    public void OnStateSplit(State parent, State child, double share)
+    {
+        if (!Deposits.TryGetValue(parent, out var d)) return;
+        var c = Deposits[child] = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (k, v) in d.ToList()) { c[k] = v * share; d[k] = v - c[k]; }
+    }
+
+    public void OnStateUnsplit(State parent, State child)
+    {
+        if (Deposits.Remove(child, out var c) && Deposits.TryGetValue(parent, out var d))
+            foreach (var (k, v) in c) d[k] = d.GetValueOrDefault(k) + v;
     }
 
     // ------------------------------------------------------------------------------------- save

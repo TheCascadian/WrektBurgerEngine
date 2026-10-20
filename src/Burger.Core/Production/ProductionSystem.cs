@@ -397,8 +397,9 @@ public sealed class ProductionSystem
         foreach (var c in _game.World.Countries)
         {
             if (!c.Exists) continue;
-            Produce(c);
-            Construct(c);
+            // Idle countries (the common case with a large roster) have nothing to advance.
+            if (c.ProductionLines.Count > 0) Produce(c);
+            if (c.Construction.Count > 0) Construct(c);
         }
     }
 

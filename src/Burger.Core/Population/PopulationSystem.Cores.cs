@@ -139,7 +139,7 @@ public sealed partial class PopulationSystem
     // =============================================================================================
 
     public int MaxColonies(Country c) => Rules.MaxColonies(_game, c);
-    public IEnumerable<State> ColoniesOf(Country c) => _states.Where(kv => kv.Value.Colonizer == c && kv.Key.Owner == null).Select(kv => kv.Key);
+    public IEnumerable<State> ColoniesOf(Country c) => _states.Where(kv => kv.Value.PartyOf(c) != null && kv.Key.Owner == null).Select(kv => kv.Key);
     public double ColonizeCost => Rules.ColonizeCost(_game);
 
     /// <summary>Why <paramref name="c"/> cannot send a colonist to <paramref name="s"/> (null = it can).</summary>
@@ -149,7 +149,13 @@ public sealed partial class PopulationSystem
         if (s.Owner != null) return "Already owned";
         if (!s.Locations.Any(l => l.IsLand && l.IsPassable)) return "No land to settle";
         var sp = Of(s);
-        if (sp.Colonizer != null && sp.Colonizer.Exists) return sp.Colonizer == c ? "Our colonists are already there" : $"{sp.Colonizer.Name} is settling it";
+        if (sp.PartyOf(c) != null) return "Our colonists are already there";
+        if (sp.Main.Country is { Exists: true } first)
+        {
+            // counter-settlement: a second country may settle the same land; the leader keeps the larger part when it is divided
+            if (sp.Counter.Country is { Exists: true } second) return $"{first.Name} and {second.Name} are already settling it";
+            if (_game.StateSplits.CannotSplit(s) is { } why) return $"{first.Name} is settling it and it cannot be shared: {why}";
+        }
         var region = RegionOf(s);
         if (ColoniesInRegion(c, region) >= MaxColoniesIn(c, region)) return $"All our colonists in {region?.Name ?? "this land"} are busy ({MaxColoniesIn(c, region)})";
         if (ColonizeCost > 0 && c.Gold < ColonizeCost) return $"Needs {ColonizeCost:0} gold";
@@ -199,77 +205,212 @@ public sealed partial class PopulationSystem
         if (reason != null) return reason;
         c.Gold -= ColonizeCost;
         var sp = Of(s);
-        sp.Colonizer = c;
-        sp.ColonyProgress = 0;
-        _game.NotifyPlayer($"{c.Name} sent colonists to {s.DisplayName}.", NotificationKind.Info, c);
+        bool counter = sp.Main.Country is { Exists: true };
+        (counter ? sp.Counter : sp.Main).Start(c);
+        string people = NativePeoplesText(s);
+        if (counter) _game.NotifyPlayer($"{c.Name} sent colonists to counter-settle {s.DisplayName}, already being settled by {sp.Main.Country!.Name}.{people}", NotificationKind.Info, c);
+        else _game.NotifyPlayer($"{c.Name} sent colonists to {s.DisplayName}.{people}", NotificationKind.Info, c);
+        if (counter) _game.NotifyPlayer($"{c.Name} is counter-settling {s.DisplayName}, which we are settling.", NotificationKind.Bad, sp.Main.Country!);
         return null;
     }
 
-    public void AbandonColony(State s)
+    /// <summary>Calls the colonists of <paramref name="c"/> back; a rival settling the same land becomes its only settler.</summary>
+    public void AbandonColony(State s, Country c)
     {
         var sp = Of(s);
-        sp.Colonizer = null;
-        sp.ColonyProgress = 0;
+        if (sp.Main.Country == c)
+        {
+            sp.Main.Country = sp.Counter.Country; sp.Main.Progress = sp.Counter.Progress; sp.Main.Reinforcements = sp.Counter.Reinforcements;
+            sp.Counter.Clear();
+            if (sp.Main.Country == null) { sp.Main.Progress = 0; sp.Main.Reinforcements = 0; }
+        }
+        else if (sp.Counter.Country == c) sp.Counter.Clear();
+    }
+
+    // ---- the native peoples of a settlement target
+
+    /// <summary>The people living on land that is being settled (or could be), largest first: culture, number of people, and share of the state.</summary>
+    public List<(string Culture, double People, double Share)> NativePeoples(State s)
+    {
+        if (!_states.TryGetValue(s, out var sp) || sp.Total <= 0) return new();
+        double total = sp.Total;
+        return sp.Pops.GroupBy(p => p.Culture).Select(g => (Culture: CultureByKey.TryGetValue(g.Key, out var cd) ? cd.Name : Localisation.GetOrPretty(g.Key), People: g.Sum(p => p.Size), Share: g.Sum(p => p.Size) / total))
+            .OrderByDescending(x => x.People).ThenBy(x => x.Culture, StringComparer.Ordinal).ToList();
+    }
+
+    /// <summary>" Natives: Lakota (60%), Crow (30%)." for messages; empty when nobody lives there.</summary>
+    public string NativePeoplesText(State s)
+    {
+        var peoples = NativePeoples(s);
+        return peoples.Count == 0 ? "" : " Natives: " + string.Join(", ", peoples.Take(3).Select(x => $"{x.Culture} ({x.Share * 100:0}%)")) + ".";
+    }
+
+    /// <summary>The native share of a state's people from the settlers' point of view: everyone who is not of an accepted culture.</summary>
+    public double NativeShare(State s, Country c)
+    {
+        if (!_states.TryGetValue(s, out var sp) || sp.Total <= 0) return 0;
+        return sp.Pops.Where(p => !IsAccepted(c, p.Culture)).Sum(p => p.Size) / sp.Total;
+    }
+
+    // ---- reinforcements
+
+    public double ReinforceGold(State s, Country c) => Rules.ReinforceCost(_game, s, c);
+
+    /// <summary>Why <paramref name="c"/> cannot send more settlers to <paramref name="s"/> (null = it can).</summary>
+    public string? CannotReinforce(Country c, State s)
+    {
+        if (!ColonizationEnabled) return "No colonization in this game";
+        if (s.Owner != null || !_states.TryGetValue(s, out var sp) || sp.PartyOf(c) is not { } party) return "We are not settling it";
+        int max = Rules.MaxReinforcements(_game, s, c);
+        if (party.Reinforcements >= max) return $"Already guarded by {max} waves";
+        double cost = ReinforceGold(s, c);
+        if (cost > 0 && c.Gold < cost) return $"Needs {cost:0} gold";
+        return null;
+    }
+
+    /// <summary>Pays gold to send another wave of settlers: it adds progress at once and stands guard, and the next native attack that would hurt the colonists may be stopped by it.</summary>
+    public string? Reinforce(Country c, State s)
+    {
+        var reason = CannotReinforce(c, s);
+        if (reason != null) return reason;
+        c.Gold -= ReinforceGold(s, c);
+        var party = Of(s).PartyOf(c)!;
+        party.Reinforcements++;
+        party.Progress = Math.Min(99, party.Progress + Rules.ReinforceProgress(_game, s, c));
+        _game.NotifyPlayer($"{c.Name} sent more settlers to {s.DisplayName}.", NotificationKind.Info, c);
+        return null;
     }
 
     private void MonthlyColonies()
     {
         foreach (var (s, sp) in _states.ToList())
         {
-            var c = sp.Colonizer;
-            if (c == null) continue;
-            if (!c.Exists || s.Owner != null) { sp.Colonizer = null; sp.ColonyProgress = 0; continue; }
-            c.Gold -= Rules.ColonyUpkeep(_game, s, c);
-            double total = sp.Total;
-            double natives = total > 0 ? sp.Pops.Where(p => !IsAccepted(c, p.Culture)).Sum(p => p.Size) / total : 0;
-            sp.ColonyProgress += Rules.ColonyProgress(_game, s, c, natives);
-            // natives fight back now and then
-            double setback = Rules.NativeAttack(_game, s, c, natives);
-            if (setback > 0)
-            {
-                sp.ColonyProgress = Math.Max(0, sp.ColonyProgress - setback);
-                _game.NotifyPlayer($"Natives attacked our colonists in {s.DisplayName}.", NotificationKind.Bad, c);
-            }
-            if (sp.ColonyProgress < 100) continue;
-            // the colony becomes our state
-            sp.Colonizer = null;
-            sp.ColonyProgress = 0;
-            _game.Diplomacy.TransferState(s, c);
-            s.Category = "colony";
-            _home.Remove(c); // the new colony extends the land connected to the capital
-            var cp = Of(c);
-            double settlers = Rules.ColonySettlers(_game, s, c);
-            if (cp.Culture != null && settlers > 0)
-                sp.Pops.Add(new Pop { Culture = cp.Culture, Religion = ReligionEnabled ? cp.Religion : null, Type = ClassesEnabled ? PopTypes.OrderByDescending(t => t.Share).First().Key : null, Size = settlers });
-            if (sp.InitialTotal <= 0) sp.InitialTotal = sp.Total;
-            var (colonyTax, colonyManpower) = Rules.ColonyBaseOutput(_game, s, c);
-            if (sp.BaseTax <= 0) sp.BaseTax = colonyTax;
-            if (sp.BaseManpower <= 0) sp.BaseManpower = colonyManpower;
-            sp.Owner = c;
-            sp.OwnedSinceDay = _game.World.Date.TotalDays;
-            ColoniesFounded++;
-            ApplyOutput(s, sp);
-            if (_game.World.Player == null) _game.Notify($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Info, s.Locations.FirstOrDefault(l => l.IsLand)); // an observer sees the AI settle
-            else _game.NotifyPlayer($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Good, c);
-            _game.Events.FireOnAction("on_colony_founded", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
-            CheckColonialNation(c, s);
+            if (sp.Main.Country == null && sp.Counter.Country == null) continue;
+            if (s.Owner != null) { sp.Main.Clear(); sp.Counter.Clear(); continue; }
+            foreach (var party in new[] { sp.Main, sp.Counter })
+                if (party.Country is { } pc && !pc.Exists) AbandonColony(s, pc);
+            foreach (var party in new[] { sp.Main, sp.Counter })
+                if (party.Country is { } c) Grow(s, sp, party, c);
+            // the first side to finish settles the land; a rival still settling it gets the smaller part
+            var done = sp.Main.Country != null && sp.Main.Progress >= 100 ? sp.Main : sp.Counter.Country != null && sp.Counter.Progress >= 100 ? sp.Counter : null;
+            if (done != null) Resolve(s, sp, done);
         }
+    }
+
+    /// <summary>One month of one settler party: upkeep, progress, and the natives' answer (a guarding wave may stop an attack and is spent).</summary>
+    private void Grow(State s, StatePopulation sp, SettlerParty party, Country c)
+    {
+        c.Gold -= Rules.ColonyUpkeep(_game, s, c);
+        double natives = NativeShare(s, c);
+        party.Progress += Rules.ColonyProgress(_game, s, c, natives);
+        double setback = Rules.NativeAttack(_game, s, c, natives);
+        if (setback <= 0) return;
+        string people = NativePeoples(s) is { Count: > 0 } l ? l[0].Culture : "Natives";
+        if (party.Reinforcements > 0 && _game.Rngs.Population.NextDouble() < Math.Clamp(Rules.ReinforceGuard(_game, s, c) * party.Reinforcements, 0, 1))
+        {
+            party.Reinforcements--;
+            _game.NotifyPlayer($"Reinforcements drove off the {people} at {s.DisplayName}.", NotificationKind.Good, c);
+            return;
+        }
+        party.Progress = Math.Max(0, party.Progress - setback);
+        _game.NotifyPlayer($"The {people} attacked our colonists in {s.DisplayName}.", NotificationKind.Bad, c);
+    }
+
+    /// <summary>Settles the state for the finished party; when a rival is counter-settling it, the land is divided first: the leader keeps the larger share.</summary>
+    private void Resolve(State s, StatePopulation sp, SettlerParty done)
+    {
+        var winner = done.Country!;
+        var other = done == sp.Main ? sp.Counter : sp.Main;
+        var rival = other.Country;
+        double winnerProgress = done.Progress, rivalProgress = other.Progress;
+        sp.Main.Clear(); sp.Counter.Clear();
+        State? rivalState = null;
+        if (rival != null)
+        {
+            double mainShare = Rules.CounterSettleMainShare(_game, s, winnerProgress, rivalProgress);
+            var (rx, ry) = NearestLand(rival, s);
+            rivalState = _game.StateSplits.Split(s, 1 - mainShare, (rx, ry), $"{s.DisplayName} ({rival.Name})");
+            if (rivalState == null) _game.NotifyPlayer($"{s.DisplayName} could not be divided: {winner.Name} took all of it.", NotificationKind.Bad, rival);
+        }
+        Settle(s, winner);
+        if (rival != null && rivalState != null)
+        {
+            Settle(rivalState, rival);
+            double share = _game.StateSplits.Splits[^1].Share;
+            _game.NotifyPlayer($"{s.DisplayName} was divided: {winner.Name} {(1 - share) * 100:0}% and {rival.Name} {share * 100:0}%.", NotificationKind.Info, winner);
+            _game.NotifyPlayer($"Our counter-settlement won {rivalState.DisplayName} ({share * 100:0}% of {s.DisplayName}).", NotificationKind.Good, rival);
+        }
+    }
+
+    /// <summary>Where the country's land is nearest to the middle of the state (the side a counter-settlement is carved from).</summary>
+    private (double X, double Y) NearestLand(Country c, State s)
+    {
+        var (sx, sy) = Center(s);
+        double best = double.MaxValue; (double X, double Y) at = (sx, sy);
+        foreach (var o in c.OwnedStates)
+            foreach (var l in o.Locations)
+            {
+                double dx = l.CenterX - sx, dy = l.CenterY - sy, d = dx * dx + dy * dy;
+                if (d < best) { best = d; at = (l.CenterX, l.CenterY); }
+            }
+        return at;
+    }
+
+    /// <summary>The state becomes a colony of <paramref name="c"/>.</summary>
+    private void Settle(State s, Country c)
+    {
+        var sp = Of(s);
+        sp.Main.Clear(); sp.Counter.Clear();
+        _game.Diplomacy.TransferState(s, c);
+        s.Category = "colony";
+        _home.Remove(c); // the new colony extends the land connected to the capital
+        var cp = Of(c);
+        double settlers = Rules.ColonySettlers(_game, s, c);
+        if (cp.Culture != null && settlers > 0)
+            sp.Pops.Add(new Pop { Culture = cp.Culture, Religion = ReligionEnabled ? cp.Religion : null, Type = ClassesEnabled ? PopTypes.OrderByDescending(t => t.Share).First().Key : null, Size = settlers });
+        if (sp.InitialTotal <= 0) sp.InitialTotal = sp.Total;
+        var (colonyTax, colonyManpower) = Rules.ColonyBaseOutput(_game, s, c);
+        if (sp.BaseTax <= 0) sp.BaseTax = colonyTax;
+        if (sp.BaseManpower <= 0) sp.BaseManpower = colonyManpower;
+        sp.Owner = c;
+        sp.OwnedSinceDay = _game.World.Date.TotalDays;
+        ColoniesFounded++;
+        ApplyOutput(s, sp);
+        if (_game.World.Player == null) _game.Notify($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Info, s.Locations.FirstOrDefault(l => l.IsLand)); // an observer sees the AI settle
+        else _game.NotifyPlayer($"{s.DisplayName} is now a colony of {c.Name}.", NotificationKind.Good, c);
+        _game.Events.FireOnAction("on_colony_founded", c, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
+        CheckColonialNation(c, s);
     }
 
     private void AiColonize(Country c)
     {
         if (!ColonizationEnabled) return;
+        AiReinforce(c);
         if (ColonizeCost > 0 && c.Gold < ColonizeCost * 3) return;
         State? best = null;
         double bestScore = double.NegativeInfinity;
         foreach (var s in _game.World.States)
         {
-            if (s.Owner != null || (_states.TryGetValue(s, out var sp) && sp.Colonizer != null)) continue;
+            if (s.Owner != null) continue;
+            bool contested = _states.TryGetValue(s, out var sp) && sp.Main.Country != null;
             if (CannotColonize(c, s) != null) continue;
-            double score = Rules.AiColonyScore(_game, c, s);
+            double score = Rules.AiColonyScore(_game, c, s) - (contested ? Rules.AiCounterSettlePenalty(_game, c, s) : 0);
             if (score > bestScore) { bestScore = score; best = s; }
         }
         if (best != null && bestScore >= Rules.AiColonyMinScore(_game, c)) Colonize(c, best);
+    }
+
+    /// <summary>The AI sends more settlers where natives are many and the colony is not nearly done, if it can pay several waves.</summary>
+    private void AiReinforce(Country c)
+    {
+        foreach (var s in ColoniesOf(c).OrderBy(x => x.Index).ToList())
+        {
+            var party = Of(s).PartyOf(c)!;
+            if (party.Progress >= 80 || NativeShare(s, c) < 0.25) continue;
+            double cost = ReinforceGold(s, c);
+            if (cost > 0 && c.Gold < cost * 4) continue;
+            Reinforce(c, s);
+        }
     }
 
     // =============================================================================================

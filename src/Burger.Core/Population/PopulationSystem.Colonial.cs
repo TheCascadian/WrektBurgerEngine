@@ -1,3 +1,4 @@
+using Burger.Core.Map;
 using Burger.Core.Model;
 using Burger.Core.Data;
 using Burger.Core.Modding;
@@ -27,6 +28,38 @@ public sealed partial class PopulationSystem
 {
     public readonly List<ColonialRegion> ColonialRegions = new();
     private Dictionary<State, ColonialRegion>? _regionOf;
+
+    /// <summary>A state was divided: the people split by area (whole people by largest remainder), the base values likewise; the new state starts empty of settlers.</summary>
+    public void OnStateSplit(State parent, State child, double share)
+    {
+        _neighbours.Clear(); _regionOf = null; _home.Clear(); InvalidateMajorities();
+        if (!_states.TryGetValue(parent, out var pp)) return;
+        var cp = new StatePopulation { OwnedSinceDay = pp.OwnedSinceDay, Owner = pp.Owner };
+        foreach (var pop in pp.Pops)
+        {
+            int part = StateSplitSystem.SplitInt((int)Math.Round(pop.Size), share);
+            if (part > 0) cp.Pops.Add(new Pop { Culture = pop.Culture, Religion = pop.Religion, Type = pop.Type, Size = part });
+            pop.Size = Math.Max(0, Math.Round(pop.Size) - part);
+        }
+        pp.Pops.RemoveAll(p => p.Size <= 0);
+        cp.InitialTotal = pp.InitialTotal * share; pp.InitialTotal -= cp.InitialTotal;
+        cp.BaseTax = pp.BaseTax * share; pp.BaseTax -= cp.BaseTax;
+        cp.BaseManpower = pp.BaseManpower * share; pp.BaseManpower -= cp.BaseManpower;
+        _states[child] = cp;
+        ApplyOutput(parent, pp);
+        ApplyOutput(child, cp);
+    }
+
+    public void OnStateUnsplit(State parent, State child)
+    {
+        _neighbours.Clear(); _regionOf = null; _home.Clear(); InvalidateMajorities();
+        if (_states.Remove(child, out var cp) && _states.TryGetValue(parent, out var pp))
+            foreach (var pop in cp.Pops)
+            {
+                var same = pp.Pops.FirstOrDefault(x => x.Same(pop.Culture, pop.Religion, pop.Type));
+                if (same != null) same.Size += pop.Size; else pp.Pops.Add(pop);
+            }
+    }
 
     private void LoadColonialRegions(GameData data)
     {

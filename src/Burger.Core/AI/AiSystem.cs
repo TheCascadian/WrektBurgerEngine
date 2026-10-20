@@ -451,7 +451,7 @@ public class AiSystem
         int agreementsBefore = Game.TradeNetwork.Agreements.Count;
         int constructionBefore = c.Construction.Count;
         int goldProjectsBefore = Game.Population.GoldProjects.Count;
-        if (Game.Commodities.Enabled) Game.Commodities.AiMonthly(c);
+        if (Game.Commodities.Enabled) Game.P("Eco.TradeAiMonthly", () => Game.Commodities.AiMonthly(c));
         bool baselineActed = Game.TradeNetwork.Agreements.Count > agreementsBefore
             || c.Construction.Count > constructionBefore
             || Game.Population.GoldProjects.Count > goldProjectsBefore;
@@ -482,18 +482,20 @@ public class AiSystem
     {
         if (!Game.Commodities.Enabled && !Game.Production.Enabled && !Game.Tech.Enabled) return;
 
-        var shortage = Game.Commodities.Enabled
-            ? Game.Commodities.Shortages(c).FirstOrDefault()
-            : (Commodity: "", Satisfied: 1.0);
+        (string Commodity, double Satisfied) shortage = (Commodity: "", Satisfied: 1.0);
+        if (Game.Commodities.Enabled) Game.P("Eco.Shortages", () => shortage = Game.Commodities.Shortages(c).FirstOrDefault());
         double budget = EconomicBudget(c);
         var actions = new List<EconomicAction>();
 
         if (allowImport && allowTradeAndConstruction && !string.IsNullOrEmpty(shortage.Commodity) && Game.TradeNetwork.Enabled)
-            if (ImportAction(c, shortage, budget) is { } import) actions.Add(import);
+            Game.P("Eco.ImportAction", () => { if (ImportAction(c, shortage, budget) is { } import) actions.Add(import); });
 
-        if (allowTradeAndConstruction && ConstructionAction(c, shortage, budget, true) is { } capacity) actions.Add(capacity);
-        if (allowTradeAndConstruction && ConstructionAction(c, shortage, budget, false) is { } industry) actions.Add(industry);
-        if (ResearchAction(c, shortage) is { } research) actions.Add(research);
+        if (allowTradeAndConstruction) Game.P("Eco.ConstructionAction", () =>
+        {
+            if (ConstructionAction(c, shortage, budget, true) is { } capacity) actions.Add(capacity);
+            if (ConstructionAction(c, shortage, budget, false) is { } industry) actions.Add(industry);
+        });
+        Game.P("Eco.ResearchAction", () => { if (ResearchAction(c, shortage) is { } research) actions.Add(research); });
         actions.Add(new EconomicAction { Kind = EconomicActionKind.Wait, Score = budget > 0 ? 0.25 : 1.0 });
 
         var chosen = actions
@@ -504,8 +506,11 @@ public class AiSystem
             .ThenBy(a => a.Technology?.Order ?? int.MaxValue)
             .First();
 
-        RecordEconomicPlan(c, shortage, budget, actions, preserveBaselineDecision);
-        ExecuteEconomicAction(c, chosen, preserveBaselineDecision);
+        Game.P("Eco.RecordExecute", () =>
+        {
+            RecordEconomicPlan(c, shortage, budget, actions, preserveBaselineDecision);
+            ExecuteEconomicAction(c, chosen, preserveBaselineDecision);
+        });
     }
 
     private static int ActionOrder(EconomicActionKind kind) => kind switch
@@ -543,20 +548,21 @@ public class AiSystem
             if (!Game.Rules.Commodities.WillTrade(Game, seller, c)) continue;
             var sellerBalance = Game.Commodities.BalanceOf(seller, shortage.Commodity);
             double surplus = sellerBalance.Output - sellerBalance.Demand - sellerBalance.Export;
-            bool anySurplus = Game.Commodities.Defs.Values.Any(def => def.IsActive(Game.World.Date)
-                && Game.Commodities.BalanceOf(seller, def.Key).Output > Game.Commodities.BalanceOf(seller, def.Key).Demand);
-            if (surplus <= 0.1 && !anySurplus) continue;
-            var route = seller.OwnedStates
-                .OrderBy(s => s.Index)
-                .Select(s => Game.TradeNetwork.RouteBetween(s, buyerState))
-                .Where(r => r != null && !Game.TradeNetwork.IsRouteBlocked(r!))
-                .OrderBy(r => r!.DistanceKm)
-                .ThenBy(r => r!.Key, StringComparer.Ordinal)
-                .FirstOrDefault();
-            if (route == null) continue;
+            // The any-commodity scan only matters when this one has no surplus; the agreement test is cheaper than routing, so it goes first.
+            if (surplus <= 0.1 && !AnyActiveSurplus(seller)) continue;
             if (Game.TradeNetwork.Agreements.Any(a => a.Active(Game.World.Date)
                 && a.From == c && a.To == seller
                 && (a.Commodity.Length == 0 || a.Commodity.Equals(shortage.Commodity, StringComparison.OrdinalIgnoreCase)))) continue;
+            // Shortest open route; the key (unique per origin state) breaks distance ties, so the scan order does not matter.
+            TradeRoute? route = null;
+            foreach (var s in seller.OwnedStates)
+            {
+                var r = Game.TradeNetwork.RouteBetween(s, buyerState);
+                if (r == null || Game.TradeNetwork.IsRouteBlocked(r)) continue;
+                if (route == null || r.DistanceKm < route.DistanceKm
+                    || (r.DistanceKm == route.DistanceKm && string.CompareOrdinal(r.Key, route.Key) < 0)) route = r;
+            }
+            if (route == null) continue;
             var candidate = new ImportOpportunity { Seller = seller, Route = route, Missing = missing, Surplus = Math.Max(0.1, surplus) };
             if (surplus > 0.1) best.Add(candidate);
             else general.Add(candidate);
@@ -584,6 +590,17 @@ public class AiSystem
             Partner = opportunity.Seller,
             Quantity = opportunity.Surplus <= 0.1 ? 0 : Math.Min(opportunity.Missing, opportunity.Surplus),
         };
+    }
+
+    private bool AnyActiveSurplus(Country seller)
+    {
+        foreach (var def in Game.Commodities.Defs.Values)
+        {
+            if (!def.IsActive(Game.World.Date)) continue;
+            var b = Game.Commodities.BalanceOf(seller, def.Key);
+            if (b.Output > b.Demand) return true;
+        }
+        return false;
     }
 
     private EconomicAction? ConstructionAction(Country c, (string Commodity, double Satisfied) shortage, double budget, bool capacity)

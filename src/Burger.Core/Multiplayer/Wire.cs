@@ -79,7 +79,7 @@ public static class Wire
     public static bool KnownCommandType(string type) =>
         type is GameCommand.Move or GameCommand.DeclareWar or GameCommand.AcceptPeace or GameCommand.RefusePeace or GameCommand.WhitePeace
             or GameCommand.QueueProduction or GameCommand.SetTradePolicy or GameCommand.NegotiateTrade or GameCommand.SetTradeBlockade
-            or GameCommand.BuildIndustry or GameCommand.SetIndustryMethod or GameCommand.Develop or GameCommand.Reform
+            or GameCommand.BuildIndustry or GameCommand.SetIndustryMethod or GameCommand.Develop or GameCommand.Colonize or GameCommand.Reinforce or GameCommand.AbandonColony or GameCommand.Reform
             or GameCommand.EventOption or GameCommand.Respond or GameCommand.ModMessage
             or GameCommand.Claim or GameCommand.Release;
 

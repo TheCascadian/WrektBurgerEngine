@@ -147,6 +147,8 @@ public sealed class Game
     public Burger.Core.Characters.IntrigueSystem Intrigue { get; }
     /// <summary>Titles, vassals, governors and the council (titles feature).</summary>
     public Burger.Core.Characters.TitleSystem Titles { get; }
+    /// <summary>Runtime state splits (counter-settlement).</summary>
+    public Burger.Core.Map.StateSplitSystem StateSplits { get; }
     /// <summary>Mobilisation, levies, mercenaries, calls to arms and the foreign legion (raising_troops feature).</summary>
     public Burger.Core.Economy.RaisingSystem Raising { get; }
     public Burger.Core.Supply.LogisticsSystem Logistics { get; }
@@ -283,6 +285,15 @@ public sealed class Game
         Hub.SubjectReleased += (s, _) => RefreshName(s);
         Hub.GovernmentChanged += (c, _) => RefreshName(c);
         Hub.StateTransferred += (_, _, _) => Population.InvalidateMajorities();
+        StateSplits = new Burger.Core.Map.StateSplitSystem(this);
+        Hub.StateSplit += Population.OnStateSplit;
+        Hub.StateUnsplit += Population.OnStateUnsplit;
+        Hub.StateSplit += Development.OnStateSplit;
+        Hub.StateUnsplit += Development.OnStateUnsplit;
+        Hub.StateSplit += Commodities.OnStateSplit;
+        Hub.StateUnsplit += Commodities.OnStateUnsplit;
+        Hub.StateSplit += Titles.OnStateSplit;
+        Hub.StateUnsplit += Titles.OnStateUnsplit;
         Clock = new GameClock(this);
         Commands = new ConsoleCommands(this);
         Builtins.RegisterAll(this);
@@ -548,6 +559,9 @@ public sealed class Game
 
     /// <summary>Advances the simulation by one hour and completes economic settlement at month boundaries.</summary>
     public void Tick() => Tick(streamEconomicWork: false);
+
+    /// <summary>One hour as the live clock runs it: monthly economic and AI work is spread over the following days.</summary>
+    public void TickLive() => Tick(streamEconomicWork: true);
 
     /// <summary>Advances one hour using the live-clock economic work budget.</summary>
     internal void Tick(bool streamEconomicWork)

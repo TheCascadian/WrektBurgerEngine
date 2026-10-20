@@ -21,6 +21,7 @@ public static class StateChecksum
         var bd = b.World.Divisions.ToDictionary(d => d.Id);
         foreach (var d in a.World.Divisions)
             if (!bd.TryGetValue(d.Id, out var y) || y.Location.Key != d.Location.Key || y.Strength != d.Strength) o.Add($"division {d.Id} ({d.Owner.Tag}): {d.Location.Key}/{d.Strength} vs {(y == null ? "missing" : y.Location.Key + "/" + y.Strength)}");
+        if (a.World.States.Count != b.World.States.Count) o.Add($"states {a.World.States.Count} vs {b.World.States.Count}");
         var rb = b.Rngs.Snapshot();
         foreach (var r in a.Rngs.Snapshot()) if (!rb.Contains(r)) o.Add("rng " + r.Name);
         if (a.Events.PlayerQueue.Count != b.Events.PlayerQueue.Count) o.Add($"event queue {a.Events.PlayerQueue.Count} vs {b.Events.PlayerQueue.Count}");
@@ -122,6 +123,7 @@ public static class StateChecksum
         // Match the recent transaction window written into multiplayer saves; older audit history is intentionally not part of lockstep state.
         foreach (var transaction in game.TradeNetwork.History.TakeLast(50))
         { S(transaction.Commodity); S(transaction.Seller.Tag); S(transaction.Buyer.Tag); S(transaction.From.Key); S(transaction.To.Key); S(transaction.RouteKind.ToString()); D(transaction.Quantity); D(transaction.Tariff); D(transaction.TransportCost); }
+        foreach (var split in game.StateSplits.Splits) { S(split.Parent); S(split.Child); D(split.Share); foreach (var l in split.Locations) S(l); }
         foreach (var (name, st) in game.Rngs.Snapshot()) { S(name); U(st); }
         return h;
     }

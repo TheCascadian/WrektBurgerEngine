@@ -99,10 +99,31 @@ public sealed class MapOverlay
     private bool OnScreen(Vector2 p, float margin = 50)
         => p.X > -margin && p.Y > -margin && p.X < Viewport.W + margin && p.Y < Viewport.H + margin;
 
+    /// <summary>Hovering unowned land shows who lives there and who is settling it (the natives stay visible without a country).</summary>
+    private void DrawSettlementTooltip()
+    {
+        var l = _map.Hovered;
+        var pop = _game.Population;
+        if (l == null || !l.IsLand || l.State is not { Owner: null } st || !pop.ColonizationEnabled || Gui.MouseOverUi || !_game.IsVisible(l)) return;
+        var peoples = pop.NativePeoples(st);
+        var sp = pop.Of(st);
+        if (peoples.Count == 0 && sp.Main.Country == null) return;
+        var rows = new List<string> { $"[icon:population][state:info] {st.DisplayName}: unsettled land" };
+        foreach (var (culture, people, share) in peoples.Take(3)) rows.Add($"[icon:population][state:value] {culture}: {people:N0} ({share:P0})");
+        foreach (var party in new[] { sp.Main, sp.Counter })
+        {
+            if (party.Country == null) continue;
+            rows.Add($"[icon:army][state:{(party == sp.Counter ? "warning" : "good")}] {(party == sp.Counter ? "Counter-settlers" : "Settlers")}: {party.Country.Name} ({party.Progress:0}%{(party.Reinforcements > 0 ? $", {party.Reinforcements} guarding" : "")})");
+        }
+        if (sp.IsContested) rows.Add("[icon:war][state:warning] Contested: the leader keeps the larger part");
+        Gui.Tooltip(string.Join("\n", rows));
+    }
+
     public void DrawLabels(Camera3D cam)
     {
         float h = Viewport.HeightOf(cam);
         if (h > 18) _countryLabels.Draw(cam);
+        DrawSettlementTooltip();
         if (h < 30)
         {
             // only the province under the cursor is named, and only when zoomed in: the rest of the map stays clear

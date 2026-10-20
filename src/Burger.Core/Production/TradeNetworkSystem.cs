@@ -39,7 +39,8 @@ public sealed class TradeRoute
     public double DistanceKm;
     public double Capacity;
     public List<State> Path = new();
-    public string Key => $"{From.Index}>{To.Index}:{Kind}";
+    private string? _key;
+    public string Key => _key ??= $"{From.Index}>{To.Index}:{Kind}";
 }
 
 public sealed class TradeTransaction
@@ -107,7 +108,14 @@ public sealed class AiEconomicPlan
 public sealed class TradeNetworkSystem
 {
     private readonly Game _game;
-    private readonly Dictionary<string, TradeRoute> _routes = new(StringComparer.Ordinal);
+    private readonly Dictionary<long, TradeRoute> _routes = new();
+    private int _routesMapVersion = -1;
+    private bool _routeMissed;
+    private long _landTopology;
+    private readonly List<Country> _pathOwners = new();
+    private readonly Dictionary<long, (TradeAgreement? Agreement, double Priority, sbyte CanTrade)> _pairCache = new();
+    private readonly List<(( StateMarket Market, double Left) Seller, int Agreed, double Priority)> _top = new();
+    private readonly Dictionary<State, (float X, float Y)> _landCentres = new();
     private readonly Dictionary<State, List<(State To, double Distance)>> _landEdges = new();
     private readonly Dictionary<State, Dictionary<State, (State Previous, double Distance)>> _landPaths = new();
     private int _landEdgesVersion = -1;
@@ -273,26 +281,56 @@ public sealed class TradeNetworkSystem
             market.Stockpile = reserve;
         }
 
+        long m0 = System.Diagnostics.Stopwatch.GetTimestamp();
         var left = sellers.ToDictionary(s => s.Market, s => s.Left);
         var matches = new List<TradeMatch>();
+        // Agreement, priority and trade permission depend only on the country pair; many states share a pair.
+        _pairCache.Clear();
+        int candidateLimit = Math.Max(8, (int)_game.Data.Defines.Get("trade_seller_candidates", 24));
+        double tradePriceScale = _game.Data.Defines.Get("commodity_trade_price", 0.5);
         foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Need))
         {
             double need = deficit;
-            int candidateLimit = Math.Max(8, (int)_game.Data.Defines.Get("trade_seller_candidates", 24));
             var buyerPolicy = PolicyOf(buyer.State.Owner!);
-            foreach (var sellerEntry in sellers.Where(s => left[s.Market] > 0.001)
-                         .OrderByDescending(s => Agreement(s.Market.State.Owner!, buyer.State.Owner!, definition.Key) != null ? 1 : 0)
-                         .ThenByDescending(s => priority(s.Market.State.Owner!, buyer.State.Owner!) * Math.Clamp(buyerPolicy.ImportPriority, 0.1, 4))
-                         .Take(candidateLimit).ToList())
+            var buyerCountry = buyer.State.Owner!;
+            double importPriority = Math.Clamp(buyerPolicy.ImportPriority, 0.1, 4);
+            // Top candidates by (agreement, priority) with original order breaking ties,
+            // the same order a stable descending sort gives, without sorting every seller.
+            _top.Clear();
+            for (int i = 0; i < sellers.Count; i++)
+            {
+                var s = sellers[i];
+                if (left[s.Market] <= 0.001) continue;
+                var sc = s.Market.State.Owner!;
+                long pairKey = ((long)sc.Index << 32) | (uint)buyerCountry.Index;
+                if (!_pairCache.TryGetValue(pairKey, out var pi))
+                    _pairCache[pairKey] = pi = (Agreement(sc, buyerCountry, definition.Key), priority(sc, buyerCountry), -1);
+                var pk = (Agreed: pi.Agreement != null ? 1 : 0, Priority: pi.Priority * importPriority);
+                int at = _top.Count;
+                while (at > 0)
+                {
+                    var o = _top[at - 1];
+                    int cmp = pk.Agreed != o.Agreed ? pk.Agreed.CompareTo(o.Agreed) : pk.Priority.CompareTo(o.Priority);
+                    if (cmp <= 0) break;
+                    at--;
+                }
+                if (at >= candidateLimit) continue;
+                _top.Insert(at, (s, pk.Agreed, pk.Priority));
+                if (_top.Count > candidateLimit) _top.RemoveAt(_top.Count - 1);
+            }
+            foreach (var (sellerEntry, _, _) in _top.ToList())
             {
                 var seller = sellerEntry.Market.State.Owner!;
-                var buyerCountry = buyer.State.Owner!;
-                if (seller == buyerCountry || !canTrade(seller, buyerCountry)) continue;
+                if (seller == buyerCountry) continue;
+                long tradeKey = ((long)seller.Index << 32) | (uint)buyerCountry.Index;
+                var pair = _pairCache[tradeKey];
+                if (pair.CanTrade < 0) _pairCache[tradeKey] = pair = (pair.Agreement, pair.Priority, canTrade(seller, buyerCountry) ? (sbyte)1 : (sbyte)0);
+                if (pair.CanTrade == 0) continue;
                 var route = RouteBetween(sellerEntry.Market.State, buyer.State);
                 if (route == null || IsBlocked(route, seller, buyerCountry)) continue;
                 double capacity = Math.Max(0, route.Capacity - _routeUse.GetValueOrDefault(route.Key));
-                var agreement = Agreement(seller, buyerCountry, definition.Key);
-                double unitBase = definition.Price * _game.Data.Defines.Get("commodity_trade_price", 0.5);
+                var agreement = pair.Agreement;
+                double unitBase = definition.Price * tradePriceScale;
                 double unitTransport = TransportCost(route, agreement);
                 double tariffRate = Math.Clamp(PolicyOf(buyerCountry).TariffRate + PolicyOf(buyerCountry).Protectionism * 0.5, 0, 5)
                     * (agreement?.TariffDiscount ?? 1);
@@ -325,6 +363,7 @@ public sealed class TradeNetworkSystem
             }
         }
 
+        long m1 = System.Diagnostics.Stopwatch.GetTimestamp();
         foreach (var market in _current.Values.Where(m => m.State.Owner?.Exists == true))
         {
             if (left.TryGetValue(market, out var unsold))
@@ -353,6 +392,11 @@ public sealed class TradeNetworkSystem
         }
         if (History.Count > 6000) History.RemoveRange(0, History.Count - 6000);
         InvalidateTotalsCache();
+        if (_game.Profiling)
+        {
+            _game.ProfileElapsed("Match.Pairing", m1 - m0);
+            _game.ProfileElapsed("Match.Settle", System.Diagnostics.Stopwatch.GetTimestamp() - m1);
+        }
         return matches;
     }
 
@@ -497,18 +541,22 @@ public sealed class TradeNetworkSystem
     {
         if (!_game.Profiling) return FindRoute(from, to);
         long start = System.Diagnostics.Stopwatch.GetTimestamp();
+        _routeMissed = false;
         try { return FindRoute(from, to); }
-        finally { _game.ProfileElapsed("Trade.Route", System.Diagnostics.Stopwatch.GetTimestamp() - start); }
+        finally { _game.ProfileElapsed(_routeMissed ? "Trade.Route.Miss" : "Trade.Route", System.Diagnostics.Stopwatch.GetTimestamp() - start); }
     }
 
     private TradeRoute? FindRoute(State from, State to)
     {
         if (from == to) return new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = 0, Capacity = double.MaxValue, Path = new() { from } };
-        string key = $"{from.Index}>{to.Index}:{_game.MapVersion}";
+        if (_routesMapVersion != _game.MapVersion) { _routes.Clear(); _routesMapVersion = _game.MapVersion; }
+        long key = ((long)from.Index << 32) | (uint)to.Index;
         if (_routes.TryGetValue(key, out var cached)) return cached;
+        _routeMissed = true;
         EnsureLandEdges();
         if (!_landPaths.TryGetValue(from, out var previous))
         {
+            long bfs0 = System.Diagnostics.Stopwatch.GetTimestamp();
             var queue = new Queue<State>();
             previous = new Dictionary<State, (State Previous, double Distance)> { [from] = (from, 0) };
             queue.Enqueue(from);
@@ -525,6 +573,7 @@ public sealed class TradeNetworkSystem
                 }
             }
             _landPaths[from] = previous;
+            if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
         }
         if (previous.ContainsKey(to))
         {
@@ -547,8 +596,18 @@ public sealed class TradeNetworkSystem
     private void EnsureLandEdges()
     {
         if (_landEdgesVersion == _game.MapVersion) return;
-        // Versioned route keys are never reused after a map change.
+        // Ownership changes bump the map version far more often than the state graph changes.
+        // Keep the edges and search trees unless a location moved between states.
+        long topology = 17;
+        foreach (var st in _game.World.States)
+        {
+            topology = topology * 31 + st.Index;
+            foreach (var l in st.Locations) topology = topology * 31 + l.Index * 7 + l.Neighbors.Count;
+        }
+        if (topology == _landTopology && _landEdges.Count == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
+        _landTopology = topology;
         _routes.Clear();
+        _landCentres.Clear();
         _landEdges.Clear();
         _landPaths.Clear();
         foreach (var state in _game.World.States)
@@ -570,22 +629,38 @@ public sealed class TradeNetworkSystem
     private double RouteCapacity(TradeRouteKind kind, List<State> path, double distance)
     {
         double baseCapacity = _game.Data.Defines.Get(kind == TradeRouteKind.Sea ? "trade_sea_capacity" : kind == TradeRouteKind.Caravan ? "trade_caravan_capacity" : "trade_land_capacity", kind == TradeRouteKind.Sea ? 1500 : kind == TradeRouteKind.Caravan ? 400 : 900);
-        double infrastructure = path.Sum(s => s.Buildings.GetValueOrDefault("infrastructure"));
-        double markets = path.Sum(s => s.Buildings.GetValueOrDefault("market"));
-        double transportServices = path.Select(s => s.Owner)
-            .Where(c => c?.Exists == true).Distinct()
-            .Select(c => _game.Commodities.BalanceOf(c!, "transport_services").Satisfied)
-            .DefaultIfEmpty(0.5).Average();
+        int infrastructure = 0, markets = 0;
+        _pathOwners.Clear();
+        double satisfiedSum = 0;
+        foreach (var s in path)
+        {
+            infrastructure += s.Buildings.GetValueOrDefault("infrastructure");
+            markets += s.Buildings.GetValueOrDefault("market");
+            if (s.Owner is { Exists: true } owner && !_pathOwners.Contains(owner))
+            {
+                _pathOwners.Add(owner);
+                satisfiedSum += _game.Commodities.BalanceOf(owner, "transport_services").Satisfied;
+            }
+        }
+        double transportServices = _pathOwners.Count == 0 ? 0.5 : satisfiedSum / _pathOwners.Count;
         return baseCapacity * (1 + infrastructure * 0.08 + markets * 0.12) * (0.75 + transportServices * 0.5)
             / (1 + distance / (kind == TradeRouteKind.Sea ? 5000 : 1000));
     }
 
+    // Matches Enumerable.Average over floats: double accumulator, float result.
+    private (float X, float Y) LandCentre(State s)
+    {
+        if (_landCentres.TryGetValue(s, out var c)) return c;
+        double sx = 0, sy = 0; long n = 0;
+        foreach (var l in s.Locations)
+            if (l.IsLand) { sx += l.CenterX; sy += l.CenterY; n++; }
+        return _landCentres[s] = n == 0 ? (0f, 0f) : ((float)(sx / n), (float)(sy / n));
+    }
+
     private double CentreDistance(State a, State b)
     {
-        var pa = a.Locations.Where(l => l.IsLand).Select(l => new { l.CenterX, l.CenterY }).DefaultIfEmpty().Average(x => x?.CenterX ?? 0);
-        var qa = a.Locations.Where(l => l.IsLand).Select(l => new { l.CenterX, l.CenterY }).DefaultIfEmpty().Average(x => x?.CenterY ?? 0);
-        var pb = b.Locations.Where(l => l.IsLand).Select(l => new { l.CenterX, l.CenterY }).DefaultIfEmpty().Average(x => x?.CenterX ?? 0);
-        var qb = b.Locations.Where(l => l.IsLand).Select(l => new { l.CenterX, l.CenterY }).DefaultIfEmpty().Average(x => x?.CenterY ?? 0);
+        var (pa, qa) = LandCentre(a);
+        var (pb, qb) = LandCentre(b);
         return Math.Max(100, Math.Sqrt(Math.Pow(pa - pb, 2) + Math.Pow(qa - qb, 2)) * 10);
     }
 
@@ -654,23 +729,39 @@ public sealed class TradeNetworkSystem
         plan.TargetCommodity = shortage.Commodity;
         plan.LastReviewDay = _game.World.Date.TotalDays;
         var buyerState = country.OwnedStates.OrderByDescending(_game.Population.TotalOf).FirstOrDefault();
-        bool HasRoute(Country sellerCountry) => buyerState != null
-            && sellerCountry.OwnedStates.Take(4).Any(s => RouteBetween(s, buyerState) != null);
-        var seller = _game.World.Countries.Where(c => c.Exists && c != country)
-            .Where(c => _game.Commodities.BalanceOf(c, shortage.Commodity).Output > _game.Commodities.BalanceOf(c, shortage.Commodity).Demand)
-            .Where(HasRoute)
-            .OrderBy(c => _game.Diplomacy.Opinion(country, c) < -60 ? 1 : 0)
-            .ThenBy(c => c.Index).FirstOrDefault();
+        // FindRoute always yields a land, sea or caravan route, so a seller with any state is reachable; building the routes here only filled the cache.
+        bool HasRoute(Country sellerCountry) => buyerState != null && sellerCountry.OwnedStates.Any();
+        // First willing seller by index, one whose opinion of us is not hostile ahead of one that is: a single pass instead of sorting every country.
+        Country? seller = null; bool sellerHostile = false;
+        bool Consider(Country c)
+        {
+            bool hostile = _game.Diplomacy.Opinion(country, c) < -60;
+            if (seller != null && (!sellerHostile || hostile)) return false;
+            seller = c; sellerHostile = hostile;
+            return !hostile;
+        }
+        foreach (var c in _game.World.Countries)
+        {
+            if (!c.Exists || c == country) continue;
+            var b = _game.Commodities.BalanceOf(c, shortage.Commodity);
+            if (b.Output > b.Demand && HasRoute(c) && Consider(c)) break;
+        }
         // A country may be short of a service that nobody exports yet. It still signs a
         // strategic agreement for the first routed surplus, keeping negotiation distinct
         // from the later import-or-build decision.
         if (seller == null && buyerState != null)
-            seller = _game.World.Countries.Where(c => c.Exists && c != country)
-                .Where(HasRoute)
-                .Where(c => _game.Commodities.Defs.Values.Any(def => def.IsActive(_game.World.Date)
-                    && _game.Commodities.BalanceOf(c, def.Key).Output > _game.Commodities.BalanceOf(c, def.Key).Demand))
-                .OrderBy(c => _game.Diplomacy.Opinion(country, c) < -60 ? 1 : 0)
-                .ThenBy(c => c.Index).FirstOrDefault();
+            foreach (var c in _game.World.Countries)
+            {
+                if (!c.Exists || c == country || !HasRoute(c)) continue;
+                bool surplus = false;
+                foreach (var def in _game.Commodities.Defs.Values)
+                {
+                    if (!def.IsActive(_game.World.Date)) continue;
+                    var b = _game.Commodities.BalanceOf(c, def.Key);
+                    if (b.Output > b.Demand) { surplus = true; break; }
+                }
+                if (surplus && Consider(c)) break;
+            }
         double missing = Math.Max(0.1, _game.Commodities.BalanceOf(country, shortage.Commodity).Demand - _game.Commodities.BalanceOf(country, shortage.Commodity).Output);
         bool sellerHasCommodity = seller != null && _game.Commodities.BalanceOf(seller, shortage.Commodity).Output > _game.Commodities.BalanceOf(seller, shortage.Commodity).Demand;
         double importScore = !sellerHasCommodity ? double.PositiveInfinity : _game.Commodities.BalanceOf(seller!, shortage.Commodity).Output / missing;

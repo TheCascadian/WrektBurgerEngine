@@ -281,7 +281,7 @@ public class GamePopulationRules : PopulationRules
 
     /// <summary>Colony progress lost this month because natives attacked the colonists (0 = no attack): now and then (native_resistance) where natives live.</summary>
     public override double NativeAttack(Game game, State s, Country c, double nativeShare)
-        => nativeShare > 0.05 && game.Rngs.Population.NextDouble() < game.Data.Defines.Get("native_resistance", 0.05) * nativeShare ? 15 : 0;
+        => NativeAttackChance(game, s, c, nativeShare) is > 0 and var chance && game.Rngs.Population.NextDouble() < chance ? NativeSetback(game, s, c) : 0;
 
     /// <summary>People of the colonizer's culture that settle a finished colony (colony_settlers).</summary>
     public override double ColonySettlers(Game game, State s, Country c) => game.Data.Defines.Get("colony_settlers", 1000);
@@ -337,13 +337,16 @@ public class GamePopulationRules : PopulationRules
     public override double AiColonyMinScore(Game game, Country c)
         => game.Data.Defines.Get("colony_ai_min_score", -1100) * Math.Max(0.5, game.AiProfiles.ProfileOf(c)?.Traits.GetValueOrDefault("colonial", 1) ?? 1);
 
-    private static readonly Dictionary<State, (double X, double Y)> _centers = new();
+    // keyed by location count too: a state shared between two settlers shrinks, and its middle moves
+    private static readonly Dictionary<State, (int Count, double X, double Y)> _centers = new();
     private static (double X, double Y) StateCenter(State s)
     {
-        if (_centers.TryGetValue(s, out var v)) return v;
+        if (_centers.TryGetValue(s, out var v) && v.Count == s.Locations.Count) return (v.X, v.Y);
         double x = 0, y = 0; int n = 0;
         foreach (var l in s.Locations) { x += l.CenterX; y += l.CenterY; n++; }
-        return _centers[s] = n == 0 ? (0, 0) : (x / n, y / n);
+        var c = n == 0 ? (0.0, 0.0) : (x / n, y / n);
+        _centers[s] = (n, c.Item1, c.Item2);
+        return c;
     }
 
     // =============================================================================================

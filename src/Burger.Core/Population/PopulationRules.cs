@@ -295,7 +295,42 @@ public class PopulationRules
 
     /// <summary>Colony progress lost this month because natives attacked the colonists (0 = no attack): now and then (native_resistance) where natives live.</summary>
     public virtual double NativeAttack(Game game, State s, Country c, double nativeShare)
-        => nativeShare > 0.05 && game.Rngs.Population.NextDouble() < game.Data.Defines.Get("native_resistance", 0.05) * nativeShare ? 15 : 0;
+        => NativeAttackChance(game, s, c, nativeShare) is > 0 and var chance && game.Rngs.Population.NextDouble() < chance ? NativeSetback(game, s, c) : 0;
+
+    /// <summary>Monthly chance (0-1) that natives attack the colonists of a state, before reinforcements (native_resistance times the natives' share; none under 5%).</summary>
+    public virtual double NativeAttackChance(Game game, State s, Country c, double nativeShare)
+        => nativeShare > 0.05 ? game.Data.Defines.Get("native_resistance", 0.05) * nativeShare : 0;
+
+    /// <summary>Colony progress one native attack costs, before reinforcements (native_setback).</summary>
+    public virtual double NativeSetback(Game game, State s, Country c) => game.Data.Defines.Get("native_setback", 15);
+
+    /// <summary>Gold for one wave of reinforcements to colonists under attack (colony_reinforce_cost; free without the economy).</summary>
+    public virtual double ReinforceCost(Game game, State s, Country c)
+        => game.Features.Has(FeatureSet.Economy) ? game.Data.Defines.Get("colony_reinforce_cost", 25) : 0;
+
+    /// <summary>Progress a wave of reinforcements adds at once (colony_reinforce_progress).</summary>
+    public virtual double ReinforceProgress(Game game, State s, Country c) => game.Data.Defines.Get("colony_reinforce_progress", 10);
+
+    /// <summary>Waves of reinforcements that can stand guard in one state at once (colony_reinforce_max).</summary>
+    public virtual int MaxReinforcements(Game game, State s, Country c) => Math.Max(0, (int)game.Data.Defines.Get("colony_reinforce_max", 3));
+
+    /// <summary>Chance (0-1) that each guarding wave stops a native attack (colony_reinforce_guard); a wave that stops one is spent.</summary>
+    public virtual double ReinforceGuard(Game game, State s, Country c) => Math.Clamp(game.Data.Defines.Get("colony_reinforce_guard", 0.25), 0, 1);
+
+    /// <summary>
+    /// Share of a contested state's land the leading settlers keep when it is settled, from how far each side got.
+    /// Never below counter_settle_main_floor (0.55) so the leader always has the larger part, never above counter_settle_main_cap (0.9) so the rival always gets something.
+    /// </summary>
+    public virtual double CounterSettleMainShare(Game game, State s, double leaderProgress, double rivalProgress)
+    {
+        double floor = Math.Clamp(game.Data.Defines.Get("counter_settle_main_floor", 0.55), 0.5, 1);
+        double cap = Math.Clamp(game.Data.Defines.Get("counter_settle_main_cap", 0.9), floor, 1);
+        double total = leaderProgress + rivalProgress;
+        return Math.Clamp(total > 0 ? leaderProgress / total : 1, floor, cap);
+    }
+
+    /// <summary>AI: points lost when the target is land another country is already settling (counter_settle_ai_penalty), so free land is preferred.</summary>
+    public virtual double AiCounterSettlePenalty(Game game, Country c, State s) => game.Data.Defines.Get("counter_settle_ai_penalty", 300);
 
     /// <summary>People of the colonizer's culture that settle a finished colony (colony_settlers).</summary>
     public virtual double ColonySettlers(Game game, State s, Country c) => game.Data.Defines.Get("colony_settlers", 1000);

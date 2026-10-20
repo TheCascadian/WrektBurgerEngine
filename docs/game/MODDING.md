@@ -472,6 +472,23 @@ ownership (rule `CanCore` in backend/Population.cs); former owners lose a core a
 (`colonize_cost` gold, `colony_upkeep` gold a month with the economy); it grows `colony_speed` (4%) a month, natives
 slow it and attack now and then (`native_resistance`), and at 100% it becomes your state with `colony_settlers` people.
 
+*Native peoples.* The people who live on land being settled are shown without a country of their own: the state panel lists
+them (culture, number, share) with their attack chance, the map tooltip over unowned land names them and the settlers, and
+notifications name the people who attacked (`NativePeoples(state)` in `PopulationSystem`).
+
+*Reinforcements.* A country settling a state can pay `colony_reinforce_cost` gold for another wave of settlers (rule
+`ReinforceCost`): it adds `colony_reinforce_progress` (10) at once and stands guard, up to `colony_reinforce_max` (3) waves
+per state. Each guarding wave gives `colony_reinforce_guard` (0.25) chance to stop a native attack; a wave that stops one
+is spent. The AI reinforces where natives are many and the colony is not nearly done.
+
+*Counter-settlement.* A second country may settle a state another is already settling (`counter_settle_ai_penalty` points
+off for the AI, so free land is preferred). When either side reaches 100% the state is split at run time (`StateSplitSystem`,
+the geography carry-over rules: people, tax, manpower, buildings and deposits by area, whole numbers by largest remainder;
+development and culture as they were; both parts stay one connected piece): the leader keeps the larger share (rule
+`CounterSettleMainShare`, between `counter_settle_main_floor` 0.55 and `counter_settle_main_cap` 0.9, by progress) and the
+rival gets the piece facing its own land as a new state. Splits are saved (`x_state_splits`) and replayed on load; multiplayer
+commands `colonize`, `reinforce` and `abandon_colony`.
+
 **Independence** (`independence`): people of an unaccepted culture that is the majority in some states (never the capital
 state) form a movement once they are `independence_min_share` (2%) of the country. It grows each month (rule
 `IndependenceProgress`: `independence_speed`, 0.4; slower in colonies than in conquered land - `colonial_independence_factor` 0.6 - faster at low stability and

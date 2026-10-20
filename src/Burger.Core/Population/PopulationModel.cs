@@ -99,13 +99,27 @@ public sealed class StatePopulation
     /// <summary>Who owned the state and since when (for cores).</summary>
     public Country? Owner;
     public int OwnedSinceDay;
-    /// <summary>Colonization of an unowned state (colonization feature).</summary>
-    public Country? Colonizer;
-    public double ColonyProgress;
+    /// <summary>Colonization of an unowned state (colonization feature): the first settler, and a rival who counter-settles the same land.</summary>
+    public readonly SettlerParty Main = new(), Counter = new();
+    public Country? Colonizer { get => Main.Country; set => Main.Country = value; }
+    public double ColonyProgress { get => Main.Progress; set => Main.Progress = value; }
+    public bool IsContested => Main.Country != null && Counter.Country != null;
+    public SettlerParty? PartyOf(Country c) => Main.Country == c ? Main : Counter.Country == c ? Counter : null;
     /// <summary>Last month's change of the total (for the interface).</summary>
     public double LastGrowth;
 
     public double Total => Pops.Sum(p => p.Size);
+}
+
+/// <summary>Colonists of one country settling an unowned state: how far along they are and how many reinforcement waves guard them against the natives.</summary>
+public sealed class SettlerParty
+{
+    public Country? Country;
+    public double Progress;
+    public int Reinforcements;
+
+    public void Clear() { Country = null; Progress = 0; Reinforcements = 0; }
+    public void Start(Country c) { Country = c; Progress = 0; Reinforcements = 0; }
 }
 
 /// <summary>Culture and religion of a country.</summary>

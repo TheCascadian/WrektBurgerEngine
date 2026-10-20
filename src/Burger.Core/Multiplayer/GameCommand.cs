@@ -27,6 +27,12 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     public const string SetIndustryMethod = "set_industry_method";
     /// <summary>Spends points on a state's development (args: state key).</summary>
     public const string Develop = "develop";
+    /// <summary>Sends colonists to an unowned state, or counter-settles one another country is settling (args: state key).</summary>
+    public const string Colonize = "colonize";
+    /// <summary>Pays gold for another wave of settlers in a state we are settling (args: state key).</summary>
+    public const string Reinforce = "reinforce";
+    /// <summary>Calls our colonists back from a state (args: state key).</summary>
+    public const string AbandonColony = "abandon_colony";
     /// <summary>Adopts (1) or drops (0) a government reform (args: reform key, 1 or 0).</summary>
     public const string Reform = "reform";
     /// <summary>Answers an event (args: event id, option index).</summary>
@@ -36,7 +42,7 @@ public sealed record GameCommand(long Tick, string Country, string Type, string[
     /// <summary>System command: a human leaves this country; the AI takes it over.</summary>
     public const string Release = "release";
 
-    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or SetTradePolicy or NegotiateTrade or SetTradeBlockade or BuildIndustry or SetIndustryMethod or Develop or Reform or EventOption or Respond or ModMessage;
+    public static bool IsPlayerCommand(string type) => type is Move or DeclareWar or AcceptPeace or RefusePeace or WhitePeace or QueueProduction or SetTradePolicy or NegotiateTrade or SetTradeBlockade or BuildIndustry or SetIndustryMethod or Develop or Colonize or Reinforce or AbandonColony or Reform or EventOption or Respond or ModMessage;
 
     public string Encode() => string.Join('|', Tick.ToString(CultureInfo.InvariantCulture), Net.Esc(Country), Net.Esc(Type), string.Join(',', Args.Select(Net.Esc)));
 
@@ -111,6 +117,14 @@ public static class CommandExecutor
             case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
             case GameCommand.Develop:
                 return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } ds && g.Development.Develop(country, ds) == null;
+            case GameCommand.Colonize:
+                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } cs && g.Population.Colonize(country, cs) == null;
+            case GameCommand.Reinforce:
+                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } rs && g.Population.Reinforce(country, rs) == null;
+            case GameCommand.AbandonColony:
+                if (g.World.States.FirstOrDefault(s => s.Key == A(0)) is not { } ab || !g.Population.ColoniesOf(country).Contains(ab)) return false;
+                g.Population.AbandonColony(ab, country);
+                return true;
             case GameCommand.Reform:
                 return g.Reforms.Reforms.TryGetValue(A(0), out var rf) && (A(1) == "0" ? g.Reforms.Drop(country, rf) : g.Reforms.Adopt(country, rf)) == null;
             case GameCommand.QueueProduction:
@@ -206,6 +220,12 @@ public static class CommandValidator
             }
             case GameCommand.Develop:
                 return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
+            case GameCommand.Colonize:
+                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vc ? g.Population.CannotColonize(country, vc) : "no such state";
+            case GameCommand.Reinforce:
+                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vr2 ? g.Population.CannotReinforce(country, vr2) : "no such state";
+            case GameCommand.AbandonColony:
+                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } va && g.Population.ColoniesOf(country).Contains(va) ? null : "not settling that state";
             case GameCommand.Reform:
                 if (args.Length != 2 || (A(1) != "0" && A(1) != "1") || !g.Reforms.Reforms.TryGetValue(A(0), out var vr)) return "no such reform";
                 return A(1) == "0" ? g.Reforms.CannotDrop(country, vr) : g.Reforms.CannotAdopt(country, vr);

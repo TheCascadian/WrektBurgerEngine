@@ -277,7 +277,7 @@ public class GamePopulationRules : PopulationRules
 
     /// <summary>Colony progress lost this month because natives attacked the colonists (0 = no attack): now and then (native_resistance) where natives live.</summary>
     public override double NativeAttack(Game game, State s, Country c, double nativeShare)
-        => nativeShare > 0.05 && game.Rngs.Population.NextDouble() < game.Data.Defines.Get("native_resistance", 0.05) * nativeShare ? 15 : 0;
+        => NativeAttackChance(game, s, c, nativeShare) is > 0 and var chance && game.Rngs.Population.NextDouble() < chance ? NativeSetback(game, s, c) : 0;
 
     /// <summary>People of the colonizer's culture that settle a finished colony (colony_settlers).</summary>
     public override double ColonySettlers(Game game, State s, Country c) => game.Data.Defines.Get("colony_settlers", 1000);
