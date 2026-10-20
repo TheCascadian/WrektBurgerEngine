@@ -5,10 +5,10 @@ import re, unicodedata
 IGNORE = re.compile(r'hunter|gatherer|forag|fishing|shellfish|marine mammal|polynesian|aboriginal|^paleo|^arctic|^dorset|^thule|^ainu|^inuit|^tasmanian|^caribbean|^subarctic|^desert|^plain bison|^plateau|'
                     r'^north american|^patagonian|^samoyed|^sami$|^saami|^samis|^guanche|^taino|^arawaks|^boethuk|^beothuk|^tungus|^innu|^athabas|^cree$|^guanahatabeyes|^alaska')
 # regions of farming or herding peoples: cut into tribes of regular size
-TRIBAL = re.compile(r'^mongols$|^mandes$|^azandes$|^oghuz|^cushites$|^berbers$|^tuaregs$|^bedouins$|^karluks$|^tupis$|^malay$|^anasazi|^mogollon|^athabask|^papuans?$|^dorset|^thule|^ciboney|^bashkirs|^permians|^thule|complex$|^point peninsula|^porter$|^miller$|^couture|^copena|^goodall|^fourche|^mill creek|^thai$|^mon-khmer|^malays$|^arabs$|^tungus$|peoples?$|tribes|farmers|cultures?$|culture$|pastoral|nomads|^khoisan|^bantu|^papuan|^austronesian|^saharan|^proto-altaic|^austro|^iron age|^siberians|^west african|^celts$|^germanic|^slavic|^slavonic|^baltic')
+TRIBAL = re.compile(r'^mongols$|^mandes$|^azandes$|^oghuz|^cushites$|^berbers$|^tuaregs$|^bedouins$|^karluks$|^tupis$|^malay$|^anasazi|^mogollon|^athabask|^papuans?$|^dorset|^thule|^ciboney|^bashkirs|^permians|^thule|complex$|^point peninsula|^porter$|^miller$|^couture|^copena|^goodall|^fourche|^mill creek|^thai$|^mon-khmer|^malays$|^arabs$|^tungus$|peoples?$|tribes|farmers|cultures?$|culture$|pastoral|nomads|^khoisan|^bantu|^papuan|^austronesian|^saharan|^proto-altaic|^austro(?!-hungarian)|^iron age|^siberians|^west african|^celts$|^germanic|^slavic|^slavonic|^baltic')
 UMBRELLA = re.compile(r'(states|kingdoms|city-states|emirates|khanates|principalities|confederation|chiefdoms|clans|duchies|republics|tribes|minor)\b')
 # umbrellas that are one state in fact
-NOT_UMBRELLA = re.compile(r'^(oirat confederation|swiss confederation|maratha confederacy|confederation|united states|united provinces)')
+NOT_UMBRELLA = re.compile(r'^(papal states|united arab emirates|austro-hungarian|oirat confederation|swiss confederation|maratha confederacy|confederation|united states|united provinces)')
 
 
 def normalize(name):
@@ -41,7 +41,7 @@ FAMILIES = [
     (r'^egypt', 'egy'), (r'^persia$|^iran$', 'iran'), (r'^turkey$|^republic of turkey', 'turkey'),
     (r'^abbasid', 'abbasid'), (r'^umayyad', 'umayyad'), (r'^fatimid', 'fatimid'),
     (r'^mongol empire|^mongols', 'mongols'), (r'^golden horde|^khanate of the golden horde|^blue horde', 'goldenhorde'),
-    (r'^german(y| empire)?$|^german$|^east germany|^west germany', 'germany'), (r'^austria|^austrian|^austro|^habsburg', 'austria'),
+    (r'^german(y| empire)?$|^german$|^east germany|^west germany', 'germany'), (r'^austria|^austrian|^austro|^habsburg(?! netherlands)', 'austria'),
     (r'^italy|^italian', 'italy')
 ]
 
@@ -73,8 +73,8 @@ COLORS = {
     'qin': (30, 30, 30), 'han': (200, 60, 50), 'jin': (110, 80, 160), 'qing': (225, 190, 40), 'ming': (205, 50, 50), 'china': (200, 40, 40), 'yuan': (60, 150, 190), 'mongols': (60, 150, 190),
     'goldenhorde': (50, 170, 160), 'yao': (220, 220, 225), 'kor': (230, 230, 240), 'van': (150, 170, 50), 'irr': (190, 120, 60), 'usa': (60, 80, 160), 'can': (210, 60, 60),
     'bra': (60, 160, 70), 'rus': (70, 130, 60), 'ott': (60, 110, 70), 'kyivan': (150, 90, 50), 'hre': (232, 200, 70), 'fra': (70, 100, 200), 'franks': (90, 130, 210), 'eng': (200, 50, 70),
-    'spain': (230, 170, 40), 'por': (50, 140, 80), 'swe': (60, 120, 200), 'den': (200, 60, 60), 'pol': (220, 80, 90), 'iran': (80, 160, 90), 'turkey': (200, 40, 50), 'abbasid': (40, 40, 44),
-    'umayyad': (225, 225, 215), 'fatimid': (50, 140, 70), 'germany': (110, 112, 118), 'austria': (236, 230, 210), 'italy': (70, 160, 110), 'ath': (70, 120, 200), 'spa': (170, 40, 40),
+    'spain': (230, 170, 40), 'por': (50, 140, 80), 'swe': (60, 120, 200), 'den': (200, 60, 60), 'pol': (220, 80, 90), 'iran': (80, 160, 90), 'turkey': (200, 40, 50), 'abbasid': (58, 62, 84),
+    'umayyad': (214, 198, 140), 'fatimid': (50, 140, 70), 'germany': (110, 112, 118), 'austria': (236, 230, 210), 'italy': (70, 160, 110), 'ath': (70, 120, 200), 'spa': (170, 40, 40),
     'cor': (110, 170, 220), 'thb': (140, 90, 160), 'zho': (180, 160, 80), 'qi': (60, 150, 140), 'chu': (80, 150, 70), 'zhao': (200, 120, 60), 'wei': (70, 110, 180), 'hanstate': (190, 90, 120),
     'yan': (100, 100, 170), 'bavaria': (90, 150, 220), 'saxony': (90, 90, 90), 'brandenburg': (60, 60, 80), 'bohemia': (200, 90, 90), 'burgundy': (120, 50, 70), 'milan': (180, 60, 60),
 }

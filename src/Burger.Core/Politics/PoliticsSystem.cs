@@ -850,23 +850,51 @@ public sealed partial class PoliticsSystem
     /// <summary>Does the country have an assembly or council now (parliament, parties): it holds elections, or its ruling ideology keeps an assembly.</summary>
     public bool HasAssembly(Country c) => Enabled && (HoldsElections(c) || Ideology(Of(c).Ruling)?.Assembly == true);
 
-    public void MonthlyTick()
+    private long _coreHeldDay = long.MinValue;
+    private readonly HashSet<Country> _coreHeld = new();
+
+    /// <summary>Is a state that has this country as a core held by another country? (counted once for all countries per day and monthly tick: asking the 11,000 states for each of hundreds of countries was the hitch of the month)</summary>
+    public bool CoreLandHeldByOthers(Country c)
+    {
+        lock (_coreHeld)
+        {
+            long day = _game.World.Date.TotalHours;   // counted again every game hour, like the modifiers that ask for it
+            if (day != _coreHeldDay)
+            {
+                _coreHeld.Clear();
+                foreach (var s in _game.World.States)
+                    if (s.Owner != null) foreach (var core in s.Cores) if (core != s.Owner) _coreHeld.Add(core);
+                _coreHeldDay = day;
+            }
+            return _coreHeld.Contains(c);
+        }
+    }
+
+    public void MonthlyTick() { for (int part = 0; part < 24; part++) MonthlyTickPart(part, 24); }
+
+    /// <summary>
+    /// A part of the monthly politics (part 0 to 23 of 24, by the country's number): the game does one part in each hour of a day so that the turn of the month is not a hitch.
+    /// Part 0 also does what concerns everyone first, the last part what comes after all countries.
+    /// </summary>
+    public void MonthlyTickPart(int part, int parts)
     {
         if (!Enabled) return;
-        // Population changes run before politics each month. Do not reuse last month's derived mood summary:
-        // a save/resync has no reason to preserve that cache, and stale versus recomputed summaries can alter drift.
-        _popSummary.Clear();
-        CheckUnlocks();
-        if (!_aiCalled && _monthsTicked > 0 && _game.Features.Has(FeatureSet.Ai) && _game.Ai.Enabled)
-            foreach (var ac in _game.World.Countries.Where(x => x.Exists && !x.IsPlayer).ToList()) AiMonthly(ac);
-        _aiCalled = false;
-        _monthsTicked++;
-        _mods.Clear(); // wealth, government support and lost land move stability (rule StabilitySources)
+        if (part == 0)
+        {
+            _popSummary.Clear();   // population changes run before politics each month: a save/resync has no reason to preserve last month's mood summary
+            _coreHeldDay = long.MinValue;   // count again: a test or a script may have moved land since the day began
+            CheckUnlocks();
+            if (!_aiCalled && _monthsTicked > 0 && _game.Features.Has(FeatureSet.Ai) && _game.Ai.Enabled)
+                foreach (var ac in _game.World.Countries.Where(x => x.Exists && !x.IsPlayer).ToList()) AiMonthly(ac);
+            _aiCalled = false;
+            _monthsTicked++;
+            _mods.Clear(); // wealth, government support and lost land move stability (rule StabilitySources)
+        }
         foreach (var c in _game.World.Countries.ToList()) // scripts may add countries (start_civil_war)
         {
-            if (!c.Exists) continue;
+            if (!c.Exists || c.Index % parts != part) continue;
             var p = Of(c);
-            var drift = Rules.MonthlyDrift(_game, c);
+            Dictionary<string, double> drift = null!; _game.P("Pol.Drift", () => drift = Rules.MonthlyDrift(_game, c));
             foreach (var kv in drift)
                 if (p.Popularity.ContainsKey(kv.Key)) p.Popularity[kv.Key] = Math.Max(0, p.Popularity[kv.Key] + kv.Value / 100.0);
             Normalize(p);
@@ -882,8 +910,11 @@ public sealed partial class PoliticsSystem
             foreach (var kv in p.Ministers.ToList())
                 if (!kv.Value.Alive || kv.Value.Country != c) { p.Ministers.Remove(kv.Key); _modsDirty.Add(c); }
         }
-        FlushRetired();
-        if (CivilWarsEnabled) MonthlyUnrest();
+        if (part == parts - 1)
+        {
+            FlushRetired();
+            if (CivilWarsEnabled) MonthlyUnrest();
+        }
     }
 
     /// <summary>Canonicalizes floating-point political support after all monthly systems and events have run.</summary>

@@ -1,0 +1,35 @@
+# Britain and Ireland, built from the counties and council areas of Natural Earth (public domain). GBR:Name = a county, district or council area, IRL:Name = an Irish county. The later line wins where two overlap.
+# Sources: Oxford Atlas of British and Irish History, Falkus and Gillingham Historical Atlas of Britain, Wikipedia articles of each kingdom and lordship; each realm holds the units that cover its lands on 1 January.
+# --- 1200 to 1492: England and Wales
+U England ; 1200 ; 1492 ; GBR
+U Scotland ; 1200 ; 1492 ; GBR:Aberdeen, GBR:Aberdeenshire, GBR:Angus, GBR:Argyll and Bute, GBR:Clackmannanshire, GBR:Dumfries and Galloway, GBR:Dundee, GBR:East Ayrshire, GBR:East Dunbartonshire, GBR:East Lothian, GBR:East Renfrewshire, GBR:Edinburgh, GBR:Falkirk, GBR:Fife, GBR:Glasgow, GBR:Highland, GBR:Inverclyde, GBR:Midlothian, GBR:Moray, GBR:North Ayrshire, GBR:North Lanarkshire, GBR:Perth and Kinross, GBR:Renfrewshire, GBR:Scottish Borders, GBR:South Ayrshire, GBR:South Lanarkshire, GBR:Stirling, GBR:West Dunbartonshire, GBR:West Lothian
+U Norway ; 1200 ; 1300 ; GBR:Orkney Islands, GBR:Shetland Islands
+U Scotland ; 1400 ; 1492 ; GBR:Orkney Islands, GBR:Shetland Islands
+U Kingdom of the Isles ; 1200 ; 1279 ; GBR:Outer Hebrides
+U Lordship of the Isles ; 1400 ; 1492 ; GBR:Outer Hebrides, GBR:Argyll and Bute, GBR:Highland
+U Gwynedd ; 1200 ; 1279 ; GBR:Gwynedd, GBR:Anglesey, GBR:Conwy, GBR:Denbighshire, GBR:Flintshire
+U Powys ; 1200 ; 1279 ; GBR:Powys, GBR:Wrexham
+U Deheubarth ; 1200 ; 1279 ; GBR:Ceredigion, GBR:Carmarthenshire, GBR:Pembrokeshire
+U Wales ; 1300 ; 1300 ; GBR:Gwynedd, GBR:Anglesey, GBR:Conwy, GBR:Denbighshire, GBR:Flintshire, GBR:Powys, GBR:Wrexham, GBR:Ceredigion, GBR:Carmarthenshire, GBR:Pembrokeshire
+# --- Ireland
+U Lordship of Ireland ; 1200 ; 1492 ; IRL:Dublin, IRL:Fingal, IRL:South Dublin, IRL:Dún Laoghaire–Rathdown, IRL:Kildare, IRL:Wicklow, IRL:Wexford, IRL:Carlow, IRL:Kilkenny, IRL:Meath, IRL:Louth
+U Gaelic Ireland ; 1200 ; 1300 ; IRL:Westmeath, IRL:Laois, IRL:Offaly, IRL:Longford, IRL:Cavan, IRL:Monaghan, IRL:Leitrim
+U Connacht ; 1200 ; 1492 ; IRL:Galway, IRL:Mayo, IRL:Sligo, IRL:Roscommon
+U Thomond ; 1200 ; 1492 ; IRL:Clare
+U Desmond ; 1200 ; 1492 ; IRL:Cork, IRL:Kerry
+U Ormond ; 1200 ; 1492 ; IRL:Tipperary, IRL:Limerick, IRL:Waterford
+U Tir Chonaill ; 1200 ; 1492 ; IRL:Donegal
+U Tir Eoghain ; 1200 ; 1492 ; GBR:Derry, GBR:Strabane, GBR:Omagh, GBR:Dungannon and South Tyrone, GBR:Magherafelt, GBR:Limavady, GBR:Fermanagh, GBR:Armagh, IRL:Monaghan
+U Ulaid ; 1200 ; 1492 ; GBR:Antrim, GBR:Down, GBR:Ards, GBR:Ballymena, GBR:Ballymoney, GBR:Banbridge, GBR:Belfast, GBR:Carrickfergus, GBR:Castlereagh, GBR:Coleraine, GBR:Craigavon, GBR:Larne, GBR:Lisburn, GBR:Magherafelt, GBR:Moyle, GBR:Newry and Mourne, GBR:Newtownabbey, GBR:North Down
+U Lordship of Ireland ; 1400 ; 1492 ; IRL:Louth, IRL:Meath, IRL:Dublin, IRL:Kildare
+# --- 900 to 1100: the kingdoms of the Heptarchy's successors
+U England ; 1000 ; 1100 ; GBR
+U Scotland ; 1000 ; 1100 ; GBR:Angus, GBR:Clackmannanshire, GBR:Dundee, GBR:East Lothian, GBR:Edinburgh, GBR:Falkirk, GBR:Fife, GBR:Midlothian, GBR:Perth and Kinross, GBR:Stirling, GBR:West Lothian, GBR:Scottish Borders, GBR:Aberdeen, GBR:Aberdeenshire, GBR:Moray, GBR:Glasgow, GBR:Renfrewshire, GBR:Inverclyde
+U Gwynedd ; 1000 ; 1100 ; GBR:Gwynedd, GBR:Anglesey, GBR:Conwy, GBR:Denbighshire, GBR:Flintshire
+U Powys ; 1000 ; 1100 ; GBR:Powys, GBR:Wrexham
+U Deheubarth ; 1000 ; 1100 ; GBR:Ceredigion, GBR:Carmarthenshire, GBR:Pembrokeshire
+U Morgannwg ; 1000 ; 1100 ; GBR:Swansea, GBR:Neath Port Talbot, GBR:Bridgend, GBR:Vale of Glamorgan, GBR:Cardiff, GBR:Rhondda Cynon Taf, GBR:Merthyr Tydfil, GBR:Caerphilly, GBR:Torfaen, GBR:Newport, GBR:Monmouthshire
+U Norway ; 1000 ; 1100 ; GBR:Orkney Islands, GBR:Shetland Islands, GBR:Outer Hebrides
+U Alba ; 1000 ; 1000 ; GBR:Angus, GBR:Clackmannanshire, GBR:Dundee, GBR:Falkirk, GBR:Fife, GBR:Perth and Kinross, GBR:Stirling, GBR:Aberdeen, GBR:Aberdeenshire, GBR:Moray, GBR:West Lothian, GBR:Midlothian, GBR:Edinburgh, GBR:East Lothian, GBR:Scottish Borders
+U Strathclyde ; 1000 ; 1000 ; GBR:Glasgow, GBR:Renfrewshire, GBR:Inverclyde, GBR:North Lanarkshire, GBR:South Lanarkshire, GBR:East Ayrshire, GBR:North Ayrshire, GBR:South Ayrshire, GBR:Dumfries and Galloway, GBR:Cumbria
+U Earldom of Northumbria ; 1000 ; 1000 ; GBR:Northumberland, GBR:Durham, GBR:North Yorkshire, GBR:York, GBR:East Riding of Yorkshire, GBR:Kingston upon Hull

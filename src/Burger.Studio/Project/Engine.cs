@@ -106,6 +106,7 @@ public static class Engine
         if (File.Exists(GameExe))
         {
             var psi = new ProcessStartInfo(GameExe) { UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(GameExe)! };
+            if (Environment.GetEnvironmentVariable("DOTNET_GCgen0size") == null) psi.Environment["DOTNET_GCgen0size"] = "8000000";   // a 128 MB youngest generation (hex): far fewer collections
             foreach (var a in args) psi.ArgumentList.Add(a);
             Process.Start(psi);
             output("Started the game.");

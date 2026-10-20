@@ -59,6 +59,7 @@ public static partial class Program
                 "split-states" => SplitStates(rest),
                 "export-state-centres" => ExportStateCentres(rest),
                 "trade-test" => TradeTest(rest),
+                "export-location-centres" => ExportLocationCentres(rest),
                 "run" => Run(rest),
                 "export" => Export(rest),
                 "generate-locations" => GenerateLocations(rest),
@@ -537,7 +538,8 @@ public static partial class Program
         Console.WriteLine($"Validating {GameDir(project)}");
         var sw = Stopwatch.StartNew();
         int runSeed = int.Parse(Opt(args, "--seed") ?? "1234");
-        var game = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
+        GameDate? startAt = Opt(args, "--start") is { } sy ? new GameDate(int.Parse(sy), 1, 1) : null;   // --start 1530: the world of that start date, as the game menu loads it
+        var game = Game.Load(GameDir(project), compileScripts: true, seed: runSeed, startDate: startAt);
         Console.WriteLine($"  loaded in {sw.ElapsedMilliseconds} ms: {game.World.Countries.Count} countries, {game.World.States.Count} states, " +
                           $"{game.World.Locations.Count} locations, {game.World.Characters.Count} characters, {game.World.Divisions.Count} divisions, " +
                           $"{game.Data.Events.Count} events, {game.Mods.Scripts.Count} C# scripts");
@@ -551,7 +553,23 @@ public static partial class Program
         Game? reloaded = null;
         Console.WriteLine($"Simulating {days} days (all AI)...");
         if (Opt(args, "--bias") is { } biasText) game.HistoricalBias = double.Parse(biasText, System.Globalization.CultureInfo.InvariantCulture);
+        if (Opt(args, "--preview") is { } previewList)   // the start screen's date switch: time Preview() of each year (comma list) on the loaded world
+            foreach (var py in previewList.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var swp = Stopwatch.StartNew();
+                game.Timeline.Preview(new GameDate(int.Parse(py), 1, 1));
+                Console.WriteLine($"  preview {py}: {swp.ElapsedMilliseconds} ms");
+            }
+        var swStart = Stopwatch.StartNew();
         game.StartNewGame(null);
+        Console.WriteLine($"  game started in {swStart.ElapsedMilliseconds} ms");
+        if (Opt(args, "--settle") is { } settleMs) Thread.Sleep(int.Parse(settleMs));   // what a player does before unpausing: the work the game does in the background finishes
+        foreach (var e in Log.Entries.Where(e => e.ToString().Contains("Game started:"))) Console.WriteLine("  " + e);
+        if (Log.ErrorCount > loadErrors)
+        {
+            Console.WriteLine("Errors while the game started:");
+            foreach (var e in Log.Entries.Where(e => e.Level == LogLevel.Error).TakeLast(Log.ErrorCount - loadErrors)) Console.WriteLine("  " + e);
+        }
         sw.Restart();
         int battles = 0, wars = 0;
         game.Mods.Add(new CountingScript(() => battles++, () => wars++));
@@ -561,6 +579,7 @@ public static partial class Program
         ScorecardRecorder? recorder = null;
         if (scorecard) { recorder = new ScorecardRecorder(game); game.Mods.Add(recorder); }
         game.Profiling = args.Contains("--profile");
+        if (game.Profiling) { Burger.Core.Mechanics.ModifierSystem.ProviderTicks = new long[game.Modifiers.Providers.Count]; Burger.Core.Mechanics.ModifierSystem.ProviderCalls = new long[game.Modifiers.Providers.Count]; }
         int warsAtDecade = 0;
         double? TickLimit(string option) => Opt(args, option) is { } value
             ? double.Parse(value, System.Globalization.CultureInfo.InvariantCulture) : null;
@@ -568,11 +587,26 @@ public static partial class Program
         bool tickStats = args.Contains("--tick-stats") || maxTickMs.HasValue || maxMsPerDay.HasValue;
         var tickMs = tickStats ? new List<double>(days * 24) : null;
         var tickDates = tickStats ? new List<string>(days * 24) : null;
+        var slowTicks = new List<string>();
+        long allocAtStart = GC.GetTotalAllocatedBytes(), gc0Start = GC.CollectionCount(0), gc2Start = GC.CollectionCount(2);
         bool streamed = args.Contains("--stream"); // tick the way the live clock does (monthly work streamed over days)
+        bool traceDone = false;
         for (int d = 0; d < days; d++)
         {
+            if (reloaded != null && args.Contains("--reload-trace") && !(reloadAt > 0 && d + 1 == reloadAt))
+            {
+                // tick the original and the reloaded game hour by hour and report the first hour they part
+                for (int h = 0; h < 24; h++)
+                {
+                    game.Tick(); reloaded.Tick();
+                    if (traceDone || StateDigest(game) == StateDigest(reloaded)) continue;
+                    Console.WriteLine($"TRACE|{game.World.Date.ToDisplay()} {game.World.Date.Hour}h|{StateDigestDiff(game, reloaded)}"); traceDone = true;
+                }
+                if (d + 1 == days || traceDone) break;
+                continue;
+            }
             if (tickMs != null)
-                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); if (streamed) game.TickLive(); else game.Tick(); tickMs.Add((Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency); tickDates?.Add(game.World.Date.ToDisplay()); }
+                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); if (streamed) game.TickLive(); else game.Tick(); double ms = (Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency; tickMs.Add(ms); tickDates?.Add(game.World.Date.ToDisplay()); if (ms > 40) slowTicks.Add($"{game.World.Date.ToDisplay()} {game.World.Date.Hour:00}h {ms:0}ms"); }
             else
                 for (int h = 0; h < 24; h++) { if (streamed) game.TickLive(); else game.Tick(); }
             recorder?.Daily();
@@ -637,6 +671,8 @@ public static partial class Program
             double fps = frames.Count / (frames.Sum() / 1000.0);
             var fs = frames.OrderBy(x => x).ToList();
             double low1 = 1000.0 / fs[Math.Min(fs.Count - 1, (int)(0.99 * fs.Count))];
+            Console.WriteLine($"ALLOC|{(GC.GetTotalAllocatedBytes() - allocAtStart) / 1048576.0 / days:0.0} MB per sim day|gen0 {GC.CollectionCount(0) - gc0Start}|gen2 {GC.CollectionCount(2) - gc2Start}");
+            Console.WriteLine("SLOWTICKS|" + string.Join("; ", slowTicks.Take(60)));
             Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
             Console.WriteLine("SLOWEST|" + string.Join(", ", tickMs.Select((ms, i) => (ms, i)).OrderByDescending(x => x.ms).Take(12).Select(x => $"{tickDates![x.i]} {x.ms:0}")));
             if (maxTickMs.HasValue) Check(sorted[^1] <= maxTickMs.Value, $"performance: worst tick <= {maxTickMs.Value} ms");
@@ -668,8 +704,12 @@ public static partial class Program
         {
             Console.WriteLine("  time per system (ms per simulated day): " + string.Join(", ", game.ProfileMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value / days:0.00}")));
             Console.WriteLine("  longest single call (ms): " + string.Join(", ", game.ProfileMaxMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value:0.0}")));
-            foreach (var (name, stat) in game.ProfileSnapshot().Where(x => !x.Key.Contains('[')).OrderByDescending(x => x.Value.TotalMilliseconds).Take(30))
+            foreach (var (name, stat) in game.ProfileSnapshot().Where(x => !x.Key.Contains('[')).OrderByDescending(x => x.Value.TotalMilliseconds).Take(60))
                 Console.WriteLine($"PROFILE|{name}|total_ms={stat.TotalMilliseconds:0.00}|max_daily_ms={stat.MaxMilliseconds:0.00}|calls={stat.Calls}");
+            Console.WriteLine("  MB allocated per sim day by scope (nested scopes count in their parents): " + string.Join(", ", game.ProfileBytes.OrderByDescending(kv => kv.Value).Take(20).Select(kv => $"{kv.Key} {kv.Value / 1048576.0 / days:0.00}")));
+            Console.WriteLine("  slowest per-country calls (ms): " + string.Join(", ", game.ProfileSnapshot().Where(kv => kv.Key.Contains('[')).OrderByDescending(kv => kv.Value.MaxMilliseconds).Take(150).Select(kv => $"{kv.Key} {kv.Value.MaxMilliseconds:0}")));
+            if (Burger.Core.Mechanics.ModifierSystem.ProviderTicks is { } pt) Console.WriteLine("  modifier providers (ms, calls): " + string.Join(", ", pt.Select((t, i) => $"#{i} {t * 1000.0 / Stopwatch.Frequency:0} ({Burger.Core.Mechanics.ModifierSystem.ProviderCalls![i]})")));
+            Console.WriteLine("  total ms per scope (all countries, whole run): " + string.Join(", ", game.ProfileSnapshot().Where(kv => !kv.Key.Contains('[')).OrderByDescending(kv => kv.Value.TotalMilliseconds).Take(30).Select(kv => $"{kv.Key} {kv.Value.TotalMilliseconds:0} ({kv.Value.Calls} calls)")));
         }
 
         if (selftest)
@@ -2371,6 +2411,7 @@ public static partial class Program
         }
         foreach (var a in gameArgs) psi.ArgumentList.Add(a);
         psi.UseShellExecute = false;
+        if (Environment.GetEnvironmentVariable("DOTNET_GCgen0size") == null) psi.Environment["DOTNET_GCgen0size"] = "8000000";   // a 128 MB youngest generation: the game collects garbage a tenth as often (hex)
         Console.WriteLine($"Starting {Path.GetFileName(project)}...");
         using var p = Process.Start(psi)!;
         p.WaitForExit();

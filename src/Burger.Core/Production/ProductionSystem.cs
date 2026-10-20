@@ -65,6 +65,12 @@ public class ProductionRules
     /// do not name one. Factory buildings retain the existing civilian-factory path.
     /// </summary>
     public virtual ConstructionMethod ResolveConstructionMethod(Game game, BuildingType b)
+        => _methods.GetOrAdd(b, x => BuildConstructionMethod(x));
+
+    // Built from the building's data only, so one (read-only) method per building is shared by all callers.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<BuildingType, ConstructionMethod> _methods = new();
+
+    private ConstructionMethod BuildConstructionMethod(BuildingType b)
     {
         string key = b.Method;
         if (string.IsNullOrWhiteSpace(key)) key = b.Definition.GetString("construction_method") ?? "";
@@ -399,7 +405,10 @@ public sealed class ProductionSystem
             if (!c.Exists) continue;
             // Idle countries (the common case with a large roster) have nothing to advance.
             if (c.ProductionLines.Count > 0) Produce(c);
-            if (c.Construction.Count > 0) Construct(c);
+            if (c.Construction.Count == 0) continue;
+            long t1 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            Construct(c);
+            if (_game.Profiling) _game.ProfileElapsed("Prod.Construct", System.Diagnostics.Stopwatch.GetTimestamp() - t1);
         }
     }
 
@@ -437,12 +446,13 @@ public sealed class ProductionSystem
         }
 
         projects = projects.Where(p => p.State.Owner == c).ToList();
-        int civ = CivilianForConstruction(c);
+        int civ = -1;
         foreach (var p in projects)
         {
             var method = Rules.ResolveConstructionMethod(_game, p.Building);
             if (!method.Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase)) continue;
             p.Method = method.Key;
+            if (civ < 0) civ = CivilianForConstruction(c);
             int factories = Math.Min(perProject, civ);
             civ -= factories;
             double inputFactor = Rules.ConstructionInputFactor(_game, c, p, method);
@@ -453,16 +463,19 @@ public sealed class ProductionSystem
 
         // Manual, public-works and workshop projects share the local capacity of their state and method.
         // Keeping this allocation local prevents every queued project from receiving the full workforce pool.
-        foreach (var group in projects
-                     .Where(p => !Rules.ResolveConstructionMethod(_game, p.Building).Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase))
-                     .GroupBy(p => (p.State, Source: Rules.ResolveConstructionMethod(_game, p.Building).Source)))
-        {
-            foreach (var p in group)
+        List<ConstructionProject>? others = null;
+        foreach (var p in projects)
+            if (!Rules.ResolveConstructionMethod(_game, p.Building).Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase)) (others ??= new()).Add(p);
+        if (others != null)
+            foreach (var group in others.GroupBy(p => (p.State, Source: Rules.ResolveConstructionMethod(_game, p.Building).Source)))
             {
-                double capacity = Rules.ConstructionCapacity(_game, c, p) / group.Count();
-                ApplyConstruction(p, 0, capacity, capacity > 0 ? null : p.BlockedReason ?? "No construction capacity available");
+                int count = group.Count();
+                foreach (var p in group)
+                {
+                    double capacity = Rules.ConstructionCapacity(_game, c, p) / count;
+                    ApplyConstruction(p, 0, capacity, capacity > 0 ? null : p.BlockedReason ?? "No construction capacity available");
+                }
             }
-        }
 
         void ApplyConstruction(ConstructionProject p, int factories, double capacity, string? blockedReason)
         {

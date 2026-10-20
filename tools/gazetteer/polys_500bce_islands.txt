@@ -1,0 +1,7 @@
+# Corsica, Sardinia and Umbria in 500 BCE-399 BCE (P name ; from ; to ; lon lat, ...; years astronomical). The smaller polygon wins where two overlap.
+# Sources: Barrington Atlas of the Greek and Roman World maps 45-47 (Sardinia and Corsica) and 42 (Umbria), Tronchetti and van Dommelen on Phoenician-Punic Sardinia, Wikipedia articles on Nuragic Sardinia, Carthaginian Sardinia and the Umbri.
+# Carthage held the southern and western plains of Sardinia (Cagliari, Nora, Sulci, Tharros) from about 510 BCE; the highlands stayed with the Ilienses and Balari. Corsica: the Corsi, with the Phocaean-Etruscan town of Alalia on the east coast.
+P Corsi ; -499 ; -399 ; 8.55 41.4, 8.6 42.6, 9.35 43.0, 9.55 42.5, 9.4 41.4, 9.0 41.35
+P Ilienses and Balari ; -499 ; -399 ; 8.1 38.9, 8.1 41.0, 8.4 41.25, 9.8 41.25, 9.85 40.0, 9.6 39.1, 9.2 38.85
+P Carthage ; -499 ; -399 ; 8.15 39.1, 8.35 39.85, 8.6 40.0, 8.9 39.9, 9.1 39.6, 9.65 39.2, 9.5 38.9, 8.5 38.85
+P Umbrians ; -499 ; -399 ; 12.1 42.7, 12.2 43.4, 12.9 43.6, 13.1 43.1, 12.9 42.7

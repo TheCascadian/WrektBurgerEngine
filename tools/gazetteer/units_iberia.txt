@@ -1,0 +1,20 @@
+# Iberia built from the administrative units of Natural Earth (public domain): a realm is the list of the provinces it held; where two lines overlap the later one wins.
+# ESP:Name = a province of Spain, PRT:Name = a district of Portugal. Sources: the realms' borders in Putzger, Atlas of Medieval Europe and Wikipedia (Reconquista maps), matched to the provinces whose lands each realm held on 1 January of the year.
+# --- 1200
+U Almohad Caliphate ; 1200 ; 1200 ; ESP:Seville, ESP:Cádiz, ESP:Huelva, ESP:Córdoba, ESP:Jaén, ESP:Granada, ESP:Málaga, ESP:Almería, ESP:Murcia, ESP:Albacete, ESP:Alicante, ESP:Valencia, ESP:Castellón, ESP:Cáceres, ESP:Badajoz, ESP:Ciudad Real, ESP:Balearic Islands, PRT:Beja, PRT:Faro, PRT:Setúbal
+U Portugal ; 1200 ; 1200 ; PRT:Viana do Castelo, PRT:Braga, PRT:Porto, PRT:Aveiro, PRT:Vila Real, PRT:Bragança, PRT:Viseu, PRT:Guarda, PRT:Coimbra, PRT:Castelo Branco, PRT:Leiria, PRT:Santarém, PRT:Lisbon, PRT:Portalegre, PRT:Évora
+U León ; 1200 ; 1200 ; ESP:León, ESP:Zamora, ESP:Salamanca, ESP:Asturias, ESP:Lugo, ESP:Ourense, ESP:Pontevedra, ESP:A Coruña
+U Castile ; 1200 ; 1200 ; ESP:Burgos, ESP:Cantabria, ESP:Palencia, ESP:Valladolid, ESP:Segovia, ESP:Ávila, ESP:Soria, ESP:Guadalajara, ESP:Community of Madrid, ESP:Cuenca, ESP:Toledo, ESP:La Rioja, ESP:Biscay
+U Navarre ; 1200 ; 1200 ; ESP:Navarre, ESP:Araba / Álava, ESP:Gipuzkoa
+U Aragon ; 1200 ; 1200 ; ESP:Zaragoza, ESP:Huesca, ESP:Teruel, ESP:Lleida, ESP:Barcelona, ESP:Girona, ESP:Tarragona
+# --- 1279 and 1300
+U Castile ; 1279 ; 1492 ; ESP:Burgos, ESP:Cantabria, ESP:Palencia, ESP:Valladolid, ESP:Segovia, ESP:Ávila, ESP:Soria, ESP:Guadalajara, ESP:Community of Madrid, ESP:Cuenca, ESP:Toledo, ESP:La Rioja, ESP:Biscay, ESP:Araba / Álava, ESP:Gipuzkoa, ESP:León, ESP:Zamora, ESP:Salamanca, ESP:Asturias, ESP:Lugo, ESP:Ourense, ESP:Pontevedra, ESP:A Coruña, ESP:Cáceres, ESP:Badajoz, ESP:Ciudad Real, ESP:Seville, ESP:Cádiz, ESP:Huelva, ESP:Córdoba, ESP:Jaén, ESP:Murcia, ESP:Albacete
+U Portugal ; 1279 ; 1492 ; PRT:Viana do Castelo, PRT:Braga, PRT:Porto, PRT:Aveiro, PRT:Vila Real, PRT:Bragança, PRT:Viseu, PRT:Guarda, PRT:Coimbra, PRT:Castelo Branco, PRT:Leiria, PRT:Santarém, PRT:Lisbon, PRT:Portalegre, PRT:Évora, PRT:Beja, PRT:Faro, PRT:Setúbal
+U Navarre ; 1279 ; 1492 ; ESP:Navarre
+U Aragon ; 1279 ; 1279 ; ESP:Zaragoza, ESP:Huesca, ESP:Teruel, ESP:Lleida, ESP:Barcelona, ESP:Girona, ESP:Tarragona, ESP:Valencia, ESP:Castellón
+U Aragon ; 1300 ; 1492 ; ESP:Zaragoza, ESP:Huesca, ESP:Teruel, ESP:Lleida, ESP:Barcelona, ESP:Girona, ESP:Tarragona, ESP:Valencia, ESP:Castellón, ESP:Alicante
+U Majorca ; 1279 ; 1300 ; ESP:Balearic Islands
+U Aragon ; 1400 ; 1492 ; ESP:Balearic Islands
+U Granada ; 1279 ; 1400 ; ESP:Granada, ESP:Málaga, ESP:Almería
+U Granada ; 1492 ; 1492 ; ESP:Granada
+U Castile ; 1492 ; 1492 ; ESP:Málaga, ESP:Almería

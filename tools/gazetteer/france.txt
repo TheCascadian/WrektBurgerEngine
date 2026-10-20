@@ -1,0 +1,68 @@
+# France, the Low Countries and Burgundy 500-1492. Sources: Wikipedia articles on each realm (Frankish Kingdom, Neustria, Austrasia, Duchy of Aquitaine, Duchy of Normandy, County of Flanders, Duchy of Brittany, Angevin Empire, Duchy of Burgundy, Hundred Years War maps),
+# Atlas of Medieval Europe, Shepherd Historical Atlas, Putzger Historischer Weltatlas, Euratlas Periodis
+# --- 500 and 600
+@ Frankish Kingdom ; 500 ; 500 ; 1.6 ; Paris, Soissons, Reims, Laon, Amiens, Arras, Cambrai, Orleans, Chartres, Rouen, Evreux, Caen, Le Mans, Sens, Troyes, Verdun, Metz, Trier, Cologne, Aachen, Maastricht, Liege, Lille, Brussels, Namur, Utrecht, Mons, Tours, Angers, Nimes, Bonn
+@ Burgundian Kingdom ; 500 ; 500 ; 1.5 ; Lyon, Vienne, Geneva, Besancon, Dijon, Autun, Chalon, Macon, Grenoble, Valence, Chambery, Avignon, Orange, Auxerre, Nevers, Sion, Lausanne, Gap, Embrun
+@ Bretons ; 500 ; 900 ; 1.3 ; Rennes, Vannes, Quimper, Brest, Saint-Brieuc, Nantes
+@ Alemanni ; 500 ; 500 ; 1.2 ; Strasbourg, Colmar, Basel, Mulhouse, Constance, Zurich, Freiburg
+@ Ostrogothic Kingdom ; 500 ; 500 ; 1.4 ; Marseille, Aix, Toulon, Nice, Arles
+@ Neustria ; 600 ; 700 ; 1.7 ; Paris, Soissons, Amiens, Rouen, Evreux, Caen, Le Mans, Chartres, Orleans, Tours, Angers, Cherbourg, Alencon, Arras, Cambrai, Laon
+@ Austrasia ; 600 ; 700 ; 1.7 ; Reims, Metz, Trier, Cologne, Aachen, Mainz, Worms, Speyer, Frankfurt, Verdun, Nancy, Liege, Maastricht, Strasbourg, Wurzburg, Brussels, Lille, Namur, Bonn, Utrecht
+@ Frankish Burgundy ; 600 ; 700 ; 1.5 ; Lyon, Vienne, Geneva, Besancon, Dijon, Autun, Chalon, Macon, Grenoble, Valence, Auxerre, Nevers, Sens, Troyes, Chambery, Orleans, Marseille, Aix, Arles, Avignon, Toulon, Nice
+@ Frankish Aquitaine ; 600 ; 700 ; 1.7 ; Toulouse, Bordeaux, Poitiers, Angouleme, Saintes, Limoges, Clermont, Rodez, Albi, Cahors, Agen, Perigueux, Bourges, Le Puy, Nevers, Moulins, Auch
+@ Frisians ; 600 ; 800 ; 1.3 ; Utrecht, Leeuwarden, Groningen, Amsterdam, Haarlem, Emden
+@ Septimania ; 700 ; 700 ; 1.1 ; Narbonne, Carcassonne, Nimes, Montpellier
+# --- 800
+@ Carolingian Empire ; 800 ; 800 ; 1.6 ; Paris, Soissons, Reims, Laon, Amiens, Arras, Cambrai, Orleans, Chartres, Rouen, Caen, Le Mans, Sens, Troyes, Verdun, Metz, Trier, Cologne, Aachen, Liege, Brussels, Namur, Utrecht, Tours, Angers, Bourges, Toulouse, Bordeaux, Poitiers, Limoges, Clermont, Albi, Narbonne, Carcassonne, Nimes, Montpellier, Marseille, Aix, Arles, Avignon, Lyon, Vienne, Geneva, Besancon, Dijon, Autun, Auxerre, Nevers, Grenoble, Valence, Perpignan, Girona, Urgell, Pau, Auch, Strasbourg, Mainz, Frankfurt
+# --- 900
+@ Kingdom of France ; 900 ; 900 ; 1.6 ; Paris, Laon, Reims, Soissons, Orleans, Chartres, Sens, Troyes, Amiens, Auxerre, Tours, Angers, Le Mans, Bourges
+@ Aquitaine ; 900 ; 1100 ; 1.8 ; Poitiers, Bordeaux, Limoges, Angouleme, Saintes, Perigueux, Clermont, Le Puy, Moulins, Bayonne, Pau, La Rochelle
+@ Toulouse ; 900 ; 1200 ; 1.6 ; Toulouse, Albi, Rodez, Cahors, Agen, Carcassonne, Narbonne, Nimes, Montpellier, Avignon, Auch
+@ Gascony ; 900 ; 1000 ; 1.2 ; Auch, Bayonne, Pau, Tarbes, Agen
+@ Burgundy ; 900 ; 1100 ; 1.5 ; Dijon, Autun, Chalon, Auxerre, Nevers, Macon, Troyes
+@ Flanders ; 900 ; 1492 ; 1.1 ; Bruges, Ghent, Arras, Lille, Saint-Omer, Calais, Boulogne
+@ Normandy ; 1000 ; 1200 ; 1.3 ; Rouen, Caen, Evreux, Cherbourg, Alencon
+@ Brittany ; 900 ; 1492 ; 1.4 ; Rennes, Vannes, Quimper, Brest, Saint-Brieuc, Nantes
+@ Provence ; 900 ; 1100 ; 1.6 ; Arles, Marseille, Aix, Toulon, Nice, Avignon, Orange, Gap, Embrun, Vienne, Valence, Grenoble
+@ Upper Burgundy ; 900 ; 1000 ; 1.5 ; Geneva, Besancon, Lausanne, Sion, Chambery, Basel, Bern, Aosta, Lyon
+@ Lotharingia ; 900 ; 1000 ; 1.5 ; Aachen, Cologne, Liege, Metz, Nancy, Verdun, Trier, Namur, Mons, Brussels, Louvain, Utrecht, Maastricht, Cambrai, Toul, Luxembourg, Bonn, Cleves
+@ Frisians ; 900 ; 1100 ; 1.2 ; Leeuwarden, Groningen, Emden
+# --- 1000
+@ Kingdom of France ; 1000 ; 1000 ; 1.4 ; Paris, Orleans, Laon, Sens, Chartres
+@ Anjou ; 1000 ; 1200 ; 1.3 ; Angers, Tours, Le Mans, Poitiers
+@ Blois ; 1000 ; 1100 ; 1.3 ; Chartres, Tours, Troyes, Reims, Orleans
+@ Vermandois ; 1000 ; 1100 ; 1.0 ; Amiens, Laon, Soissons, Cambrai
+@ Hainaut ; 1000 ; 1492 ; 0.9 ; Mons, Valenciennes
+# --- 1100
+@ Kingdom of France ; 1100 ; 1100 ; 1.4 ; Paris, Orleans, Laon, Sens, Bourges, Etampes, Soissons
+@ Anjou ; 1100 ; 1100 ; 1.3 ; Angers, Tours, Le Mans
+@ Normandy ; 1100 ; 1100 ; 1.3 ; Rouen, Caen, Evreux, Cherbourg
+@ Champagne ; 1100 ; 1300 ; 1.2 ; Troyes, Reims, Chalon, Sens
+@ Burgundy ; 1100 ; 1200 ; 1.3 ; Dijon, Autun, Auxerre, Nevers, Macon
+@ Provence ; 1100 ; 1200 ; 1.6 ; Arles, Marseille, Aix, Toulon, Nice, Avignon, Orange, Gap, Embrun
+@ Savoy ; 1100 ; 1492 ; 1.2 ; Chambery, Aosta, Susa, Geneva
+@ Dauphine ; 1100 ; 1492 ; 1.3 ; Grenoble, Vienne, Valence, Gap
+@ Lyonnais ; 1100 ; 1200 ; 0.9 ; Lyon, Saint-Etienne
+# --- 1200 (the Angevin Empire; Aquitaine English; Toulouse)
+@ Kingdom of France ; 1200 ; 1200 ; 1.5 ; Paris, Orleans, Laon, Sens, Bourges, Etampes, Soissons, Amiens, Arras, Evreux, Chartres, Nevers, Moulins, Clermont, Le Puy, Mons, Saint-Etienne
+@ Angevin Empire ; 1200 ; 1200 ; 1.5 ; Rouen, Caen, Alencon, Le Mans, Angers, Tours, Poitiers
+@ Kingdom of France ; 1279 ; 1300 ; 1.5 ; Paris, Orleans, Laon, Sens, Bourges, Etampes, Soissons, Amiens, Arras, Evreux, Chartres, Nevers, Moulins, Clermont, Le Puy, Saint-Etienne, Rouen, Caen, Alencon, Le Mans, Angers, Tours, Poitiers, Limoges, Angouleme, Saintes, La Rochelle, Toulouse, Albi, Rodez, Cahors, Carcassonne, Narbonne, Nimes, Montpellier, Auxerre, Troyes, Reims, Lyon, Perigueux
+@ Angevin Empire ; 1200 ; 1200 ; 1.5 ; Bordeaux, Limoges, Angouleme, Saintes, Perigueux, La Rochelle, Bayonne, Pau, Agen, Auch, Cahors
+# --- 1279 and 1300
+@ English Aquitaine ; 1279 ; 1492 ; 1.5 ; Bordeaux, Bayonne, Pau, Agen, Perigueux, Saintes, La Rochelle, Auch
+@ Burgundy ; 1279 ; 1492 ; 1.4 ; Dijon, Chalon, Macon, Besancon, Auxerre
+@ Provence ; 1279 ; 1400 ; 1.4 ; Arles, Marseille, Aix, Toulon, Nice, Avignon, Gap, Embrun
+# --- 1400 and 1492
+@ Kingdom of France ; 1400 ; 1492 ; 1.5 ; Paris, Orleans, Laon, Sens, Bourges, Etampes, Soissons, Reims, Troyes, Amiens, Rouen, Caen, Evreux, Tours, Angers, Le Mans, Alencon, Chartres, Poitiers, Auxerre, Nevers, Moulins, Clermont, Le Puy, Toulouse, Albi, Rodez, Cahors, Carcassonne, Narbonne, Nimes, Montpellier, Limoges, Angouleme, Saintes, La Rochelle, Lyon, Saint-Etienne, Avignon, Marseille, Aix, Toulon, Nice, Grenoble, Valence, Vienne, Gap, Bordeaux, Bayonne, Perigueux, Agen, Pau, Auch
+@ Burgundy ; 1400 ; 1400 ; 1.6 ; Dijon, Chalon, Macon, Besancon, Auxerre, Lille, Arras, Ghent, Bruges, Antwerp, Brussels, Louvain, Mons, Namur
+@ Burgundian State ; 1492 ; 1492 ; 1.6 ; Lille, Arras, Ghent, Bruges, Antwerp, Brussels, Louvain, Mons, Namur, Liege, Luxembourg, Dordrecht, Haarlem, Amsterdam, Utrecht
+@ Duchy of Lorraine ; 1100 ; 1492 ; 1.1 ; Nancy, Toul, Epinal
+@ Duchy of Bar ; 1100 ; 1400 ; 0.9 ; Verdun
+@ Luxembourg ; 1100 ; 1492 ; 0.9 ; Luxembourg
+@ Liege ; 1000 ; 1492 ; 0.9 ; Liege, Maastricht
+@ Holland ; 1100 ; 1492 ; 1.0 ; Dordrecht, Haarlem, Amsterdam
+@ Utrecht ; 1000 ; 1492 ; 0.8 ; Utrecht
+@ Guelders ; 1100 ; 1492 ; 0.9 ; Arnhem, Nijmegen
+@ Brabant ; 1100 ; 1492 ; 1.1 ; Brussels, Louvain, Antwerp
+@ Frisia ; 1100 ; 1492 ; 1.1 ; Leeuwarden, Groningen, Emden
+@ Roussillon ; 1100 ; 1200 ; 0.9 ; Perpignan

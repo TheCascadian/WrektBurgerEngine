@@ -76,6 +76,35 @@ class Feature:
         return False
 
 
+class FeatList(list):
+    """The polygons of one map of the dataset, with the year and a cache of what each point of the world was in (kept between runs: the states mostly stay where they are)."""
+    year = None
+    memo = None
+
+
+_CACHE_PATH = os.path.join(DATA, 'owner_cache.pkl')
+_CACHE = None
+_CACHE_DIRTY = False
+
+
+def _cache():
+    global _CACHE
+    if _CACHE is None:
+        import pickle
+        try:
+            _CACHE = pickle.load(open(_CACHE_PATH, 'rb'))
+        except Exception:
+            _CACHE = {}
+    return _CACHE
+
+
+def save_owner_cache():
+    if _CACHE_DIRTY:
+        import pickle
+        with open(_CACHE_PATH, 'wb') as f:
+            pickle.dump(_CACHE, f)
+
+
 def load_snapshot(year):
     path = os.path.join(DATA, f'world_{year}.geojson')
     d = json.load(open(path, encoding='utf-8'))
@@ -93,14 +122,34 @@ def load_snapshot(year):
         if polys:
             feats.append(Feature(name, polys))
     feats.sort(key=lambda f: f.area)   # the smallest polygon that holds a point wins
-    return feats
+    out = FeatList(feats)
+    out.year = str(year)
+    mtime = os.path.getmtime(path)
+    c = _cache()
+    ent = c.get(out.year)
+    if ent is None or ent[0] != mtime:
+        ent = (mtime, {})
+        c[out.year] = ent
+    out.memo = ent[1]
+    return out
 
 
 def owner_of(feats, x, y):
+    global _CACHE_DIRTY
+    memo = getattr(feats, 'memo', None)
+    if memo is not None:
+        k = (round(x, 4), round(y, 4))
+        if k in memo:
+            return memo[k]
+    name = None
     for f in feats:
         if f.contains(x, y):
-            return f.name
-    return None
+            name = f.name
+            break
+    if memo is not None:
+        memo[k] = name
+        _CACHE_DIRTY = True
+    return name
 
 
 def scan():
@@ -122,3 +171,4 @@ if __name__ == '__main__':
     elif cmd == 'build':
         import history_build
         history_build.build(sys.modules[__name__])
+        save_owner_cache()

@@ -116,13 +116,13 @@ public static class CommandExecutor
             }
             case GameCommand.ModMessage: return g.ModNet.Apply(country, c.Args);
             case GameCommand.Develop:
-                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } ds && g.Development.Develop(country, ds) == null;
+                return g.World.GetState(A(0)) is { } ds && g.Development.Develop(country, ds) == null;
             case GameCommand.Colonize:
-                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } cs && g.Population.Colonize(country, cs) == null;
+                return g.World.GetState(A(0)) is { } cs && g.Population.Colonize(country, cs) == null;
             case GameCommand.Reinforce:
-                return g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } rs && g.Population.Reinforce(country, rs) == null;
+                return g.World.GetState(A(0)) is { } rs && g.Population.Reinforce(country, rs) == null;
             case GameCommand.AbandonColony:
-                if (g.World.States.FirstOrDefault(s => s.Key == A(0)) is not { } ab || !g.Population.ColoniesOf(country).Contains(ab)) return false;
+                if (g.World.GetState(A(0)) is not { } ab || !g.Population.ColoniesOf(country).Contains(ab)) return false;
                 g.Population.AbandonColony(ab, country);
                 return true;
             case GameCommand.Reform:
@@ -219,13 +219,13 @@ public static class CommandValidator
                 return enemy != null && w.WarBetween(country, enemy) != null ? null : "not at war with that country";
             }
             case GameCommand.Develop:
-                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
+                return args.Length == 1 && g.World.GetState(A(0)) is { } vs ? g.Development.CannotDevelop(country, vs) : "no such state";
             case GameCommand.Colonize:
-                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vc ? g.Population.CannotColonize(country, vc) : "no such state";
+                return args.Length == 1 && g.World.GetState(A(0)) is { } vc ? g.Population.CannotColonize(country, vc) : "no such state";
             case GameCommand.Reinforce:
-                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } vr2 ? g.Population.CannotReinforce(country, vr2) : "no such state";
+                return args.Length == 1 && g.World.GetState(A(0)) is { } vr2 ? g.Population.CannotReinforce(country, vr2) : "no such state";
             case GameCommand.AbandonColony:
-                return args.Length == 1 && g.World.States.FirstOrDefault(s => s.Key == A(0)) is { } va && g.Population.ColoniesOf(country).Contains(va) ? null : "not settling that state";
+                return args.Length == 1 && g.World.GetState(A(0)) is { } va && g.Population.ColoniesOf(country).Contains(va) ? null : "not settling that state";
             case GameCommand.Reform:
                 if (args.Length != 2 || (A(1) != "0" && A(1) != "1") || !g.Reforms.Reforms.TryGetValue(A(0), out var vr)) return "no such reform";
                 return A(1) == "0" ? g.Reforms.CannotDrop(country, vr) : g.Reforms.CannotAdopt(country, vr);

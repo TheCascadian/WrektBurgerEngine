@@ -75,6 +75,8 @@ public static class SaveGame
             }
         }
 
+        var fused = root.AddBlock("fused");
+        foreach (var g in game.Timeline.FusedGroups) fused.AddItem(string.Join("+", g));
         var states = root.AddBlock("states");
         foreach (var s in w.States)
         {
@@ -181,6 +183,7 @@ public static class SaveGame
             if (d.Supply != 1) n.Add("supply", F(d.Supply));
             if (d.CombatFactor != 1) n.Add("combat_factor", F(d.CombatFactor));
             if (d.PathRetryDay != 0) n.Add("path_retry", I(d.PathRetryDay));
+            if (d.Attrition != 0) { n.Add("attrition", F(d.Attrition)); n.Add("attrition_why", d.AttritionWhy, true); }
         }
 
         // battles in progress: without them a reloaded game (or a client after a resync) starts a fresh battle and drifts from the host
@@ -221,6 +224,7 @@ public static class SaveGame
             if (war.Goal != null) n.Add("goal", war.Goal.Key);
             n.Add("start", war.StartDate.ToScript());
             n.Add("battle_score", F(war.BattleScore));
+            n.Add("war_score", F(war.WarScore)); // a cache that is only worked out once a day: the value of the save is what the game goes on with
             WriteVars(n.AddBlock("vars"), war.Vars);
         }
 
@@ -388,6 +392,10 @@ public static class SaveGame
     public static void Load(Game game, Node root)
     {
         var w = game.World;
+        {   // the states that the start date of the saved game fused are fused first
+            var groups = (root.Get("fused")?.Items() ?? Enumerable.Empty<string>()).Select(x => x.Split('+')).Where(g => g.Length >= 2).ToList();
+            if (groups.Count > 0) game.Timeline.FuseKeys(groups);
+        }
         var data = game.Data;
         var meta = root.Get("meta") ?? throw new InvalidDataException("Not a BurgerEngine save (no meta block)");
 
@@ -627,6 +635,8 @@ public static class SaveGame
                 Supply = n.GetDouble("supply", 1),
                 CombatFactor = n.GetDouble("combat_factor", 1),
                 PathRetryDay = n.GetInt("path_retry"),
+                Attrition = n.GetDouble("attrition"),
+                AttritionWhy = n.GetString("attrition_why") ?? "",
             };
             foreach (var lk in n.GetList("path")) if (w.GetLocation(lk) is { } pl) d.Path.Add(pl);
             if (n.Has("army") && armyById.TryGetValue(n.GetInt("army"), out var army)) { d.Army = army; army.Divisions.Add(d); }
@@ -678,6 +688,7 @@ public static class SaveGame
                 DefenderLeader = dl,
                 StartDate = GameDate.Parse(n.GetString("start") ?? "", w.Date),
                 BattleScore = n.GetDouble("battle_score"),
+                WarScore = n.GetDouble("war_score", double.NaN), // NaN: an old save without it, counted when the game starts
                 Goal = w.GetState(n.GetString("goal")),
             };
             data.CasusBelli.TryGetValue(n.GetString("cb") ?? "", out var cb);

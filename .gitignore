@@ -52,3 +52,4 @@ projects/World500BCE_BordersDemo/
 
 # raw downloads of historical-basemaps (GPL-3.0), used by tools/import-history.py
 tools/historical-basemaps/*.geojson
+tools/historical-basemaps/owner_cache.pkl

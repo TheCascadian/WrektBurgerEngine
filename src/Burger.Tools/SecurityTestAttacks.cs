@@ -524,6 +524,7 @@ public static partial class Program
             Check(s2.Count == seats.Count && s2.Count(s => s.Member != null) == light - 1 && s2.Count(s => s.Character != null) == full + 1, "save keeps light and full holders");
             Check(s2.Zip(seats).All(p => p.First.HolderName == p.Second.HolderName && p.First.TimesSeated == p.Second.TimesSeated), "save keeps every name and count");
             for (int h = 0; h < 24 * 365; h++) { g.Tick(); g2.Tick(); }
+            Console.WriteLine($"     after a year: characters {g.World.Characters.Count}/{g2.World.Characters.Count}, notes {g.Politics.ForgottenMembers}/{g2.Politics.ForgottenMembers}, seats differing {g2.Politics.AllSeats.Zip(g.Politics.AllSeats).Count(p => p.First.HolderName != p.Second.HolderName)}");
             Check(g2.World.Characters.Count == g.World.Characters.Count && g2.Politics.ForgottenMembers == g.Politics.ForgottenMembers
                   && g2.Politics.AllSeats.Zip(g.Politics.AllSeats).All(p => p.First.HolderName == p.Second.HolderName), "reloaded game continues the same for a year");
         }

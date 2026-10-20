@@ -113,11 +113,26 @@ public sealed class TradeNetworkSystem
     private bool _routeMissed;
     private long _landTopology;
     private readonly List<Country> _pathOwners = new();
-    private readonly Dictionary<long, (TradeAgreement? Agreement, double Priority, sbyte CanTrade)> _pairCache = new();
-    private readonly List<(( StateMarket Market, double Left) Seller, int Agreed, double Priority)> _top = new();
+    // Agreement, priority and trade permission of a seller/buyer country pair, in flat arrays indexed buyer * count + seller and valid when the stamp is the current one.
+    private TradeAgreement?[] _pairAgreement = Array.Empty<TradeAgreement?>();
+    private double[] _pairPriority = Array.Empty<double>();
+    private sbyte[] _pairCanTrade = Array.Empty<sbyte>();
+    private int[] _pairStamp = Array.Empty<int>();
+    private int _pairStampNow;
+    private readonly List<(int Seller, int Agreed, double Priority)> _top = new();
+    // Recipes by output and by input, built on first use (the recipes only change when the data is loaded).
+    private Dictionary<string, List<IndustryRecipe>>? _recipesByOutput, _recipesByInput;
+    private List<string>? _recipeOutputs;
+    private readonly HashSet<string> _totalsBulk = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<State, (float X, float Y)> _landCentres = new();
     private readonly Dictionary<State, List<(State To, double Distance)>> _landEdges = new();
-    private readonly Dictionary<State, Dictionary<State, (State Previous, double Distance)>> _landPaths = new();
+    /// <summary>A breadth-first search from one origin that is carried on only as far as a destination needs (the first-found parents do not depend on where it stops).</summary>
+    private sealed class LandSearch
+    {
+        public readonly Dictionary<State, (State Previous, double Distance)> Previous = new();
+        public readonly Queue<State> Queue = new();
+    }
+    private readonly Dictionary<State, LandSearch> _landPaths = new();
     private int _landEdgesVersion = -1;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
     private readonly Dictionary<TradeAgreement, double> _agreementUse = new();
@@ -151,7 +166,7 @@ public sealed class TradeNetworkSystem
 
     private static string F(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
-    private void InvalidateTotalsCache() => _totalsCache.Clear();
+    private void InvalidateTotalsCache() { if (_totalsCache.Count > 0) _totalsCache.Clear(); if (_totalsBulk.Count > 0) _totalsBulk.Clear(); }
 
     public TradePolicy PolicyOf(Country country)
         => Policies.TryGetValue(country, out var p) ? p : Policies[country] = new TradePolicy();
@@ -159,6 +174,7 @@ public sealed class TradeNetworkSystem
     public void LoadDefinitions(GameData data)
     {
         Recipes.Clear();
+        _recipesByOutput = _recipesByInput = null; _recipeOutputs = null;
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/industry"))
             foreach (var n in root.All)
             {
@@ -270,24 +286,130 @@ public sealed class TradeNetworkSystem
         // Matching mutates stockpiles, imports, exports, prices and satisfaction.
         // Clear before mutation so an exception cannot leave a stale aggregate usable.
         InvalidateTotalsCache();
-        var sellers = new List<(StateMarket Market, double Left)>();
+        var sellerMarkets = new List<StateMarket>();
+        var sellerLeft = new List<double>();
         var buyers = new List<(StateMarket Market, double Need)>();
-        foreach (var market in _current.Values.Where(m => m.State.Owner?.Exists == true))
+        foreach (var market in _current.Values)
         {
+            market.SellerSlot = -1;
+            if (market.State.Owner?.Exists != true) continue;
             double total = market.Output + market.OpeningStockpile;
             double reserve = Math.Min(Math.Max(0, total - market.Demand), market.Demand * market.StorageMonths);
-            if (total > market.Demand) sellers.Add((market, total - market.Demand - reserve));
+            if (total > market.Demand) { market.SellerSlot = sellerMarkets.Count; sellerMarkets.Add(market); sellerLeft.Add(total - market.Demand - reserve); }
             else if (market.Demand > total) buyers.Add((market, market.Demand - total));
             market.Stockpile = reserve;
         }
 
         long m0 = System.Diagnostics.Stopwatch.GetTimestamp();
-        var left = sellers.ToDictionary(s => s.Market, s => s.Left);
+        var left = sellerLeft.ToArray();
+        var sellerOwner = new int[sellerMarkets.Count];
+        for (int i = 0; i < sellerOwner.Length; i++) sellerOwner[i] = sellerMarkets[i].State.Owner!.Index;
         var matches = new List<TradeMatch>();
         // Agreement, priority and trade permission depend only on the country pair; many states share a pair.
-        _pairCache.Clear();
+        int countryCount = _game.World.Countries.Count;
+        if (_pairStamp.Length < countryCount * countryCount)
+        {
+            int size = countryCount * countryCount;
+            _pairAgreement = new TradeAgreement?[size]; _pairPriority = new double[size]; _pairCanTrade = new sbyte[size]; _pairStamp = new int[size];
+            _pairStampNow = 0;
+        }
+        int stamp = ++_pairStampNow;
         int candidateLimit = Math.Max(8, (int)_game.Data.Defines.Get("trade_seller_candidates", 24));
         double tradePriceScale = _game.Data.Defines.Get("commodity_trade_price", 0.5);
+        // The sellers by country (their slots ascending), and for each buying country the seller countries best first. A buyer then walks the
+        // best countries until it has its candidates instead of looking at every seller; the order is the one a stable sort of all sellers gives.
+        var countryStart = new int[countryCount + 1];
+        foreach (int o in sellerOwner) countryStart[o + 1]++;
+        for (int i = 0; i < countryCount; i++) countryStart[i + 1] += countryStart[i];
+        var flat = new int[sellerOwner.Length];
+        var fill = (int[])countryStart.Clone();
+        for (int i = 0; i < sellerOwner.Length; i++) flat[fill[sellerOwner[i]]++] = i;
+        var head = (int[])countryStart.Clone();            // the first slot of the country that may still have something to sell
+        var alive = new int[countryCount];                 // sellers of the country with something left
+        for (int i = 0; i < left.Length; i++) if (left[i] > 0.001) alive[sellerOwner[i]]++;
+        var orderOf = new int[countryCount][];
+        var orderAgreed = new int[countryCount][];
+        var orderPriority = new double[countryCount][];
+        var orderStart = new int[countryCount];
+
+        void BuildOrder(Country buyerCountry, double importPriority)
+        {
+            long order0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+            int pairBase = buyerCountry.Index * countryCount;
+            var list = new List<int>();
+            for (int sc = 0; sc < countryCount; sc++)
+            {
+                if (alive[sc] <= 0) continue;
+                int pairAt = pairBase + sc;
+                if (_pairStamp[pairAt] != stamp)
+                {
+                    var seller = _game.World.Countries[sc];
+                    _pairAgreement[pairAt] = Agreement(seller, buyerCountry, definition.Key);
+                    _pairPriority[pairAt] = priority(seller, buyerCountry);
+                    _pairCanTrade[pairAt] = -1;
+                    _pairStamp[pairAt] = stamp;
+                }
+                list.Add(sc);
+            }
+            var agreed = new int[countryCount];
+            var prio = new double[countryCount];
+            foreach (int sc in list) { agreed[sc] = _pairAgreement[pairBase + sc] != null ? 1 : 0; prio[sc] = _pairPriority[pairBase + sc] * importPriority; }
+            list.Sort((x, y) =>
+            {
+                int cmp = agreed[y].CompareTo(agreed[x]);
+                if (cmp == 0) cmp = prio[y].CompareTo(prio[x]);
+                return cmp != 0 ? cmp : x.CompareTo(y);
+            });
+            orderOf[buyerCountry.Index] = list.ToArray();
+            orderAgreed[buyerCountry.Index] = list.Select(x => agreed[x]).ToArray();
+            orderPriority[buyerCountry.Index] = list.Select(x => prio[x]).ToArray();
+            if (_game.Profiling) _game.ProfileElapsed("Match.Order", System.Diagnostics.Stopwatch.GetTimestamp() - order0);
+        }
+
+        void CollectCandidates(int buyerIndex)
+        {
+            _top.Clear();
+            var order = orderOf[buyerIndex]!; var orderA = orderAgreed[buyerIndex]; var orderP = orderPriority[buyerIndex];
+            int pos = orderStart[buyerIndex];
+            while (pos < order.Length && alive[order[pos]] <= 0) pos++;   // a country that has sold out stays sold out
+            orderStart[buyerIndex] = pos;
+            for (int p = pos; p < order.Length && _top.Count < candidateLimit;)
+            {
+                int q = p + 1;   // the countries p..q-1 rank equal: their sellers are interleaved by slot, as in one list
+                while (q < order.Length && orderA[q] == orderA[p] && orderP[q].CompareTo(orderP[p]) == 0) q++;
+                if (q - p == 1)
+                {
+                    int c = order[p];
+                    if (alive[c] > 0)
+                        for (int i = head[c]; i < countryStart[c + 1] && _top.Count < candidateLimit; i++)
+                        {
+                            int slot = flat[i];
+                            if (left[slot] <= 0.001) { if (i == head[c]) head[c]++; continue; }
+                            _top.Add((slot, orderA[p], orderP[p]));
+                        }
+                }
+                else
+                {
+                    var cursor = new int[q - p];
+                    for (int k = 0; k < cursor.Length; k++) cursor[k] = head[order[p + k]];
+                    while (_top.Count < candidateLimit)
+                    {
+                        int bestK = -1, bestSlot = int.MaxValue;
+                        for (int k = 0; k < cursor.Length; k++)
+                        {
+                            int c = order[p + k], end = countryStart[c + 1];
+                            while (cursor[k] < end && left[flat[cursor[k]]] <= 0.001) cursor[k]++;
+                            if (cursor[k] < end && flat[cursor[k]] < bestSlot) { bestSlot = flat[cursor[k]]; bestK = k; }
+                        }
+                        if (bestK < 0) break;
+                        cursor[bestK]++;
+                        _top.Add((bestSlot, orderA[p], orderP[p]));
+                    }
+                }
+                p = q;
+            }
+        }
+
         foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Need))
         {
             double need = deficit;
@@ -297,39 +419,21 @@ public sealed class TradeNetworkSystem
             // Top candidates by (agreement, priority) with original order breaking ties,
             // the same order a stable descending sort gives, without sorting every seller.
             _top.Clear();
-            for (int i = 0; i < sellers.Count; i++)
+            int pairBase = buyerCountry.Index * countryCount;
+            if (orderOf[buyerCountry.Index] == null) BuildOrder(buyerCountry, importPriority);
+            CollectCandidates(buyerCountry.Index);
+            foreach (var (sellerSlot, _, _) in _top.ToList())
             {
-                var s = sellers[i];
-                if (left[s.Market] <= 0.001) continue;
-                var sc = s.Market.State.Owner!;
-                long pairKey = ((long)sc.Index << 32) | (uint)buyerCountry.Index;
-                if (!_pairCache.TryGetValue(pairKey, out var pi))
-                    _pairCache[pairKey] = pi = (Agreement(sc, buyerCountry, definition.Key), priority(sc, buyerCountry), -1);
-                var pk = (Agreed: pi.Agreement != null ? 1 : 0, Priority: pi.Priority * importPriority);
-                int at = _top.Count;
-                while (at > 0)
-                {
-                    var o = _top[at - 1];
-                    int cmp = pk.Agreed != o.Agreed ? pk.Agreed.CompareTo(o.Agreed) : pk.Priority.CompareTo(o.Priority);
-                    if (cmp <= 0) break;
-                    at--;
-                }
-                if (at >= candidateLimit) continue;
-                _top.Insert(at, (s, pk.Agreed, pk.Priority));
-                if (_top.Count > candidateLimit) _top.RemoveAt(_top.Count - 1);
-            }
-            foreach (var (sellerEntry, _, _) in _top.ToList())
-            {
-                var seller = sellerEntry.Market.State.Owner!;
+                var sellerMarket = sellerMarkets[sellerSlot];
+                var seller = sellerMarket.State.Owner!;
                 if (seller == buyerCountry) continue;
-                long tradeKey = ((long)seller.Index << 32) | (uint)buyerCountry.Index;
-                var pair = _pairCache[tradeKey];
-                if (pair.CanTrade < 0) _pairCache[tradeKey] = pair = (pair.Agreement, pair.Priority, canTrade(seller, buyerCountry) ? (sbyte)1 : (sbyte)0);
-                if (pair.CanTrade == 0) continue;
-                var route = RouteBetween(sellerEntry.Market.State, buyer.State);
+                int pairAt = pairBase + seller.Index;
+                if (_pairCanTrade[pairAt] < 0) _pairCanTrade[pairAt] = canTrade(seller, buyerCountry) ? (sbyte)1 : (sbyte)0;
+                if (_pairCanTrade[pairAt] == 0) continue;
+                var route = RouteBetween(sellerMarket.State, buyer.State);
                 if (route == null || IsBlocked(route, seller, buyerCountry)) continue;
                 double capacity = Math.Max(0, route.Capacity - _routeUse.GetValueOrDefault(route.Key));
-                var agreement = pair.Agreement;
+                var agreement = _pairAgreement[pairAt];
                 double unitBase = definition.Price * tradePriceScale;
                 double unitTransport = TransportCost(route, agreement);
                 double tariffRate = Math.Clamp(PolicyOf(buyerCountry).TariffRate + PolicyOf(buyerCountry).Protectionism * 0.5, 0, 5)
@@ -341,7 +445,7 @@ public sealed class TradeNetworkSystem
                     ? Math.Max(0, agreement.MonthlyQuantity - _agreementUse.GetValueOrDefault(agreement)) : double.MaxValue;
                 if (agreement is { Commodity.Length: > 0 } && contractLeft <= 0.001) continue;
                 double protectionFactor = seller == buyerCountry ? 1 : 1 - Math.Clamp(PolicyOf(buyerCountry).Protectionism, 0, 0.9);
-                double take = Math.Min(need, Math.Min(left[sellerEntry.Market], Math.Min(capacity, Math.Min(affordability, Math.Min(contractLeft, need * protectionFactor + 0.001)))));
+                double take = Math.Min(need, Math.Min(left[sellerSlot], Math.Min(capacity, Math.Min(affordability, Math.Min(contractLeft, need * protectionFactor + 0.001)))));
                 if (take <= 0.001) continue;
 
                 double basePrice = take * unitBase;
@@ -349,14 +453,16 @@ public sealed class TradeNetworkSystem
                 double tariff = basePrice * tariffRate;
                 var match = new TradeMatch
                 {
-                    Seller = seller, Buyer = buyerCountry, From = sellerEntry.Market.State, To = buyer.State,
+                    Seller = seller, Buyer = buyerCountry, From = sellerMarket.State, To = buyer.State,
                     Route = route, Quantity = take, BasePrice = basePrice, TransportCost = transport, Tariff = tariff,
                 };
                 matches.Add(match);
                 _routeUse[route.Key] = _routeUse.GetValueOrDefault(route.Key) + take;
                 if (agreement is { Commodity.Length: > 0, MonthlyQuantity: > 0 }) _agreementUse[agreement] = _agreementUse.GetValueOrDefault(agreement) + take;
-                left[sellerEntry.Market] -= take;
-                sellerEntry.Market.Export += take;
+                bool wasAlive = left[sellerSlot] > 0.001;
+                left[sellerSlot] -= take;
+                if (wasAlive && left[sellerSlot] <= 0.001) alive[seller.Index]--;
+                sellerMarket.Export += take;
                 buyer.Import += take;
                 need -= take;
                 if (need <= 0.001) break;
@@ -366,8 +472,8 @@ public sealed class TradeNetworkSystem
         long m1 = System.Diagnostics.Stopwatch.GetTimestamp();
         foreach (var market in _current.Values.Where(m => m.State.Owner?.Exists == true))
         {
-            if (left.TryGetValue(market, out var unsold))
-                market.Stockpile = Math.Min(market.Demand * market.StorageMonths, market.Stockpile + Math.Max(0, unsold));
+            if (market.SellerSlot >= 0)
+                market.Stockpile = Math.Min(market.Demand * market.StorageMonths, market.Stockpile + Math.Max(0, left[market.SellerSlot]));
             double supplied = market.Output + market.OpeningStockpile + market.Import;
             market.Satisfied = market.Demand <= 0.0001 ? 1 : Math.Clamp(supplied / market.Demand, 0, 1);
             market.Price = definition.Price * Math.Clamp(market.Demand / Math.Max(0.1, supplied), 0.5, 3);
@@ -405,9 +511,25 @@ public sealed class TradeNetworkSystem
         if (_totalsCache.TryGetValue(country, out var cachedByCommodity)
             && cachedByCommodity.TryGetValue(commodity, out var cached)) return cached;
 
-        var rows = new List<StateMarket>();
-        foreach (var (state, markets) in Markets)
-            if (state.Owner == country && markets.TryGetValue(commodity, out var market)) rows.Add(market);
+        // One pass over the markets gives the totals of every country for this commodity (a pass for each country was countries times states).
+        if (_totalsBulk.Add(commodity))
+        {
+            var rowsByOwner = new Dictionary<Country, List<StateMarket>>();
+            foreach (var (state, markets) in Markets)
+                if (state.Owner is { } owner && markets.TryGetValue(commodity, out var market))
+                {
+                    if (!rowsByOwner.TryGetValue(owner, out var list)) rowsByOwner[owner] = list = new List<StateMarket>();
+                    list.Add(market);
+                }
+            foreach (var (owner, rows) in rowsByOwner)
+                CacheTotals(owner, commodity, rows);
+        }
+        if (_totalsCache.TryGetValue(country, out cachedByCommodity) && cachedByCommodity.TryGetValue(commodity, out cached)) return cached;
+        return CacheTotals(country, commodity, new List<StateMarket>());
+    }
+
+    private (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) CacheTotals(Country country, string commodity, List<StateMarket> rows)
+    {
         double demand = rows.Sum(x => x.Demand);
         var total = (rows.Sum(x => x.Output), demand, rows.Sum(x => x.Import), rows.Sum(x => x.Export), rows.Sum(x => x.Stockpile), rows.Count == 0 ? 1 : rows.Average(x => x.Price), demand <= 0.0001 ? 1 : rows.Sum(x => x.Demand * x.Satisfied) / demand);
         if (!_totalsCache.TryGetValue(country, out var byCommodity))
@@ -440,10 +562,31 @@ public sealed class TradeNetworkSystem
         return result;
     }
 
+    private void BuildRecipeIndex()
+    {
+        _recipesByOutput = new(StringComparer.OrdinalIgnoreCase);
+        _recipesByInput = new(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in Recipes.Values)
+        {
+            if (!_recipesByOutput.TryGetValue(r.Output, out var outs)) _recipesByOutput[r.Output] = outs = new();
+            outs.Add(r);
+            foreach (var input in r.Inputs.Keys)
+            {
+                if (!_recipesByInput.TryGetValue(input, out var ins)) _recipesByInput[input] = ins = new();
+                ins.Add(r);
+            }
+        }
+        _recipeOutputs = _recipesByOutput.Keys.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    private static readonly List<IndustryRecipe> NoRecipes = new();
+    private List<IndustryRecipe> RecipesFor(string output) { if (_recipesByOutput == null) BuildRecipeIndex(); return _recipesByOutput!.GetValueOrDefault(output) ?? NoRecipes; }
+    private List<IndustryRecipe> ConsumersOf(string input) { if (_recipesByInput == null) BuildRecipeIndex(); return _recipesByInput!.GetValueOrDefault(input) ?? NoRecipes; }
+    private List<string> RecipeOutputs() { if (_recipeOutputs == null) BuildRecipeIndex(); return _recipeOutputs!; }
+
     /// <summary>Methods currently available for a state's output, ordered from the newest era to the oldest.</summary>
     public IReadOnlyList<IndustryRecipe> MethodsFor(Country country, State state, string output)
-        => Recipes.Values.Where(r => r.Output.Equals(output, StringComparison.OrdinalIgnoreCase)
-                                     && r.Active(_game.World.Date) && TechnologyAvailable(country, r))
+        => RecipesFor(output).Where(r => r.Active(_game.World.Date) && TechnologyAvailable(country, r))
                         .OrderByDescending(r => r.StartYear).ThenBy(r => r.Key, StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>Sets a player-controlled method. An empty recipe key clears the explicit choice.</summary>
@@ -457,9 +600,14 @@ public sealed class TradeNetworkSystem
         return true;
     }
 
+    /// <summary>Set while one commodity is settled (technology and date cannot change in between): the methods of each country and output are worked out once.</summary>
+    internal Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? MethodMemo;
+
     private IEnumerable<IndustryRecipe> ActiveRecipes(Country country, State state, string output)
     {
-        var methods = MethodsFor(country, state, output);
+        IReadOnlyList<IndustryRecipe> methods;
+        if (MethodMemo == null) methods = MethodsFor(country, state, output);
+        else if (!MethodMemo.TryGetValue((country, output), out methods!)) MethodMemo[(country, output)] = methods = MethodsFor(country, state, output); // the methods do not depend on the state
         if (methods.Count == 0) yield break;
         var selected = SelectedMethods.GetValueOrDefault((state, output));
         yield return (selected == null ? methods[0] : methods.FirstOrDefault(r => r.Key.Equals(selected, StringComparison.OrdinalIgnoreCase)) ?? methods[0]);
@@ -471,9 +619,9 @@ public sealed class TradeNetworkSystem
         // Most states have no relevant industry. Avoid selecting and sorting every
         // production method when none of its buildings can consume this input.
         double demand = 0;
-        if (Recipes.Values.Any(r => r.Inputs.ContainsKey(commodity) && state.Buildings.GetValueOrDefault(r.Building) > 0))
+        if (state.Buildings.Count > 0 && ConsumersOf(commodity).Any(r => state.Buildings.GetValueOrDefault(r.Building) > 0))
         {
-            foreach (var output in Recipes.Values.Select(r => r.Output).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
+            foreach (var output in RecipeOutputs())
             {
                 var recipe = ActiveRecipes(country, state, output).FirstOrDefault(r => r.Inputs.ContainsKey(commodity));
                 if (recipe == null) continue;
@@ -554,25 +702,27 @@ public sealed class TradeNetworkSystem
         if (_routes.TryGetValue(key, out var cached)) return cached;
         _routeMissed = true;
         EnsureLandEdges();
-        if (!_landPaths.TryGetValue(from, out var previous))
+        if (!_landPaths.TryGetValue(from, out var search))
+        {
+            search = _landPaths[from] = new LandSearch();
+            search.Previous[from] = (from, 0);
+            search.Queue.Enqueue(from);
+        }
+        var previous = search.Previous;
+        if (!previous.ContainsKey(to) && search.Queue.Count > 0)
         {
             long bfs0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            var queue = new Queue<State>();
-            previous = new Dictionary<State, (State Previous, double Distance)> { [from] = (from, 0) };
-            queue.Enqueue(from);
-            // One ordered search serves all destinations from this origin, including
-            // disconnected destinations that otherwise repeat a full graph traversal.
-            while (queue.Count > 0)
+            // One ordered search serves all destinations from this origin; it resumes where the last one stopped.
+            while (search.Queue.Count > 0 && !previous.ContainsKey(to))
             {
-                var current = queue.Dequeue();
+                var current = search.Queue.Dequeue();
                 foreach (var (next, distance) in _landEdges[current])
                 {
                     if (previous.ContainsKey(next)) continue;
                     previous[next] = (current, previous[current].Distance + distance);
-                    queue.Enqueue(next);
+                    search.Queue.Enqueue(next);
                 }
             }
-            _landPaths[from] = previous;
             if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
         }
         if (previous.ContainsKey(to))
@@ -697,9 +847,17 @@ public sealed class TradeNetworkSystem
     }
 
     private TradeAgreement? Agreement(Country from, Country to, string commodity = "")
-        => Agreements.Where(a => a.From == from && a.To == to && a.Active(_game.World.Date))
-            .Where(a => a.Commodity.Length == 0 || a.Commodity.Equals(commodity, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(a => a.Commodity.Length > 0 ? 1 : 0).FirstOrDefault();
+    {
+        TradeAgreement? generic = null;
+        var date = _game.World.Date;
+        foreach (var a in Agreements)
+        {
+            if (a.From != from || a.To != to || !a.Active(date)) continue;
+            if (a.Commodity.Length == 0) { generic ??= a; continue; }
+            if (a.Commodity.Equals(commodity, StringComparison.OrdinalIgnoreCase)) return a;
+        }
+        return generic;
+    }
 
     public bool Negotiate(Country from, Country to, double tariffDiscount = 0.5, int months = 12, string commodity = "", double monthlyQuantity = 0)
     {
@@ -889,6 +1047,8 @@ public sealed class StateMarket
     public State State = null!;
     public string Commodity = "";
     public double Output, Demand, OpeningStockpile, Stockpile, Import, Export, Price = 1, Satisfied = 1, StorageMonths;
+    /// <summary>Scratch for the matching: this market's place in the list of sellers, or -1.</summary>
+    internal int SellerSlot = -1;
 }
 
 public sealed class TradeMatch

@@ -1,0 +1,157 @@
+# South Asia 400 BCE-1492. Sources: Wikipedia articles on each state (Nanda, Maurya, Shunga, Satavahana, Indo-Greek, Indo-Scythian, Kushan, Western Satraps, Gupta, Vakataka, Pallava, Chalukya, Harsha, Rashtrakuta, Gurjara-Pratihara, Pala, Chola, Hoysala, Delhi Sultanate and successor sultanates, Vijayanagara),
+# Schwartzberg Historical Atlas of South Asia, Joppen Historical Atlas of India, Majumdar Classical Age, Sastri History of South India, Habib & Habib Atlas of the Mughal Empire (for the sultanates), Thapar Early India
+# --- 400 BCE to 100 BCE
+@ Nanda Empire ; -399 ; -322 ; 1.8 ; Pataliputra, Rajagriha, Varanasi, Kaushambi, Champa Bhagalpur, Ayodhya, Gorakhpur, Vaishali, Ujjain, Tosali, Mathura, Kalinjar
+@ Gandhara ; -399 ; -322 ; 1.1 ; Taxila, Pushkalavati, Peshawar, Swat Udyana
+@ Kamboja ; -399 ; -322 ; 1.0 ; Rajauri, Srinagar
+@ Sindhu-Sauvira ; -399 ; -322 ; 1.2 ; Aror, Mohenjo Daro, Thatta
+@ Malavas ; -399 ; -322 ; 1.0 ; Multan, Jhelum
+@ Kuru ; -399 ; -322 ; 0.8 ; Indraprastha, Hastinapura, Kurukshetra
+@ Panchala ; -399 ; -322 ; 0.8 ; Ahichchhatra, Kampilya
+@ Matsya ; -399 ; -199 ; 0.7 ; Bairat, Jaipur
+@ Surasena ; -399 ; -322 ; 0.6 ; Mathura
+@ Asmaka ; -399 ; -199 ; 1.0 ; Paithan, Nashik
+@ Kalinga ; -399 ; -299 ; 1.0 ; Tosali, Kalinga Nagara, Puri, Cuttack
+@ Andhra ; -399 ; -299 ; 1.2 ; Amaravati, Vijayawada, Warangal
+@ Chera ; -399 ; 1500 ; 0.9 ; Muziris, Karur, Kochi
+@ Chola ; -399 ; 800 ; 0.7 ; Uraiyur, Thanjavur
+@ Pandya ; -399 ; 1500 ; 0.9 ; Madurai, Korkai, Tirunelveli
+@ Anuradhapura ; -399 ; 1000 ; 1.0 ; Anuradhapura
+@ Rohana ; -399 ; 1000 ; 1.0 ; Rohana Tissamaharama
+@ Alexander ; -322 ; -322 ; 1.4 ; Taxila, Peshawar, Jhelum, Multan, Mohenjo Daro, Thatta, Kabul, Kandahar
+@ Paurava ; -322 ; -322 ; 0.7 ; Jhelum
+@ Maurya Empire ; -299 ; -199 ; 2.0 ; Pataliputra, Rajagriha, Varanasi, Kaushambi, Champa Bhagalpur, Ayodhya, Ujjain, Mathura, Taxila, Peshawar, Delhi, Lahore, Multan, Mohenjo Daro, Kandahar, Kabul, Girnar, Junagadh, Surat, Nashik, Paithan, Amaravati, Warangal, Tosali, Cuttack, Raichur, Bidar, Kolar, Banavasi, Sialkot, Sanchi, Vidisha, Jabalpur, Kathmandu, Jhelum
+@ Kalinga ; -199 ; -99 ; 1.2 ; Tosali, Kalinga Nagara, Puri, Cuttack, Raipur
+@ Shunga Empire ; -199 ; -99 ; 1.5 ; Pataliputra, Vidisha, Ujjain, Ayodhya, Kaushambi, Varanasi, Sanchi, Bhopal, Gwalior, Jabalpur
+@ Satavahana Empire ; -199 ; 200 ; 1.8 ; Paithan, Nashik, Amaravati, Vijayawada, Warangal, Kolhapur, Pune, Banavasi, Nagarjunakonda, Raichur
+@ Greco-Bactrian Kingdom ; -199 ; -99 ; 1.5 ; Balkh, Termez, Bamiyan, Kabul
+@ Indo-Greek Kingdom ; -199 ; 0 ; 1.4 ; Taxila, Peshawar, Sialkot, Lahore, Kabul, Jhelum, Kapisa Begram
+@ Yaudheyas ; -199 ; 400 ; 1.0 ; Kurukshetra, Sirhind, Delhi, Hastinapura
+@ Kunindas ; -199 ; 300 ; 0.8 ; Chandigarh, Kangra
+@ Arjunayanas ; -99 ; 300 ; 0.8 ; Jaipur, Agra, Bairat
+@ Indo-Scythian Kingdom ; -99 ; 100 ; 1.8 ; Mohenjo Daro, Thatta, Aror, Taxila, Mathura, Ujjain, Junagadh, Multan, Kutch Bhuj, Jodhpur, Karachi
+@ Kanva Dynasty ; -99 ; 0 ; 1.0 ; Pataliputra, Vidisha
+@ Mitra Dynasty ; 0 ; 100 ; 0.9 ; Mathura, Ayodhya, Kaushambi, Ahichchhatra
+@ Indo-Parthian Kingdom ; 0 ; 100 ; 1.6 ; Taxila, Kabul, Kandahar, Zaranj, Peshawar, Bust
+# --- 100 CE to 400 CE
+@ Kushan Empire ; 100 ; 300 ; 2.0 ; Peshawar, Taxila, Mathura, Kabul, Bamiyan, Balkh, Termez, Kapisa Begram, Swat Udyana, Lahore, Sialkot, Delhi, Varanasi, Kaushambi, Ayodhya, Multan, Mohenjo Daro, Ghazni, Kandahar, Kashgar, Khotan, Bukhara, Samarkand, Kesh, Ahichchhatra, Sanchi
+@ Western Satraps ; 100 ; 400 ; 1.5 ; Ujjain, Junagadh, Surat, Bharuch, Mandasor, Ahmedabad, Kutch Bhuj, Dwarka, Pune, Nashik, Jodhpur, Ajmer, Chittor
+@ Satavahana Dynasty ; 100 ; 100 ; 1.8 ; Paithan, Nashik, Amaravati, Vijayawada, Warangal, Kolhapur, Pune, Banavasi, Nagarjunakonda, Raichur, Goa, Nagpur
+@ Ikshvakus ; 200 ; 300 ; 0.9 ; Nagarjunakonda, Vijayawada
+@ Abhiras ; 200 ; 300 ; 1.0 ; Nashik, Pune
+@ Nagas of Padmavati ; 200 ; 300 ; 1.0 ; Gwalior, Mathura, Agra
+@ Malavas ; 100 ; 300 ; 0.9 ; Mandasor, Ujjain
+@ Chutus ; 200 ; 300 ; 1.0 ; Banavasi
+@ Kushano-Sasanian ; 300 ; 400 ; 1.8 ; Balkh, Kabul, Peshawar, Taxila, Bamiyan, Termez, Ghazni, Lahore, Multan, Mohenjo Daro
+@ Gupta Empire ; 320 ; 500 ; 1.8 ; Pataliputra, Rajagriha, Varanasi, Kaushambi, Ayodhya, Prayag, Mathura, Delhi, Agra, Kannauj, Ujjain, Vidisha, Sanchi, Bhopal, Gwalior, Eran, Pundravardhana, Gaur, Tamralipti, Champa Bhagalpur, Vaishali, Nalanda, Gorakhpur, Mandasor, Junagadh, Surat, Ahmedabad, Kutch Bhuj
+@ Vakataka Dynasty ; 300 ; 500 ; 1.4 ; Nagpur, Vatsagulma, Pune, Nashik, Amaravati, Jabalpur, Tripuri, Raipur
+@ Pallavas ; 300 ; 900 ; 1.1 ; Kanchipuram, Mahabalipuram, Chennai, Pulicat
+@ Kadambas ; 300 ; 600 ; 0.9 ; Banavasi, Goa
+@ Western Gangas ; 300 ; 1000 ; 0.9 ; Kolar, Talakad, Mysore, Bengaluru
+@ Salankayanas ; 300 ; 500 ; 0.8 ; Eluru, Vijayawada
+@ Kamarupa ; 300 ; 1100 ; 1.4 ; Guwahati, Imphal, Sylhet
+@ Samatata ; 300 ; 800 ; 0.9 ; Samatata Comilla, Dhaka, Sonargaon, Vikramapura
+@ Kalabhras ; 300 ; 500 ; 1.2 ; Madurai, Thanjavur, Uraiyur, Kanchipuram
+@ Kidarites ; 400 ; 500 ; 1.6 ; Peshawar, Taxila, Swat Udyana, Kapisa Begram, Srinagar, Lahore
+@ Hindu Kush Kushans ; 400 ; 400 ; 1.0 ; Bamiyan
+@ Kashmir ; 400 ; 1500 ; 0.9 ; Srinagar
+@ Licchavis ; 400 ; 800 ; 0.9 ; Kathmandu, Bhaktapur, Patan Nepal
+# --- 500 and 600
+@ Alchon Huns ; 500 ; 500 ; 1.8 ; Sialkot, Taxila, Peshawar, Lahore, Mandasor, Eran, Gwalior, Kabul, Bamiyan, Kapisa Begram
+@ Late Gupta ; 500 ; 700 ; 1.1 ; Pataliputra, Rajagriha, Vaishali, Nalanda, Bodh Gaya, Varanasi
+@ Maukharis ; 500 ; 600 ; 0.9 ; Kannauj, Ayodhya, Kaushambi
+@ Maitrakas ; 500 ; 800 ; 0.9 ; Valabhi, Junagadh
+@ Kalachuris ; 500 ; 600 ; 1.0 ; Mahishmati, Tripuri, Ujjain
+@ Chalukyas of Badami ; 500 ; 700 ; 1.5 ; Badami, Aihole, Pattadakal, Nashik, Goa, Kolhapur, Raichur, Bijapur
+@ Eastern Chalukyas ; 600 ; 1100 ; 1.0 ; Eluru, Vijayawada, Kondavidu
+@ Vishnukundinas ; 500 ; 600 ; 1.0 ; Vijayawada, Eluru, Nagarjunakonda
+@ Gauda ; 500 ; 700 ; 1.0 ; Karnasuvarna, Gaur, Pundravardhana, Tamralipti
+@ Pushyabhuti ; 600 ; 700 ; 1.4 ; Kannauj, Thanesar, Ayodhya, Mathura, Delhi
+@ Gurjaras ; 600 ; 700 ; 1.1 ; Bhinmal, Jodhpur, Ajmer
+@ Rai Dynasty ; 600 ; 700 ; 1.4 ; Aror, Mohenjo Daro, Multan, Thatta
+@ Turk Shahi ; 600 ; 700 ; 1.2 ; Kabul, Ghazni, Kapisa Begram, Bamiyan
+@ Karkota Dynasty ; 700 ; 800 ; 1.4 ; Srinagar, Jammu, Rajauri
+@ Shailodbhavas ; 600 ; 700 ; 0.8 ; Puri, Kalinga Nagara
+@ Cholas ; 600 ; 800 ; 0.6 ; Uraiyur
+@ Pandyas ; 600 ; 800 ; 1.0 ; Madurai, Korkai, Tirunelveli
+@ Cheras ; 600 ; 900 ; 0.9 ; Karur, Muziris
+@ Arakan ; 600 ; 1100 ; 0.9 ; Vesali, Dhanyawadi, Arakan Mrauk U
+@ Ceylon ; 500 ; 1000 ; 1.0 ; Anuradhapura, Rohana Tissamaharama
+# --- 700 and 800
+@ Rashtrakutas ; 700 ; 1000 ; 1.5 ; Elichpur, Nashik, Paithan, Manyakheta, Pune, Kolhapur, Bijapur, Raichur, Nagpur, Surat, Ujjain
+@ Gurjara-Pratiharas ; 700 ; 1000 ; 1.4 ; Ujjain, Bhinmal, Kannauj, Mathura, Gwalior, Jodhpur, Ajmer, Chittor, Agra, Delhi, Bharuch, Allahabad
+@ Pala Empire ; 700 ; 1100 ; 1.3 ; Pataliputra, Rajagriha, Nalanda, Bodh Gaya, Varanasi, Gaur, Karnasuvarna, Pundravardhana, Champa Bhagalpur
+@ Yashovarman ; 700 ; 700 ; 1.2 ; Kannauj, Mathura
+@ Arab Sindh ; 700 ; 800 ; 1.5 ; Mansura, Debal, Multan, Aror, Mohenjo Daro, Thatta, Karachi, Quetta
+@ Habbarids ; 800 ; 1000 ; 1.5 ; Mansura, Debal, Thatta, Aror
+@ Hindu Shahi ; 800 ; 1000 ; 1.2 ; Kabul, Udabhandapura, Peshawar, Ghazni
+@ Zunbil ; 800 ; 800 ; 1.0 ; Ghazni, Kandahar, Bust
+@ Guhilas ; 700 ; 1300 ; 0.8 ; Chittor, Udaipur
+@ Bhauma-Kara ; 800 ; 1000 ; 1.0 ; Puri, Cuttack, Bhubaneswar
+@ Eastern Gangas ; 800 ; 1500 ; 1.0 ; Kalinga Nagara, Puri, Cuttack
+@ Karkota Kashmir ; 700 ; 800 ; 1.0 ; Srinagar
+@ Pandya Empire ; 800 ; 900 ; 1.2 ; Madurai, Korkai, Tirunelveli, Thanjavur
+@ Hindu Chera ; 800 ; 1100 ; 0.8 ; Mahodayapuram, Kochi, Kollam
+@ Muttaraiyar ; 800 ; 900 ; 0.6 ; Thanjavur
+@ Hoysala ; 1000 ; 1400 ; 0.9 ; Dwarasamudra, Mysore
+@ Sinhalese ; 800 ; 1200 ; 0.9 ; Anuradhapura
+@ Tibetan Empire ; 800 ; 800 ; 1.6 ; Leh, Gilgit
+# --- 900 and 1000
+@ Chola Empire ; 900 ; 1300 ; 1.3 ; Thanjavur, Gangaikonda Cholapuram, Kanchipuram, Uraiyur, Madurai, Chennai, Pulicat, Kolar, Talakad, Mysore, Vijayawada, Eluru, Tirunelveli, Karur
+@ Chandelas ; 900 ; 1300 ; 1.0 ; Khajuraho, Mahoba, Kalinjar
+@ Kalachuris of Tripuri ; 900 ; 1200 ; 1.0 ; Tripuri, Jabalpur
+@ Paramaras ; 900 ; 1300 ; 1.0 ; Dhar, Ujjain, Mandu, Vidisha, Bhopal
+@ Chahamanas ; 900 ; 1300 ; 1.0 ; Ajmer, Sambhar, Ranthambore
+@ Chaulukyas ; 900 ; 1300 ; 1.0 ; Anhilwara Patan, Ahmedabad, Junagadh, Surat, Bharuch, Kutch Bhuj
+@ Western Chalukyas ; 1000 ; 1200 ; 1.4 ; Kalyani, Bidar, Gulbarga, Bijapur, Raichur, Banavasi, Dwarasamudra, Pune, Kolhapur
+@ Kachchhapaghatas ; 1000 ; 1200 ; 0.7 ; Gwalior
+@ Kakatiyas ; 1000 ; 1400 ; 1.0 ; Warangal, Hyderabad
+@ Shilaharas ; 1000 ; 1300 ; 0.7 ; Mumbai, Goa
+@ Yadavas of Devagiri ; 1000 ; 1300 ; 1.3 ; Devagiri, Nashik, Paithan, Pune, Burhanpur
+@ Chandra Dynasty ; 1000 ; 1100 ; 0.9 ; Sylhet, Dhaka, Comilla
+@ Utkala ; 1000 ; 1100 ; 0.9 ; Cuttack, Bhubaneswar
+@ Lohara Dynasty ; 1000 ; 1300 ; 1.0 ; Srinagar
+@ Ghaznavids ; 1000 ; 1200 ; 1.7 ; Ghazni, Lahore, Multan, Peshawar, Kabul, Sialkot
+@ Soomras ; 1000 ; 1300 ; 1.4 ; Thatta, Mansura, Mohenjo Daro, Karachi
+@ Thakuris ; 900 ; 1200 ; 0.9 ; Kathmandu, Bhaktapur, Patan Nepal
+@ Kamarupa Pala ; 1000 ; 1200 ; 1.3 ; Guwahati, Imphal
+@ Jaffna ; 1200 ; 1492 ; 0.5 ; Jaffna
+# --- 1100 and 1200
+@ Gahadavalas ; 1100 ; 1200 ; 1.3 ; Kannauj, Varanasi, Ayodhya, Allahabad, Jaunpur, Lucknow
+@ Sena Dynasty ; 1100 ; 1200 ; 1.3 ; Nabadwip, Gaur, Karnasuvarna, Pundravardhana, Dhaka, Vikramapura
+@ Ghurid Sultanate ; 1100 ; 1200 ; 1.6 ; Ghazni, Firozkoh, Herat, Kandahar, Bust
+@ Venad ; 1100 ; 1492 ; 0.6 ; Kollam
+@ Kingdom of Polonnaruwa ; 1100 ; 1200 ; 0.9 ; Polonnaruwa
+@ Rudrama Kakatiya ; 1279 ; 1300 ; 0.9 ; Warangal
+@ Delhi Sultanate ; 1279 ; 1300 ; 1.7 ; Delhi, Agra, Mathura, Kannauj, Varanasi, Ajmer, Gwalior, Lahore, Multan, Sirhind, Hastinapura, Kurukshetra, Thanesar, Jodhpur, Bikaner, Jaipur, Ayodhya, Kaushambi, Allahabad, Lucknow, Kanpur, Nalanda, Pataliputra, Bodh Gaya, Mohenjo Daro, Thatta, Jaunpur
+@ Ghurid Empire ; 1200 ; 1200 ; 1.8 ; Ghazni, Firozkoh, Herat, Kandahar, Bust, Kabul, Lahore, Multan, Delhi, Ajmer, Kannauj, Varanasi, Gwalior, Mathura, Agra, Sirhind, Allahabad
+# --- 1279 and 1300
+@ Hoysala Kingdom ; 1279 ; 1300 ; 0.9 ; Dwarasamudra, Mysore, Talakad, Kolar
+@ Vaghelas ; 1279 ; 1300 ; 1.0 ; Anhilwara Patan, Ahmedabad
+@ Mewar ; 1279 ; 1492 ; 0.8 ; Chittor, Udaipur
+@ Ahom Kingdom ; 1279 ; 1492 ; 0.9 ; Charaideo
+@ Bengal Sultanate ; 1300 ; 1492 ; 1.3 ; Gaur Bengal, Pandua, Sonargaon, Dhaka, Karnasuvarna, Pundravardhana, Nabadwip, Tamralipti, Sylhet, Samatata Comilla
+@ Tripura ; 1300 ; 1492 ; 0.6 ; Udaipur Tripura
+@ Malla ; 1279 ; 1492 ; 0.8 ; Kathmandu, Bhaktapur, Patan Nepal
+@ Samma Dynasty ; 1400 ; 1492 ; 1.4 ; Thatta, Mohenjo Daro, Karachi
+@ Langah Sultanate ; 1400 ; 1492 ; 1.0 ; Multan
+# --- 1400 and 1492
+@ Gujarat Sultanate ; 1400 ; 1492 ; 1.1 ; Ahmedabad, Anhilwara Patan, Champaner, Junagadh, Surat, Bharuch, Kutch Bhuj, Dwarka
+@ Malwa Sultanate ; 1400 ; 1492 ; 1.1 ; Dhar, Mandu, Ujjain, Vidisha, Bhopal, Mandasor
+@ Jaunpur Sultanate ; 1400 ; 1492 ; 0.9 ; Jaunpur, Varanasi, Ayodhya, Kaushambi
+@ Khandesh Sultanate ; 1400 ; 1492 ; 0.7 ; Burhanpur
+@ Kashmir Sultanate ; 1400 ; 1492 ; 1.0 ; Srinagar
+@ Bahmani Sultanate ; 1400 ; 1492 ; 1.4 ; Gulbarga, Bidar, Raichur, Bijapur, Kalyani, Warangal, Hyderabad, Golconda, Pune, Kolhapur, Elichpur, Junnar, Devagiri
+@ Vijayanagara Empire ; 1400 ; 1492 ; 1.7 ; Hampi Vijayanagara, Penukonda, Mysore, Bengaluru, Kanchipuram, Chennai, Thanjavur, Madurai, Tirunelveli, Kondavidu, Vijayawada, Eluru, Banavasi, Goa, Calicut, Kochi, Karur, Tiruchirappalli, Dwarasamudra
+@ Reddi Kingdom ; 1400 ; 1400 ; 0.9 ; Kondavidu, Vijayawada
+@ Orissa ; 1400 ; 1492 ; 1.1 ; Cuttack, Puri, Bhubaneswar, Kalinga Nagara, Raipur
+@ Marwar ; 1400 ; 1492 ; 0.8 ; Mandore, Jodhpur
+@ Amber ; 1400 ; 1492 ; 0.6 ; Amber, Jaipur
+@ Kamata ; 1400 ; 1492 ; 0.9 ; Kamatapur, Guwahati
+@ Zamorin of Calicut ; 1400 ; 1492 ; 0.7 ; Calicut
+@ Cochin ; 1400 ; 1492 ; 0.5 ; Kochi
+@ Kingdom of Kotte ; 1400 ; 1492 ; 0.7 ; Kotte, Colombo, Galle
+@ Kandy ; 1400 ; 1492 ; 0.5 ; Kandy, Gampola
+@ Ladakh ; 1100 ; 1492 ; 1.5 ; Leh
+@ Delhi Sultanate ; 1400 ; 1400 ; 1.2 ; Delhi, Agra, Mathura, Kannauj, Hastinapura, Kurukshetra, Thanesar, Ajmer, Gwalior, Ranthambore
+@ Lodi Sultanate ; 1492 ; 1492 ; 1.5 ; Delhi, Agra, Mathura, Kannauj, Lahore, Multan, Sirhind, Kanpur, Lucknow, Gwalior, Ajmer, Ayodhya, Kaushambi, Allahabad, Hastinapura, Kurukshetra, Thanesar, Bodh Gaya, Pataliputra

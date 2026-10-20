@@ -17,11 +17,22 @@ public static partial class Program
     {
         string project = ResolveProject(RequireProjectArg(args, "burger split-states <project> [--max 12] [--chunk 6]"));
         int max = 12, chunk = 6;
+        string? planPath = null;
         for (int i = 0; i < args.Count - 1; i++)
         {
             if (args[i] == "--max") max = int.Parse(args[i + 1]);
             if (args[i] == "--chunk") chunk = int.Parse(args[i + 1]);
+            if (args[i] == "--plan") planPath = args[i + 1];
         }
+        // a plan: state key -> groups of location keys that must stay together (the locations whose owner is the same at every start date); each group is cut into its connected pieces
+        var plan = new Dictionary<string, List<List<string>>>();
+        if (planPath != null)
+            foreach (var line in File.ReadLines(planPath))
+            {
+                var parts = line.Split('	');
+                if (parts.Length < 2) continue;
+                plan[parts[0]] = parts.Skip(1).Select(g => g.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList()).ToList();
+            }
         Log.EchoToConsole = false;
         var game = Game.Load(GameDir(project), compileScripts: false, seed: 1);
         string statesPath = Path.Combine(GameDir(project), "map", "states", "00_states.txt");
@@ -52,8 +63,24 @@ public static partial class Program
             var locMatch = Regex.Match(body, @"locations = \{([^}]*)\}");
             var keys = locMatch.Groups[1].Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
             var locs = keys.Select(k => game.World.GetLocation(k)).Where(l => l != null && l.IsLand).Cast<Location>().ToList();
-            if (locs.Count <= max) { sb.Append(m.Value); continue; }
-            var chunks = Cut(locs, Math.Max(2, (int)Math.Round(locs.Count / (double)chunk)));
+            List<List<Location>> chunks;
+            if (planPath != null)
+            {
+                if (!plan.TryGetValue(key, out var groups) || groups.Count < 2) { sb.Append(m.Value); continue; }
+                var byKey = locs.ToDictionary(l => l.Key);
+                chunks = new List<List<Location>>();
+                foreach (var g in groups)
+                    chunks.AddRange(ContiguousPieces(g.Where(byKey.ContainsKey).Select(k => byKey[k]).ToList()));
+                var placed = new HashSet<Location>(chunks.SelectMany(c => c));
+                var left = locs.Where(l => !placed.Contains(l)).ToList();
+                if (left.Count > 0) chunks.AddRange(ContiguousPieces(left));
+                if (chunks.Count < 2) { sb.Append(m.Value); continue; }
+            }
+            else
+            {
+                if (locs.Count <= max) { sb.Append(m.Value); continue; }
+                chunks = Cut(locs, Math.Max(2, (int)Math.Round(locs.Count / (double)chunk)));
+            }
             string prefix2 = Regex.Replace(key, @"_\d+$", "");
             string name = Regex.Match(body, @"name = ""([^""]*)""").Groups[1].Value;
             double manpower = double.Parse(Regex.Match(body, @"manpower = ([\d.]+)").Groups[1].Value, CultureInfo.InvariantCulture);
@@ -135,6 +162,47 @@ public static partial class Program
         }
         File.WriteAllText(args[0], sb.ToString());
         Console.WriteLine($"{game.World.States.Count} states written to {args[0]}");
+        return 0;
+    }
+
+    /// <summary>The connected pieces of a set of locations (neighbours inside the set).</summary>
+    private static List<List<Location>> ContiguousPieces(List<Location> locs)
+    {
+        var set = new HashSet<Location>(locs);
+        var seen = new HashSet<Location>();
+        var result = new List<List<Location>>();
+        foreach (var l in locs)
+        {
+            if (!seen.Add(l)) continue;
+            var piece = new List<Location> { l };
+            var q = new Queue<Location>(); q.Enqueue(l);
+            while (q.Count > 0)
+                foreach (var a in q.Dequeue().Neighbors)
+                    if (set.Contains(a.To) && seen.Add(a.To)) { piece.Add(a.To); q.Enqueue(a.To); }
+            result.Add(piece.OrderBy(x => x.Key, StringComparer.Ordinal).ToList());
+        }
+        return result;
+    }
+
+    /// <summary><c>burger export-location-centres &lt;project&gt; &lt;file.csv&gt;</c>: state,location,lon,lat of every land location that belongs to a state, for tools/refine_states.py.</summary>
+    private static int ExportLocationCentres(List<string> args)
+    {
+        string project = ResolveProject(RequireProjectArg(args, "burger export-location-centres <project> <file.csv>"));
+        if (args.Count < 1) { Console.WriteLine("usage: burger export-location-centres <project> <file.csv>"); return 2; }
+        Log.EchoToConsole = false;
+        var game = Game.Load(GameDir(project), compileScripts: false, seed: 1);
+        var map = game.World.Map;
+        var sb = new StringBuilder("state,location,lon,lat\n");
+        int n = 0;
+        foreach (var s in game.World.States.OrderBy(s => s.Key, StringComparer.Ordinal))
+            foreach (var l in s.Locations.Where(l => l.IsLand))
+            {
+                double lon = -180.0 + 360.0 * l.CenterX / map.Width, lat = map.Settings.NorthLat - (map.Settings.NorthLat - map.Settings.SouthLat) * l.CenterY / map.Height;
+                sb.Append(s.Key).Append(',').Append(l.Key).Append(',').Append(lon.ToString("0.###", CultureInfo.InvariantCulture)).Append(',').Append(lat.ToString("0.###", CultureInfo.InvariantCulture)).Append('\n');
+                n++;
+            }
+        File.WriteAllText(args[0], sb.ToString());
+        Console.WriteLine($"{n} locations written to {args[0]}");
         return 0;
     }
 

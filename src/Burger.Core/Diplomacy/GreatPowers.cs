@@ -399,12 +399,25 @@ public sealed class GreatPowerSystem
 
     private void Save(Node root)
     {
+        // the ranking is worked out once a month from the state of the first moment it is asked for: a loaded game must not work it out again from the state of the save
+        root.Add("built_month", _builtMonth.ToString(CultureInfo.InvariantCulture));
+        foreach (var e in Ranking)
+        {
+            var n = root.AddBlock("entry");
+            n.Add("tag", e.Country.Tag); n.Add("score", F(e.Score)); n.Add("previous_score", F(e.PreviousScore));
+            n.Add("rank", e.Rank.ToString(CultureInfo.InvariantCulture)); n.Add("previous_rank", e.PreviousRank.ToString(CultureInfo.InvariantCulture));
+            n.Add("industry", F(e.Industry)); n.Add("army", F(e.Army)); n.Add("fleet", F(e.Fleet)); n.Add("people", F(e.People));
+            if (e.Great) n.Add("great", "yes");
+        }
         foreach (var kv in _influence.OrderBy(k => k.Key.Power.Tag, StringComparer.Ordinal).ThenBy(k => k.Key.Target.Tag, StringComparer.Ordinal))
         {
             var n = root.AddBlock("influence");
             n.Add("power", kv.Key.Power.Tag); n.Add("target", kv.Key.Target.Tag); n.Add("value", F(kv.Value));
             if (_campaigns.Contains(kv.Key)) n.Add("campaign", "yes");
         }
+        // a campaign can run before it has any influence to show: it has no entry above then
+        foreach (var k in _campaigns.Where(k => !_influence.ContainsKey(k)).OrderBy(k => k.Power.Tag, StringComparer.Ordinal).ThenBy(k => k.Target.Tag, StringComparer.Ordinal))
+        { var n = root.AddBlock("campaign"); n.Add("power", k.Power.Tag); n.Add("target", k.Target.Tag); }
         foreach (var kv in _sphere) { var n = root.AddBlock("sphere"); n.Add("target", kv.Key.Tag); n.Add("power", kv.Value.Tag); }
         foreach (var cr in Crises) { var n = root.AddBlock("crisis"); n.Add("target", cr.Target.Tag); n.Add("day", cr.StartDay.ToString(CultureInfo.InvariantCulture)); n.Add("powers", string.Join(' ', cr.Powers.Select(p => p.Tag)), quoted: true); }
         foreach (var kv in _members) { var n = root.AddBlock("body"); n.Add("key", kv.Key); n.Add("members", string.Join(' ', kv.Value.OrderBy(m => m.Tag, StringComparer.Ordinal).Select(m => m.Tag)), quoted: true); }
@@ -416,12 +429,23 @@ public sealed class GreatPowerSystem
     {
         Reset();
         var w = _game.World;
+        foreach (var b in root.GetAll("entry"))
+            if (w.GetCountry(b.GetString("tag")) is { } ec)
+            {
+                var e = new PowerEntry { Country = ec, Score = b.GetDouble("score"), PreviousScore = b.GetDouble("previous_score"), Rank = (int)b.GetDouble("rank"), PreviousRank = (int)b.GetDouble("previous_rank"),
+                    Industry = b.GetDouble("industry"), Army = b.GetDouble("army"), Fleet = b.GetDouble("fleet"), People = b.GetDouble("people"), Great = b.GetBool("great") };
+                Ranking.Add(e); _entry[ec] = e;
+            }
+        Ranking.Sort((a, b) => a.Rank.CompareTo(b.Rank));
+        if (Ranking.Count > 0) _builtMonth = (int)root.GetDouble("built_month");
         foreach (var b in root.GetAll("influence"))
             if (w.GetCountry(b.GetString("power")) is { } p && w.GetCountry(b.GetString("target")) is { } t)
             {
                 _influence[(p, t)] = b.GetDouble("value");
                 if (b.GetBool("campaign")) _campaigns.Add((p, t));
             }
+        foreach (var b in root.GetAll("campaign"))
+            if (w.GetCountry(b.GetString("power")) is { } cp && w.GetCountry(b.GetString("target")) is { } ct) _campaigns.Add((cp, ct));
         foreach (var b in root.GetAll("sphere"))
             if (w.GetCountry(b.GetString("target")) is { } t && w.GetCountry(b.GetString("power")) is { } p) _sphere[t] = p;
         foreach (var b in root.GetAll("crisis"))

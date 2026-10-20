@@ -73,6 +73,8 @@ public static class Program
     public static int Main(string[] args)
     {
         var opt = new AppOptions();
+        // a collection that stops the game for a hundred milliseconds is a hitch: gen 2 runs in the background where it can
+        try { System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency; } catch { }
         try
         {
             for (int i = 0; i < args.Length; i++)

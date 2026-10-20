@@ -1,0 +1,15 @@
+# 399 BCE (and 322 BCE where nothing changed): the Carthaginian lands cut back to Tunisia, Tripolitania, west Sicily, Sardinia and the Balearics; the Maghreb and south Iberia returned to their peoples; the Magadha of the dataset cut back to its core and the rest of the Ganges plain, Malwa and the Deccan given to their own realms.
+# Sources: Barrington Atlas of the Greek and Roman World maps 1-2 and 35 (North Africa), Lancel Carthage: A History, Gsell Histoire ancienne de l'Afrique du Nord (Massyli, Massaesyli), Schwartzberg Historical Atlas of South Asia plate A-1 (the mahajanapadas c.400 BCE), Raychaudhuri Political History of Ancient India, Wikipedia articles of each state.
+U Turdetani ; -398 ; -298 ; ESP@-7.5/36/-4/38
+U Bastetani ; -398 ; -298 ; ESP@-4/36.5/-1.5/38.7
+U Magadha ; -398 ; -321 ; IND@82.5/23.5/89.5/27.5
+U Avanti ; -398 ; -321 ; IND@74/21/79.5/25.2
+U Kosala ; -398 ; -321 ; IND@81/25.8/84.5/28.6
+U Vatsa ; -398 ; -321 ; IND@80/24.5/82.5/26
+U Videha ; -398 ; -321 ; IND@84.5/25.5/87/27.3
+U Kalinga ; -398 ; -321 ; IND@83/18/88/22.5
+U Asmaka ; -398 ; -321 ; IND@74/17.5/79.5/21
+U Gond ; -398 ; -321 ; IND@77/18/84/23.5
+U Bhil ; -398 ; -321 ; IND@69/21/74/25.5
+# 199 BCE: Provence was not Roman before 121 BCE
+U Salluvii and Ligurians ; -198 ; -198 ; FRA@3/42.3/7.8/46

@@ -156,7 +156,17 @@ public sealed class DevelopmentSystem
     public int Gained(State s) => Math.Max(0, Level(s) - StartLevel(s));
     public double Literacy(State s) => s.Index < _literacy.Length ? _literacy[s.Index] : 0;
     public double Urbanization(State s) => s.Index < _urban.Length ? _urban[s.Index] : 0;
-    public double Presence(InstitutionDef i, State s) => _presence.TryGetValue(i.Key, out var p) && s.Index < p.Length ? p[s.Index] : 0;
+    /// <summary>The months the institutions spread before the start date are counted in the background while the game starts; whatever reads the presence waits for them first.</summary>
+    private Task? _catchUp;
+    private void WaitForCatchUp()
+    {
+        var t = _catchUp;
+        if (t == null) return;
+        t.GetAwaiter().GetResult();
+        _catchUp = null;
+    }
+
+    public double Presence(InstitutionDef i, State s) { WaitForCatchUp(); return _presence.TryGetValue(i.Key, out var p) && s.Index < p.Length ? p[s.Index] : 0; }
     public bool Adopted(InstitutionDef i, State s) => Presence(i, s) >= 0.999;
     public bool HasAppeared(InstitutionDef i) => _appeared.Contains(i.Key);
     public string GroupOfCountry(Country c) => GroupOf.GetValueOrDefault(c.Tag, "other");
@@ -349,7 +359,7 @@ public sealed class DevelopmentSystem
         }
         foreach (var i in Institutions)
         {
-            if (_game.World.States.All(s => !s.Key.Equals(i.Origin, StringComparison.OrdinalIgnoreCase))) { Log.Error($"Institution '{i.Key}': unknown origin_state '{i.Origin}'"); continue; }
+            if (_game.World.GetState(i.Origin) == null) { Log.Error($"Institution '{i.Key}': unknown origin_state '{i.Origin}'"); continue; }
             _presence[i.Key] = new float[n];
         }
         // the institutions that appeared before the game began have been spreading since: run the months in between
@@ -357,14 +367,16 @@ public sealed class DevelopmentSystem
         var spreading = Institutions.Where(i => _presence.ContainsKey(i.Key) && i.Appears <= start).ToList();
         foreach (var i in spreading) Appear(i);
         Links();   // built once, before the institutions (which are independent of each other) spread on every core
-        Parallel.ForEach(spreading, i => CatchUp(i, Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30)));
+        var runs = spreading.Select(i => CatchUp(i, Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30))).ToList();
+        _catchUp = Task.Run(() => Parallel.ForEach(runs, run => run()));
     }
 
     /// <summary>
     /// The same as <paramref name="months"/> calls of <see cref="Spread"/> while nothing else changes (as at the start of a game), without looking at the states that can never take the
     /// institution, and stopping once nothing moves any more.
     /// </summary>
-    private void CatchUp(InstitutionDef i, int months)
+    /// <summary>Takes what the months need from the states now and returns the counting of them (to run on another thread: it touches nothing but its own arrays).</summary>
+    private Action CatchUp(InstitutionDef i, int months)
     {
         var p = _presence[i.Key];
         var links = Links();
@@ -383,10 +395,15 @@ public sealed class DevelopmentSystem
         var near = new int[n][];
         for (int k = 0; k < n; k++) near[k] = links[at[k]].Select(o => o.Index).ToArray();
         var delta = new float[n];
-        for (int m = 0; m < months; m++)
+        // a month looks at every state next to the others (hundreds of links each): with thousands of states the months are split over the cores
+        const int Chunk = 1024;
+        int chunks = (n + Chunk - 1) / Chunk;
+        var anyOf = new bool[chunks];
+        bool parallel = n >= 4 * Chunk;
+        void Look(int c)
         {
             bool any = false;
-            for (int k = 0; k < n; k++)
+            for (int k = c * Chunk, end = Math.Min(n, k + Chunk); k < end; k++)
             {
                 delta[k] = 0;
                 if (p[at[k]] >= 1) continue;
@@ -397,21 +414,35 @@ public sealed class DevelopmentSystem
                 delta[k] = rt[k] * best;
                 any = true;
             }
-            if (!any) break;
-            for (int k = 0; k < n; k++) if (delta[k] > 0) p[at[k]] = Math.Min(1f, p[at[k]] + delta[k]);
+            anyOf[c] = any;
         }
+        void Apply(int c)
+        {
+            for (int k = c * Chunk, end = Math.Min(n, k + Chunk); k < end; k++)
+                if (delta[k] > 0) p[at[k]] = Math.Min(1f, p[at[k]] + delta[k]);
+        }
+        return () =>
+        {
+            for (int m = 0; m < months; m++)
+            {
+                if (parallel) Parallel.For(0, chunks, Look); else for (int c = 0; c < chunks; c++) Look(c);
+                if (!anyOf.Any(a => a)) break;
+                if (parallel) Parallel.For(0, chunks, Apply); else for (int c = 0; c < chunks; c++) Apply(c);
+            }
+        };
     }
 
     private void Appear(InstitutionDef i)
     {
         _appeared.Add(i.Key);
-        var o = _game.World.States.First(s => s.Key.Equals(i.Origin, StringComparison.OrdinalIgnoreCase));
+        var o = _game.World.GetState(i.Origin)!;
         _presence[i.Key][o.Index] = 1;
     }
 
     /// <summary>A month of spreading: a state gains the greatest presence of its neighbors times the spread rate, when it is developed enough.</summary>
     private void Spread(InstitutionDef i)
     {
+        WaitForCatchUp();
         var p = _presence[i.Key];
         var links = Links();
         var delta = new float[p.Length];
@@ -432,6 +463,7 @@ public sealed class DevelopmentSystem
     public void MonthlyTick()
     {
         if (!Enabled || _level.Length != N) return;
+        WaitForCatchUp();
         var d = _game.Data.Defines;
         double litYear = d.Get("development_literacy_per_year", 0.002), urbYear = d.Get("development_urban_per_year", 0.001);
         foreach (var s in _game.World.States)
@@ -445,7 +477,7 @@ public sealed class DevelopmentSystem
         foreach (var i in Institutions)
         {
             if (!_presence.ContainsKey(i.Key)) continue;
-            if (!_appeared.Contains(i.Key) && i.Appears <= _game.World.Date) { Appear(i); _game.NotifyPlayer($"{i.Name} appears in {_game.World.States.First(s => s.Key.Equals(i.Origin, StringComparison.OrdinalIgnoreCase)).DisplayName}.", NotificationKind.Good); }
+            if (!_appeared.Contains(i.Key) && i.Appears <= _game.World.Date) { Appear(i); _game.NotifyPlayer($"{i.Name} appears in {_game.World.GetState(i.Origin)!.DisplayName}.", NotificationKind.Good); }
             else if (_appeared.Contains(i.Key)) Spread(i);
         }
         foreach (var c in _game.World.Countries.Where(c => c.Exists && !c.IsPlayer)) AiSpend(c);
@@ -484,6 +516,7 @@ public sealed class DevelopmentSystem
             n.Add("literacy", F(_literacy[s.Index]));
             n.Add("urban", F(_urban[s.Index]));
         }
+        WaitForCatchUp();
         foreach (var (key, p) in _presence)
         {
             var n = root.AddBlock("institution");
@@ -507,6 +540,7 @@ public sealed class DevelopmentSystem
             _level[s.Index] = (int)b.GetDouble("level", 1); _start[s.Index] = (int)b.GetDouble("start", 1);
             _literacy[s.Index] = (float)b.GetDouble("literacy"); _urban[s.Index] = (float)b.GetDouble("urban");
         }
+        WaitForCatchUp();
         foreach (var b in root.GetAll("institution"))
         {
             string key = b.GetString("key") ?? "";
@@ -520,6 +554,7 @@ public sealed class DevelopmentSystem
 
     private void Reset()
     {
+        WaitForCatchUp();
         _level = Array.Empty<int>(); _start = Array.Empty<int>(); _literacy = Array.Empty<float>(); _urban = Array.Empty<float>();
         _presence.Clear();
         _appeared.Clear();

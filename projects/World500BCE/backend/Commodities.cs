@@ -38,16 +38,25 @@ public class GameCommodityRules : CommodityRules
         return !seller.Vars.HasFlag("embargo_" + buyer.Tag);
     }
 
+    // the commodities the switch in Output gives a local (population-based) output; keep in step with it
+    private static readonly HashSet<string> LocallyProduced = new(StringComparer.Ordinal)
+    {
+        "grain", "fish", "animal_products", "wool", "hides", "salt", "olive_oil", "wine", "timber", "charcoal", "clay", "stone", "copper", "tin",
+        "iron_ore", "lead", "alum", "textiles", "pottery", "glass", "tools", "bronze", "iron_tools", "luxury_goods", "horses",
+    };
+
     public override double Output(Game game, Country country, State state, CommodityDef commodity, double deposit)
     {
+        if (deposit == 0 && !LocallyProduced.Contains(commodity.Key)) return 0; // nothing to extract and no local production: most states for most commodities
         double infrastructure = Levels(state, "infrastructure");
         double farms = Levels(state, "farm");
         double workshops = Levels(state, "workshop");
         double infrastructureFactor = 1 + infrastructure * 0.05;
         double farmFactor = 1 + farms * 0.25;
         double workshopFactor = 1 + workshops * 0.25;
-        double deposits = base.Output(game, country, state, commodity, deposit) * infrastructureFactor;
-        double people = game.Population.TotalOf(state) / 1000.0 * state.ControlledShare(country);
+        double controlled = state.ControlledShare(country);
+        double deposits = deposit / 12.0 * controlled * OutputFactor(game, country, commodity) * infrastructureFactor; // as base.Output
+        double people = game.Population.TotalOf(state) / 1000.0 * controlled;
         bool coastal = state.Locations.Any(location => location.IsCoastal);
         double local = commodity.Key switch
         {

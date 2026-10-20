@@ -75,7 +75,7 @@ public class PoliticsRules
             }
         }
         // revanchism: a country whose core land is held by others listens to extremists
-        if (pol.Ideology(p.Ruling) is not { Extremist: true } && game.World.States.Any(s => s.Owner != null && s.Owner != c && s.Cores.Contains(c)))
+        if (pol.Ideology(p.Ruling) is not { Extremist: true } && pol.CoreLandHeldByOthers(c))
             foreach (var i in pol.Ideologies.Where(i => i.WeakDemocracyDrift > 0 && i.Key != p.Ruling)) Add(i.Key, d.Get("revanchism_drift", 0.15) * 3); // lost land feeds the nationalists
         // ideas spread from neighbours (stronger neighbours spread more)
         {
@@ -199,7 +199,7 @@ public class PoliticsRules
         else list.Add(("Prosperity", Math.Min(d.Get("prosperity_stability", 5), (wealth - 1) * 5)));
         double need = d.Get("government_support_needed", 0.4), support = GovernmentSupport(game, c);
         if (support < need) list.Add(("Unpopular government", -(need - support) * 100 * d.Get("unpopular_government_stability", 0.6)));
-        if (game.World.States.Any(s => s.Owner != null && s.Owner != c && s.Cores.Contains(c)))
+        if (game.Politics.CoreLandHeldByOthers(c))
             list.Add(("Core land in foreign hands", -d.Get("lost_cores_stability", 5)));
         double strikes = game.Politics.MovementsOf(c).Sum(m => MovementDisruption(game, c, m));
         if (strikes < -0.01) list.Add(("Strikes and protest", strikes));

@@ -1,0 +1,52 @@
+# Iberia 500-1492 (realms; each place is a seed). Sources: Wikipedia articles of each realm and its Reconquista maps, Atlas of Medieval Europe (Mackay/Ditchburn), Collins Atlas of World History, Historical Atlas of Spain (Menendez Pidal)
+# --- 500-700: Visigoths, Suebi, Byzantines and the north
+@ Visigothic Kingdom ; 500 ; 500 ; 2.0 ; Toulouse, Bordeaux, Poitiers, Angouleme, Saintes, Limoges, Clermont, Rodez, Albi, Cahors, Agen, Narbonne, Carcassonne, Nimes, Arles, Barcelona, Tarragona, Zaragoza, Valencia, Cartagena, Toledo, Merida, Seville, Cordoba, Carmona, Malaga, Caceres, Salamanca, Valladolid, Burgos, Segovia, Cuenca, Albacete, Talavera, Ciudad Real, Badajoz, Evora, Lisbon, Soria, Guadalajara, Teruel, Lerida
+@ Suebic Kingdom ; 500 ; 500 ; 1.6 ; Braga, Lugo, Orense, Astorga, Porto, Santiago de Compostela, Coimbra
+@ Vascones ; 500 ; 700 ; 1.4 ; Pamplona, Vitoria, Bayonne, Estella, San Sebastian, Bilbao, Pau, Logrono, Najera
+@ Cantabri ; 500 ; 700 ; 1.2 ; Santander, Palencia, Oviedo, Gijon
+@ Visigothic Kingdom ; 600 ; 700 ; 2.0 ; Narbonne, Carcassonne, Nimes, Barcelona, Tarragona, Zaragoza, Huesca, Teruel, Valencia, Toledo, Merida, Seville, Cordoba, Carmona, Caceres, Salamanca, Valladolid, Burgos, Segovia, Cuenca, Albacete, Talavera, Ciudad Real, Badajoz, Evora, Lisbon, Soria, Guadalajara, Lerida, Braga, Porto, Coimbra, Lugo, Orense, Astorga, Santiago de Compostela, Leon, Zamora, Girona, Lisbon, Murcia, Alicante, Jaen, Granada, Beja, Faro, Huelva
+@ Spania ; 600 ; 600 ; 0.9 ; Cartagena, Malaga, Algeciras, Cadiz, Almeria
+# --- 800: al-Andalus, Asturias, Pamplona and the Spanish March
+@ Emirate of Córdoba ; 800 ; 900 ; 2.0 ; Cordoba, Seville, Toledo, Merida, Badajoz, Caceres, Salamanca, Segovia, Avila, Talavera, Ciudad Real, Cuenca, Guadalajara, Madrid, Soria, Calatayud, Zaragoza, Huesca, Lerida, Tudela, Tortosa, Valencia, Alicante, Murcia, Albacete, Granada, Jaen, Malaga, Almeria, Cadiz, Algeciras, Huelva, Beja, Evora, Faro, Silves, Lisbon, Santarem, Coimbra, Viseu, Teruel, Castellon, Carmona, Ronda, Palma, Ibiza, Minorca, Valladolid, Palencia, Zamora, Astorga
+@ Barcelona ; 800 ; 800 ; 0.9 ; Barcelona
+@ Marca Hispanica ; 800 ; 1000 ; 1.2 ; Girona, Urgell, Vic, Perpignan, Narbonne
+@ Asturias ; 800 ; 900 ; 1.3 ; Oviedo, Gijon, Lugo, Santander
+@ Pamplona ; 800 ; 900 ; 1.3 ; Pamplona, Estella, Vitoria
+@ Emirate of Córdoba ; 900 ; 900 ; 2.0 ; Bobastro
+# --- 900: León, Castile, Pamplona, the Catalan counties, Banu Qasi and Hafsun
+@ León ; 900 ; 1000 ; 1.7 ; Leon, Oviedo, Santiago de Compostela, Astorga, Zamora, Orense, Lugo, Porto, Coimbra, Gijon, Salamanca, Palencia, Valladolid, Braga, Viseu
+@ Castile ; 900 ; 1000 ; 1.3 ; Burgos, Santander, Soria, Logrono
+@ Pamplona ; 900 ; 1000 ; 1.4 ; Pamplona, Estella, Najera, Vitoria, San Sebastian, Jaca, Tudela
+@ County of Barcelona ; 900 ; 1000 ; 1.3 ; Barcelona, Girona, Vic, Urgell, Perpignan, Tarragona
+@ Banu Qasi ; 900 ; 900 ; 1.5 ; Tudela, Zaragoza, Huesca, Calatayud, Lerida
+@ Caliphate of Córdoba ; 1000 ; 1000 ; 2.0 ; Cordoba, Seville, Toledo, Merida, Badajoz, Caceres, Segovia, Avila, Talavera, Ciudad Real, Cuenca, Guadalajara, Madrid, Soria, Calatayud, Zaragoza, Huesca, Lerida, Tudela, Tortosa, Valencia, Alicante, Murcia, Albacete, Granada, Jaen, Malaga, Almeria, Cadiz, Algeciras, Huelva, Beja, Evora, Faro, Silves, Lisbon, Santarem, Coimbra, Teruel, Castellon, Carmona, Ronda, Palma, Ibiza, Minorca, Salamanca, Viseu
+# --- 1100: Almoravids, Castile-León, Aragon-Pamplona, Barcelona, Portugal
+@ Almoravid Empire ; 1100 ; 1100 ; 2.0 ; Seville, Cordoba, Granada, Malaga, Almeria, Jaen, Murcia, Cartagena, Badajoz, Merida, Caceres, Huelva, Cadiz, Algeciras, Ronda, Beja, Faro, Silves, Evora, Lisbon, Santarem, Alicante, Albacete, Xativa, Palma, Ibiza, Minorca, Carmona
+@ Castile and León ; 1100 ; 1100 ; 1.8 ; Burgos, Leon, Toledo, Santiago de Compostela, Zamora, Salamanca, Avila, Segovia, Soria, Talavera, Guadalajara, Madrid, Valladolid, Palencia, Oviedo, Gijon, Santander, Lugo, Orense, Astorga, Logrono, Najera, Vitoria, Bilbao, San Sebastian, Ciudad Real, Plasencia
+@ Aragon and Pamplona ; 1100 ; 1100 ; 1.5 ; Pamplona, Estella, Jaca, Huesca, Tudela
+@ Valencia ; 1100 ; 1100 ; 1.4 ; Valencia, Castellon, Denia, Xativa
+@ Zaragoza ; 1100 ; 1100 ; 1.4 ; Zaragoza, Calatayud, Lerida, Teruel, Tortosa
+@ Portugal ; 1100 ; 1100 ; 1.3 ; Porto, Guimaraes, Braga, Coimbra, Viseu
+@ County of Barcelona ; 1100 ; 1100 ; 1.3 ; Barcelona, Girona, Vic, Tarragona, Perpignan, Urgell
+# --- 1200: Almohads, Castile, León, Portugal, Navarre, Aragon
+@ Almohad Caliphate ; 1200 ; 1200 ; 2.0 ; Seville, Cordoba, Granada, Malaga, Almeria, Jaen, Murcia, Cartagena, Badajoz, Merida, Caceres, Huelva, Cadiz, Algeciras, Ronda, Beja, Faro, Silves, Valencia, Denia, Xativa, Alicante, Albacete, Palma, Ibiza, Minorca, Carmona, Ciudad Real
+@ Castile ; 1200 ; 1200 ; 1.8 ; Burgos, Toledo, Soria, Avila, Segovia, Talavera, Guadalajara, Madrid, Cuenca, Valladolid, Palencia, Santander, Logrono, Bilbao, Plasencia, Najera
+@ León ; 1200 ; 1200 ; 1.8 ; Leon, Oviedo, Santiago de Compostela, Zamora, Salamanca, Astorga, Orense, Lugo, Gijon
+@ Portugal ; 1200 ; 1200 ; 1.5 ; Porto, Guimaraes, Braga, Coimbra, Viseu, Santarem, Lisbon, Evora
+@ Navarre ; 1200 ; 1200 ; 1.3 ; Pamplona, Estella, Tudela, Vitoria, San Sebastian
+@ Aragon ; 1200 ; 1200 ; 1.7 ; Zaragoza, Huesca, Jaca, Calatayud, Teruel, Lerida, Barcelona, Girona, Vic, Tarragona, Tortosa, Perpignan, Urgell
+# --- 1279 and 1300: Castile-León, Granada, Aragon, Majorca, Navarre, Portugal
+@ Castile ; 1279 ; 1300 ; 1.9 ; Burgos, Toledo, Soria, Avila, Segovia, Talavera, Guadalajara, Madrid, Cuenca, Valladolid, Palencia, Santander, Logrono, Bilbao, Plasencia, Najera, Leon, Oviedo, Santiago de Compostela, Zamora, Salamanca, Astorga, Orense, Lugo, Gijon, Seville, Cordoba, Jaen, Cadiz, Huelva, Caceres, Merida, Badajoz, Carmona, Murcia, Cartagena, Albacete, Ciudad Real, Vitoria, San Sebastian
+@ Granada ; 1279 ; 1300 ; 1.3 ; Granada, Malaga, Almeria, Ronda
+@ Aragon ; 1279 ; 1300 ; 1.7 ; Zaragoza, Huesca, Jaca, Calatayud, Teruel, Lerida, Barcelona, Girona, Vic, Tarragona, Tortosa, Valencia, Castellon, Xativa, Denia, Alicante, Urgell
+@ Majorca ; 1279 ; 1300 ; 1.0 ; Palma, Ibiza, Minorca, Perpignan
+@ Navarre ; 1279 ; 1300 ; 1.3 ; Pamplona, Estella, Tudela
+@ Portugal ; 1279 ; 1300 ; 1.7 ; Porto, Guimaraes, Braga, Coimbra, Viseu, Santarem, Lisbon, Evora, Beja, Faro, Silves
+# --- 1400
+@ Castile ; 1400 ; 1492 ; 1.9 ; Burgos, Toledo, Soria, Avila, Segovia, Talavera, Guadalajara, Madrid, Cuenca, Valladolid, Palencia, Santander, Logrono, Bilbao, Plasencia, Najera, Leon, Oviedo, Santiago de Compostela, Zamora, Salamanca, Astorga, Orense, Lugo, Gijon, Seville, Cordoba, Jaen, Cadiz, Huelva, Caceres, Merida, Badajoz, Carmona, Murcia, Cartagena, Albacete, Ciudad Real, Vitoria, San Sebastian
+@ Granada ; 1400 ; 1400 ; 1.4 ; Granada, Malaga, Almeria, Ronda, Gibraltar, Algeciras
+@ Granada ; 1492 ; 1492 ; 1.3 ; Granada
+@ Aragon ; 1400 ; 1492 ; 1.7 ; Zaragoza, Huesca, Jaca, Calatayud, Teruel, Lerida, Barcelona, Girona, Vic, Tarragona, Tortosa, Valencia, Castellon, Xativa, Denia, Alicante, Palma, Ibiza, Minorca, Perpignan, Urgell
+@ Navarre ; 1400 ; 1492 ; 1.3 ; Pamplona, Estella, Tudela
+@ Portugal ; 1400 ; 1492 ; 1.7 ; Porto, Guimaraes, Braga, Coimbra, Viseu, Santarem, Lisbon, Evora, Beja, Faro, Silves
+@ Castile ; 1492 ; 1492 ; 1.6 ; Malaga, Almeria, Ronda, Algeciras, Gibraltar

@@ -116,14 +116,36 @@ public sealed class ModifierSystem
     }
 
     /// <summary>Total of a modifier key on a scope (characters also count their traits).</summary>
+    public static long[]? ProviderTicks, ProviderCalls;   // set by burger validate --profile: time and calls of each provider
+    [ThreadStatic] private static Dictionary<(IScope, string), double>? _memo;
+    /// <summary>Remembers every Sum on this thread until EndMemo; only for read-only passes during which no modifier or provider input changes.</summary>
+    public static void BeginMemo() => _memo = new();
+    public static void EndMemo() => _memo = null;
     public double Sum(IScope? scope, string key)
     {
         if (scope == null) return 0;
+        if (_memo != null)
+        {
+            if (_memo.TryGetValue((scope, key), out var cached)) return cached;
+            var memo = _memo; _memo = null;
+            try { return memo[(scope, key)] = Sum(scope, key); } finally { _memo = memo; }
+        }
         double v = 0;
         if (Active.TryGetValue(scope, out var list))
             foreach (var m in list)
                 if (m.Def.Values.TryGetValue(key, out var x)) v += x;
         if (scope is Character ch) v += ch.TraitModifier(key);
+        if (ProviderTicks != null)
+        {
+            for (int i = 0; i < Providers.Count; i++)
+            {
+                long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+                v += Providers[i](scope, key);
+                System.Threading.Interlocked.Add(ref ProviderTicks[i], System.Diagnostics.Stopwatch.GetTimestamp() - t0);
+                System.Threading.Interlocked.Increment(ref ProviderCalls[i]);
+            }
+            return v;
+        }
         foreach (var p in Providers) v += p(scope, key);
         return v;
     }

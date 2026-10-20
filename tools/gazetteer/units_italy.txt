@@ -1,0 +1,55 @@
+# Italy, built from the provinces of Natural Earth (public domain). The later line wins where two overlap. ITA:Name = a province.
+# Sources: Putzger Historischer Weltatlas (Italy 1200, 1300, 1400, 1494), Atlas of Medieval Europe, Wikipedia articles of each state; each realm holds the provinces that cover its lands on 1 January of the year.
+# --- 1200
+U Kingdom of Sicily ; 1200 ; 1300 ; ITA:Teramo, ITA:Pescara, ITA:Chieti, ITA:L'Aquila, ITA:Campobasso, ITA:Isernia, ITA:Naples, ITA:Caserta, ITA:Avellino, ITA:Benevento, ITA:Salerno, ITA:Bari, ITA:Barletta-Andria-Trani, ITA:Foggia, ITA:Taranto, ITA:Brindisi, ITA:Lecce, ITA:Potenza, ITA:Matera, ITA:Cosenza, ITA:Catanzaro, ITA:Crotone, ITA:Vibo Valentia, ITA:Reggio Calabria, ITA:Palermo, ITA:Trapani, ITA:Agrigento, ITA:Caltanissetta, ITA:Enna, ITA:Catania, ITA:Messina, ITA:Ragusa, ITA:Syracuse
+U Papal States ; 1200 ; 1492 ; ITA:Rome, ITA:Viterbo, ITA:Rieti, ITA:Latina, ITA:Frosinone, ITA:Terni, ITA:Perugia, ITA:Macerata, ITA:Ancona, ITA:Pesaro and Urbino, ITA:Ascoli Piceno, ITA:Fermo, ITA:Rimini, ITA:Forlì-Cesena, ITA:Ravenna
+U Sardinia ; 1200 ; 1300 ; ITA:Cagliari, ITA:Sassari, ITA:Nuoro, ITA:Oristano, ITA:Carbonia-Iglesias, ITA:Medio Campidano, ITA:Ogliastra, ITA:Olbia-Tempio
+U Milan ; 1200 ; 1300 ; ITA:Milan, ITA:Monza and Brianza, ITA:Lecco, ITA:Como, ITA:Varese, ITA:Lodi
+U Pavia ; 1200 ; 1300 ; ITA:Pavia
+U Cremona ; 1200 ; 1300 ; ITA:Cremona
+U Brescia ; 1200 ; 1300 ; ITA:Brescia
+U Bergamo ; 1200 ; 1300 ; ITA:Bergamo, ITA:Sondrio
+U Mantua ; 1200 ; 1492 ; ITA:Mantua
+U Verona ; 1200 ; 1300 ; ITA:Verona, ITA:Vicenza
+U Venice ; 1200 ; 1300 ; ITA:Venice
+U Padua ; 1200 ; 1300 ; ITA:Padua, ITA:Rovigo
+U Treviso ; 1200 ; 1300 ; ITA:Treviso, ITA:Belluno
+U Aquileia ; 1200 ; 1300 ; ITA:Udine, ITA:Gorizia, ITA:Pordenone, ITA:Trieste
+U Trento ; 1200 ; 1492 ; ITA:Trentino, ITA:Trentino-South Tyrol
+U Genoa ; 1200 ; 1492 ; ITA:Liguria, ITA:Savona, ITA:Imperia, ITA:La Spezia
+U Montferrat ; 1200 ; 1300 ; ITA:Alessandria, ITA:Asti, ITA:Vercelli
+U Savoy ; 1200 ; 1492 ; ITA:Aosta, ITA:Turin, ITA:Cuneo, ITA:Biella, ITA:Verbano-Cusio-Ossola
+U Novara ; 1200 ; 1300 ; ITA:Novara
+U Piacenza ; 1200 ; 1300 ; ITA:Piacenza
+U Parma ; 1200 ; 1300 ; ITA:Parma
+U Modena ; 1200 ; 1492 ; ITA:Modena, ITA:Reggio Emilia
+U Bologna ; 1200 ; 1492 ; ITA:Bologna
+U Ferrara ; 1200 ; 1492 ; ITA:Ferrara
+U Florence ; 1200 ; 1492 ; ITA:Florence, ITA:Prato, ITA:Pistoia
+U Pisa ; 1200 ; 1300 ; ITA:Pisa, ITA:Livorno
+U Lucca ; 1200 ; 1492 ; ITA:Lucca, ITA:Massa-Carrara
+U Siena ; 1200 ; 1492 ; ITA:Siena, ITA:Grosseto
+U Arezzo ; 1200 ; 1300 ; ITA:Arezzo
+# --- 1279 and 1300: Angevin Naples, Aragonese Sicily
+U Kingdom of Naples ; 1300 ; 1300 ; ITA:Teramo, ITA:Pescara, ITA:Chieti, ITA:L'Aquila, ITA:Campobasso, ITA:Isernia, ITA:Naples, ITA:Caserta, ITA:Avellino, ITA:Salerno, ITA:Bari, ITA:Barletta-Andria-Trani, ITA:Foggia, ITA:Taranto, ITA:Brindisi, ITA:Lecce, ITA:Potenza, ITA:Matera, ITA:Cosenza, ITA:Catanzaro, ITA:Crotone, ITA:Vibo Valentia, ITA:Reggio Calabria
+U Sicily ; 1300 ; 1300 ; ITA:Palermo, ITA:Trapani, ITA:Agrigento, ITA:Caltanissetta, ITA:Enna, ITA:Catania, ITA:Messina, ITA:Ragusa, ITA:Syracuse
+U Pisa ; 1300 ; 1300 ; ITA:Cagliari, ITA:Carbonia-Iglesias, ITA:Medio Campidano
+U Arborea ; 1300 ; 1400 ; ITA:Oristano
+U Genoa ; 1300 ; 1300 ; ITA:Sassari, ITA:Olbia-Tempio
+# --- 1400
+U Milan ; 1400 ; 1400 ; ITA:Milan, ITA:Monza and Brianza, ITA:Lecco, ITA:Como, ITA:Varese, ITA:Lodi, ITA:Pavia, ITA:Cremona, ITA:Brescia, ITA:Bergamo, ITA:Sondrio, ITA:Piacenza, ITA:Parma, ITA:Novara, ITA:Vercelli, ITA:Alessandria, ITA:Verona, ITA:Vicenza, ITA:Pisa, ITA:Livorno, ITA:Asti
+U Venice ; 1400 ; 1400 ; ITA:Venice, ITA:Treviso, ITA:Belluno
+U Padua ; 1400 ; 1400 ; ITA:Padua, ITA:Rovigo
+U Aquileia ; 1400 ; 1400 ; ITA:Udine, ITA:Gorizia, ITA:Pordenone, ITA:Trieste
+U Kingdom of Naples ; 1400 ; 1492 ; ITA:Teramo, ITA:Pescara, ITA:Chieti, ITA:L'Aquila, ITA:Campobasso, ITA:Isernia, ITA:Naples, ITA:Caserta, ITA:Avellino, ITA:Salerno, ITA:Bari, ITA:Barletta-Andria-Trani, ITA:Foggia, ITA:Taranto, ITA:Brindisi, ITA:Lecce, ITA:Potenza, ITA:Matera, ITA:Cosenza, ITA:Catanzaro, ITA:Crotone, ITA:Vibo Valentia, ITA:Reggio Calabria
+U Sicily ; 1400 ; 1492 ; ITA:Palermo, ITA:Trapani, ITA:Agrigento, ITA:Caltanissetta, ITA:Enna, ITA:Catania, ITA:Messina, ITA:Ragusa, ITA:Syracuse
+U Sardinia ; 1400 ; 1492 ; ITA:Cagliari, ITA:Sassari, ITA:Nuoro, ITA:Carbonia-Iglesias, ITA:Medio Campidano, ITA:Ogliastra, ITA:Olbia-Tempio
+U Arborea ; 1400 ; 1400 ; ITA:Oristano
+U Florence ; 1400 ; 1400 ; ITA:Florence, ITA:Prato, ITA:Pistoia, ITA:Arezzo
+U Pisa ; 1400 ; 1400 ; ITA:Pisa, ITA:Livorno
+# --- 1492
+U Duchy of Milan ; 1492 ; 1492 ; ITA:Milan, ITA:Monza and Brianza, ITA:Lecco, ITA:Como, ITA:Varese, ITA:Lodi, ITA:Pavia, ITA:Cremona, ITA:Piacenza, ITA:Parma, ITA:Novara, ITA:Vercelli, ITA:Alessandria, ITA:Asti, ITA:Sondrio
+U Republic of Venice ; 1492 ; 1492 ; ITA:Venice, ITA:Treviso, ITA:Belluno, ITA:Padua, ITA:Rovigo, ITA:Vicenza, ITA:Verona, ITA:Brescia, ITA:Bergamo, ITA:Udine, ITA:Pordenone, ITA:Ravenna
+U Florence ; 1492 ; 1492 ; ITA:Florence, ITA:Prato, ITA:Pistoia, ITA:Arezzo, ITA:Pisa, ITA:Livorno
+U Papal States ; 1492 ; 1492 ; ITA:Rome, ITA:Viterbo, ITA:Rieti, ITA:Latina, ITA:Frosinone, ITA:Terni, ITA:Perugia, ITA:Macerata, ITA:Ancona, ITA:Pesaro and Urbino, ITA:Ascoli Piceno, ITA:Fermo, ITA:Rimini, ITA:Forlì-Cesena
+U Aragon ; 1492 ; 1492 ; ITA:Cagliari, ITA:Sassari, ITA:Nuoro, ITA:Oristano, ITA:Carbonia-Iglesias, ITA:Medio Campidano, ITA:Ogliastra, ITA:Olbia-Tempio

@@ -40,7 +40,22 @@ public class CommodityRules
 {
     /// <summary>Monthly output of a state: its deposits (units a year / 12) scaled by what the owner controls and by the modifier extraction_factor.</summary>
     public virtual double Output(Game game, Country c, State s, CommodityDef k, double deposit)
-        => deposit / 12.0 * s.ControlledShare(c) * Math.Max(0.1, 1 + game.Modifiers.Sum(c, "extraction") + game.Modifiers.Sum(c, k.Key + "_output"));
+        => deposit / 12.0 * s.ControlledShare(c) * OutputFactor(game, c, k);
+
+    /// <summary>Country-wide extraction multiplier of a commodity (the same for all its states).</summary>
+    public double OutputFactor(Game game, Country c, CommodityDef k)
+    {
+        if (CacheOpen && _factorCountry == c && _factorCommodity == k) return _factor;
+        double f = Math.Max(0.1, 1 + game.Modifiers.Sum(c, "extraction") + game.Modifiers.Sum(c, k.Key + "_output"));
+        if (CacheOpen) { _factorCountry = c; _factorCommodity = k; _factor = f; }
+        return f;
+    }
+
+    /// <summary>True while one commodity is settled: modifiers cannot change in between, so the last factor may be reused.</summary>
+    internal bool CacheOpen;
+    private Country? _factorCountry;
+    private CommodityDef? _factorCommodity;
+    private double _factor;
 
     /// <summary>Monthly use of a country besides its military lines: its civilian factories (industry, consumer goods, construction).</summary>
     public virtual double BaseDemand(Game game, Country c, CommodityDef k)
@@ -335,15 +350,21 @@ public sealed class CommoditySystem
             ProcessSettlementBatch();
     }
 
+    private readonly List<(State State, double Output)> _stateOutputs = new();
+    private readonly List<double> _statePops = new();
+
     private void ProcessCommodity(CommodityDef k)
     {
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         _game.TradeNetwork.BeginCommodity(k.Key);
+        Rules.CacheOpen = true;
+        _game.TradeNetwork.MethodMemo = new();
+        Burger.Core.Mechanics.ModifierSystem.BeginMemo();
         foreach (var c in _settlementCountries)
         {
             var b = BalanceOf(c, k.Key);
             double output = 0;
-            var stateOutputs = new List<(State State, double Output)>();
+            var stateOutputs = _stateOutputs; stateOutputs.Clear();
             foreach (var s in c.OwnedStates)
             {
                 double deposit = Deposits.TryGetValue(s, out var d) ? d.GetValueOrDefault(k.Key) : 0;
@@ -359,19 +380,30 @@ public sealed class CommoditySystem
             b.Import = 0;
             b.Export = 0;
             double opening = Math.Max(0, b.Stockpile);
-            double population = c.OwnedStates.Sum(s => _game.Population.Enabled && _game.Population.HasPops(s) ? _game.Population.Of(s).Total : Math.Max(1, s.Manpower * 1000));
+            double population = 0;
+            _statePops.Clear();
+            foreach (var s in c.OwnedStates)
+            {
+                double sp = _game.Population.Enabled && _game.Population.HasPops(s) ? _game.Population.Of(s).Total : Math.Max(1, s.Manpower * 1000);
+                _statePops.Add(sp);
+                population += sp;
+            }
             double demandWithoutMilitary = Math.Max(0, b.Demand);
             double outputWeight = Math.Max(0.0001, output);
-            foreach (var (state, stateOutput) in stateOutputs)
+            for (int si = 0; si < stateOutputs.Count; si++)
             {
-                double statePopulation = _game.Population.Enabled && _game.Population.HasPops(state) ? _game.Population.Of(state).Total : Math.Max(1, state.Manpower * 1000);
+                var (state, stateOutput) = stateOutputs[si];
+                double statePopulation = _statePops[si];
                 double demandShare = population <= 0 ? 1.0 / Math.Max(1, stateOutputs.Count) : statePopulation / population;
                 double outputShare = output <= 0 ? demandShare : stateOutput / outputWeight;
                 _game.TradeNetwork.AddMarket(state, k.Key, stateOutput, demandWithoutMilitary * demandShare, opening * demandShare, Rules.StorageMonths(_game, k));
             }
         }
+        Rules.CacheOpen = false;
         long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
-        _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+        _game.TradeNetwork.MethodMemo = null;
+        try { _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer)); }
+        finally { Burger.Core.Mechanics.ModifierSystem.EndMemo(); }
         long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
         foreach (var c in _settlementCountries)
         {
@@ -391,6 +423,7 @@ public sealed class CommoditySystem
             _game.ProfileElapsed("Settle.Markets", t1 - t0);
             _game.ProfileElapsed("Settle.Match", t2 - t1);
             _game.ProfileElapsed("Settle.Totals", t3 - t2);
+            _game.ProfileElapsed("Settle[" + k.Key + "]", t3 - t0); _game.ProfileElapsed("SettleM[" + k.Key + "]", t1 - t0); _game.ProfileElapsed("SettleX[" + k.Key + "]", t2 - t1);
         }
     }
 

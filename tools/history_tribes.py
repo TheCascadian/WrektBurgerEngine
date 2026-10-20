@@ -45,7 +45,7 @@ BLOCK_SEEDS = {
             ('andhra', 'Andhra', 80.5, 16.5), ('anarta', 'Anarta and Saurashtra', 71.0, 22.0), ('kuntala', 'Kuntala', 76.0, 15.5), ('mahishmati', 'Narmada tribes', 77.5, 22.5)],
     'TML': [('chola', 'Chola', 79.8, 10.9), ('pandya', 'Pandya', 78.1, 9.9), ('chera', 'Chera', 76.4, 10.4), ('ay', 'Ay and Mushika', 77.0, 8.3), ('tuluva', 'Tuluva', 75.0, 13.0)],
     'GAN': [('gandhara', 'Gandhara', 72.0, 34.0), ('madra', 'Madra', 74.5, 32.5), ('sindhu', 'Sindhu-Sauvira', 68.5, 26.5), ('kamboja', 'Kamboja', 71.5, 36.3), ('kekaya', 'Kekaya', 73.5, 32.8)],
-    'IRR': [('pyu', 'Pyu', 95.5, 21.5), ('mon', 'Mon', 97.0, 17.0), ('arakan', 'Arakan', 94.0, 20.0), ('dvaravati', 'Lavo and the Chao Phraya tribes', 100.5, 14.5), ('funan', 'Funan', 105.5, 10.3),
+    'IRR': [('pyu', 'Pyu', 95.5, 21.5), ('mon', 'Mon', 97.0, 17.0), ('arakan', 'Arakan', 94.0, 20.0), ('dvaravati', 'Lavo and the Chao Phraya tribes', 100.5, 14.5), ('funan', 'Proto-Khmer', 105.5, 10.3),
             ('chenla', 'Khmer tribes', 103.5, 13.3), ('champa', 'Cham tribes', 108.5, 15.5), ('lanna', 'Tai tribes', 99.5, 19.0), ('shan', 'Shan', 98.0, 23.0), ('khorat', 'Mun', 103.0, 16.0),
             ('malay', 'Malay tribes', 101.0, 5.0), ('laos', 'Lao tribes', 102.5, 19.5)],
     # ---- east Asia
@@ -67,7 +67,8 @@ BLOCK_SEEDS = {
 }
 
 # unowned land: the cultures of the dataset that were farming or herding peoples become tribes of about this many states; hunter-gatherers stay unowned
-TRIBE_SIZE = 8
+TRIBE_SIZE = 14
+MIN_SIZE = 5   # the fewest states a people or country of the dataset keeps (the states are cut along the borders of every date)
 
 # seeds for the cultural regions with names worth giving (dataset name -> seeds); the others are cut into clusters named by compass point
 CULTURE_SEEDS = {
@@ -195,7 +196,7 @@ MASK_YEAR.extend([
 ])
 
 YEAR_SEEDS.append((640, 790, r'^sasanian', [('umayyad', 'Umayyad Caliphate', 52.0, 33.0), ('umayyad', 'Umayyad Caliphate', 60.0, 36.0), ('umayyad', 'Umayyad Caliphate', 46.0, 30.0),
-                                           ('tabaristan', 'Dabuyids', 53.5, 36.5), ('khwarazm', 'Khwarazm', 60.0, 41.5), ('sogd', 'Sogdian city-states', 65.5, 39.0)]))
+                                           ('tabaristan', 'Dabuyids', 53.5, 36.5), ('khwarazm', 'Khwarazm', 60.0, 41.5), ('sogd', 'Sogdiana', 65.5, 39.0)]))
 
 YEAR_SEEDS.append((950, 1070, r'^denmark-norway', [('den', 'Denmark', 10.5, 56.0), ('norway', 'Kingdom of Norway', 9.5, 61.0), ('iceland', 'Iceland', -19.0, 64.8), ('greenland', 'Norse Greenland', -45.0, 61.0),
                                                    ('hebrides', 'Kingdom of the Isles', -6.5, 57.5)]))

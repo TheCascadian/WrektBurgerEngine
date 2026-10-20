@@ -24,6 +24,8 @@ public sealed class Snapshot
     public string Name = "";
     public string[] Owners = Array.Empty<string>();
     public Dictionary<string, string> Names = new();
+    /// <summary>States that fuse into one on this date: indexes into the sorted state keys, the first is the state that stays (snapshots.txt: <c>groups = { 5+7+9 12+15 }</c>).</summary>
+    public List<int[]> Groups = new();
     /// <summary>The snapshot of the first start date: it adds the tribes to the data of the project and keeps its relations and countries.</summary>
     public bool Keep;
 }
@@ -61,6 +63,8 @@ public sealed class TimelineSystem
     public readonly List<Era> Eras = new();
     public readonly List<Snapshot> Snapshots = new();
     private string _stateHash = "";
+    /// <summary>The sorted keys of every state of the map as the files define them (a snapshot lists its owners in this order, also after states were fused).</summary>
+    private List<string> _baseKeys = new();
     private int _stateCount;
     /// <summary>A named shape on the globe: polygons and boxes in degrees of longitude and latitude.</summary>
     public sealed class Area
@@ -131,6 +135,11 @@ public sealed class TimelineSystem
     {
         if (!GameDate.TryParse(n.GetString("date") ?? "", out var date)) { Log.Error("history/timeline: a snapshot needs a date", n.Location); return; }
         var snap = new Snapshot { Date = date, Name = n.GetString("name") ?? date.ToDisplay(), Owners = n.GetList("owners").ToArray(), Keep = n.GetBool("keep") };
+        foreach (var g in n.GetList("groups"))
+        {
+            var ids = g.Split('+', StringSplitOptions.RemoveEmptyEntries).Select(x => int.TryParse(x, out var v) ? v : -1).ToArray();
+            if (ids.Length >= 2 && ids.All(v => v >= 0)) snap.Groups.Add(ids);
+        }
         if (n.Get("names") is { Children: not null } names) foreach (var c in names.Children) if (c.Value != null) snap.Names[c.Key] = c.Value;
         Snapshots.Add(snap);
     }
@@ -229,6 +238,84 @@ public sealed class TimelineSystem
         return true;
     }
 
+    /// <summary>
+    /// The states of this date: what the snapshot lists as one group becomes one state (the first of the group stays; the others are gone, their locations, tax, manpower, buildings,
+    /// cores, claims and people join it, and their keys still find it). Only groups whose states have one owner now are fused. The map file keeps the fine states for every other date.
+    /// </summary>
+    public int FuseStates(Snapshot snap)
+    {
+        if (_baseKeys.Count == 0) _baseKeys = _game.World.States.Select(s => s.Key).OrderBy(k => k, StringComparer.Ordinal).ToList();
+        if (snap.Groups.Count == 0) return 0;
+        int fused = 0;
+        foreach (var g in snap.Groups)
+        {
+            if (g.Any(i => i >= _baseKeys.Count)) continue;
+            fused += FuseGroup(g.Select(i => _baseKeys[i]).ToArray(), force: false);
+        }
+        if (fused == 0) return 0;
+        FinishFusing();
+        Log.Info($"{snap.Name}: {fused} states fused into their neighbours, {_game.World.States.Count} states left");
+        return fused;
+    }
+
+    /// <summary>Fuses the states for the date the world is at, when that has not been done (a game is about to start on it).</summary>
+    public void FuseForStart()
+    {
+        if (FusedGroups.Count > 0 || !Enabled) return;
+        var snap = SnapshotFor(_game.World.Date);
+        if (snap != null && snap.Groups.Count > 0 && FuseStates(snap) > 0) _game.RaiseMapChanged();
+    }
+
+    /// <summary>The groups fused in this world, as state keys (the first stays): a save lists them so that loading it fuses the same states first.</summary>
+    public readonly List<string[]> FusedGroups = new();
+
+    /// <summary>Fuses the groups of a save (state keys) into a world that has not been fused yet; groups already fused are skipped.</summary>
+    public void FuseKeys(IEnumerable<string[]> groups)
+    {
+        int fused = 0;
+        foreach (var g in groups) fused += FuseGroup(g, force: true);
+        if (fused > 0) FinishFusing();
+    }
+
+    private void FinishFusing()
+    {
+        var w = _game.World;
+        if (_gone.Count > 0) { w.States.RemoveAll(_gone.Contains); _gone.Clear(); }   // one pass: removing 30,000 states one by one from a list of 37,000 is slow
+        for (int i = 0; i < w.States.Count; i++) w.States[i].Index = i;
+        _centre.Clear();
+        w.RefreshOwnership();
+    }
+
+    private readonly HashSet<State> _gone = new();
+
+    private int FuseGroup(string[] keys, bool force)
+    {
+        var w = _game.World;
+        var states = keys.Select(k => w.GetState(k)).ToList();
+        if (states.Any(s => s == null)) return 0;
+        var keep = states[0]!;
+        var others = states.Skip(1).Where(s => s != keep && !_gone.Contains(s!)).Distinct().ToList();
+        if (others.Count == 0) return 0;
+        if (!force && others.Any(s => s!.Owner != keep.Owner)) return 0;
+        int fused = 0;
+        foreach (var o in others)
+        {
+            foreach (var l in o!.Locations) { l.State = keep; keep.Locations.Add(l); }
+            o.Locations.Clear();
+            keep.Manpower += o.Manpower; keep.Tax += o.Tax;
+            foreach (var (b, n) in o.Buildings) keep.Buildings[b] = keep.Buildings.GetValueOrDefault(b) + n;
+            foreach (var (b, n) in o.Damaged) keep.Damaged[b] = keep.Damaged.GetValueOrDefault(b) + n;
+            keep.Cores.UnionWith(o.Cores); keep.Claims.UnionWith(o.Claims);
+            keep.Demilitarized |= o.Demilitarized;
+            _game.Population.FuseStates(keep, o);
+            _gone.Add(o);
+            w.StateByKey[o.Key] = keep;
+            fused++;
+        }
+        FusedGroups.Add(new[] { keep.Key }.Concat(others.Select(o => o!.Key)).ToArray());
+        return fused;
+    }
+
     /// <summary>A country whose capital is not its own gets the land nearest the middle of its states.</summary>
     private void FixCapitals()
     {
@@ -279,7 +366,7 @@ public sealed class TimelineSystem
     public void StartAt(GameDate date)
     {
         RestoreBase();
-        Apply(date);
+        Apply(date, fuseStates: true);
         _game.RaiseMapChanged();
     }
 
@@ -305,7 +392,7 @@ public sealed class TimelineSystem
     public Bookmark? BookmarkAt(GameDate date) => Bookmarks.LastOrDefault(b => b.Date <= date);
 
     /// <summary>Sets the date and replays the history up to it. Call once, right after loading the world and before the game starts.</summary>
-    public void Apply(GameDate date)
+    public void Apply(GameDate date, bool fuseStates = false)
     {
         var w = _game.World;
         if (date < Earliest) date = Earliest;
@@ -324,6 +411,7 @@ public sealed class TimelineSystem
             }
             applied++;
         }
+        if (fuseStates && snap != null) FuseStates(snap);
         w.RefreshOwnership();
         // forces of a country that lost its last state (by transfers) stay where they stand, under whoever owns the land, or are gone
         foreach (var d in w.Divisions.Where(d => !d.Owner.Exists).ToList())

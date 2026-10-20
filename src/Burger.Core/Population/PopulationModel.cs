@@ -108,13 +108,16 @@ public sealed class StatePopulation
     /// <summary>Last month's change of the total (for the interface).</summary>
     public double LastGrowth;
 
-    public double Total => Pops.Sum(p => p.Size);
+    public double Total { get { double t = 0; foreach (var p in Pops) t += p.Size; return t; } }
 }
 
 /// <summary>Colonists of one country settling an unowned state: how far along they are and how many reinforcement waves guard them against the natives.</summary>
 public sealed class SettlerParty
 {
-    public Country? Country;
+    /// <summary>Bumped whenever any party changes its settler, so lists of colonies can be cached.</summary>
+    public static int Version;
+    private Country? _country;
+    public Country? Country { get => _country; set { _country = value; Interlocked.Increment(ref Version); } }
     public double Progress;
     public int Reinforcements;
 

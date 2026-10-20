@@ -19,7 +19,7 @@ public static partial class Program
         }
         var bd = b.World.Divisions.ToDictionary(d => d.Id);
         foreach (var d in a.World.Divisions)
-            if (!bd.TryGetValue(d.Id, out var x) || d.Strength != x.Strength || d.Org != x.Org || d.Location.Key != x.Location.Key) return $"division {d.Id} strength/org/location";
+            if (!bd.TryGetValue(d.Id, out var x) || d.Strength != x.Strength || d.Org != x.Org || d.Location.Key != x.Location.Key) return $"division {d.Id} strength/org/location {d.Strength:R}/{x?.Strength:R} {d.Org:R}/{x?.Org:R} {d.Location.Key}/{x?.Location.Key}";
         var bw = b.World.Wars.ToDictionary(w => w.Name, StringComparer.Ordinal);
         foreach (var w in a.World.Wars)
             if (!bw.TryGetValue(w.Name, out var x) || w.WarScore != x.WarScore) return $"war {w.Name} score";
@@ -35,6 +35,15 @@ public static partial class Program
             foreach (var kv in ap.Popularity.OrderBy(kv => kv.Key, StringComparer.Ordinal))
                 if (bp.Popularity.GetValueOrDefault(kv.Key) != kv.Value) return $"politics {c.Tag}/{kv.Key} {kv.Value:R} vs {bp.Popularity.GetValueOrDefault(kv.Key):R}";
         }
+        foreach (var st in a.World.States)
+            if (b.World.States.FirstOrDefault(x => x.Key == st.Key) is not { } o || o.Owner?.Tag != st.Owner?.Tag) return $"state {st.Key} owner";
+        var bc = b.World.Characters.ToDictionary(c => c.Id);
+        if (a.World.Characters.Count != b.World.Characters.Count) return $"character count {a.World.Characters.Count} vs {b.World.Characters.Count}";
+        foreach (var c in a.World.Characters)
+            if (!bc.TryGetValue(c.Id, out var x) || x.Alive != c.Alive) return $"character {c.Id} {c.DisplayName} alive {c.Alive} vs {(bc.TryGetValue(c.Id, out var y) ? y.Alive.ToString() : "missing")}";
+        var br = b.Rngs.Snapshot().ToDictionary(r => r.Item1, r => r.Item2);
+        foreach (var (name, st) in a.Rngs.Snapshot())
+            if (!br.TryGetValue(name, out var o) || o != st) return $"rng {name}";
         return "unknown digest component";
     }
 

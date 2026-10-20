@@ -1,0 +1,72 @@
+# Britain and Ireland 500-1492. Sources: Wikipedia articles on the Heptarchy, Anglo-Saxon kingdoms, Kingdom of Alba, Welsh kingdoms, Irish kingdoms and provinces, Lordship of Ireland, Lordship of the Isles; Oxford Atlas of British and Irish History; Historical Atlas of Britain (Falkus & Gillingham)
+# --- 500 and 600
+@ Kent ; 500 ; 800 ; 0.6 ; Canterbury, Dover, Rochester
+@ Sussex ; 500 ; 800 ; 0.6 ; Chichester, Lewes
+@ Wessex ; 500 ; 900 ; 1.0 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton
+@ Essex ; 500 ; 800 ; 0.6 ; London, Colchester, Maldon
+@ East Angles ; 500 ; 900 ; 0.8 ; Norwich, Ipswich, Cambridge
+@ Mercia ; 600 ; 1000 ; 1.1 ; Tamworth, Leicester, Lichfield, Derby, Nottingham, Northampton, Coventry, Warwick, Worcester, Gloucester, Oxford, Hereford, Shrewsbury, Chester, Stamford, Bedford, Huntingdon
+@ Lindsey ; 500 ; 700 ; 0.6 ; Lincoln
+@ Britons of Dumnonia ; 500 ; 800 ; 1.1 ; Exeter, Truro, Tintagel, Land's End
+@ Deira ; 500 ; 600 ; 0.8 ; York, Hull, Leeds, Ripon, Whitby
+@ Bernicia ; 500 ; 600 ; 0.8 ; Bamburgh, Newcastle, Durham, Lindisfarne
+@ Elmet ; 600 ; 600 ; 0.5 ; Leeds
+@ Rheged ; 500 ; 700 ; 0.9 ; Carlisle, Lancaster, Whithorn, Dumfries
+@ Gwynedd ; 500 ; 1300 ; 0.8 ; Caernarfon
+@ Powys ; 500 ; 1300 ; 0.7 ; Welshpool, Shrewsbury
+@ Dyfed ; 500 ; 900 ; 0.7 ; St Davids, Carmarthen, Pembroke
+@ Glywysing ; 500 ; 1100 ; 0.6 ; Cardiff, Swansea, Llandaff, Brecon
+@ Gododdin ; 500 ; 700 ; 0.8 ; Edinburgh, Dunbar, Berwick
+@ Strathclyde ; 500 ; 1100 ; 0.8 ; Glasgow, Dumbarton, Stirling
+@ Picts ; 500 ; 900 ; 1.4 ; Inverness, Aberdeen, Perth, Dundee, Elgin, Dornoch, Kinross
+@ Dal Riata ; 500 ; 800 ; 0.9 ; Dunadd, Oban, Iona
+@ Ulaid ; 500 ; 1200 ; 0.7 ; Downpatrick, Carrickfergus, Emain Macha
+@ Cenel nEogain ; 500 ; 1500 ; 0.8 ; Derry, Letterkenny, Armagh
+@ Cenel Conaill ; 500 ; 1500 ; 0.8 ; Donegal, Sligo
+@ Connachta ; 500 ; 1500 ; 1.0 ; Cruachan, Galway, Tuam, Roscommon, Athlone
+@ Mide ; 500 ; 1200 ; 0.7 ; Tara, Cavan, Drogheda
+@ Laigin ; 500 ; 1500 ; 0.8 ; Kildare, Wexford, Kilkenny
+@ Mumu ; 500 ; 1200 ; 1.0 ; Cashel, Cork, Limerick, Waterford, Tralee, Ennis
+# --- 700-800
+@ Northumbria ; 700 ; 900 ; 1.1 ; York, Bamburgh, Newcastle, Durham, Lindisfarne, Carlisle, Lancaster, Ripon, Whitby, Hull, Leeds, Richmond
+@ Seisyllwg ; 800 ; 900 ; 0.7 ; Aberystwyth, Carmarthen
+@ Norse Orkney ; 800 ; 1200 ; 0.8 ; Kirkwall, Thurso
+@ Kingdom of the Isles ; 800 ; 1279 ; 0.9 ; Stornoway, Douglas, Portree
+# --- 900
+@ England ; 900 ; 900 ; 1.0 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton, Canterbury, Dover, Rochester, Chichester, Lewes, London, Oxford, Gloucester, Worcester, Hereford, Chester, Tamworth, Lichfield, Coventry, Warwick, Shrewsbury
+@ Danelaw ; 900 ; 900 ; 1.0 ; York, Lincoln, Nottingham, Derby, Leicester, Stamford, Northampton, Bedford, Cambridge, Norwich, Ipswich, Colchester, Huntingdon, Hull, Maldon
+@ Bamburgh ; 900 ; 1000 ; 0.9 ; Bamburgh, Newcastle, Durham, Lindisfarne
+@ Alba ; 900 ; 1100 ; 1.2 ; Perth, Scone, Dundee, Aberdeen, Stirling, Kinross, Edinburgh, Dunbar
+@ Moray ; 900 ; 1100 ; 0.9 ; Inverness, Elgin, Dornoch
+@ Strathclyde ; 900 ; 1000 ; 0.9 ; Glasgow, Dumfries, Carlisle
+@ Deheubarth ; 900 ; 1300 ; 0.8 ; St Davids, Carmarthen, Aberystwyth, Pembroke, Brecon
+@ Morgannwg ; 900 ; 1100 ; 0.6 ; Cardiff, Swansea, Llandaff
+@ Dublin ; 900 ; 1200 ; 0.5 ; Dublin
+@ Osraige ; 900 ; 1100 ; 0.5 ; Kilkenny
+# --- 1000 and 1100
+@ England ; 1000 ; 1000 ; 1.1 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton, Canterbury, Dover, Rochester, Chichester, Lewes, London, Oxford, Gloucester, Worcester, Hereford, Chester, Tamworth, Lichfield, Coventry, Warwick, Shrewsbury, Lincoln, Nottingham, Derby, Leicester, Stamford, Northampton, Bedford, Cambridge, Norwich, Ipswich, Colchester, Huntingdon, Maldon, Truro, Bath
+@ Earldom of Northumbria ; 1000 ; 1100 ; 1.1 ; York, Bamburgh, Newcastle, Durham, Lindisfarne, Carlisle, Lancaster, Ripon, Whitby, Hull, Leeds, Richmond, Sheffield
+@ Scotland ; 1000 ; 1100 ; 1.2 ; Perth, Scone, Dundee, Aberdeen, Stirling, Kinross, Edinburgh, Dunbar, Berwick, Glasgow, Dumfries
+@ Galloway ; 1100 ; 1300 ; 0.7 ; Whithorn
+@ Gwynedd ; 1000 ; 1300 ; 0.9 ; Caernarfon, Bangor
+@ Munster ; 1000 ; 1100 ; 1.1 ; Cashel, Cork, Limerick, Waterford, Tralee, Ennis
+@ Breifne ; 1100 ; 1500 ; 0.7 ; Cavan, Enniskillen
+@ Anglo-Norman England ; 1100 ; 1100 ; 1.1 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton, Canterbury, Dover, Rochester, Chichester, Lewes, London, Oxford, Gloucester, Worcester, Hereford, Chester, Tamworth, Lichfield, Coventry, Warwick, Shrewsbury, Lincoln, Nottingham, Derby, Leicester, Stamford, Northampton, Bedford, Cambridge, Norwich, Ipswich, Colchester, Huntingdon, Maldon, Truro, Bath, York, Bamburgh, Newcastle, Durham, Carlisle, Lancaster, Ripon, Whitby, Hull, Leeds, Richmond, Sheffield, Pembroke
+@ Thomond ; 1100 ; 1500 ; 0.8 ; Limerick, Ennis
+@ Desmond ; 1100 ; 1500 ; 0.9 ; Cork, Tralee
+# --- 1200 to 1300
+@ England ; 1200 ; 1300 ; 1.1 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton, Canterbury, Dover, Rochester, Chichester, Lewes, London, Oxford, Gloucester, Worcester, Hereford, Chester, Tamworth, Lichfield, Coventry, Warwick, Shrewsbury, Lincoln, Nottingham, Derby, Leicester, Stamford, Northampton, Bedford, Cambridge, Norwich, Ipswich, Colchester, Huntingdon, Maldon, Truro, Bath, York, Bamburgh, Newcastle, Durham, Carlisle, Lancaster, Ripon, Whitby, Hull, Leeds, Richmond, Sheffield, Pembroke
+@ Scotland ; 1200 ; 1300 ; 1.2 ; Perth, Scone, Dundee, Aberdeen, Stirling, Kinross, Edinburgh, Dunbar, Berwick, Glasgow, Dumfries, Inverness, Elgin, Dornoch, Thurso, Oban, Portree, Stornoway, Whithorn
+@ Lordship of Ireland ; 1200 ; 1492 ; 0.9 ; Dublin, Drogheda, Dundalk, Kildare, Kilkenny, Wexford, Waterford, Limerick, Cork, Carrickfergus, Downpatrick
+@ Gwynedd ; 1200 ; 1279 ; 1.0 ; Caernarfon, Welshpool, Aberystwyth, Bangor
+@ Wales ; 1200 ; 1279 ; 0.8 ; Carmarthen, St Davids, Brecon
+@ Isle of Man ; 1200 ; 1300 ; 0.4 ; Douglas
+# --- 1400 and 1492
+@ England ; 1400 ; 1492 ; 1.1 ; Winchester, Salisbury, Southampton, Dorchester, Exeter, Taunton, Canterbury, Dover, Rochester, Chichester, Lewes, London, Oxford, Gloucester, Worcester, Hereford, Chester, Tamworth, Lichfield, Coventry, Warwick, Shrewsbury, Lincoln, Nottingham, Derby, Leicester, Stamford, Northampton, Bedford, Cambridge, Norwich, Ipswich, Colchester, Huntingdon, Maldon, Truro, Bath, York, Bamburgh, Newcastle, Durham, Carlisle, Lancaster, Ripon, Whitby, Hull, Leeds, Richmond, Sheffield, Pembroke, Caernarfon, Welshpool, Aberystwyth, Bangor, Carmarthen, St Davids, Brecon, Cardiff, Swansea, Douglas
+@ Scotland ; 1400 ; 1492 ; 1.2 ; Perth, Scone, Dundee, Aberdeen, Stirling, Kinross, Edinburgh, Dunbar, Berwick, Glasgow, Dumfries, Inverness, Elgin, Dornoch, Thurso, Whithorn, Kirkwall
+@ Lordship of the Isles ; 1400 ; 1492 ; 1.0 ; Oban, Portree, Stornoway, Dunadd
+@ Tir Eoghain ; 1400 ; 1492 ; 0.9 ; Derry, Armagh, Letterkenny, Emain Macha
+@ Tir Chonaill ; 1400 ; 1492 ; 0.9 ; Donegal, Sligo
+@ Connacht ; 1400 ; 1492 ; 1.0 ; Cruachan, Galway, Tuam, Roscommon, Athlone
+@ Ormond ; 1400 ; 1492 ; 0.8 ; Kilkenny, Cashel
+@ Kavanagh Leinster ; 1400 ; 1492 ; 0.7 ; Wexford

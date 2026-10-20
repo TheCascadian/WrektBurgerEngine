@@ -1,0 +1,36 @@
+# North Africa west of Egypt 400 BCE-1492 (realms). Sources: Wikipedia articles on Carthage, Numidia, Mauretania, Roman Africa, Vandal Kingdom, Byzantine Exarchate of Africa, Idrisids, Rustamids, Aghlabids, Fatimids, Zirids, Hammadids, Almoravids, Almohads, Hafsids, Zayyanids, Marinids, Wattasids,
+# Cambridge History of Africa vols. 2-4, UNESCO General History of Africa vols. 2-4, Brett and Fentress The Berbers, Abun-Nasr History of the Maghrib, Laroui History of the Maghrib
+@ Carthaginian Empire ; -399 ; -299 ; 1.3 ; Carthage, Utica, Hadrumetum, Sfax, Gabes, Leptis, Sabratha, Tripoli Africa, Bizerte, Tebessa, Kairouan
+@ Carthage ; -199 ; -199 ; 0.9 ; Carthage, Utica, Hadrumetum, Sfax, Gabes, Bizerte
+@ Numidia ; -199 ; 40 ; 1.4 ; Constantine, Tebessa, Biskra, Algiers, Siga, Oran, Tlemcen
+@ Mauretania ; -199 ; 40 ; 1.4 ; Tangier, Volubilis, Rabat, Fez, Iol Caesarea
+@ Roman Africa ; -99 ; 400 ; 1.2 ; Carthage, Utica, Hadrumetum, Sfax, Gabes, Bizerte, Kairouan, Tebessa, Constantine, Leptis, Sabratha, Tripoli Africa, Biskra, Cyrene, Ptolemais, Barqa
+@ Roman Mauretania ; 100 ; 400 ; 1.3 ; Tangier, Volubilis, Rabat, Fez, Iol Caesarea, Algiers, Oran, Tlemcen, Siga, Ceuta
+@ Vandal Kingdom ; 500 ; 500 ; 1.4 ; Carthage, Utica, Hadrumetum, Sfax, Gabes, Bizerte, Kairouan, Tebessa, Constantine, Leptis, Sabratha, Tripoli Africa, Biskra, Cagliari, Oristano, Sassari, Ajaccio, Bastia, Palma, Ibiza, Minorca, Algiers, Iol Caesarea, Marsala
+@ Moors ; 500 ; 700 ; 1.4 ; Fez, Volubilis, Tangier, Rabat, Meknes, Marrakesh, Taza
+@ Byzantine Africa ; 600 ; 600 ; 1.3 ; Carthage, Utica, Hadrumetum, Sfax, Gabes, Bizerte, Kairouan, Tebessa, Constantine, Leptis, Sabratha, Tripoli Africa, Biskra, Cagliari, Oristano, Sassari, Ceuta, Palma, Ibiza
+@ Umayyad Ifriqiya ; 700 ; 700 ; 1.4 ; Kairouan, Carthage, Tunis, Mahdia, Sfax, Gabes, Constantine, Tebessa, Tripoli Africa, Leptis, Barqa, Biskra, Algiers, Tlemcen, Fez, Tangier, Marrakesh, Rabat, Cyrene, Sirte
+@ Aghlabid Emirate ; 800 ; 900 ; 1.3 ; Kairouan, Carthage, Tunis, Mahdia, Sfax, Gabes, Constantine, Tebessa, Tripoli Africa, Leptis, Biskra, Sabratha, Palermo, Syracuse
+@ Rustamid Imamate ; 800 ; 900 ; 1.3 ; Tahert, Tlemcen, Algiers, Ouargla
+@ Idrisid Caliphate ; 800 ; 1000 ; 1.2 ; Fez, Meknes, Volubilis, Rabat, Taza, Tangier
+@ Midrarids ; 800 ; 900 ; 0.9 ; Sijilmasa
+@ Fatimid Caliphate ; 900 ; 1000 ; 1.5 ; Kairouan, Mahdia, Tunis, Sfax, Gabes, Constantine, Tebessa, Tripoli Africa, Leptis, Biskra, Palermo, Syracuse, Tahert, Algiers, Sijilmasa, Barqa, Cairo, Alexandria, Memphis, Damascus, Jerusalem
+@ Maghrawa ; 1000 ; 1000 ; 1.3 ; Fez, Meknes, Rabat, Sijilmasa, Taza
+@ Banu Ifran ; 1000 ; 1000 ; 1.0 ; Tlemcen, Sale
+@ Zirids ; 1000 ; 1100 ; 1.4 ; Kairouan, Mahdia, Tunis, Sfax, Gabes, Constantine, Tebessa, Tripoli Africa, Biskra, Ashir
+@ Hammadids ; 1000 ; 1200 ; 1.1 ; Qal a Beni Hammad, Bejaia, Constantine, Biskra, Ouargla, Algiers
+@ Almoravid Empire ; 1100 ; 1100 ; 1.8 ; Marrakesh, Fez, Meknes, Rabat, Tangier, Ceuta, Sijilmasa, Tlemcen, Oran, Algiers, Agadir, Taghaza, Awdaghust, Walata
+@ Kingdom of Africa ; 1100 ; 1100 ; 0.8 ; Mahdia
+@ Banu Hilal ; 1100 ; 1300 ; 1.6 ; Gabes, Tripoli Africa, Barqa, Sirte
+@ Almohad Caliphate ; 1200 ; 1200 ; 1.6 ; Marrakesh, Fez, Meknes, Rabat, Tangier, Ceuta, Sijilmasa, Tlemcen, Oran, Algiers, Constantine, Bejaia, Tunis, Kairouan, Mahdia, Sfax, Tripoli Africa, Agadir, Tebessa, Biskra, Taza, Leptis
+@ Banu Ghaniya ; 1200 ; 1200 ; 1.0 ; Tripoli Africa, Gabes, Sabratha
+@ Hafsid Sultanate ; 1279 ; 1492 ; 1.4 ; Tunis, Kairouan, Mahdia, Sfax, Gabes, Tripoli Africa, Leptis, Constantine, Bejaia, Tebessa, Biskra, Bizerte, Sabratha
+@ Zayyanid Kingdom ; 1279 ; 1492 ; 1.3 ; Tlemcen, Oran, Algiers, Siga, Ouargla
+@ Marinid Sultanate ; 1279 ; 1400 ; 1.4 ; Fez, Meknes, Rabat, Tangier, Ceuta, Sijilmasa, Marrakesh, Agadir, Taza, Sale
+@ Wattasid Sultanate ; 1492 ; 1492 ; 1.4 ; Fez, Meknes, Rabat, Tangier, Sijilmasa, Marrakesh, Agadir, Taza, Sale
+@ Marinids of Fez ; 1400 ; 1400 ; 1.2 ; Fez, Meknes, Rabat, Sale, Taza
+@ Hintata ; 1400 ; 1492 ; 1.2 ; Marrakesh, Agadir
+@ Mamluk Barqa ; 1279 ; 1492 ; 1.0 ; Barqa, Tobruk, Cyrene
+@ Tuareg Confederations ; 1100 ; 1492 ; 3.0 ; Tamanrasset, Ghat, Agadez
+@ Fezzan ; 1000 ; 1492 ; 1.4 ; Murzuq, Ghadames
+@ Zawila ; 700 ; 1200 ; 1.0 ; Murzuq

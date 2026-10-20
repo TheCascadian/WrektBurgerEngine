@@ -371,7 +371,7 @@ public sealed class Game
         game.Timeline.Load();
         game.Timeline.CaptureBase();
         var wanted = startDate ?? game.Data.Defines.StartDate;
-        if (wanted > game.Data.Defines.StartDate || game.Timeline.Snapshots.Any(s => s.Date == wanted && s.Keep)) game.Timeline.Apply(wanted);
+        if (wanted > game.Data.Defines.StartDate || game.Timeline.Snapshots.Any(s => s.Date == wanted && s.Keep)) game.Timeline.Apply(wanted, fuseStates: startDate != null);
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);
         for (int i = 0; i < 5; i++) game.Clock.DaysPerSecond[i + 1] = game.Data.Defines.GameSpeeds[i];
@@ -382,34 +382,43 @@ public sealed class Game
     /// <summary>Starts the game with the given player country (null = observer mode, all AI).</summary>
     public void StartNewGame(string? playerTag)
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var parts = new List<string>();
+        void T(string name) { parts.Add($"{name} {sw.ElapsedMilliseconds}"); sw.Restart(); }
+        Timeline.FuseForStart(); T("fuse");
         SetPlayer(playerTag);
         Started = true;
-        Resources.InitStartValues();
-        Modifiers.MonthlyTick();
+        Resources.InitStartValues(); T("resources");
+        Modifiers.MonthlyTick(); T("modifiers");
         foreach (var c in World.Countries.Where(c => c.Exists))
         {
             if (Features.Has(F.Characters)) Characters.EnsureRuler(c);
             Economy.UpdateEstimates(c);
         }
-        if (Features.Has(F.Characters)) Characters.GenerateFamilies();
-        if (Features.Has(F.Titles)) Titles.OnGameStart();
-        if (Features.Has(F.Military)) Warfare.DailyTick();
+        T("rulers");
+        if (Features.Has(F.Characters)) Characters.GenerateFamilies(); T("families");
+        if (Features.Has(F.Titles)) Titles.OnGameStart(); T("titles");
+        if (Features.Has(F.Military)) Warfare.DailyTick(); T("warfare");
         if (Features.Has(F.Navy)) Navy.OnGameStart();
         if (Features.Has(F.Air)) Air.OnGameStart();
-        Development.OnGameStart();
+        T("navy+air");
+        Development.OnGameStart(); T("development");
         GreatPowers.OnGameStart();
         Reputation.OnGameStart();
         Tech.OnGameStart(); // before production sets up its lines: what a country can build depends on what it knows
-        if (Features.Has(F.Production)) Production.OnGameStart();
+        T("tech");
+        if (Features.Has(F.Production)) Production.OnGameStart(); T("production");
         if (Features.Has(F.Diplomacy)) Diplomacy.UpdateWarScores();
         AiProfiles.ForgetCache();
-        RefreshNames();
+        RefreshNames(); T("names");
         Mods.Invoke(m => m.OnGameStart());
         foreach (var c in World.Countries.Where(c => c.Exists))
             Events.FireOnAction("on_game_start", c);
         Events.FireOnAction("on_game_start_global", null);
-        UpdateVisibility();
+        T("events");
+        UpdateVisibility(); T("visibility");
         RaiseMapChanged();
+        Log.Info("Game started: " + string.Join(", ", parts) + " ms");
     }
 
     /// <summary>The ideology ruling a country (null without the politics feature).</summary>
@@ -482,7 +491,7 @@ public sealed class Game
         Started = true;
         // (the estimates are saved: they are counted monthly, so recounting here would give a loaded game other numbers than the one it came from; an old save without them is counted)
         foreach (var c in World.Countries.Where(c => c.Exists && c.LastIncome == 0 && c.LastExpenses == 0 && c.LastManpowerGain == 0)) Economy.UpdateEstimates(c);
-        Diplomacy.UpdateWarScores();
+        foreach (var war in World.Wars.Where(w => double.IsNaN(w.WarScore))) war.WarScore = Diplomacy.ComputeWarScore(war);
     }
 
         public void SetPlayer(string? playerTag)
@@ -524,16 +533,19 @@ public sealed class Game
     public void ClearProfile() => _profile.Clear();
     public void ProfileCall(string name) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, 0);
     public readonly Dictionary<string, double> ProfileMs = new();
+    /// <summary>Bytes allocated by the thread of each profiled scope (--profile): where the garbage comes from.</summary>
+    public readonly ConcurrentDictionary<string, long> ProfileBytes = new();
     /// <summary>The longest single call per system in milliseconds (what the player feels as a hitch).</summary>
     public readonly Dictionary<string, double> ProfileMaxMs = new();
 
     public void P(string name, Action a)
     {
         if (!Profiling) { a(); return; }
-        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp(), b0 = GC.GetAllocatedBytesForCurrentThread();
         try { a(); }
         finally
         {
+            ProfileBytes.AddOrUpdate(name, GC.GetAllocatedBytesForCurrentThread() - b0, (_, v) => v + GC.GetAllocatedBytesForCurrentThread() - b0);
             long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
             double ms = elapsed * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
@@ -544,10 +556,11 @@ public sealed class Game
     public void P(string name, string countryTag, Action a)
     {
         if (!Profiling) { a(); return; }
-        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp(), b0 = GC.GetAllocatedBytesForCurrentThread();
         try { a(); }
         finally
         {
+            ProfileBytes.AddOrUpdate(name, GC.GetAllocatedBytesForCurrentThread() - b0, (_, v) => v + GC.GetAllocatedBytesForCurrentThread() - b0);
             long elapsed = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
             int day = World.Date.TotalDays;
             RecordProfile(name, day, elapsed);
@@ -571,7 +584,7 @@ public sealed class Game
         if (Features.Has(F.Navy)) P("Navy.HourlyTick", () => Navy.HourlyTick());
         Exploration.HourlyTick();
         Mods.Invoke(m => m.OnHourlyTick());
-        if (World.Date.Hour == 0) DailyTick(streamEconomicWork);
+        DailyStages(streamEconomicWork);
     }
 
     // ---------------------------------------------------------------------------------------- fog of war
@@ -608,79 +621,121 @@ public sealed class Game
     /// <summary>Changes every time visibility is recomputed (the renderer refreshes the map then).</summary>
     public int VisibilityVersion { get; private set; }
 
-    private void DailyTick(bool streamEconomicWork)
+    /// <summary>
+    /// The daily and monthly work of the systems, spread over the hours so that no tick is a hitch (all of it at midnight took a fifth of a second and more with hundreds of countries).
+    /// Hour 0: visibility, modifiers, events and scripts; every hour: the armies with that number; 1: supply; 2: production, navy, air; 3: economy, diplomacy and politics. The AI does its daily part for 1/24 of its countries each hour
+    /// and its monthly part for 1/672 each hour of the first 28 days. The monthly work of each system is on a day of its own (see <see cref="MonthlyStage"/>).
+    /// </summary>
+    private void DailyStages(bool streamEconomicWork)
     {
-        P("Visibility", UpdateVisibility);
-        if (Features.Has(F.Military)) P("Warfare.DailyTick", () => Warfare.DailyTick());
-        if (Features.HasSupply && Features.Has(F.Military)) P("Supply.DailyTick", () => Supply.DailyTick());
-        if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTick());
-        if (Features.Has(F.Navy)) P("Navy.DailyTick", () => Navy.DailyTick());
-        if (Features.Has(F.Air)) P("Air.DailyTick", () => Air.DailyTick());
-        if ((Features.Has(F.LendLease) || Features.Has(F.RaisingTroops)) && Features.Has(F.Military)) P("Support.DailyTick", () => Support.DailyTick());
-        if (Features.Has(F.RaisingTroops)) P("Raising.DailyTick", () => Raising.DailyTick());
-        if (Features.Has(F.Logistics)) P("Logistics.DailyTick", () => Logistics.DailyTick());
-        P("Modifiers.DailyTick", () => Modifiers.DailyTick());
-        if (Features.Has(F.Military)) P("Economy.DailyTick", () => Economy.DailyTick()); // training and reinforcing divisions
-        if (Features.Has(F.Diplomacy)) P("Diplomacy.DailyTick", () => Diplomacy.DailyTick());
-        if (Features.Has(F.ExpandedDiplomacy)) P("Conferences.DailyTick", () => Conferences.DailyTick());
-        if (Features.Has(F.Politics)) P("Politics.DailyTick", () => Politics.DailyTick());
-        if (Features.Has(F.Ai)) P("Ai.DailyTick", () => Ai.DailyTick());
-        P("Events.DailyTick", () => Events.DailyTick());
-        Mods.Invoke(m => m.OnDailyTick());
-        if (World.Date.Day == 1) MonthlyTick(streamEconomicWork);
-        else if (Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick());
+        int hour = World.Date.Hour;
+        if (Features.Has(F.Ai))
+        {
+            P("Ai.DailyTick", () => Ai.DailyTickSpread());
+            P("Ai.MonthlyTick", () => Ai.MonthlyTickSpread());
+        }
+        if (Features.Has(F.Military)) P("Warfare.DailyTick", () => Warfare.DailyTick(hour));
+        switch (hour)
+        {
+            case 0:
+                P("Visibility", UpdateVisibility);
+                P("Modifiers.DailyTick", () => Modifiers.DailyTick());
+                P("Events.DailyTick", () => Events.DailyTick());
+                Mods.Invoke(m => m.OnDailyTick());
+                break;
+            case 1:
+                if (Features.HasSupply && Features.Has(F.Military)) P("Supply.DailyTick", () => Supply.DailyTick());
+                break;
+            case 2:
+                if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTick());
+                if (Features.Has(F.Navy)) P("Navy.DailyTick", () => Navy.DailyTick());
+                if (Features.Has(F.Air)) P("Air.DailyTick", () => Air.DailyTick());
+                if ((Features.Has(F.LendLease) || Features.Has(F.RaisingTroops)) && Features.Has(F.Military)) P("Support.DailyTick", () => Support.DailyTick());
+                if (Features.Has(F.RaisingTroops)) P("Raising.DailyTick", () => Raising.DailyTick());
+                if (Features.Has(F.Logistics)) P("Logistics.DailyTick", () => Logistics.DailyTick());
+                if (Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick()); // a settlement the monthly work started is finished in batches
+                break;
+            case 3:
+                if (Features.Has(F.Military)) P("Economy.DailyTick", () => Economy.DailyTick()); // training and reinforcing divisions
+                if (Features.Has(F.Diplomacy)) P("Diplomacy.DailyTick", () => Diplomacy.DailyTick());
+                if (Features.Has(F.ExpandedDiplomacy)) P("Conferences.DailyTick", () => Conferences.DailyTick());
+                if (Features.Has(F.Politics)) P("Politics.DailyTick", () => Politics.DailyTick());
+                break;
+        }
+        // two more commodity batches a day, so the 40 commodities of a settlement finish well inside the month instead of piling up at the next one
+        if ((hour == 10 || hour == 20) && Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick());
+        if (World.Date.Day <= 9) MonthlyStage(World.Date.Day, hour, streamEconomicWork);
     }
 
-    private void MonthlyTick(bool streamEconomicWork)
+    /// <summary>
+    /// The monthly work of the systems, each on a day of its own and in parts by the hour where it goes country by country: population on day 1 (24 parts), economy on day 2 (24 parts), resources on day 3,
+    /// politics on day 4 (24 parts), development, culture and reforms on day 5, technology, focus and commodities on 6, diplomacy, characters, succession and dynasties on 7 and events on 8; statistics, scripts and the yearly pulse on day 9.
+    /// </summary>
+    private void MonthlyStage(int day, int hour, bool streamEconomicWork)
     {
-        if (Features.Has(F.Population))
+        switch (day)
         {
-            P("Population.Ai", () => Population.AiFallback());
-            P("Population.MonthlyTick", () => Population.MonthlyTick());
+            case 1:
+                if (Features.Has(F.Population))
+                {
+                    if (hour == 0) P("Population.Ai", () => Population.AiFallback());
+                    P("Population.MonthlyTick", () => Population.MonthlyTickPart(hour, 24));
+                }
+                if (hour == 6) P("Memory.MonthlyTick", () => Memory.MonthlyTick());
+                break;
+            case 2:
+                if (Features.Has(F.Economy) || Features.Has(F.Military)) P("Economy.MonthlyTick", () => Economy.MonthlyTickPart(hour, 24)); // gold (economy) and manpower (military)
+                if (hour == 6 && Features.Has(F.LendLease)) P("Support.MonthlyTick", () => Support.MonthlyTick());
+                if (hour == 12 && Geo.Enabled) P("Geo.MonthlyTick", () => GeoDynamics.MonthlyTick());
+                break;
+            case 3:
+                if (hour == 6) { P("Resources.MonthlyTick", () => Resources.MonthlyTick()); P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick()); }
+                break;
+            case 4:
+                if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTickPart(hour, 24));
+                break;
+            case 5:
+                if (hour == 6 && Features.Has(F.Development)) P("Development.MonthlyTick", () => Development.MonthlyTick());
+                if (hour == 12 && Features.Has(F.CultureTraditions)) P("CultureLife.MonthlyTick", () => CultureLife.MonthlyTick());
+                if (hour == 18 && Features.Has(F.GovernmentReforms)) P("Reforms.MonthlyTick", () => Reforms.MonthlyTick());
+                break;
+            case 6:
+                if (hour == 6 && Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());
+                if (hour == 12 && Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
+                if (hour == 18 && Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick(streamEconomicWork));
+                break;
+            case 7:
+                if (hour == 6 && Features.Has(F.Diplomacy)) P("Diplomacy.MonthlyTick", () => Diplomacy.MonthlyTick());
+                if (hour == 7 && Features.Has(F.GreatPowers)) P("GreatPowers.MonthlyTick", () => GreatPowers.MonthlyTick());
+                if (hour == 8 && Features.Has(F.Reputation)) P("Reputation.MonthlyTick", () => Reputation.MonthlyTick());
+                if (hour == 8 && Features.Has(F.ExpandedDiplomacy)) { P("Factions.MonthlyTick", () => Factions.MonthlyTick()); P("Marriages.MonthlyTick", () => Marriages.MonthlyTick()); }
+                if (hour == 9 && Features.Has(F.Characters)) P("Characters.MonthlyTick", () => Characters.MonthlyTick());
+                if (hour == 10 && Features.Has(F.Intrigue)) P("Intrigue.MonthlyTick", () => Intrigue.MonthlyTick());
+                if (hour == 11 && Features.Has(F.Titles)) P("Titles.MonthlyTick", () => Titles.MonthlyTick());
+                if (hour == 12 && Features.Has(F.Succession)) P("Succession.MonthlyTick", () => Succession.MonthlyTick());
+                if (hour == 13 && Features.Has(F.RaisingTroops)) P("Raising.MonthlyTick", () => Raising.MonthlyTick());
+                if (hour == 14 && Features.Has(F.ArmyOrganization)) P("ArmyOrg.MonthlyTick", () => ArmyOrg.MonthlyTick());
+                if (hour == 15 && Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());
+                break;
+            case 8:
+                if (hour == 6) P("Events.MonthlyTick", () => Events.MonthlyTick());
+                break;
+            case 9:
+                if (hour != 6) break;
+                Mods.Invoke(m => m.OnMonthlyTick());
+                P("Statistics", () => Statistics.MonthlyTick());
+                if (World.Date.Month == 1)
+                {
+                    if (Features.Has(F.Characters)) Characters.YearlyTick();
+                    if (Features.Has(F.Dynasties)) Dynasties.YearlyTick();
+                    foreach (var c in World.Countries.Where(c => c.Exists))
+                        Events.FireOnAction("on_yearly_pulse", c);
+                    Mods.Invoke(m => m.OnYearlyTick());
+                }
+                if (Features.Has(F.Politics)) Politics.CanonicalizeForSync();
+                if (Notifications.Count > 300) Notifications.RemoveRange(0, Notifications.Count - 300);
+                break;
         }
-        if (Features.Has(F.Economy) || Features.Has(F.Military)) P("Economy.MonthlyTick", () => Economy.MonthlyTick()); // gold (economy) and manpower (military)
-        if (Features.Has(F.LendLease)) P("Support.MonthlyTick", () => Support.MonthlyTick());
-        if (Geo.Enabled) P("Geo.MonthlyTick", () => GeoDynamics.MonthlyTick());
-        P("Memory.MonthlyTick", () => Memory.MonthlyTick());
-        P("Resources.MonthlyTick", () => Resources.MonthlyTick());
-        P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick());
-        if (Features.Has(F.Development)) P("Development.MonthlyTick", () => Development.MonthlyTick());
-        if (Features.Has(F.CultureTraditions)) P("CultureLife.MonthlyTick", () => CultureLife.MonthlyTick());
-        if (Features.Has(F.GovernmentReforms)) P("Reforms.MonthlyTick", () => Reforms.MonthlyTick());
-        if (Features.Has(F.Technology)) P("Tech.MonthlyTick", () => Tech.MonthlyTick());
-        if (Features.Has(F.Focus)) P("Focus.MonthlyTick", () => Focus.MonthlyTick());
-        if (Features.Has(F.Commodities)) P("Commodities.MonthlyTick", () => Commodities.MonthlyTick(streamEconomicWork));
-        if (Features.Has(F.Diplomacy)) P("Diplomacy.MonthlyTick", () => Diplomacy.MonthlyTick());
-        if (Features.Has(F.GreatPowers)) P("GreatPowers.MonthlyTick", () => GreatPowers.MonthlyTick());
-        if (Features.Has(F.Reputation)) P("Reputation.MonthlyTick", () => Reputation.MonthlyTick());
-        if (Features.Has(F.ExpandedDiplomacy)) { P("Factions.MonthlyTick", () => Factions.MonthlyTick()); P("Marriages.MonthlyTick", () => Marriages.MonthlyTick()); }
-        if (Features.Has(F.Characters)) P("Characters.MonthlyTick", () => Characters.MonthlyTick());
-        if (Features.Has(F.Intrigue)) P("Intrigue.MonthlyTick", () => Intrigue.MonthlyTick());
-        if (Features.Has(F.Titles)) P("Titles.MonthlyTick", () => Titles.MonthlyTick());
-        if (Features.Has(F.RaisingTroops)) P("Raising.MonthlyTick", () => Raising.MonthlyTick());
-        if (Features.Has(F.ArmyOrganization)) P("ArmyOrg.MonthlyTick", () => ArmyOrg.MonthlyTick());
-        if (Features.Has(F.Succession)) P("Succession.MonthlyTick", () => Succession.MonthlyTick());
-        if (Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());
-        if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTick());
-        P("Events.MonthlyTick", () => Events.MonthlyTick());
-        if (Features.Has(F.Ai))
-            P("Ai.MonthlyTick", () =>
-            {
-                if (streamEconomicWork) Ai.MonthlyTick(streamEconomicWork: true);
-                else Ai.MonthlyTick();
-            });
-        Mods.Invoke(m => m.OnMonthlyTick());
-        P("Statistics", () => Statistics.MonthlyTick());
-        if (World.Date.Month == 1)
-        {
-            if (Features.Has(F.Characters)) Characters.YearlyTick();
-            if (Features.Has(F.Dynasties)) Dynasties.YearlyTick();
-            foreach (var c in World.Countries.Where(c => c.Exists))
-                Events.FireOnAction("on_yearly_pulse", c);
-            Mods.Invoke(m => m.OnYearlyTick());
-        }
-        if (Features.Has(F.Politics)) Politics.CanonicalizeForSync();
-        if (Notifications.Count > 300) Notifications.RemoveRange(0, Notifications.Count - 300);
     }
 
     // =============================================================================================

@@ -45,7 +45,7 @@ public sealed partial class PopulationSystem
         cp.InitialTotal = pp.InitialTotal * share; pp.InitialTotal -= cp.InitialTotal;
         cp.BaseTax = pp.BaseTax * share; pp.BaseTax -= cp.BaseTax;
         cp.BaseManpower = pp.BaseManpower * share; pp.BaseManpower -= cp.BaseManpower;
-        _states[child] = cp;
+        _states[child] = cp; _tableVersion++;
         ApplyOutput(parent, pp);
         ApplyOutput(child, cp);
     }
@@ -53,6 +53,7 @@ public sealed partial class PopulationSystem
     public void OnStateUnsplit(State parent, State child)
     {
         _neighbours.Clear(); _regionOf = null; _home.Clear(); InvalidateMajorities();
+        _tableVersion++;
         if (_states.Remove(child, out var cp) && _states.TryGetValue(parent, out var pp))
             foreach (var pop in cp.Pops)
             {

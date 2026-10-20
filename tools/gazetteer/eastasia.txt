@@ -1,0 +1,255 @@
+# East Asia, Mongolia, Siberia and the Tarim 400 BCE-1492. Sources: Wikipedia articles on each state (Warring States, Qin, Han, Three Kingdoms, Jin, Sixteen Kingdoms, Northern and Southern dynasties, Sui, Tang, Five Dynasties and Ten Kingdoms, Liao, Song, Western Xia, Jin, Yuan, Ming, Xiongnu, Xianbei, Rouran, Gokturk, Uyghur, Khitan, Balhae, Goguryeo, Baekje, Silla, Goryeo, Joseon, Yamato, Kamakura, Muromachi),
+# Tan Qixiang Historical Atlas of China, Cambridge History of China, Barfield Perilous Frontier, Twitchett Cambridge History of Early Inner Asia, Lee A New History of Korea, Sansom History of Japan
+# --- Warring States and Qin
+@ Qin ; -399 ; -199 ; 1.3 ; Chang An, Baoji, Tianshui
+@ Chu ; -399 ; -299 ; 1.5 ; Yingdu, Jingzhou, Wuhan, Changsha, Xiangyang, Shouchun, Nanchang, Xuzhou, Suzhou
+@ Qi ; -399 ; -299 ; 1.2 ; Linzi, Jinan, Qingdao, Qingzhou
+@ Yan ; -399 ; -299 ; 1.4 ; Beijing, Tianjin, Zhangjiakou, Liaoyang, Shenyang
+@ Han ; -399 ; -299 ; 0.9 ; Xinzheng, Zhengzhou, Luoyang
+@ Zhao ; -399 ; -299 ; 1.3 ; Handan, Taiyuan, Datong, Anyang
+@ Wei ; -399 ; -299 ; 1.0 ; Yuncheng, Kaifeng, Anyang
+@ Song ; -399 ; -299 ; 0.7 ; Shangqiu
+@ Lu ; -399 ; -299 ; 0.6 ; Qufu
+@ Zhongshan ; -399 ; -299 ; 0.6 ; Zhengzhou
+@ Yue ; -399 ; -322 ; 1.0 ; Shaoxing, Suzhou, Hangzhou, Ningbo
+@ Shu ; -399 ; -299 ; 1.0 ; Chengdu
+@ Ba ; -399 ; -299 ; 0.9 ; Chongqing
+@ Dian ; -399 ; -99 ; 1.2 ; Kunming
+@ Yelang ; -399 ; -99 ; 1.2 ; Guiyang
+@ Minyue ; -399 ; -99 ; 0.9 ; Fuzhou, Quanzhou
+@ Baiyue ; -399 ; -199 ; 1.5 ; Guangzhou, Nanning, Guilin
+@ Gojoseon ; -399 ; -99 ; 1.5 ; Pyongyang, Gungnae, Seoul
+@ Qin Kingdom ; -299 ; -299 ; 1.4 ; Chang An, Baoji, Tianshui, Hanzhong, Chengdu, Chongqing, Jingzhou, Luoyang, Xiangyang, Yuncheng, Taiyuan
+@ Xiongnu ; -299 ; 100 ; 2.4 ; Hohhot, Datong, Wuwei, Orkhon, Selenge, Kherlen
+@ Donghu ; -299 ; -199 ; 2.0 ; Hulunbuir, Buir Lake, Zhongjing
+@ Yuezhi ; -299 ; -99 ; 1.8 ; Wuwei, Zhangye, Jiuquan, Dunhuang
+@ Wusun ; -299 ; 100 ; 1.8 ; Ili, Issyk Kul, Kulja
+@ Qiang ; -399 ; 400 ; 1.8 ; Xining, Lanzhou, Golmud
+@ Dingling ; -299 ; 300 ; 2.4 ; Baikal, Irkutsk, Sayan
+@ Han Empire ; -199 ; -199 ; 1.5 ; Chang An, Luoyang, Chengdu, Hanzhong, Taiyuan, Chongqing, Tianshui, Kaifeng, Zhengzhou, Anyang, Handan, Wuhan, Xiangyang, Jingzhou, Xuzhou, Nanchang, Jinan
+@ Chu Kingdom ; -199 ; -199 ; 0.9 ; Xuzhou, Qufu
+@ Wu Kingdom ; -199 ; -99 ; 1.0 ; Suzhou, Yangzhou, Nanjing, Hangzhou, Shaoxing
+@ Liang Kingdom ; -199 ; -99 ; 0.8 ; Shangqiu
+@ Huainan ; -199 ; -99 ; 0.9 ; Shouchun, Hefei
+@ Zhao Kingdom ; -199 ; -99 ; 0.9 ; Handan
+@ Dai ; -199 ; -199 ; 0.9 ; Datong
+@ Yan Kingdom ; -199 ; -99 ; 1.0 ; Beijing, Tianjin
+@ Qi Kingdom ; -199 ; -99 ; 1.0 ; Linzi, Jinan, Qingdao
+@ Changsha Kingdom ; -199 ; -99 ; 1.0 ; Changsha
+@ Nanyue ; -199 ; -99 ; 1.6 ; Guangzhou, Nanning, Hanoi, Guilin, Haikou, Hepu
+@ Wiman Joseon ; -199 ; -99 ; 1.3 ; Pyongyang, Seoul
+@ Han ; -99 ; 200 ; 1.5 ; Chang An, Luoyang, Chengdu, Hanzhong, Taiyuan, Chongqing, Tianshui, Kaifeng, Zhengzhou, Anyang, Handan, Wuhan, Xiangyang, Jingzhou, Xuzhou, Nanchang, Jinan, Beijing, Tianjin, Liaoyang, Shenyang, Hefei, Nanjing, Suzhou, Hangzhou, Shaoxing, Fuzhou, Changsha, Guangzhou, Nanning, Hanoi, Guilin, Hepu, Guiyang, Kunming, Wuwei, Zhangye, Jiuquan, Dunhuang, Lanzhou, Xining, Jinan, Qingdao, Qufu, Yangzhou, Quanzhou, Datong, Hohhot, Yinchuan, Dali, Haikou, Zhangjiakou, Lelang
+@ Four Commanderies ; -99 ; 0 ; 1.2 ; Lelang, Daebang
+@ Dayuan ; -99 ; 100 ; 1.0 ; Fergana, Kokand, Andijan, Osh
+@ Kangju ; -99 ; 400 ; 2.0 ; Turkestan, Tashkent, Sygnak, Otrar
+@ Mahan ; -99 ; 300 ; 1.2 ; Jeonju, Gongju, Seoul
+@ Jinhan ; -99 ; 300 ; 0.9 ; Gyeongju, Daegu
+@ Byeonhan ; -99 ; 100 ; 0.8 ; Gimhae, Busan
+@ Buyeo ; -99 ; 400 ; 1.4 ; Songhua Buyeo, Jilin, Changchun
+@ Okjeo ; -99 ; 400 ; 0.9 ; Hamhung
+@ Dongye ; -99 ; 300 ; 0.8 ; Dongye
+@ Wuhuan ; -99 ; 300 ; 1.5 ; Zhongjing, Lin Huang Fu
+@ Xianbei ; 0 ; 300 ; 2.4 ; Hulunbuir, Buir Lake, Zhongjing, Lin Huang Fu, Hohhot, Orkhon
+@ Goguryeo ; 0 ; 600 ; 1.3 ; Gungnae, Pyongyang, Liaoyang, Shenyang, Hamhung, Seoul, Kaesong
+@ Baekje ; 0 ; 700 ; 1.0 ; Hanseong, Wirye, Gongju, Sabi, Jeonju, Gwangju
+@ Silla ; 0 ; 700 ; 1.0 ; Gyeongju, Daegu, Andong
+@ Gaya ; 100 ; 600 ; 0.8 ; Gimhae, Busan
+@ Wa ; 0 ; 200 ; 1.5 ; Fukuoka, Nagasaki, Izumo, Nara, Osaka
+@ Funan ; 100 ; 600 ; 1.6 ; Oc Eo, Phnom Penh, Saigon
+@ Lin Yi ; 200 ; 700 ; 1.3 ; Hue, Danang
+@ Northern Xiongnu ; 100 ; 100 ; 1.8 ; Hami, Dzungaria, Beshbalik, Altay
+@ Southern Xiongnu ; 100 ; 300 ; 1.2 ; Lishi, Hohhot, Yinchuan
+@ Tibet Yarlung ; 100 ; 600 ; 1.4 ; Yarlung, Lhasa
+@ Zhangzhung ; 100 ; 700 ; 2.0 ; Zhangzhung Khyunglung, Tholing
+# --- 200-300
+@ Cao Wei ; 200 ; 300 ; 1.5 ; Luoyang, Kaifeng, Xuzhou, Taiyuan, Handan, Beijing, Chang An, Tianshui, Lanzhou, Wuwei, Jinan
+@ Shu Han ; 200 ; 300 ; 1.5 ; Chengdu, Chongqing, Hanzhong, Kunming
+@ Eastern Wu ; 200 ; 300 ; 1.5 ; Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Guangzhou, Nanchang, Fuzhou, Hanoi
+@ Gongsun ; 200 ; 200 ; 1.0 ; Liaoyang, Shenyang
+@ Yuan Shao ; 200 ; 200 ; 1.2 ; Handan, Beijing, Jinan
+@ Sun Quan ; 200 ; 200 ; 1.3 ; Suzhou, Nanjing, Nanchang, Hangzhou
+@ Han Empire ; 200 ; 200 ; 1.2 ; Luoyang, Chang An, Kaifeng
+@ Jin Dynasty ; 300 ; 400 ; 1.5 ; Luoyang, Chang An, Kaifeng, Taiyuan, Handan, Beijing, Jinan, Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Chengdu, Chongqing, Xiangyang, Jingzhou, Nanchang, Fuzhou, Guangzhou
+@ Han-Zhao ; 300 ; 300 ; 1.0 ; Lishi
+@ Cheng-Han ; 300 ; 300 ; 1.0 ; Chengdu
+@ Murong ; 300 ; 400 ; 1.1 ; Liaoyang, Longcheng
+@ Tuoba ; 300 ; 400 ; 1.4 ; Shengle, Hohhot, Datong
+@ Duan ; 300 ; 300 ; 0.9 ; Zhangjiakou
+@ Yuwen ; 300 ; 300 ; 0.9 ; Zhongjing
+@ Tufa ; 300 ; 400 ; 1.0 ; Wuwei, Lanzhou
+@ Tuyuhun ; 300 ; 600 ; 2.2 ; Xining, Golmud
+# --- 400-600
+@ Eastern Jin ; 400 ; 400 ; 1.6 ; Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Chengdu, Chongqing, Xiangyang, Jingzhou, Nanchang, Fuzhou, Guangzhou, Hanoi, Nanning, Guilin, Yangzhou, Hefei, Xuzhou, Shaoxing, Ningbo
+@ Northern Wei ; 400 ; 500 ; 1.5 ; Pingcheng, Datong, Luoyang, Taiyuan, Handan, Kaifeng, Zhengzhou, Beijing, Jinan, Chang An, Tianshui, Lanzhou, Xuzhou, Anyang, Hohhot, Yinchuan, Zhangjiakou, Baoji, Hanzhong
+@ Later Yan ; 400 ; 400 ; 1.2 ; Longcheng, Zhengzhou, Handan, Beijing
+@ Later Qin ; 400 ; 400 ; 1.4 ; Chang An, Baoji, Luoyang, Taiyuan
+@ Western Qin ; 400 ; 400 ; 1.0 ; Lanzhou, Tianshui
+@ Later Liang ; 400 ; 400 ; 1.2 ; Wuwei
+@ Southern Liang ; 400 ; 400 ; 1.0 ; Xining
+@ Northern Liang ; 400 ; 400 ; 1.0 ; Zhangye, Jiuquan
+@ Western Liang ; 400 ; 400 ; 0.9 ; Dunhuang
+@ Xia ; 400 ; 400 ; 1.1 ; Tongwancheng, Yinchuan
+@ Southern Yan ; 400 ; 400 ; 0.9 ; Qingzhou, Jinan
+@ Later Yan Liaoxi ; 400 ; 400 ; 0.9 ; Longcheng
+@ Rouran ; 400 ; 600 ; 2.8 ; Orkhon, Selenge, Kherlen, Hulunbuir, Altay, Hami
+@ Liu Song ; 500 ; 500 ; 1.5 ; Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Chengdu, Chongqing, Xiangyang, Jingzhou, Nanchang, Fuzhou, Guangzhou, Hanoi, Yangzhou, Hefei, Xuzhou, Shaoxing, Ningbo
+@ Southern Liang ; 500 ; 600 ; 1.5 ; Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Chengdu, Chongqing, Xiangyang, Jingzhou, Nanchang, Fuzhou, Guangzhou, Hanoi
+@ Chen ; 600 ; 600 ; 1.5 ; Nanjing, Suzhou, Hangzhou, Wuhan, Changsha, Nanchang, Fuzhou, Guangzhou
+@ Western Wei ; 500 ; 600 ; 1.4 ; Chang An, Baoji, Tianshui, Hanzhong, Chengdu, Chongqing
+@ Eastern Wei ; 500 ; 600 ; 1.4 ; Kaifeng, Taiyuan, Handan, Anyang, Jinan, Beijing
+@ Gaochang ; 500 ; 600 ; 0.8 ; Turfan
+@ Khotan ; -99 ; 1000 ; 0.9 ; Khotan
+@ Kucha ; -99 ; 700 ; 0.9 ; Kucha, Aksu
+@ Shule ; -99 ; 700 ; 0.9 ; Kashgar
+@ Khitan ; 500 ; 900 ; 1.1 ; Lin Huang Fu
+@ Xi ; 500 ; 700 ; 0.9 ; Zhongjing
+@ Mohe ; 500 ; 1100 ; 2.4 ; Mudanjiang, Harbin, Ussuri, Amur
+@ Shiwei ; 500 ; 800 ; 2.0 ; Hulunbuir, Qiqihar
+@ Tiele ; 500 ; 600 ; 2.4 ; Tuul, Selenge, Baikal
+@ Kurykan ; 500 ; 900 ; 1.6 ; Baikal
+@ Kyrgyz ; 400 ; 1200 ; 1.6 ; Minusinsk, Abakan, Tuva Kyzyl
+# --- 600 to 900
+@ Sui Dynasty ; 600 ; 600 ; 1.5 ; Chang An, Luoyang, Nanjing, Chengdu, Taiyuan, Kaifeng, Beijing, Handan, Wuhan, Changsha, Suzhou, Hangzhou, Guangzhou, Hanoi, Xiangyang, Hanzhong, Tianshui, Lanzhou, Wuwei, Jinan, Qingdao, Xuzhou, Nanchang, Fuzhou, Chongqing, Yinchuan, Datong
+@ Eastern Turkic Khaganate ; 600 ; 700 ; 2.6 ; Orkhon, Selenge, Kherlen, Hulunbuir, Hohhot, Baikal, Tuul, Altay, Hami
+@ Western Turkic Khaganate ; 600 ; 700 ; 2.6 ; Ili, Issyk Kul, Semirechye Suyab, Tashkent, Taraz, Almalik, Kulja
+@ Tang Dynasty ; 700 ; 900 ; 1.5 ; Chang An, Luoyang, Nanjing, Chengdu, Taiyuan, Kaifeng, Beijing, Handan, Wuhan, Changsha, Suzhou, Hangzhou, Guangzhou, Hanoi, Xiangyang, Hanzhong, Tianshui, Lanzhou, Wuwei, Jinan, Qingdao, Xuzhou, Nanchang, Fuzhou, Chongqing, Yinchuan, Datong, Anyang, Kunming, Guilin, Nanning, Guiyang, Hami, Turfan, Kucha, Dunhuang
+@ Tibetan Empire ; 700 ; 800 ; 3.0 ; Lhasa, Yarlung, Golmud, Xining, Shigatse, Khotan, Kashgar, Dunhuang, Tholing, Leh
+@ Second Turkic Khaganate ; 700 ; 700 ; 2.6 ; Orkhon, Selenge, Kherlen, Hulunbuir, Hohhot, Baikal, Tuul, Altay
+@ Turgesh ; 700 ; 700 ; 1.6 ; Ili, Issyk Kul, Semirechye Suyab, Taraz, Almalik, Kulja
+@ Balhae ; 700 ; 900 ; 1.4 ; Dongmou, Ning An, Mudanjiang, Jilin, Changchun, Hamhung
+@ Unified Silla ; 700 ; 900 ; 1.1 ; Gyeongju, Daegu, Andong, Gwangju, Jeonju, Gongju, Seoul, Pyongyang
+@ Nara Japan ; 700 ; 900 ; 1.0 ; Nara, Kyoto, Osaka, Nagoya, Kofu, Kamakura, Tokyo, Kanazawa, Hiroshima, Matsue, Fukuoka, Kumamoto, Matsuyama, Kochi, Takamatsu, Yamaguchi, Shizuoka, Mito, Chiba, Utsunomiya, Niigata, Kagoshima, Nagasaki
+@ Heian Japan ; 900 ; 1100 ; 1.0 ; Nara, Kyoto, Osaka, Nagoya, Kofu, Kamakura, Tokyo, Kanazawa, Hiroshima, Matsue, Fukuoka, Kumamoto, Matsuyama, Kochi, Takamatsu, Yamaguchi, Shizuoka, Mito, Chiba, Utsunomiya, Niigata, Kagoshima, Nagasaki
+@ Emishi ; 700 ; 900 ; 1.3 ; Sendai, Morioka, Akita
+@ Nanzhao ; 800 ; 900 ; 1.4 ; Dali, Kunming
+@ Uyghur Khaganate ; 800 ; 800 ; 2.6 ; Ordu Baliq, Orkhon, Selenge, Kherlen, Tuul, Hovd, Altay
+@ Karluks ; 800 ; 900 ; 1.8 ; Ili, Semirechye Suyab, Taraz, Almalik, Kulja
+@ Ryukyu ; 900 ; 1492 ; 0.8 ; Shuri
+@ Ainu ; 700 ; 1492 ; 2.2 ; Sapporo, Hakodate, Sakhalin
+# --- 900 to 1200
+@ Five Dynasties ; 900 ; 900 ; 1.4 ; Kaifeng, Luoyang, Taiyuan, Handan, Jinan, Xuzhou, Chang An, Baoji, Zhengzhou, Anyang, Datong
+@ Wu ; 900 ; 900 ; 1.0 ; Yangzhou, Nanjing, Hefei, Suzhou, Nanchang
+@ Wuyue ; 900 ; 1000 ; 0.9 ; Hangzhou, Shaoxing, Ningbo, Wenzhou
+@ Min ; 900 ; 900 ; 0.9 ; Fuzhou, Quanzhou
+@ Ma Chu ; 900 ; 900 ; 1.2 ; Changsha, Guilin
+@ Southern Han ; 900 ; 900 ; 1.3 ; Guangzhou, Nanning, Haikou
+@ Former Shu ; 900 ; 900 ; 1.4 ; Chengdu, Chongqing, Hanzhong
+@ Jingnan ; 900 ; 900 ; 0.8 ; Jingzhou
+@ Guiyi Circuit ; 900 ; 1000 ; 1.0 ; Dunhuang, Jiuquan
+@ Ganzhou Uyghurs ; 900 ; 1000 ; 0.9 ; Ganzhou, Zhangye
+@ Qocho ; 900 ; 1200 ; 1.0 ; Turfan, Beshbalik
+@ Khotan Kingdom ; 900 ; 900 ; 0.9 ; Khotan
+@ Dali Kingdom ; 900 ; 1200 ; 1.4 ; Dali, Kunming
+@ Liao Dynasty ; 900 ; 1100 ; 1.8 ; Lin Huang Fu, Zhongjing, Beijing, Datong, Liaoyang, Shenyang, Shangjing, Jilin, Changchun, Hohhot, Zhangjiakou, Hulunbuir, Harbin
+@ Later Baekje ; 900 ; 900 ; 0.8 ; Jeonju, Gwangju
+@ Taebong ; 900 ; 900 ; 0.8 ; Cheorwon, Kaesong
+@ Silla Remnant ; 900 ; 900 ; 0.8 ; Gyeongju, Daegu
+@ Dai Viet ; 900 ; 1492 ; 0.9 ; Thang Long, Hoa Lu, Thanh Hoa, Vinh, Tonkin Delta
+@ Champa ; 700 ; 1492 ; 1.0 ; Champa Indrapura, Vijaya, Danang
+@ Khmer Empire ; 800 ; 1400 ; 1.8 ; Angkor, Phnom Penh, Wat Phu, Sambor Prei Kuk, Lopburi, Kampong Cham
+@ Dvaravati ; 500 ; 1000 ; 1.3 ; Dvaravati Nakhon Pathom, Lopburi, Ayutthaya
+@ Pyu ; 400 ; 900 ; 1.5 ; Sriksetra, Beikthano, Halin, Prome
+@ Mon ; 900 ; 1400 ; 1.0 ; Thaton, Pegu, Martaban
+@ Pagan ; 900 ; 1300 ; 1.4 ; Pagan, Mandalay, Kyaukse, Shwebo
+@ Srivijaya ; 700 ; 1300 ; 1.6 ; Palembang, Srivijaya Jambi, Kedah, Chaiya, Nakhon Si Thammarat
+@ Mataram ; 700 ; 1000 ; 1.1 ; Yogyakarta, Borobudur, Medang Kediri
+@ Kediri ; 1100 ; 1300 ; 1.1 ; Medang Kediri
+@ Hariphunchai ; 800 ; 1300 ; 0.8 ; Lamphun
+@ Jurchen Jin ; 1100 ; 1200 ; 1.8 ; Shangjing, Harbin, Mudanjiang, Changchun, Jilin, Shenyang, Liaoyang, Beijing, Datong, Taiyuan, Kaifeng, Jinan, Handan, Anyang, Xuzhou, Zhengzhou, Luoyang, Chang An, Zhangjiakou, Lin Huang Fu, Hohhot
+@ Northern Song ; 1000 ; 1100 ; 1.5 ; Kaifeng, Luoyang, Chang An, Chengdu, Hangzhou, Nanjing, Wuhan, Changsha, Suzhou, Taiyuan, Handan, Jinan, Xuzhou, Guangzhou, Fuzhou, Nanchang, Hefei, Zhengzhou, Anyang, Chongqing, Hanzhong, Tianshui, Lanzhou, Guilin, Nanning, Guiyang, Xiangyang, Jingzhou, Yangzhou, Quanzhou, Ningbo, Shaoxing, Wenzhou
+@ Western Xia ; 1000 ; 1279 ; 1.6 ; Yinchuan, Wuwei, Zhangye, Ganzhou, Jiuquan, Dunhuang, Tongwancheng, Xining
+@ Goryeo ; 1000 ; 1400 ; 1.1 ; Kaesong, Pyongyang, Seoul, Gyeongju, Daegu, Jeonju, Gwangju, Gongju, Hamhung, Andong
+@ Jurchens ; 1000 ; 1100 ; 2.0 ; Harbin, Mudanjiang, Ussuri, Amur, Changchun, Jilin
+@ Kara-Khitan ; 1100 ; 1200 ; 2.0 ; Balasagun, Semirechye Suyab, Kashgar, Khotan, Almalik, Taraz
+@ Keraites ; 1000 ; 1200 ; 1.8 ; Orkhon, Tuul
+@ Naimans ; 1000 ; 1200 ; 2.0 ; Hovd, Altay, Dzungaria
+@ Merkits ; 1000 ; 1200 ; 1.6 ; Selenge, Baikal
+@ Tatars ; 1000 ; 1200 ; 1.6 ; Buir Lake, Hulunbuir
+@ Khamag Mongol ; 1000 ; 1200 ; 1.8 ; Onon, Kherlen, Burkhan Khaldun
+@ Oirats ; 1000 ; 1300 ; 1.8 ; Sayan, Tuva Kyzyl, Hovd
+@ Southern Song ; 1200 ; 1279 ; 1.5 ; Hangzhou, Nanjing, Suzhou, Wuhan, Changsha, Chengdu, Chongqing, Xiangyang, Jingzhou, Nanchang, Fuzhou, Guangzhou, Hanoi, Yangzhou, Hefei, Shaoxing, Ningbo, Guilin, Nanning, Guiyang, Quanzhou, Wenzhou, Hanzhong
+@ Kamakura Japan ; 1200 ; 1300 ; 1.0 ; Kamakura, Kyoto, Nara, Osaka, Nagoya, Fukuoka, Hiraizumi
+@ Mongol Empire ; 1200 ; 1200 ; 2.5 ; Onon, Kherlen, Burkhan Khaldun, Orkhon, Tuul, Selenge, Hovd
+@ Sakya ; 1200 ; 1400 ; 1.3 ; Sakya, Shigatse, Lhasa
+@ Guge ; 1000 ; 1492 ; 1.4 ; Tholing
+# --- 1279 to 1492
+@ Yuan Dynasty ; 1279 ; 1300 ; 2.0 ; Dadu, Karakorum, Shangdu, Taiyuan, Chang An, Luoyang, Kaifeng, Jinan, Nanjing, Hangzhou, Suzhou, Wuhan, Changsha, Chengdu, Chongqing, Kunming, Dali, Guangzhou, Fuzhou, Guilin, Nanning, Hefei, Nanchang, Lanzhou, Wuwei, Yinchuan, Liaoyang, Shenyang, Jilin, Harbin, Hulunbuir, Orkhon, Selenge, Hohhot, Datong, Xiangyang, Jingzhou, Xining, Dunhuang, Hami, Tianshui, Zhangye, Lhasa, Sakya, Shigatse, Xuzhou, Anyang, Handan, Hanzhong, Quanzhou, Ningbo, Guiyang, Yangzhou, Qingdao, Zhangjiakou, Wenzhou, Shaoxing
+@ Kaidu Khanate ; 1279 ; 1300 ; 2.0 ; Almalik, Kashgar, Kulja, Dzungaria, Beshbalik, Issyk Kul, Taraz, Ili
+@ Goryeo Vassal ; 1279 ; 1300 ; 1.0 ; Kaesong, Seoul, Gyeongju, Daegu, Jeonju, Gwangju, Gongju, Hamhung, Andong, Pyongyang
+@ Joseon ; 1400 ; 1492 ; 1.1 ; Seoul, Kaesong, Pyongyang, Gyeongju, Daegu, Jeonju, Gwangju, Gongju, Hamhung, Andong, Busan
+@ Ming Dynasty ; 1400 ; 1492 ; 1.5 ; Nanjing, Beijing, Chang An, Luoyang, Kaifeng, Jinan, Hangzhou, Suzhou, Wuhan, Changsha, Chengdu, Chongqing, Kunming, Dali, Guangzhou, Fuzhou, Guilin, Nanning, Hefei, Nanchang, Lanzhou, Wuwei, Yinchuan, Liaoyang, Shenyang, Datong, Xiangyang, Jingzhou, Xining, Tianshui, Taiyuan, Xuzhou, Anyang, Handan, Hanzhong, Quanzhou, Ningbo, Guiyang, Yangzhou, Qingdao, Zhangjiakou, Wenzhou, Shaoxing, Haikou, Tianjin, Zhengzhou, Hohhot
+@ Northern Yuan ; 1400 ; 1492 ; 2.4 ; Karakorum, Orkhon, Tuul, Kherlen, Onon, Hulunbuir, Shangdu, Hohhot
+@ Oirat Confederation ; 1400 ; 1492 ; 2.4 ; Hovd, Altay, Dzungaria, Uliastai, Sayan
+@ Jianzhou Jurchens ; 1400 ; 1492 ; 1.6 ; Jianzhou, Hetuala, Mudanjiang, Harbin, Yanji, Jilin
+@ Haixi Jurchens ; 1400 ; 1492 ; 1.4 ; Harbin, Qiqihar, Changchun
+@ Moghulistan ; 1400 ; 1492 ; 2.2 ; Almalik, Kulja, Issyk Kul, Kashgar, Yarkand, Aksu, Turfan, Beshbalik
+@ Hami ; 1400 ; 1492 ; 0.9 ; Hami
+@ Turfan Khanate ; 1492 ; 1492 ; 1.2 ; Turfan, Beshbalik, Hami
+@ Muromachi Japan ; 1400 ; 1492 ; 1.0 ; Kyoto, Nara, Osaka, Nagoya, Kofu, Kamakura, Tokyo, Kanazawa, Hiroshima, Matsue, Fukuoka, Kumamoto, Matsuyama, Kochi, Takamatsu, Yamaguchi, Shizuoka, Mito, Chiba, Utsunomiya, Niigata, Kagoshima, Nagasaki, Sendai, Morioka, Akita
+@ Ryukyu Kingdom ; 1492 ; 1492 ; 0.8 ; Shuri
+@ Chuzan ; 1400 ; 1400 ; 0.5 ; Shuri
+@ Ayutthaya ; 1400 ; 1492 ; 1.4 ; Ayutthaya, Lopburi, Sukhothai, Nakhon Si Thammarat, Dvaravati Nakhon Pathom
+@ Sukhothai ; 1279 ; 1400 ; 1.1 ; Sukhothai
+@ Lanna ; 1300 ; 1492 ; 1.2 ; Chiang Mai, Chiang Saen, Nan, Phayao, Lamphun
+@ Lan Xang ; 1400 ; 1492 ; 1.4 ; Luang Prabang, Vientiane, Xieng Khouang
+@ Ava ; 1400 ; 1492 ; 1.3 ; Ava, Mandalay, Prome, Shwebo, Kyaukse
+@ Hanthawaddy ; 1400 ; 1492 ; 1.1 ; Pegu, Martaban, Thaton, Yangon
+@ Toungoo ; 1400 ; 1492 ; 0.8 ; Taungoo
+@ Mrauk U ; 1400 ; 1492 ; 1.0 ; Arakan Mrauk U, Vesali
+@ Cambodia ; 1400 ; 1492 ; 1.4 ; Phnom Penh, Longvek, Kampong Cham, Angkor
+@ Champa Rump ; 1492 ; 1492 ; 0.7 ; Panduranga
+@ Majapahit ; 1300 ; 1492 ; 1.8 ; Majapahit Trowulan, Surabaya, Cirebon, Bali Denpasar, Lombok, Banjarmasin, Palembang
+@ Malacca Sultanate ; 1400 ; 1492 ; 1.4 ; Malacca, Singapore, Kedah, Pattani
+@ Samudera Pasai ; 1279 ; 1492 ; 0.8 ; Pasai, Aceh
+@ Brunei ; 1400 ; 1492 ; 0.8 ; Brunei
+@ Sulu ; 1400 ; 1492 ; 0.7 ; Sulu
+@ Demak ; 1492 ; 1492 ; 0.8 ; Demak
+@ Rinpungpa ; 1492 ; 1492 ; 1.4 ; Shigatse, Lhasa
+@ Phagmodrupa ; 1400 ; 1400 ; 1.4 ; Neydong, Lhasa, Shigatse
+Linhu and Loufan ; 111.5 ; 39.5 ; -499 ; -299 ; 1.5
+Rong ; 106.0 ; 36.0 ; -499 ; -299 ; 1.8
+Di of the Hanzhong ; 106.0 ; 33.5 ; -499 ; -299 ; 1.2
+Xianyun ; 110.0 ; 38.0 ; -499 ; -299 ; 1.3
+Kirata ; 88.0 ; 27.5 ; -499 ; 700 ; 1.8
+Naga ; 94.5 ; 26.0 ; -499 ; 1500 ; 1.2
+Khasi ; 91.5 ; 25.5 ; -499 ; 1500 ; 0.8
+Garo ; 90.5 ; 25.5 ; -499 ; 1500 ; 0.8
+Bodo-Kachari ; 91.8 ; 26.5 ; -499 ; 1100 ; 1.4
+Mizo and Kuki ; 93.5 ; 23.5 ; -499 ; 1500 ; 1.2
+Santal ; 87.0 ; 23.5 ; -499 ; 1500 ; 1.6
+Munda ; 85.0 ; 22.5 ; -499 ; 1500 ; 1.6
+Gond ; 80.5 ; 21.0 ; -499 ; 1500 ; 2.0
+Bhil ; 74.0 ; 22.5 ; -499 ; 1500 ; 1.5
+Toda and Kota ; 76.7 ; 11.5 ; -499 ; 1500 ; 0.8
+Tulu ; 75.0 ; 13.0 ; -499 ; 1500 ; 0.7
+Andamanese ; 92.8 ; 12.0 ; -499 ; 1500 ; 0.8
+Nicobarese ; 93.8 ; 8.0 ; -499 ; 1500 ; 0.5
+Sentinelese ; 92.3 ; 11.5 ; -499 ; 1500 ; 0.3
+Vedda ; 81.0 ; 7.5 ; -499 ; 1500 ; 1.0
+Bhutia and Lepcha ; 88.8 ; 27.4 ; -499 ; 1500 ; 0.8
+Shina and Burusho ; 74.0 ; 36.0 ; -499 ; 1500 ; 1.4
+Kalash and Nuristani ; 71.0 ; 35.5 ; -499 ; 1500 ; 1.0
+Baloch ; 62.0 ; 28.0 ; 400 ; 1500 ; 2.5
+Brahui ; 66.6 ; 29.0 ; -499 ; 1500 ; 1.2
+Pashtun ; 68.0 ; 32.5 ; 100 ; 1500 ; 2.0
+Tajik and Pamiri ; 72.0 ; 38.0 ; -499 ; 1500 ; 1.8
+Ainu of Hokkaido ; 142.0 ; 43.5 ; -499 ; 700 ; 2.0
+Jomon ; 140.0 ; 38.0 ; -499 ; 200 ; 3.0
+Yayoi ; 134.0 ; 34.5 ; -499 ; 200 ; 2.5
+Hayato ; 130.7 ; 31.5 ; -99 ; 800 ; 0.9
+Kumaso ; 131.0 ; 32.0 ; -99 ; 800 ; 0.9
+Mongols of the Forest ; 112.0 ; 52.0 ; -499 ; 1100 ; 2.0
+Tungus ; 126.0 ; 50.0 ; -499 ; 1100 ; 3.0
+Sushen ; 130.0 ; 47.0 ; -499 ; 400 ; 2.0
+Gaoli and Mo ; 128.0 ; 43.0 ; -499 ; 200 ; 1.8
+Pazyryk ; 88.0 ; 50.0 ; -499 ; -99 ; 1.5
+Wusun of the Altai ; 90.0 ; 47.0 ; -499 ; -299 ; 1.5
+Agafirsi ; 72.0 ; 47.0 ; -499 ; -99 ; 1.5
+Argippaei ; 65.0 ; 54.0 ; -499 ; 100 ; 2.0
+Issedones ; 78.0 ; 45.0 ; -499 ; 100 ; 2.0
+Arimaspi ; 60.0 ; 56.0 ; -499 ; -99 ; 1.5
+Sakas of the Kunlun ; 83.0 ; 36.0 ; -499 ; 100 ; 1.8
+Yanqi ; 86.57 ; 42.06 ; -99 ; 700 ; 0.9
+Loulan ; 89.5 ; 40.5 ; -99 ; 500 ; 1.0
+Kroraina Cheshi ; 89.2 ; 43.0 ; -99 ; 500 ; 0.8
+Yarkand Suoju ; 77.24 ; 38.41 ; -99 ; 700 ; 0.8

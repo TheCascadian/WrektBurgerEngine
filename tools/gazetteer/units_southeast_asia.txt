@@ -1,0 +1,71 @@
+# Southeast Asia, India, Sri Lanka and Nepal: the states with real borders, from the provinces of Natural Earth (public domain). Years are astronomical (0 = 1 BCE). ISO3@w/s/e/n = the part of the country inside the box (degrees). The later line wins where two overlap.
+# Sources: Coedes The Indianized States of Southeast Asia, Cambridge History of Southeast Asia vol.1, Schwartzberg Historical Atlas of South Asia, Majumdar History and Culture of the Indian People, Tarling Cambridge History vol.1, Wikipedia articles of each state (territorial extent sections).
+# --- mainland Southeast Asia
+U Funan ; 100 ; 500 ; KHM, VNM@104/8.3/107.5/11.5, THA@99/9/103/14.5
+U Champa ; 400 ; 1492 ; VNM@107/10.8/109.5/18
+U Chenla ; 600 ; 700 ; KHM, LAO@104/14/106/17
+U Dvaravati ; 600 ; 900 ; THA@99/13/102.5/17.5
+U Pyu ; 100 ; 800 ; MMR@94/19/96.5/23
+U Khmer Empire ; 800 ; 1279 ; KHM, THA@100/12/105.7/17.5, LAO@103.5/14/107/18.5, VNM@104/9/107.5/12
+U Khmer Empire ; 1100 ; 1200 ; THA@99/9/105.7/18.5, LAO@103/14/107.5/18.5, VNM@104/9/107.5/12
+U Pagan Empire ; 1000 ; 1279 ; MMR@93/16/99/24
+U Pagan Empire ; 1100 ; 1279 ; MMR@93/15/98.7/24
+U Dai Viet ; 1000 ; 1492 ; VNM@103.5/17/108/23.4
+U Dai Viet ; 1400 ; 1492 ; VNM@103.5/15.3/108.5/23.4
+U Lan Na ; 1279 ; 1492 ; THA@98/17.5/101.2/20.4
+U Sukhothai Kingdom ; 1279 ; 1400 ; THA@98.5/14.5/101.5/18
+U Ayutthaya Kingdom ; 1400 ; 1492 ; THA@99/12/102.5/17.5, THA:Nakhon Si Thammarat
+U Lan Xang ; 1400 ; 1492 ; LAO@100/14.5/107.5/21
+U Ayutthaya Kingdom ; 1492 ; 1492 ; THA@99/8/102.5/17.5
+U Khmer Empire ; 1400 ; 1492 ; KHM, VNM@104/9/107/11.5, THA@102/12/105.7/15
+U Toungoo Kingdom ; 1492 ; 1492 ; MMR@95/17/97/20
+U Ava Kingdom ; 1400 ; 1492 ; MMR@94/19/97.5/23.5
+U Hanthawaddy Kingdom ; 1400 ; 1492 ; MMR@94/15.8/98/19
+U Kingdom of Mrauk-U ; 1400 ; 1492 ; MMR@92/18/94.5/21.5
+# --- maritime Southeast Asia
+U Srivijaya ; 700 ; 1279 ; IDN@100/-5/108/4, MYS@99/1.2/105/6.5
+U Medang Kingdom ; 800 ; 1000 ; IDN@108/-8.8/115/-6
+U Kediri ; 1100 ; 1279 ; IDN@110/-8.5/115/-6.5
+U Singhasari ; 1279 ; 1300 ; IDN@110/-8.8/115/-6.5
+U Majapahit ; 1300 ; 1400 ; IDN@108/-8.8/115.6/-6
+U Majapahit ; 1400 ; 1492 ; IDN@108/-9/116.5/-6
+U Sultanate of Malacca ; 1400 ; 1492 ; MYS@99/1.2/104.5/5
+U Sultanate of Aceh ; 1492 ; 1492 ; IDN@95/4/98/5.9
+U Sultanate of Brunei ; 1400 ; 1492 ; BRN
+U Sultanate of Sulu ; 1400 ; 1492 ; PHL@119/5/122/6.8
+U Sultanate of Demak ; 1492 ; 1492 ; IDN@109.5/-7.6/111.7/-6.4
+U Kingdom of Butuan ; 1000 ; 1300 ; PHL@125/8/126.2/9.5
+# --- India: the Mauryas to the sultanates
+U Maurya Empire ; -298 ; -298 ; IND@68/18/90/36, PAK, BGD, AFG@60/29/70/37
+U Maurya Empire ; -198 ; -198 ; IND@74/21/91/31, NPL, BGD
+U Chola ; -198 ; 300 ; IND@77/8/80.5/12
+U Pandya Empire ; -298 ; 1300 ; IND@77/8/78.5/10.5
+U Chera ; -298 ; 1100 ; IND@75.5/8/77.5/12
+U Satavahana Empire ; -98 ; 200 ; IND@73/14/84/22
+U Shunga Empire ; -98 ; -98 ; IND@77/22/88/28
+U Kushan Empire ; 100 ; 200 ; PAK, AFG, UZB@64/37/68.5/42, TJK@67/36/72/39, IND@72/25/84/36
+U Gupta Empire ; 400 ; 500 ; IND@69/20/92/35, NPL@80/26.5/88/28.5, BGD, PAK@69/28/75/34
+U Vakataka Dynasty ; 400 ; 500 ; IND@76/18/80/22
+U Pallava Dynasty ; 400 ; 700 ; IND@78/11/80.5/15
+U Chalukya Empire ; 600 ; 700 ; IND@74/14/78/20
+U Pala Empire ; 800 ; 1100 ; IND@85/22/90/27, BGD
+U Pratihara Empire ; 800 ; 900 ; IND@72/22/82/29
+U Rashtrakuta Empire ; 800 ; 900 ; IND@72/13/80/24
+U Chola Empire ; 900 ; 1100 ; IND@76/8/87/17, LKA@79/8.5/82/10
+U Chola Empire ; 1000 ; 1100 ; IND@76/8/87/18, LKA
+U Chalukya Dynasty ; 1000 ; 1100 ; IND@74/14/79/20
+U Ghaznavids ; 1000 ; 1100 ; AFG, PAK@66/28/75/34, IND@71/29/77/34
+U Hoysala Empire ; 1200 ; 1279 ; IND@74/12/77.5/15
+U Kakatiya Dynasty ; 1200 ; 1300 ; IND@78/16/82/19.5
+U Yadava Dynasty ; 1200 ; 1279 ; IND@73/17/77/21
+U Delhi Sultanate ; 1200 ; 1200 ; IND@70/22/88/32, PAK@68/24/75/34
+U Delhi Sultanate ; 1300 ; 1300 ; IND@68/20/90/32.5, PAK@67/24/75/34, BGD
+U Delhi Sultanate ; 1400 ; 1400 ; IND@74.5/27/80.5/32, PAK@71/28/75/32
+U Jaunpur Sultanate ; 1400 ; 1492 ; IND@80/24/85/28
+U Malwa Sultanate ; 1400 ; 1492 ; IND@74/21/80/25
+U Kingdom of Mewar ; 1400 ; 1492 ; IND@73/23/75/26
+U Kashmir Sultanate ; 1400 ; 1492 ; IND@73.5/32.5/76/35
+U Kingdom of Kandy ; 1400 ; 1492 ; LKA@80/6.5/81.5/8
+U Kingdom of Kotte ; 1400 ; 1492 ; LKA@79.5/6/80.5/8
+U Kingdom of Polonnaruwa ; 1000 ; 1200 ; LKA@80/6.5/82/9
+U Kingdom of Nepal ; 1000 ; 1492 ; NPL

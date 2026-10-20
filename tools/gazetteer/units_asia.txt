@@ -1,0 +1,43 @@
+# China, Korea, Japan, India, Pakistan, Afghanistan and Central Asia, built from the provinces of Natural Earth (public domain; years are astronomical: 0 = 1 BCE). The later line wins where two overlap.
+# Sources: Tan Qixiang Historical Atlas of China (vols 2-8), Schwartzberg Historical Atlas of South Asia, Lee A New History of Korea, Hammond Atlas of the Islamic World, Cambridge History of Early Inner Asia, Wikipedia articles of each state; each realm holds the units that cover its lands on 1 January.
+# --- China, Han to Jin
+U Han Empire ; -198 ; 200 ; CHN:Anhui, CHN:Beijing, CHN:Chongqing, CHN:Fujian, CHN:Gansu, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hebei, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Ningxia, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Shanxi, CHN:Sichuan, CHN:Tianjin, CHN:Zhejiang, CHN:Yunnan
+U Han Empire ; -98 ; 100 ; CHN:Liaoning
+U Jin ; 300 ; 300 ; CHN:Anhui, CHN:Beijing, CHN:Chongqing, CHN:Fujian, CHN:Gansu, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hebei, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Ningxia, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Shanxi, CHN:Sichuan, CHN:Tianjin, CHN:Zhejiang, CHN:Yunnan, CHN:Liaoning
+# --- China, Tang and Song
+U Tang Dynasty ; 700 ; 800 ; CHN:Anhui, CHN:Beijing, CHN:Chongqing, CHN:Fujian, CHN:Gansu, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hebei, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Ningxia, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Shanxi, CHN:Sichuan, CHN:Tianjin, CHN:Zhejiang, CHN:Liaoning
+U Song Dynasty ; 1000 ; 1100 ; CHN:Anhui, CHN:Chongqing, CHN:Fujian, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Sichuan, CHN:Zhejiang, CHN:Hebei, CHN:Shanxi, CHN:Tianjin
+U Liao Dynasty ; 1000 ; 1100 ; CHN:Beijing, CHN:Liaoning, CHN:Jilin, CHN:Inner Mongolia
+U Western Xia ; 1000 ; 1200 ; CHN:Ningxia
+U Western Xia ; 1000 ; 1200 ; CHN:Gansu
+U Jin Dynasty ; 1200 ; 1200 ; CHN:Beijing, CHN:Tianjin, CHN:Hebei, CHN:Shanxi, CHN:Shandong, CHN:Henan, CHN:Liaoning, CHN:Jilin, CHN:Heilongjiang, CHN:Shaanxi, CHN:Anhui, CHN:Jiangsu
+U Southern Song ; 1200 ; 1200 ; CHN:Chongqing, CHN:Fujian, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hubei, CHN:Hunan, CHN:Jiangxi, CHN:Shanghai, CHN:Sichuan, CHN:Zhejiang
+U Dali ; 1000 ; 1200 ; CHN:Yunnan
+U Yuan Dynasty ; 1279 ; 1300 ; CHN:Anhui, CHN:Beijing, CHN:Chongqing, CHN:Fujian, CHN:Gansu, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hebei, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Ningxia, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Shanxi, CHN:Sichuan, CHN:Tianjin, CHN:Zhejiang, CHN:Liaoning, CHN:Jilin, CHN:Heilongjiang, CHN:Yunnan, CHN:Inner Mongolia
+U Ming Dynasty ; 1400 ; 1492 ; CHN:Anhui, CHN:Beijing, CHN:Chongqing, CHN:Fujian, CHN:Gansu, CHN:Guangdong, CHN:Guangxi, CHN:Guizhou, CHN:Hainan, CHN:Hebei, CHN:Henan, CHN:Hubei, CHN:Hunan, CHN:Jiangsu, CHN:Jiangxi, CHN:Ningxia, CHN:Shaanxi, CHN:Shandong, CHN:Shanghai, CHN:Shanxi, CHN:Sichuan, CHN:Tianjin, CHN:Zhejiang, CHN:Liaoning, CHN:Yunnan
+U Tibetan Empire ; 700 ; 800 ; CHN:Tibet, CHN:Qinghai
+U Tibetan Principalities ; 900 ; 900 ; CHN:Tibet, CHN:Qinghai
+U Guiyi Circuit ; 900 ; 900 ; CHN@92/38/100/42
+U Gansu Uyghurs ; 900 ; 900 ; CHN@98/38/102.5/40
+U Kingdom of Khotan ; 900 ; 1000 ; CHN@77/35.5/83/38.5
+U Karakhanids ; 900 ; 900 ; CHN@73/38.5/80/41.5
+U Tibet ; 1000 ; 1492 ; CHN:Tibet
+# --- Korea and Japan
+U Goryeo ; 1000 ; 1300 ; KOR, PRK
+U Joseon ; 1400 ; 1492 ; KOR, PRK
+U Silla ; 700 ; 900 ; KOR
+U Balhae ; 700 ; 900 ; PRK:North Hamgyong, PRK:South Hamgyong, PRK:Ryanggang
+U Heian Japan ; 800 ; 1100 ; JPN@128/30/142.9/41.6
+U Kamakura Japan ; 1200 ; 1300 ; JPN@128/30/142.9/41.6
+U Muromachi Japan ; 1400 ; 1492 ; JPN@128/30/142.9/41.6
+U Ainu ; 700 ; 1492 ; JPN:Hokkaidō
+# --- Central Asia and Mongolia
+U Mongol Empire ; 1200 ; 1200 ; MNG
+U Yuan Dynasty ; 1279 ; 1300 ; MNG
+U Northern Yuan ; 1400 ; 1492 ; MNG
+U Delhi Sultanate ; 1279 ; 1279 ; IND:Delhi, IND:Haryana, IND:Punjab, IND:Uttar Pradesh, IND:Bihar, IND:Rajasthan, IND:Gujarat, IND:Madhya Pradesh, IND:Maharashtra, PAK:Punjab, PAK:Sindh
+U Vijayanagara Empire ; 1400 ; 1492 ; IND:Karnataka, IND:Andhra Pradesh, IND:Tamil Nadu, IND:Kerala
+U Bahmani Sultanate ; 1400 ; 1492 ; IND:Maharashtra, IND:Telangana
+U Delhi Sultanate ; 1492 ; 1492 ; IND:Delhi, IND:Haryana, IND:Punjab, IND:Uttar Pradesh
+U Gujarat Sultanate ; 1400 ; 1492 ; IND:Gujarat
+U Bengal Sultanate ; 1400 ; 1492 ; IND:West Bengal, IND:Tripura

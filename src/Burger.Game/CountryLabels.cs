@@ -85,12 +85,15 @@ public sealed class CountryLabels
     {
         _buildTask = null;   // a layout still running belongs to the map as it was: its result is dropped
         _version++;
+        var swl = System.Diagnostics.Stopwatch.StartNew();
+        bool fromCache = false;
         try
         {
             Label[] labels;
             if (snapshotDate is { } d && _cache.TryGetValue(d, out var cached))
             {
                 // laid out earlier (in the background, or in an earlier run): at once
+                fromCache = true;
                 labels = cached.Select(l => l.Rekeyed(l.Key, l.Locs)).ToArray();
                 if (labels.Any(l => l.Heights.Length != l.Points.Length)) ApplyHeights(labels);
             }
@@ -102,6 +105,7 @@ public sealed class CountryLabels
             _labels.Clear();
             _labels.AddRange(labels);
             _needFull = true;
+            Log.Info($"Country names laid out in {swl.ElapsedMilliseconds} ms ({labels.Length} names, {(fromCache ? "from the cache" : "new")})");
             _lastBuildStartedAt = Raylib.GetTime();
             _dirty = true;
         }
@@ -136,6 +140,7 @@ public sealed class CountryLabels
             _aheadTask = null;
         }
         if (_aheadTask != null || _diskComplete) return;
+        if (tl.FusedGroups.Count > 0) return;   // a game on fused states: the layouts of the other dates belong to the fine states of the start screen
         // first every date quickly (so that all of them show at once soon), then every date in full; the full layouts are kept for the next run
         if (_ahead == null || _ahead.Count == 0)
         {
@@ -289,12 +294,13 @@ public sealed class CountryLabels
     {
         var world = _game.World;
         var map = world.Map;
+        _landNeighbors ??= world.Locations.Select(l => l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray()).ToArray();   // (the neighbours do not change once the map is loaded)
         var locations = new LocationInput[world.Locations.Count];
         foreach (var l in world.Locations)
         {
             // Adjacency and province geometry do not change after map load; only owner/name/capital
             // state is copied here. PixelLocation is likewise immutable after MapLoader finishes.
-            int[] landNeighbors = l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray();
+            int[] landNeighbors = _landNeighbors[l.Index];
             locations[l.Index] = new LocationInput(l.Index, (_game.Exploration.IsCharted(l) ? l.Owner?.Index : null) ?? -1, l.IsWater,
                 l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, landNeighbors);
         }
@@ -983,7 +989,23 @@ public sealed class CountryLabels
         if (sig != _signature) { _signature = sig; MarkDirty(); }
     }
 
-    public void Draw(Camera3D cam, float minScreenFont = 3f)
+    private readonly Dictionary<int, Dictionary<char, float>> _advBySize = new();   // glyph advances by pixel size, kept between frames
+    private float[] _adv = new float[64];
+    private static readonly Dictionary<char, IntPtr> GlyphText = new();
+    private static unsafe sbyte* GlyphZ(char ch)
+    {
+        if (!GlyphText.TryGetValue(ch, out var ptr))
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(ch.ToString());
+            ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(bytes.Length + 1);
+            System.Runtime.InteropServices.Marshal.Copy(bytes, 0, ptr, bytes.Length);
+            System.Runtime.InteropServices.Marshal.WriteByte(ptr, bytes.Length, 0);
+            GlyphText[ch] = ptr;
+        }
+        return (sbyte*)ptr;
+    }
+
+    public unsafe void Draw(Camera3D cam, float minScreenFont = 3f)
     {
         PollChanges();
         RefreshLabels();
@@ -998,6 +1020,7 @@ public sealed class CountryLabels
         // panning. Cache them; sizes are rounded to whole pixels so the cache stays small and bounded.
         Dictionary<char, float>? advCache = null;
         int advCacheSize = 0;
+        var advBySize = _advBySize;
         var forward = Vector3.Normalize(cam.Target - cam.Position);
         foreach (var lb in _labels)
         {
@@ -1062,10 +1085,10 @@ public sealed class CountryLabels
             // glyph advances
             int keySize = (int)Math.Round(fs);
             float kscale = keySize / fs;
-            if (advCacheSize != keySize) { advCache = null; advCacheSize = keySize; }
-            advCache ??= new Dictionary<char, float>();
+            if (advCacheSize != keySize) { if (!advBySize.TryGetValue(keySize, out advCache)) advBySize[keySize] = advCache = new Dictionary<char, float>(); advCacheSize = keySize; }
             float total = 0;
-            var adv = new float[lb.Text.Length];
+            if (_adv.Length < lb.Text.Length) _adv = new float[lb.Text.Length * 2];
+            var adv = _adv;
             for (int i = 0; i < lb.Text.Length; i++)
             {
                 char ch = lb.Text[i];
@@ -1078,7 +1101,7 @@ public sealed class CountryLabels
                 total += adv[i];
             }
             float avail = L * 0.9f;   // a little room at both ends, so neighbouring names do not touch
-            if (total > avail) { float k = avail / total; fs *= k; for (int i = 0; i < adv.Length; i++) adv[i] *= k; total = avail; if (fs < minScreenFont) continue; }
+            if (total > avail) { float k = avail / total; fs *= k; for (int i = 0; i < lb.Text.Length; i++) adv[i] *= k; total = avail; if (fs < minScreenFont) continue; }
             float spacing = lb.Text.Length > 1 ? Math.Clamp((avail - total) / (lb.Text.Length - 1), 0, fs * MaxSpacing) : 0;
             float used = total + spacing * (lb.Text.Length - 1);
             float pos = (L - used) / 2;
@@ -1106,11 +1129,11 @@ public sealed class CountryLabels
                 var d = Vector2.Lerp(tan[k - 1], tan[k], Math.Clamp(t, 0, 1));
                 float rot = MathF.Atan2(d.Y, d.X) * 180f / MathF.PI;
                 var origin = new Vector2(adv[i] / 2, fs / 2);
-                string s = ch.ToString();
-                Raylib.DrawTextPro(font, s, p + new Vector2(so, so), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, s, p + new Vector2(-so * 0.6f, so * 0.6f), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, s, p + new Vector2(so * 0.6f, -so * 0.6f), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, s, p, origin, rot, fs, 0, col);
+                sbyte* z = GlyphZ(ch);   // (the letter as text the library reads as it is: a new string and a copy of it for each of the four draws were most of the garbage of a frame)
+                Raylib.DrawTextPro(font, z, p + new Vector2(so, so), origin, rot, fs, 0, shadow);
+                Raylib.DrawTextPro(font, z, p + new Vector2(-so * 0.6f, so * 0.6f), origin, rot, fs, 0, shadow);
+                Raylib.DrawTextPro(font, z, p + new Vector2(so * 0.6f, -so * 0.6f), origin, rot, fs, 0, shadow);
+                Raylib.DrawTextPro(font, z, p, origin, rot, fs, 0, col);
             }
         }
     }
