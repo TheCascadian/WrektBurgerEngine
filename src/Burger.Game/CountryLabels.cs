@@ -1092,7 +1092,7 @@ public sealed class CountryLabels
             for (int i = 0; i < lb.Text.Length; i++)
             {
                 char ch = lb.Text[i];
-                if (!advCache.TryGetValue(ch, out float a))
+                if (!advCache!.TryGetValue(ch, out float a))
                 {
                     a = Raylib.MeasureTextEx(font, ch.ToString(), keySize, 0).X;
                     advCache[ch] = a;

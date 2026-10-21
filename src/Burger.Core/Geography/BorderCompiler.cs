@@ -61,6 +61,8 @@ public static class BorderCompiler
     }
 
     /// <summary>The text of <c>history/geography/_generated_borders.txt</c>. Same input, same bytes.</summary>
+    /// <param name="set">The border claims.</param>
+    /// <param name="tl">The timeline the claims were read into.</param>
     /// <param name="pieces">Cuts the atoms of an area into pieces joined by real borders. An area that is in several pieces becomes several provinces: the largest keeps the area's name, the others are called name_p2, name_p3 ...; each follows the area's claims.</param>
     public static string Geography(BorderSet set, BorderTimeline tl, Func<string[], List<string[]>>? pieces = null)
     {

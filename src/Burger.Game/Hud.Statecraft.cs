@@ -19,7 +19,6 @@ public sealed partial class Hud
     private float _scH = 800;
     private double _scTax = 0.2, _scLevy = 0.2;
     private ArmyGroup? _scMarshalFor;
-    private Character? _scOwner;
     private readonly HashSet<int> _scConferencesClosed = new();
 
     private void ScResult(string? why, string ok = "")

@@ -142,7 +142,7 @@ public sealed class ModifierSystem
                 long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
                 v += Providers[i](scope, key);
                 System.Threading.Interlocked.Add(ref ProviderTicks[i], System.Diagnostics.Stopwatch.GetTimestamp() - t0);
-                System.Threading.Interlocked.Increment(ref ProviderCalls[i]);
+                System.Threading.Interlocked.Increment(ref ProviderCalls![i]);
             }
             return v;
         }

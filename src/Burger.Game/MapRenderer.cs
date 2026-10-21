@@ -56,7 +56,7 @@ public sealed unsafe class MapRenderer : IDisposable
     private float[] _meshHeights = Array.Empty<float>();
     private int _mw, _mh;
 
-    private int _locMapData, _locLut, _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
+    private int _locLutSize, _locBlockRows, _locMapSize, _locWorldSize, _locAtlasGrid, _locTileScale, _locAtlasTile,
         _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun, _locLodWater, _locLodRiver, _locLodTerrain;
     private int _visibilityVersion = -1;
     // terra incognita: locations being charted right now (index -> progress, negative = still waiting its turn), and the shader switch
@@ -594,7 +594,6 @@ public sealed unsafe class MapRenderer : IDisposable
         _locLodRiver = Raylib.GetShaderLocation(_shader, "lodRiver");
         _locLodTerrain = Raylib.GetShaderLocation(_shader, "lodTerrain");
         _locGlobeRadius = Raylib.GetShaderLocation(_shader, "globeRadius");
-        _locMapData = _locLut = 0;
 
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "seaH"), _map.Settings.SeaLevel / 255f * _map.Settings.HeightScale, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "waveAmp"), 0.3f * 2f / 255f * _map.Settings.HeightScale, ShaderUniformDataType.Float);

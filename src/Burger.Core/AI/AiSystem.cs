@@ -293,7 +293,7 @@ public class AiSystem
 
     /// <summary>
     /// The monthly AI of one country is done in one hour of the month (the first 28 days, by the country's number) instead of all hundreds at the turn of the month: no hitch on the first. Call every hour.
-    /// A project whose AI overrides <see cref="MonthlyTick"/> still gets it once, on day 1.
+    /// A project whose AI overrides <see cref="MonthlyTick()"/> still gets it once, on day 1.
     /// </summary>
     public void MonthlyTickSpread()
     {

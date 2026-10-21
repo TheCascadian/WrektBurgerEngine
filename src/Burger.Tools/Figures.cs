@@ -86,7 +86,7 @@ public static partial class Program
 
         // in every pose of every clip the gear stays on the person: helmet near the head, pack near the chest, rifle within reach of the back
         var rig = soldier.Rig; var pose = rig.RestPose(); var skin = new Matrix4x4[rig.Count];
-        bool close = true; float worst = 0;
+        float worst = 0;
         foreach (var clip in soldier.Clips.Values.Where(c => c.Name != HumanMale.FireProne)) // lying down carries everything a body's length from where it stood
             for (int f = 0; f < 12; f++)
             {

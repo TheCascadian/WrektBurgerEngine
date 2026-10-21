@@ -248,7 +248,6 @@ public sealed partial class Studio
     // =============================================================================================
 
     private string _newName = "MyGame";
-    private int _newTemplate;
     private Task<int>? _creating;
     private string _browsePath = "";
 

@@ -18,7 +18,6 @@ public sealed class ExplorationSystem
     private bool _primed;
     private readonly List<int> _fresh = new();
     private readonly HashSet<int> _scratch = new();
-    private int _lastShips = -1;
 
     /// <summary>Terra incognita is on for this game (chosen when the game starts; turning it off asks for confirmation in the menu).</summary>
     public bool Enabled { get; private set; }

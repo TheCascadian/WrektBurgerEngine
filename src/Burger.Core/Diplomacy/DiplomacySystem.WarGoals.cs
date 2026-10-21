@@ -442,7 +442,7 @@ public sealed partial class DiplomacySystem
         return _enclaves.TryGetValue(c, out var found) ? found : new HashSet<Country>();
     }
 
-    /// <summary>The state is an enclave: every neighbour of it belongs to <paramref name="by"/> or its side.</summary>
+    /// <summary>The state is an enclave: every neighbour of it belongs to <paramref name="bySide"/> or its side.</summary>
     public bool IsEnclaveOf(State s, ICollection<Country> bySide)
     {
         bool any = false;

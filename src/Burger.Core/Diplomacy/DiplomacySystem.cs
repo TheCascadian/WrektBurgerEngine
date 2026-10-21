@@ -108,7 +108,7 @@ public sealed partial class DiplomacySystem
         => IsVisible(a, actor, recipient) && Requirements(a, actor, recipient).All(r => r.Ok);
 
     /// <summary>
-    /// Allocation-light twin of <see cref="CanUse"/> for the AI hot loop: same rules (potential, allow, gold, cooldown),
+    /// Allocation-light twin of <see cref="CanUse(ActionDef, Country, IScope)"/> for the AI hot loop: same rules (potential, allow, gold, cooldown),
     /// but one shared context, a single potential evaluation, short-circuiting and no tooltip text.
     /// </summary>
     public bool CanUseFast(ActionDef a, Country actor, IScope recipient, ScriptContext ctx)

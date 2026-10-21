@@ -1,3 +1,4 @@
+#nullable enable
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;

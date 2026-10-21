@@ -1023,7 +1023,7 @@ public sealed partial class PoliticsSystem
         _pendingUnlocks.Clear();
         foreach (var n in root.GetAll("pending_unlock"))
         {
-            string key = n.Value ?? n.GetString("key", "");
+            string key = n.Value ?? n.GetString("key", "") ?? "";
             if (key.Length > 0 && (IdeologyByKey.ContainsKey(key) || key.StartsWith("law:", StringComparison.OrdinalIgnoreCase))) _pendingUnlocks.Add(key);
         }
         lock (_wealth)

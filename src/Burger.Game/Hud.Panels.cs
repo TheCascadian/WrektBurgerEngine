@@ -79,17 +79,6 @@ public sealed partial class Hud
             if (tip != null && Gui.Hover(new Rectangle(x, y, w, lh))) Gui.Tooltip(tip);
             y += lh;
         }
-        void CountryRow(string k, Country? c, Color? col = null)
-        {
-            Gui.Label(k, x, y, 15, Gui.TextDim);
-            if (c == null) Gui.Label("-", x + 100 * S, y, 15);
-            else
-            {
-                float fx = FlagChip(c, x + 100 * S, y + 1 * S, 16 * S, col);
-                Gui.Label(Gui.Fit(c.Name, w - 100 * S - fx, 15), x + 100 * S + fx + 2 * S, y, 15, col ?? Gui.Text);
-            }
-            y += lh;
-        }
         // the panel is cut into cells: small label over a value, several to a row
         const float CellH = 38;
         float gap = 8 * S;

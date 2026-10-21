@@ -391,15 +391,15 @@ public sealed partial class Hud
             for (int i = 0; i < actions.Count; i++)
             {
                 var a = actions[i];
-                var reqs = G.Diplomacy.Requirements(a, player, ch);
+                var reqs = G.Diplomacy.Requirements(a, player!, ch);
                 bool can = reqs.All(q => q.Ok);
                 string tip = Localisation.Get(a.Desc);
                 if (reqs.Count > 0) tip += (tip.Length > 0 ? "\n\n" : "") + string.Join("\n", reqs.Select(q => (q.Ok ? "[OK] " : "[X] ") + q.Text));
-                var effects = G.Script.Describe(a.OnAccept, G.Diplomacy.ActionContext(a, player, ch));
+                var effects = G.Script.Describe(a.OnAccept, G.Diplomacy.ActionContext(a, player!, ch));
                 if (effects.Count > 0) tip += "\n\nEffects:\n" + string.Join("\n", effects);
                 var br = new Rectangle(x + (i % 2) * (bw + gap), y + (i / 2) * 30 * S, bw, 26 * S);
                 if (Gui.Button(br, Localisation.Get(a.Name), can, tip, false, 14))
-                    Ui.SetStatus($"{Localisation.Get(a.Name)}: {G.Diplomacy.Use(a, player, ch)}");
+                    Ui.SetStatus($"{Localisation.Get(a.Name)}: {G.Diplomacy.Use(a, player!, ch)}");
             }
             y += (actions.Count + 1) / 2 * 30 * S;
         }

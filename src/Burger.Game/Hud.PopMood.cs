@@ -12,7 +12,7 @@ public sealed partial class Hud
     private int _peopleSort;       // 0 size, 1 opinion, 2 radicalism
     private int _peoplePage;
     /// <summary>Seats sub-tabs (location panel and Politics overview) are switched off for now; set true to bring them back.</summary>
-    internal const bool SeatsTabs = false;
+    internal static readonly bool SeatsTabs = false;
     private int _stateMoodSub;     // 0 groups, 1 seats
     private const int PeoplePageSize = 7;
 

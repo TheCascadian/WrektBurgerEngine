@@ -351,7 +351,7 @@ public sealed partial class Studio
         SetStatus(errors + warnings == 0 ? "No problems found" : $"{errors} error(s), {warnings} warning(s)");
         // the check replaced the global localisation; reload the world's so names stay right
         if (_world != null) Localisation.Clear();
-        if (_world != null) Localisation.LoadDirectory(Path.Combine(Store.GameDir, "localisation"), Store.GameDir);
+        if (_world != null) Localisation.LoadDirectory(Path.Combine(Store!.GameDir, "localisation"), Store.GameDir);
     }
 
     // =============================================================================================

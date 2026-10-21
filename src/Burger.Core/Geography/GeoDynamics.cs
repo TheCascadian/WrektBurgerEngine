@@ -82,7 +82,7 @@ public sealed class GeoDynamics
         var pop = PopulationByLocation();
         if (pop == null) return "growth splits off: the project has no population feature";
         var ps = _g.Geo.Snapshot(day).Provinces;
-        int multi = 0, over = 0, locked = 0, mixed = 0, young = 0;
+        int multi = 0, over = 0, young = 0;
         double max = 0;
         var byKey = _g.World.LocationByKey;
         foreach (var p in ps)

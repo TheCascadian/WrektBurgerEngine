@@ -139,7 +139,6 @@ public static class GeoGenerator
         public double Area;
         public long Pop;
         public string[] Cores = Array.Empty<string>(), Claims = Array.Empty<string>();
-        public bool Touched;
     }
 
     public static GeoGenResult Generate(Game game, string outDir, GeoGenOptions opt)

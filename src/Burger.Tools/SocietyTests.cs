@@ -195,13 +195,6 @@ public static partial class Program
         if (g.Succession.Enabled)
         {
             var S = g.Succession;
-            Character Kid(Country c, Character parent, bool female, int age)
-            {
-                var k = g.Characters.Generate(c, female, age, parent.Family);
-                k.Father = parent;
-                parent.Children.Add(k);
-                return k;
-            }
             (Country, Character, Character, Character, Character) Family(Game gm)
             {
                 var c = gm.World.Countries.First(x => x.Exists && x.OwnedStates.Count >= 4 && x.Ruler != null && !x.IsPlayer);

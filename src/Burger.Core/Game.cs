@@ -79,7 +79,7 @@ public sealed class GameRules
 
 /// <summary>
 /// The whole simulation. Create with <see cref="Load"/>, then call <see cref="StartNewGame"/> (or load a save)
-/// and advance time with <see cref="Tick"/> (one in-game hour) or <see cref="Clock"/>.
+/// and advance time with <see cref="Tick()"/> (one in-game hour) or <see cref="Clock"/>.
 /// </summary>
 public sealed class Game
 {
@@ -326,14 +326,15 @@ public sealed class Game
         Politics.RegisterCommands(Commands);
     }
 
-    /// <summary>Loads a game folder (the one containing game.txt, common/, map/ ...).</summary>
-    /// <param name="gameRoot">Path to the game folder.</param>
-    /// <param name="compileScripts">Compile C# scripts in scripts/ (disable for pure data validation).</param>
-    /// <param name="seed">RNG seed for deterministic ticks; defaults to the current time when null.</param>
     /// <summary>Raised on the loading thread as soon as the map arrays and locations exist, while the rest of the game is still loading. A renderer can start its CPU-only work here.</summary>
     public static event Action<Game>? MapLoaded;
     internal void RaiseMapLoaded() => MapLoaded?.Invoke(this);
 
+    /// <summary>Loads a game folder (the one containing game.txt, common/, map/ ...).</summary>
+    /// <param name="gameRoot">Path to the game folder.</param>
+    /// <param name="compileScripts">Compile C# scripts in scripts/ (disable for pure data validation).</param>
+    /// <param name="seed">RNG seed for deterministic ticks; defaults to the current time when null.</param>
+    /// <param name="startDate">Start date to play from; the first start date of the game when null.</param>
     public static Game Load(string gameRoot, bool compileScripts = true, int? seed = null, GameDate? startDate = null)
     {
         var game = new Game();
