@@ -22,7 +22,7 @@ The game files hold no named rulers, no named factions, no rituals and no war do
 |---|---|---|---|---|---|---|---|---|---|
 | ACH | Achaemenid Empire | persian | mazdayasna | land_17558 | 65 | 16,371,758 | 820 | 10 infantry + 6 heavy infantry divisions | Own set (`gear_*_ach.glb`) |
 | ATH, SPA, COR, ARG, THB, THS, CRT, NAX, CRO, SYR, PNT | Greek city-states (split from the old GRK) | greek, western_greek, pontic_greek | hellenic_religion | see the Greek section | 1 to 2 each (see the Greek table) | 1,071,654 | 54 | 12 divisions in all | Own set (`gear_*_<tag>.glb`) |
-| MAC | Macedon | greek | hellenic_religion | land_05247 (Macedon and Epirus) | 1 | 179,496 | 9 | 2 | Own set (`gear_*_mac.glb`) |
+| MAC | Macedon | ancient_macedonian | macedonian_religion | land_05247 (Macedon and Epirus) | 60 | 179,502 | 9 | 2 | Own set (`gear_*_mac.glb`) |
 | CAR | Carthage | punic | canaanite_religion | land_09105 (Carthage and Tunisia) | 6 | 1,039,904 | 52 | 2 | Generic soldier |
 | NUB | Kush | kushite | kushite_religion | land_08279 (Nubia and Napata) | 3 | 633,812 | 32 | 2 | Generic soldier |
 | SAB | South Arabia | south_arabian | south_arabian_polytheism | land_09216 (South Arabia) | 6 | 1,583,519 | 80 | 2 | Generic soldier |
@@ -326,14 +326,18 @@ Renders (male and female, from `--figure-variants`):
 
 ### In the game files (GAME)
 
-- Color 200/80/60. Capital land_05247 ("Macedon and Epirus"). Culture greek, religion hellenic_religion.
-- **1 state**, 179,496 people, all Greek culture and Hellenic religion. Classes: farmers 161,549, nobles 7,179, artisans 7,179, clergy 3,589. No slaves.
+- Color 200/80/60. Capital land_05247 ("Macedon and Epirus"). Culture `ancient_macedonian`, religion `macedonian_religion`.
+- **60 states**, 179,502 people, all starting pops use the distinct `ancient_macedonian` / `macedonian_religion` identifiers. Classes: farmers 161,546, nobles 7,182, artisans 7,182, clergy 3,592. No slaves.
+- Flag: `gfx/flags/MAC.png`, a red `#fb3100` field with a centered gold `#ffd21a` sixteen-rayed Vergina Sun. The asset is a scenario emblem, not a claim that the symbol was a modern national flag in 500 BCE.
+- Named characters: `mac_amyntas_i` is the starting ruler, `mac_alexander_i` is the starting heir, and `mac_gygaea` is a named daughter of Amyntas. The country definition uses `primogeniture` and an Argead name pool for future generated characters.
 - Politics: ruling party neutrality. Popularity neutrality 42, **fascist 38**, democratic 12, communist 8. Law: restricted_parties.
 - AI profile "macedon" (parent: aggressive). "A rising kingdom with a warrior nobility." Rival ACH 1. Wants THS 2, awakening in -490.
 - Army: 2 infantry divisions. Fleet: 2 destroyers, 1 light cruiser, 1 transport (anachronistic).
 - Allied with THS (design choice). The AI profile of ACH lists MAC as a target (want 2, from -498).
 
-### Rulers (HIST)
+### Rulers (GAME + HIST)
+
+The game data starts with Amyntas I as ruler, Alexander I as heir, and Gygaea as a named daughter. Exact birth years for these early Argead figures are not securely known, so the character ages are explicit scenario approximations.
 
 Amyntas I (r. c. 547 to 498) is king and dies about 498. His son **Alexander I "Philhellene"** (r. c. 498 to 454) follows. The dynasty is the Argeads, who claim descent from Argos and Heracles, with the old capital at Aegae (Vergina). Amyntas gave "earth and water" to Persia around 512 (after Megabazus's expedition); Alexander I keeps Macedon a Persian vassal and later helps and spies on both sides in the Greek wars.
 
@@ -363,7 +367,7 @@ Cavalry: helmet, cloak (chlamys), the broad-brimmed hat (kausia), spear and swor
 ### OPEN
 
 - In 500 BCE Macedon is a Persian vassal (HIST), but the game does NOT list it as a subject of ACH; it is allied with THS.
-- Culture is "greek", the same as the Greek city-states; there is no separate Macedonian culture in `00_cultures.txt`.
+- **GAME:** Macedon is represented separately from the Greek city-states with `ancient_macedonian` culture and `macedonian_religion`. **OPEN/HIST:** the language and identity evidence remains contested; the scenario label is not a nationalist conclusion.
 
 ---
 

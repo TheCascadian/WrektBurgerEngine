@@ -4,6 +4,10 @@
 
 Trade/Industry converts population labour, land, deposits, buildings, production methods, and equipment inputs into food, services, and goods, then moves the result through local markets and foreign trade. The current implementation uses state markets aggregated into the existing country commodity books, deterministic land/sea/caravan routes, capacity and transport costs, tariffs/customs, agreements, class-specific needs, recipe/workforce allocation, trade history, player policy/build/import/method controls, and AI import-versus-build planning. Era-gated modern factory recipes and buildings are included in the World500BCE timeline for later dates.
 
+## Era-appropriate construction and equipment
+
+Preindustrial countries do not see or use modern factory buildings. At the 500 BCE start, manual construction can build artisan manufactories, arsenals, and shipwright yards; these provide civilian, military, and naval production capacity respectively. Modern mechanised factories, armaments factories, and industrial dockyards are date- and technology-gated. Once the required research and date are reached, predecessor capacity is converted one-for-one to its modern counterpart, so both human production lines and AI production planning continue across the transition.
+
 ## How it plays
 
 1. The player selects a state.

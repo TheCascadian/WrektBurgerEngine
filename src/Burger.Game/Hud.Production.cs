@@ -147,13 +147,20 @@ public sealed partial class Hud
     {
         var P = G.Production;
         int civ = P.CivilianFactories(c), free = P.CivilianForConstruction(c);
-        Gui.Label($"Civilian factories: {civ}  ({free} for construction)", x, y, 15);
+        Gui.Label(civ > 0
+            ? $"Civilian factories: {civ}  ({free} for construction)"
+            : "Preindustrial construction: labour, public works and workshops (no civilian factories required)", x, y, 15);
         if (Gui.Hover(new Rectangle(x, y, w, 20 * S)))
-            Gui.Tooltip($"{civ - free} civilian factories make consumer goods.\nEach building gets up to {G.Data.Defines.Get("max_factories_per_project", 15):0} factories, top of the queue first.");
+            Gui.Tooltip(civ > 0
+                ? $"{civ - free} civilian factories make consumer goods.\nEach building gets up to {G.Data.Defines.Get("max_factories_per_project", 15):0} factories, top of the queue first."
+                : "Manual labour, public works and workshops provide construction capacity before civilian factories exist.");
         y += 26 * S;
         Gui.Section("Build", x, y, w);
         y += 26 * S;
-        var types = G.Data.BuildingTypes.Values.ToList();
+        var types = G.Data.BuildingTypes.Values
+            .Where(b => b.Active(G.World.Date))
+            .Where(b => G.World.States.Any(s => s.Owner == c && P.CannotBuildReason(c, b, s) == null))
+            .ToList();
         var cats = types.GroupBy(b => b.Category).Select(g => (Cap(g.Key), g.Count())).ToList();
         y += FilterChips("build", cats, x, y, w, out string bcat);
         var shown = types.Where(b => Cap(b.Category) == bcat).ToList();

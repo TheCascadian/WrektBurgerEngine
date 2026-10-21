@@ -15,6 +15,9 @@ public class ProductionRules
     public virtual string CivilianFactory => "civilian_factory";
     public virtual string MilitaryFactory => "military_factory";
     public virtual string Dockyard => "dockyard";
+    public virtual string PreindustrialCivilianFactory => "artisan_workshop";
+    public virtual string PreindustrialMilitaryFactory => "arsenal";
+    public virtual string PreindustrialDockyard => "shipwright_yard";
 
     /// <summary>Factories of a kind a country can use: levels in its owned states, scaled by how much of each state it controls.</summary>
     public virtual int Factories(Game game, Country c, string building)
@@ -23,6 +26,27 @@ public class ProductionRules
         foreach (var s in c.OwnedStates) n += s.Working(building) * s.ControlledShare(c); // bombed levels do not work
         return (int)Math.Floor(n + 0.001);
     }
+
+    /// <summary>Equipment capacity combines modern factories with their era-appropriate predecessor buildings.</summary>
+    public virtual int MilitaryFactories(Game game, Country c)
+        => Factories(game, c, MilitaryFactory) + Factories(game, c, PreindustrialMilitaryFactory);
+
+    /// <summary>Naval equipment capacity combines modern dockyards with preindustrial shipwright yards.</summary>
+    public virtual int Dockyards(Game game, Country c)
+        => Factories(game, c, Dockyard) + Factories(game, c, PreindustrialDockyard);
+
+    /// <summary>Pick a modern building only after its date and technology are available; otherwise use its predecessor.</summary>
+    public virtual BuildingType? EraBuilding(Game game, Country c, string modernKey, string predecessorKey)
+    {
+        var modern = game.Data.BuildingTypes.GetValueOrDefault(modernKey);
+        if (modern != null && BuildingResearchAvailable(game, c, modern)) return modern;
+        return game.Data.BuildingTypes.GetValueOrDefault(predecessorKey);
+    }
+
+    public virtual bool BuildingResearchAvailable(Game game, Country c, BuildingType building)
+        => building.Active(game.World.Date)
+            && game.Tech.CanUse(c, building.Definition)
+            && (!game.Tech.Enabled || building.RequiresTech.All(t => game.Tech.Has(c, t)));
 
     /// <summary>Civilian factories left for construction after consumer goods.</summary>
     public virtual int CivilianForConstruction(Game game, Country c)
@@ -247,7 +271,8 @@ public class ProductionRules
         bool war = game.World.WarsOf(c).Any();
         double ratio = game.Data.Defines.Get(war ? "ai_war_military_ratio" : "ai_peace_military_ratio", war ? 1.5 : 0.6);
         int queuedCiv = civ == null ? 0 : c.Construction.Count(p => p.Building == civ), queuedMil = mil == null ? 0 : c.Construction.Count(p => p.Building == mil);
-        double haveCiv = Factories(game, c, CivilianFactory) + queuedCiv, haveMil = Factories(game, c, MilitaryFactory) + queuedMil;
+        double haveCiv = civ == null ? 0 : Factories(game, c, civ.Key) + queuedCiv;
+        double haveMil = mil == null ? 0 : Factories(game, c, mil.Key) + queuedMil;
         return haveMil < haveCiv * ratio ? mil ?? civ : civ ?? mil;
     }
 
@@ -280,9 +305,9 @@ public sealed class ProductionSystem
     private ProductionRules Rules => _game.Rules.Production;
     public bool Enabled => _game.Features.Has(FeatureSet.Production);
 
-    public int MilitaryFactories(Country c) => Rules.Factories(_game, c, Rules.MilitaryFactory);
+    public int MilitaryFactories(Country c) => Rules.MilitaryFactories(_game, c);
     public int CivilianFactories(Country c) => Rules.Factories(_game, c, Rules.CivilianFactory);
-    public int Dockyards(Country c) => Rules.Factories(_game, c, Rules.Dockyard);
+    public int Dockyards(Country c) => Rules.Dockyards(_game, c);
     public int CivilianForConstruction(Country c) => Rules.CivilianForConstruction(_game, c);
     public double ConstructionCapacity(Country c, ConstructionProject p) => Rules.ConstructionCapacity(_game, c, p);
 
@@ -403,12 +428,42 @@ public sealed class ProductionSystem
         foreach (var c in _game.World.Countries)
         {
             if (!c.Exists) continue;
+            UpgradeEraBuildings(c);
             // Idle countries (the common case with a large roster) have nothing to advance.
             if (c.ProductionLines.Count > 0) Produce(c);
             if (c.Construction.Count == 0) continue;
             long t1 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             Construct(c);
             if (_game.Profiling) _game.ProfileElapsed("Prod.Construct", System.Diagnostics.Stopwatch.GetTimestamp() - t1);
+        }
+    }
+
+    /// <summary>Convert predecessor capacity into its researched modern counterpart one-for-one.</summary>
+    private void UpgradeEraBuildings(Country c)
+    {
+        foreach (var state in c.OwnedStates)
+        {
+            foreach (var predecessor in _game.Data.BuildingTypes.Values)
+            {
+                if (string.IsNullOrWhiteSpace(predecessor.UpgradeTo)) continue;
+                int oldLevel = state.Buildings.GetValueOrDefault(predecessor.Key);
+                if (oldLevel <= 0) continue;
+                var target = _game.Data.BuildingTypes.GetValueOrDefault(predecessor.UpgradeTo);
+                if (target == null || !Rules.BuildingResearchAvailable(_game, c, target)) continue;
+                int room = Math.Max(0, target.MaxLevel - state.Buildings.GetValueOrDefault(target.Key));
+                int converted = Math.Min(oldLevel, room);
+                if (converted <= 0) continue;
+                state.Buildings[predecessor.Key] = oldLevel - converted;
+                state.Buildings[target.Key] = state.Buildings.GetValueOrDefault(target.Key) + converted;
+                if (state.Damaged.GetValueOrDefault(predecessor.Key) > 0)
+                {
+                    double damaged = Math.Min(converted, state.Damaged[predecessor.Key]);
+                    state.Damaged[predecessor.Key] -= damaged;
+                    state.Damaged[target.Key] = state.Damaged.GetValueOrDefault(target.Key) + damaged;
+                }
+                if (c.IsPlayer)
+                    _game.NotifyPlayer($"{predecessor.Name} in {state.DisplayName} upgraded to {target.Name}.", NotificationKind.Good, c);
+            }
         }
     }
 
@@ -539,8 +594,8 @@ public sealed class ProductionSystem
             while (given > total) { var big = lines.OrderByDescending(l => l.Factories).First(); big.Factories--; given--; }
         }
         // construction: as many projects as its building capacity supports (a few new ones a month)
-        var civT = _game.Data.BuildingTypes.GetValueOrDefault(Rules.CivilianFactory);
-        var milT = _game.Data.BuildingTypes.GetValueOrDefault(Rules.MilitaryFactory);
+        var civT = Rules.EraBuilding(_game, c, Rules.CivilianFactory, Rules.PreindustrialCivilianFactory);
+        var milT = Rules.EraBuilding(_game, c, Rules.MilitaryFactory, Rules.PreindustrialMilitaryFactory);
         int size = Rules.AiQueueSize(_game, c);
         for (int added = 0; added < 3 && c.Construction.Count < size; added++)
         {

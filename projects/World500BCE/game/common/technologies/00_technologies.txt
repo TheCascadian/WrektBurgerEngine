@@ -259,7 +259,7 @@ mechanical_power = {
 	year = 1450
 	cost = 900
 	requires = { water_power engineering }
-	unlocks = { construction_mechanical_power mechanised_workshops }
+	unlocks = { construction_mechanical_power mechanised_workshops dockyard }
 }
 steam_power = {
 	name = "Steam Power"
@@ -268,7 +268,7 @@ steam_power = {
 	year = 1712
 	cost = 1100
 	requires = { mechanical_power steel_working }
-	unlocks = { construction_steam_power mechanised_factories }
+	unlocks = { construction_steam_power mechanised_factories armaments_factories }
 }
 railways = {
 	name = "Railways"

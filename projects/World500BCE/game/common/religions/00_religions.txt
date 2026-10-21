@@ -32,6 +32,13 @@ levantine = {
 	south_arabian_polytheism = { name = "South Arabian Polytheism" color = { 196 83 64 } }
 	arab_polytheism = { name = "North Arabian Polytheism" color = { 61 79 138 } }
 }
+# A distinct Macedonian religious layer represents local royal, ancestral, mountain,
+# and agrarian cult practice without denying overlap with neighboring traditions.
+macedonian = {
+	name = "Macedonian Religious Traditions"
+	color = { 126 96 54 }
+	macedonian_religion = { name = "Macedonian Cult Tradition" color = { 190 132 63 } }
+}
 mediterranean = {
 	name = "Mediterranean"
 	color = { 80 130 200 }

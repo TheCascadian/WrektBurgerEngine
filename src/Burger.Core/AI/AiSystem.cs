@@ -77,7 +77,7 @@ public class AiSystem
     }
 
     private static readonly string[] ConstructionCapacityBuildings =
-        { "workshop", "infrastructure", "bureaucracy", "market", "civilian_factory" };
+        { "workshop", "artisan_workshop", "arsenal", "shipwright_yard", "infrastructure", "bureaucracy", "market", "civilian_factory" };
 
     /// <summary>Kept for mods that call it; the AI streams now live in <see cref="Game.Rngs"/>.</summary>
     public void ResetRng(int seed) { }

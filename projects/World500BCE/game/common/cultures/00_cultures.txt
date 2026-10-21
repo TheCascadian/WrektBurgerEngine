@@ -1,5 +1,12 @@
 # Cultures of the 500 BCE world: design groupings from the reference maps (facts only).
 # traditions = { a b c }: the three traditions of a culture (common/traditions, culture_traditions feature).
+# Macedonian identity is represented as a distinct political-cultural layer. This does not
+# resolve scholarly debate over Macedonian language classification or erase regional interaction.
+macedonian = {
+	name = "Macedonian"
+	color = { 118 133 72 }
+	ancient_macedonian = { name = "Macedonian" color = { 155 168 86 } religion = macedonian_religion traditions = { warrior_aristocracy horse_lords phalanx_discipline } }
+}
 hellenic = {
 	name = "Hellenic"
 	color = { 93 97 179 }

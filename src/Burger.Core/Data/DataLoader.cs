@@ -375,6 +375,7 @@ public static class DataLoader
                     Cost = Math.Max(1, n.GetDouble("cost", 5000)),
                     Method = n.GetString("construction_method", "")!,
                     RequiresTech = n.GetList("requires_tech").Concat(n.GetList("construction_requires_tech")).Distinct(StringComparer.OrdinalIgnoreCase).ToList(),
+                    UpgradeTo = n.GetString("upgrade_to", "")!,
                     LabourRequired = n.GetDouble("labour_required", n.GetDouble("labor_required", 0)),
                     CapacityOutput = n.GetDouble("construction_capacity", 0),
                     MaxLevel = n.GetInt("max_level", 10),
@@ -389,7 +390,7 @@ public static class DataLoader
                     foreach (var input in constructionInputs.All)
                         if (input.Value != null) b.ConstructionInputs[input.Key] = input.AsDouble();
                 foreach (var c in n.All)
-                    if (c.Value != null && c.Key is not ("name" or "desc" or "cost" or "construction_method" or "requires_tech" or "construction_requires_tech" or "labour_required" or "labor_required" or "construction_capacity" or "construction_inputs" or "max_level" or "category" or "start_year" or "end_year" or "shares_slots") && Node.TryParseDouble(c.Value, out var v))
+                    if (c.Value != null && c.Key is not ("name" or "desc" or "cost" or "construction_method" or "requires_tech" or "construction_requires_tech" or "upgrade_to" or "labour_required" or "labor_required" or "construction_capacity" or "construction_inputs" or "max_level" or "category" or "start_year" or "end_year" or "shares_slots") && Node.TryParseDouble(c.Value, out var v))
                         b.Stats[c.Key] = v;
                 if (data.BuildingTypes.ContainsKey(b.Key)) Log.Warn($"Building '{b.Key}' redefined", n.Location);
                 data.BuildingTypes[b.Key] = b;

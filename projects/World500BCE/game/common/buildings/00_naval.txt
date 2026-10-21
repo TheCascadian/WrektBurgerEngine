@@ -1,4 +1,4 @@
-# Naval buildings (navy feature). Levels are stored per state: buildings = { naval_base = 1 dockyard = 1 }
+# Naval buildings (navy feature). Levels are stored per state: buildings = { naval_base = 1 shipwright_yard = 1 dockyard = 1 }
 naval_base = {
 	name = "Naval Base"
 	desc = "Ships in a port of this state repair faster."
@@ -9,10 +9,25 @@ naval_base = {
 }
 dockyard = {
 	name = "Dockyard"
-	desc = "Builds ships on dockyard production lines (production feature)."
+	desc = "An industrial dockyard for large-scale ship production."
 	cost = 6400
 	max_level = 20
 	category = factory
 	shares_slots = yes
+	start_year = 1450
+	requires_tech = { mechanical_power }
+	potential = { is_coastal = yes }
+}
+shipwright_yard = {
+	name = "Shipwright Yard"
+	desc = "A preindustrial yard where shipwrights build oared vessels."
+	cost = 3600
+	max_level = 10
+	category = factory
+	shares_slots = yes
+	start_year = -500
+	construction_method = manual
+	upgrade_to = dockyard
+	construction_inputs = { timber = 0.45 tools = 0.08 }
 	potential = { is_coastal = yes }
 }

@@ -37,6 +37,30 @@ workshop = {
 	construction_method = manual
 	construction_inputs = { timber = 0.20 stone = 0.10 tools = 0.06 }
 }
+artisan_workshop = {
+	name = "Artisan Manufactories"
+	desc = "Organised artisan production before mechanised factories."
+	cost = 4200
+	max_level = 20
+	category = factory
+	shares_slots = yes
+	start_year = -500
+	construction_method = manual
+	upgrade_to = civilian_factory
+	construction_inputs = { timber = 0.25 stone = 0.15 tools = 0.08 }
+}
+arsenal = {
+	name = "Arsenal"
+	desc = "A state armoury where smiths and craftsmen make weapons and military stores."
+	cost = 3800
+	max_level = 20
+	category = factory
+	shares_slots = yes
+	start_year = -500
+	construction_method = manual
+	upgrade_to = military_factory
+	construction_inputs = { timber = 0.20 stone = 0.20 bronze = 0.20 tools = 0.08 }
+}
 market = {
 	name = "Markets"
 	desc = "Organises local exchange and gives traders a place to clear imported goods."

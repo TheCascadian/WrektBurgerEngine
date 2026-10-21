@@ -928,6 +928,17 @@ public static partial class Program
         Check(game.TradeNetwork.Recipes.Count >= 3 && game.TradeNetwork.Workforce.Count > 0, $"trade/industry: recipes and workforce allocations active ({game.TradeNetwork.Recipes.Count} recipes, {game.TradeNetwork.Workforce.Count} allocations)");
         Check(game.TradeNetwork.Recipes.Values.Any(r => r.Inputs.Count > 0), "trade/industry: production recipes consume industrial inputs");
         Check(game.TradeNetwork.Recipes.Values.Any(r => r.StartYear >= 1750 && r.Building == "civilian_factory"), "trade/industry: later-era factory methods are date-gated");
+        Check(game.World.Countries.SelectMany(c => c.Construction).Any(p => p.Building.Key is "artisan_workshop" or "arsenal" or "shipwright_yard"), "production: AI queues preindustrial capacity instead of modern factories");
+        var artisan = game.Data.BuildingTypes.GetValueOrDefault("artisan_workshop");
+        var arsenal = game.Data.BuildingTypes.GetValueOrDefault("arsenal");
+        var shipwright = game.Data.BuildingTypes.GetValueOrDefault("shipwright_yard");
+        var mechanised = game.Data.BuildingTypes.GetValueOrDefault("civilian_factory");
+        var armaments = game.Data.BuildingTypes.GetValueOrDefault("military_factory");
+        var dockyard = game.Data.BuildingTypes.GetValueOrDefault("dockyard");
+        Check(artisan != null && artisan.Active(game.World.Date) && artisan.UpgradeTo == "civilian_factory", "construction: artisan manufactories replace mechanised factories in 500 BCE");
+        Check(arsenal != null && arsenal.Active(game.World.Date) && arsenal.UpgradeTo == "military_factory", "construction: arsenals replace armaments factories in 500 BCE");
+        Check(shipwright != null && shipwright.Active(game.World.Date) && shipwright.UpgradeTo == "dockyard", "construction: shipwright yards replace dockyards in 500 BCE");
+        Check(mechanised != null && !mechanised.Active(game.World.Date) && armaments != null && !armaments.Active(game.World.Date) && dockyard != null && !dockyard.Active(game.World.Date), "construction: industrial factory buildings are hidden before their era");
         var methodState = country.OwnedStates.FirstOrDefault();
         Check(methodState != null && game.TradeNetwork.Recipes.Values.Any(r => game.TradeNetwork.MethodsFor(country, methodState, r.Output).Count > 0), "trade/industry: available production methods resolve per state");
         Check(game.TradeNetwork.Policies.Count > 0 && game.TradeNetwork.Policies.Values.Any(p => p.CustomsRevenue >= 0), "trade/industry: tariffs and customs ledgers active");
@@ -978,6 +989,14 @@ public static partial class Program
                 Check(progressed, "construction: manual farm receives labour capacity with zero civilian factories");
                 Check(queuedProject != null && queuedProject.InputsConsumed.Values.Any(v => v > 0), "construction: applied capacity records consumed inputs");
             }
+        }
+        if (arsenal != null && preindustrial != null && constructionState != null)
+        {
+            int before = constructionState.Buildings.GetValueOrDefault(arsenal.Key);
+            constructionState.Buildings[arsenal.Key] = before + 1;
+            Check(game.Production.MilitaryFactories(preindustrial) > 0, "production: preindustrial arsenals provide equipment capacity");
+            if (before == 0) constructionState.Buildings.Remove(arsenal.Key);
+            else constructionState.Buildings[arsenal.Key] = before;
         }
     }
 

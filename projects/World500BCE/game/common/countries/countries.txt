@@ -110,9 +110,18 @@ PNT = {
 MAC = {
 	name = "Macedon"
 	color = { 200 80 60 }
+	flag = "gfx/flags/MAC.png"
 	capital = land_05247
-	culture = greek
-	religion = hellenic_religion
+	culture = ancient_macedonian
+	religion = macedonian_religion
+	ruler = mac_amyntas_i
+	heir = mac_alexander_i
+	succession_law = primogeniture
+	names = {
+		male = { Amyntas Alexander Perdiccas Philip Alcetas Aeropus Argaios Archelaus }
+		female = { Gygaea Eurynoe }
+		family = { Argead }
+	}
 	gold = 100
 	manpower = 10000
 }

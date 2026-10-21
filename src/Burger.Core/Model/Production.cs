@@ -36,6 +36,8 @@ public sealed class BuildingType
     public string Method = "";
     /// <summary>Technology keys required before this building can be constructed.</summary>
     public List<string> RequiresTech = new();
+    /// <summary>Preindustrial building key that is automatically converted when this target is researched and active.</summary>
+    public string UpgradeTo = "";
     /// <summary>Relative workforce required while this building is under construction.</summary>
     public double LabourRequired;
     /// <summary>Industrial inputs required by one construction project. Consumption is handled by the economy layer.</summary>
