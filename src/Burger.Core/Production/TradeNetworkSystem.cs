@@ -139,6 +139,13 @@ public sealed class TradeNetworkSystem
     private readonly HashSet<string> _blockades = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, StateMarket> _current = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied)>> _totalsCache = new();
+    // MatchCommodity is deliberately serial because its commit phase mutates shared world state.
+    // Reuse stable per-call storage so bounded commodity settlement does not create a second
+    // allocation-heavy pause while preserving the existing candidate and commit order.
+    private readonly List<StateMarket> _sellerMarketsScratch = new();
+    private readonly List<double> _sellerLeftScratch = new();
+    private readonly List<(StateMarket Market, double Need)> _buyersScratch = new();
+    private readonly List<int> _tieCursorScratch = new();
 
     public readonly Dictionary<State, Dictionary<string, StateMarket>> Markets = new();
     public readonly Dictionary<Country, TradePolicy> Policies = new();
@@ -286,9 +293,13 @@ public sealed class TradeNetworkSystem
         // Matching mutates stockpiles, imports, exports, prices and satisfaction.
         // Clear before mutation so an exception cannot leave a stale aggregate usable.
         InvalidateTotalsCache();
-        var sellerMarkets = new List<StateMarket>();
-        var sellerLeft = new List<double>();
-        var buyers = new List<(StateMarket Market, double Need)>();
+        var sellerMarkets = _sellerMarketsScratch;
+        var sellerLeft = _sellerLeftScratch;
+        var buyers = _buyersScratch;
+        var matches = new List<TradeMatch>();
+        sellerMarkets.Clear();
+        sellerLeft.Clear();
+        buyers.Clear();
         foreach (var market in _current.Values)
         {
             market.SellerSlot = -1;
@@ -304,7 +315,6 @@ public sealed class TradeNetworkSystem
         var left = sellerLeft.ToArray();
         var sellerOwner = new int[sellerMarkets.Count];
         for (int i = 0; i < sellerOwner.Length; i++) sellerOwner[i] = sellerMarkets[i].State.Owner!.Index;
-        var matches = new List<TradeMatch>();
         // Agreement, priority and trade permission depend only on the country pair; many states share a pair.
         int countryCount = _game.World.Countries.Count;
         if (_pairStamp.Length < countryCount * countryCount)
@@ -411,19 +421,19 @@ public sealed class TradeNetworkSystem
                 }
                 else
                 {
-                    var cursor = new int[q - p];
-                    for (int k = 0; k < cursor.Length; k++) cursor[k] = head[order[p + k]];
+                    _tieCursorScratch.Clear();
+                    for (int k = 0; k < q - p; k++) _tieCursorScratch.Add(head[order[p + k]]);
                     while (_top.Count < candidateLimit)
                     {
                         int bestK = -1, bestSlot = int.MaxValue;
-                        for (int k = 0; k < cursor.Length; k++)
+                        for (int k = 0; k < _tieCursorScratch.Count; k++)
                         {
                             int c = order[p + k], end = countryStart[c + 1];
-                            while (cursor[k] < end && left[flat[cursor[k]]] <= 0.001) cursor[k]++;
-                            if (cursor[k] < end && flat[cursor[k]] < bestSlot) { bestSlot = flat[cursor[k]]; bestK = k; }
+                            while (_tieCursorScratch[k] < end && left[flat[_tieCursorScratch[k]]] <= 0.001) _tieCursorScratch[k]++;
+                            if (_tieCursorScratch[k] < end && flat[_tieCursorScratch[k]] < bestSlot) { bestSlot = flat[_tieCursorScratch[k]]; bestK = k; }
                         }
                         if (bestK < 0) break;
-                        cursor[bestK]++;
+                        _tieCursorScratch[bestK]++;
                         _top.Add((bestSlot, orderA[p], orderP[p]));
                     }
                 }
@@ -431,7 +441,9 @@ public sealed class TradeNetworkSystem
             }
         }
 
-        foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Need))
+        // Preparation is complete before mutation: the stable state-index tie-break keeps the
+        // commit order identical across save/load and multiplayer peers.
+        foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Need).ThenBy(x => x.Market.State.Index))
         {
             double need = deficit;
             var buyerPolicy = PolicyOf(buyer.State.Owner!);
@@ -443,8 +455,11 @@ public sealed class TradeNetworkSystem
             int pairBase = buyerCountry.Index * countryCount;
             if (orderOf[buyerCountry.Index] == null) BuildOrder(buyerCountry, importPriority);
             CollectCandidates(buyerCountry.Index);
-            foreach (var (sellerSlot, _, _) in _top.ToList())
+            double tariffRateBase = Math.Clamp(buyerPolicy.TariffRate + buyerPolicy.Protectionism * 0.5, 0, 5);
+            double importProtectionFactor = 1 - Math.Clamp(buyerPolicy.Protectionism, 0, 0.9);
+            for (int candidateIndex = 0; candidateIndex < _top.Count; candidateIndex++)
             {
+                var (sellerSlot, _, _) = _top[candidateIndex];
                 var sellerMarket = sellerMarkets[sellerSlot];
                 var seller = sellerMarket.State.Owner!;
                 if (seller == buyerCountry) continue;
@@ -457,15 +472,14 @@ public sealed class TradeNetworkSystem
                 var agreement = _pairAgreement[pairAt];
                 double unitBase = definition.Price * tradePriceScale;
                 double unitTransport = TransportCost(route, agreement);
-                double tariffRate = Math.Clamp(PolicyOf(buyerCountry).TariffRate + PolicyOf(buyerCountry).Protectionism * 0.5, 0, 5)
-                    * (agreement?.TariffDiscount ?? 1);
+                double tariffRate = tariffRateBase * (agreement?.TariffDiscount ?? 1);
                 double unitTariff = unitBase * tariffRate;
                 double affordability = !_game.Features.Has(FeatureSet.Economy) ? double.MaxValue
                     : Math.Max(0, buyerCountry.Gold) / Math.Max(0.0001, unitBase + unitTransport + unitTariff);
                 double contractLeft = agreement is { Commodity.Length: > 0, MonthlyQuantity: > 0 }
                     ? Math.Max(0, agreement.MonthlyQuantity - _agreementUse.GetValueOrDefault(agreement)) : double.MaxValue;
                 if (agreement is { Commodity.Length: > 0 } && contractLeft <= 0.001) continue;
-                double protectionFactor = seller == buyerCountry ? 1 : 1 - Math.Clamp(PolicyOf(buyerCountry).Protectionism, 0, 0.9);
+                double protectionFactor = seller == buyerCountry ? 1 : importProtectionFactor;
                 double take = Math.Min(need, Math.Min(left[sellerSlot], Math.Min(capacity, Math.Min(affordability, Math.Min(contractLeft, need * protectionFactor + 0.001)))));
                 if (take <= 0.001) continue;
 

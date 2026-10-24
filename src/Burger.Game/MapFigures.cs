@@ -2,6 +2,7 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Figures;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -50,6 +51,7 @@ public sealed class MapFigures : IDisposable
         public string? Attack;   // the melee attack being played in this fight
     }
     private readonly Dictionary<Division, Stand> _stands = new();
+    private readonly Dictionary<int, Stand> _snapshotStands = new();
 
     public MapFigures(Game game, MapRenderer map)
     {
@@ -206,6 +208,74 @@ public sealed class MapFigures : IDisposable
         }
         if (_frame % 600 == 0)
             foreach (var gone in _stands.Where(kv => _frame - kv.Value.Seen > 600).Select(kv => kv.Key).ToList()) _stands.Remove(gone);
+    }
+
+    /// <summary>Snapshot-backed figure path. Simulation-owned division objects are not read here.</summary>
+    public void Draw(RenderSnapshot snapshot, Camera3D cam, float dt)
+    {
+        _frame++;
+        if (!Visible(cam)) return;
+        var figures = _game.Figures;
+        var human = figures.Soldier;
+        float height = HeightFor(cam);
+        var charted = snapshot.Locations.Where(l => l.IsCharted).Select(l => l.Key).ToHashSet(StringComparer.Ordinal);
+        _renderer.Begin(cam);
+        int drawn = 0;
+        foreach (var g in snapshot.Divisions.Where(d => !d.IsWater && (charted.Contains(d.LocationKey) || d.OwnerTag == snapshot.PlayerTag)).GroupBy(d => (d.LocationKey, d.OwnerTag)))
+        {
+            var first = g.First();
+            var model = figures.Find(first.ModelKey) ?? human;
+            var pos = _map.LocationPos(first.CenterX, first.CenterY);
+            if (!Viewport.TryProjectSnapped(pos, cam, out var screen)) continue;
+            if (screen.X < -80 || screen.Y < -80 || screen.X > Viewport.W + 80 || screen.Y > Viewport.H + 120) continue;
+            bool moving = first.HasNextLocation && g.All(d => d.HasNextLocation);
+            Vector3 target = pos;
+            if (moving)
+            {
+                target = _map.LocationPos(first.NextCenterX, first.NextCenterY);
+                var to = target - pos;
+                if (to.X * to.X + to.Z * to.Z > 1e-6f && !_snapshotStands.TryGetValue(first.Id, out _))
+                    _snapshotStands[first.Id] = new Stand { TargetYaw = MathF.Atan2(to.X, to.Z) };
+                pos = Vector3.Lerp(pos, target, 0.5f);
+            }
+            float drawHeight = height;
+            float radius = StandRadius(drawHeight);
+            if (!_snapshotStands.TryGetValue(first.Id, out var stand) || stand.ModelKey != model.Key)
+            {
+                stand = new Stand { Animator = figures.NewAnimator(model.Key), ModelKey = model.Key };
+                { var st = stand; stand.Animator.OnEvent = ev => st.Events.Add(ev); }
+                stand.Animator.Time = (first.Id * 0.618034f % 1f) * (stand.Animator.Current?.Duration ?? 1f);
+                _snapshotStands[first.Id] = stand;
+            }
+            stand.Seen = _frame;
+            if (moving)
+            {
+                var to = target - pos;
+                if (to.X * to.X + to.Z * to.Z > 1e-6f) stand.TargetYaw = MathF.Atan2(to.X, to.Z);
+            }
+            if (!stand.Placed || Vector2.Distance(new(stand.Pos.X, stand.Pos.Z), new(pos.X, pos.Z)) > height * 6) { stand.Pos = pos; stand.Speed = 0; }
+            else if (dt > 1e-4f)
+            {
+                var from = stand.Pos; float k = 1 - MathF.Exp(-dt * 6f);
+                stand.Pos = new Vector3(from.X + (pos.X - from.X) * k, 0, from.Z + (pos.Z - from.Z) * k);
+                float v = Vector2.Distance(new(from.X, from.Z), new(stand.Pos.X, stand.Pos.Z)) / dt;
+                stand.Speed += (v - stand.Speed) * (1 - MathF.Exp(-dt * 4f));
+            }
+            pos = stand.Pos; pos.Y = _map.StandHeight(pos.X, pos.Z, radius);
+            if (!stand.Placed) { stand.Yaw = stand.TargetYaw; stand.Placed = true; }
+            stand.Yaw += Math.Clamp(MathF.IEEERemainder(stand.TargetYaw - stand.Yaw, MathF.Tau), -dt * 7f, dt * 7f);
+            stand.Up = Vector3.Normalize(Vector3.Lerp(stand.Up, _map.GroundNormal(pos.X, pos.Z, drawHeight * 0.6f), Math.Min(1f, dt * 8f)));
+            string gait = moving ? HumanMale.Walk : first.Retreating ? HumanMale.Run : HumanMale.Idle;
+            if (!model.Clips.ContainsKey(gait)) gait = HumanMale.Idle;
+            stand.Animator.Play(gait, 0.3f); stand.Animator.Rate = moving ? 1.2f : 1f; stand.Animator.Advance(dt);
+            var skin = stand.Animator.Skin();
+            var place = FigureRenderer.Placement(model, pos, stand.Yaw, drawHeight, stand.Up);
+            FigureShadows.Draw(new ShadowContext(model, skin, place, pos, stand.Up, stand.Yaw, drawHeight, radius, cam));
+            _renderer.Draw(model, skin, place, Color.White);
+            if (++drawn >= MaxFigures) break;
+        }
+        if (_frame % 600 == 0)
+            foreach (var gone in _snapshotStands.Where(kv => _frame - kv.Value.Seen > 600).Select(kv => kv.Key).ToList()) _snapshotStands.Remove(gone);
     }
 
     public void Dispose() => _renderer.Dispose();

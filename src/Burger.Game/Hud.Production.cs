@@ -62,6 +62,7 @@ public sealed partial class Hud
     private void DrawProductionLines(Country c, Rectangle r, float x, float y, float w)
     {
         var P = G.Production;
+        var snapshot = _app.Snapshot;
         int mil = P.MilitaryFactories(c), dock = P.Dockyards(c);
         Gui.Label($"Military factories {mil - P.FreeFactories(c, false)}/{mil} in use", x, y, 14);
         if (dock > 0) { string dt = $"Dockyards {dock - P.FreeFactories(c, true)}/{dock}"; Gui.Label(dt, x + w - Gui.Measure(dt, 14).X, y, 14, Gui.TextDim); }
@@ -105,6 +106,7 @@ public sealed partial class Hud
         float ly = listTop;
         foreach (var line in c.ProductionLines.ToList())
         {
+            var lineSnapshot = snapshot.ProductionLines.FirstOrDefault(v => v.EquipmentKey.Equals(line.Equipment.Key, StringComparison.OrdinalIgnoreCase));
             var box = new Rectangle(x, ly, w - 8 * S, rowH);
             Card(box, new Color(36, 38, 44, 255));
             bool naval = P.UsesDockyards(line.Equipment);
@@ -119,16 +121,16 @@ public sealed partial class Hud
             if (Gui.Button(new Rectangle(bx + 2 * bs + 6 * S, by, bs, bs), "+", P.FreeFactories(c, naval) > 0, "One factory more (if free)", false, 18)) line.Factories++;
             if (Gui.Button(new Rectangle(bx + 3 * bs + 12 * S, by, bs, bs), "x", true, "Stop this line", false, 15)) P.RemoveLine(c, line);
             // second row: efficiency, output, change
-            double perDay = line.Factories * G.Data.Defines.Get("production_per_factory", 4.5) * line.Efficiency / line.Equipment.Cost;
+            double perDay = lineSnapshot.Factories * G.Data.Defines.Get("production_per_factory", 4.5) * lineSnapshot.Efficiency / Math.Max(1, lineSnapshot.Cost);
             var eff = new Rectangle(box.X + 10 * S, box.Y + 42 * S, 90 * S, 8 * S);
-            Gui.Bar(eff, (float)line.Efficiency, new Color(90, 170, 220, 255));
-            if (Gui.Hover(eff)) Gui.Tooltip($"Efficiency {line.Efficiency:P0}\nIt grows every day the line keeps producing the same thing.");
-            Gui.Label($"{line.Efficiency:P0}  {perDay:0.##}/day  stock {Fmt(P.Stock(c, line.Equipment.Key))}", eff.X + eff.Width + 8 * S, box.Y + 37 * S, 12, Gui.TextDim);
+            Gui.Bar(eff, (float)lineSnapshot.Efficiency, new Color(90, 170, 220, 255));
+            if (Gui.Hover(eff)) Gui.Tooltip($"Efficiency {lineSnapshot.Efficiency:P0}\nIt grows every day the line keeps producing the same thing.");
+            Gui.Label($"{lineSnapshot.Efficiency:P0}  {perDay:0.##}/day  stock {Fmt(lineSnapshot.Stock)}", eff.X + eff.Width + 8 * S, box.Y + 37 * S, 12, Gui.TextDim);
             if (Gui.Button(new Rectangle(box.X + box.Width - 74 * S, box.Y + 36 * S, 66 * S, 18 * S), "Change", true, "Produce something else (efficiency drops)", false, 11)) _changingLine = line;
             ly += rowH + 4 * S;
         }
         Gui.EndScroll();
-        if (c.ProductionLines.Count == 0) Gui.Label("No production lines. Add one below.", x, y, 14, Gui.TextDim);
+        if (snapshot.ProductionLines.Length == 0) Gui.Label("No production lines. Add one below.", x, y, 14, Gui.TextDim);
         if (Gui.Button(new Rectangle(x, r.Y + r.Height - 42 * S, w, 30 * S), "+ Add production line", G.Data.Equipment.Count > 0, null, false, 15)) _addingLine = true;
     }
 
@@ -181,20 +183,21 @@ public sealed partial class Hud
         }
         y += (shown.Count + 1) / 2 * (bh + 4 * S) + 6 * S;
         if (Ui.BuildType != null) { y += Gui.Wrapped($"Click one of your states to build a {Ui.BuildType.Name}. Right-click or Esc to stop.", x, y, w, 14, Gui.Gold) + 6 * S; }
-        Gui.Section($"Queue ({c.Construction.Count})", x, y, w);
+        var snapshot = _app.Snapshot;
+        Gui.Section($"Queue ({snapshot.ConstructionQueue.Length})", x, y, w);
         y += 26 * S;
         float rowH = 46 * S;
-        float need = Math.Max(20 * S, c.Construction.Count * (rowH + 4 * S));
+        float need = Math.Max(20 * S, snapshot.ConstructionQueue.Length * (rowH + 4 * S));
         FitEnd("prod1", r, y + need);
         float top = Gui.BeginScroll("construction", new Rectangle(x, y, w, Math.Min(need, r.Y + r.Height - y - 10 * S)), need);
         float qy = top;
-        for (int i = 0; i < c.Construction.Count; i++)
+        for (int i = 0; i < snapshot.ConstructionQueue.Length; i++)
         {
-            var p = c.Construction[i];
+            var p = snapshot.ConstructionQueue[i];
             var box = new Rectangle(x, qy, w - 8 * S, rowH);
             Card(box, new Color(36, 38, 44, 255));
-            Gui.Label(Gui.Fit($"{p.Building.Name} - {p.State.DisplayName}", box.Width - 100 * S, 15), box.X + 8 * S, box.Y + 4 * S, 15);
-            Gui.Bar(new Rectangle(box.X + 8 * S, box.Y + 28 * S, box.Width - 110 * S, 9 * S), (float)(p.Progress / p.Building.Cost), Gui.Gold);
+            Gui.Label(Gui.Fit($"{p.BuildingName} - {p.StateName}", box.Width - 100 * S, 15), box.X + 8 * S, box.Y + 4 * S, 15);
+            Gui.Bar(new Rectangle(box.X + 8 * S, box.Y + 28 * S, box.Width - 110 * S, 9 * S), (float)(p.Progress / p.Cost), Gui.Gold);
             Gui.Label($"{p.Factories} fact.", box.X + box.Width - 96 * S, box.Y + 24 * S, 13, Gui.TextDim);
             if (i > 0 && Gui.Button(new Rectangle(box.X + box.Width - 58 * S, box.Y + 4 * S, 24 * S, 20 * S), "^", true, "Move up", false, 13))
                 (c.Construction[i - 1], c.Construction[i]) = (c.Construction[i], c.Construction[i - 1]);
@@ -206,22 +209,20 @@ public sealed partial class Hud
 
     private void DrawStockpile(Country c, Rectangle r, float x, float y, float w)
     {
-        var shortage = G.Production.Shortage(c);
-        var produced = c.ProductionLines.GroupBy(l => l.Equipment.Key).ToDictionary(g => g.Key, g => g.Sum(l => l.LastOutput), StringComparer.OrdinalIgnoreCase);
-        float top = Gui.BeginScroll("stockpile", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), G.Data.Equipment.Count * 46 * S);
+        var snapshot = _app.Snapshot;
+        float top = Gui.BeginScroll("stockpile", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), snapshot.Stockpile.Length * 46 * S);
         float sy = top;
-        foreach (var e in G.Data.Equipment.Values)
+        foreach (var e in snapshot.Stockpile)
         {
             var box = new Rectangle(x, sy, w - 8 * S, 42 * S);
             Card(box, new Color(36, 38, 44, 255));
             Gui.Label(e.Name, box.X + 8 * S, box.Y + 4 * S, 15, Gui.Text, FontKind.Bold);
-            double need = shortage.GetValueOrDefault(e.Key);
-            Gui.Label($"+{produced.GetValueOrDefault(e.Key):0.#}/day" + (need > 0 ? $"   missing {Fmt(need)}" : ""), box.X + 8 * S, box.Y + 23 * S, 13, need > 0 ? Gui.Bad : Gui.TextDim);
-            string stock = Fmt(G.Production.Stock(c, e.Key));
+            Gui.Label($"+{e.ProducedPerDay:0.#}/day" + (e.Shortage > 0 ? $"   missing {Fmt(e.Shortage)}" : ""), box.X + 8 * S, box.Y + 23 * S, 13, e.Shortage > 0 ? Gui.Bad : Gui.TextDim);
+            string stock = Fmt(e.Stock);
             var m = Gui.Measure(stock, 18, FontKind.Bold);
             Gui.Label(stock, box.X + box.Width - m.X - 10 * S, box.Y + 11 * S, 18, Gui.Gold, FontKind.Bold);
-            if (Gui.Hover(box)) Gui.Tooltip($"[icon:production][state:value] {e.Name}: {G.Production.Stock(c, e.Key):0} in stock\n" +
-                            $"[state:warning] Missing for divisions and training: {need:0}");
+            if (Gui.Hover(box)) Gui.Tooltip($"[icon:production][state:value] {e.Name}: {e.Stock:0} in stock\n" +
+                            $"[state:warning] Missing for divisions and training: {e.Shortage:0}");
             sy += 46 * S;
         }
         Gui.EndScroll();

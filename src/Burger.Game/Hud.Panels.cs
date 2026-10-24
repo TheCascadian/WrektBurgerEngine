@@ -1,7 +1,9 @@
 using System.Numerics;
+using System.Collections.Immutable;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -60,8 +62,9 @@ public sealed partial class Hud
     {
         var l = Ui.SelectedLocation;
         if (l == null) { Ui.Left = LeftPanel.None; return; }
+        var locationSnapshot = _app.Snapshot.Locations.FirstOrDefault(x => x.Index == l.Index);
         var r = FitRect("loc");
-        bool unknown = !G.Exploration.IsCharted(l);
+        bool unknown = locationSnapshot.Index == l.Index ? !locationSnapshot.IsCharted : !G.Exploration.IsCharted(l);
         Gui.Panel(r, unknown ? "Terra incognita" : l.DisplayName);
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 22 * S, w = r.Width - 24 * S;
@@ -98,26 +101,30 @@ public sealed partial class Hud
         void CellsEnd() => y += (CellH + 6) * S;
 
         var st = l.State;
-        string terr = l.Terrain.Name + (l.IsCoastal ? " (coastal)" : "");
-        if (l.IsWater) { Cell(0, 2, "Terrain", terr); Cell(1, 2, "Type", l.IsLake ? "Lake" : "Sea"); CellsEnd(); FitEnd("loc", r, y); return; }
+        var stateSnapshot = locationSnapshot.StateKey is { } stateKey
+            ? _app.Snapshot.States.FirstOrDefault(s => s.Key == stateKey)
+            : default;
+        string terr = locationSnapshot.TerrainName + (locationSnapshot.IsCoastal ? " (coastal)" : "");
+        if (locationSnapshot.IsWater) { Cell(0, 2, "Terrain", terr); Cell(1, 2, "Type", locationSnapshot.IsLake ? "Lake" : "Sea"); CellsEnd(); FitEnd("loc", r, y); return; }
         Cell(0, 2, "Terrain", terr);
-        Cell(1, 2, l.Continent != null && l.Continent.IsOcean ? "Ocean" : "Continent", l.Continent?.DisplayName ?? "-");
+        Cell(1, 2, locationSnapshot.ContinentIsOcean ? "Ocean" : "Continent", locationSnapshot.ContinentName ?? "-");
         CellsEnd();
-        if (st != null)
+        if (locationSnapshot.StateName != null)
         {
-            Cell(0, 1, "State", st.DisplayName + (st.Locations.Count > 1 ? $"  ·  {st.Locations.Count} locations" : ""));
+            Cell(0, 1, "State", locationSnapshot.StateName + (locationSnapshot.StateLocationCount > 1 ? $"  ·  {locationSnapshot.StateLocationCount} locations" : ""));
             CellsEnd();
         }
-        bool split = l.Controller != l.Owner;
-        Cell(0, split ? 2 : 1, "Owner", l.Owner?.Name ?? "-", null, null, l.Owner);
-        if (split) Cell(1, 2, "Controller", l.Controller?.Name ?? "-", Gui.Bad, null, l.Controller);
+        bool split = locationSnapshot.ControllerTag != locationSnapshot.OwnerTag;
+        Cell(0, split ? 2 : 1, "Owner", locationSnapshot.OwnerName ?? "-", null, null, l.Owner);
+        if (split) Cell(1, 2, "Controller", locationSnapshot.ControllerName ?? "-", Gui.Bad, null, l.Controller);
         CellsEnd();
         if (st != null && l.Owner != null) y += DrawStateRulers(st, x, y, w);
         if (st != null)
         {
             // tax and manpower against the average state of the owner: above is green, below is red
-            var peers = (l.Owner?.OwnedStates ?? new List<State>()).Where(s => s != st).ToList();
-            double avgTax = peers.Count > 0 ? peers.Average(s => s.Tax) : st.Tax, avgMan = peers.Count > 0 ? peers.Average(s => s.Manpower) : st.Manpower;
+            var peers = _app.Snapshot.States.Where(s => s.OwnerTag == locationSnapshot.OwnerTag && s.Key != stateSnapshot.Key).ToList();
+            double avgTax = peers.Count > 0 ? peers.Average(s => s.Tax) : stateSnapshot.Tax;
+            double avgMan = peers.Count > 0 ? peers.Average(s => s.Manpower) : stateSnapshot.Manpower;
             void Stat2(int i, string k, double v, double avg, string text)
             {
                 double rel = avg > 0 ? v / avg - 1 : 0;
@@ -125,8 +132,8 @@ public sealed partial class Hud
                 Cell(i, 2, k, text, null, $"{k}\n{text} a month\nOwner's average state: {avg:0.##}" + (peers.Count > 0 ? $"\n{(rel >= 0 ? "+" : "")}{rel:P0} against the average" : ""),
                     null, show ? $"{(rel >= 0 ? "+" : "")}{rel:P0}" : null, DeltaColor(rel));
             }
-            Stat2(0, "Tax", st.Tax, avgTax, $"{st.Tax:0.##}");
-            Stat2(1, "Manpower", st.Manpower, avgMan, Num(st.Manpower));
+            Stat2(0, "Tax", stateSnapshot.Tax, avgTax, $"{stateSnapshot.Tax:0.##}");
+            Stat2(1, "Manpower", stateSnapshot.Manpower, avgMan, Num(stateSnapshot.Manpower));
             CellsEnd();
             y += 2 * S;
             if (G.Development.Enabled) y = DrawStateDevelopment(st, x, y, w);
@@ -134,32 +141,35 @@ public sealed partial class Hud
             {
                 var P = G.Population;
                 var sp = P.Of(st);
-                string sum = $"{People(sp.Total)}  {(sp.LastGrowth >= 0 ? "+" : "-")}{People(Math.Abs(sp.LastGrowth))}/mo";
-                bool open = Collapse("people", "People", sum, DeltaColor(sp.LastGrowth, 0.5), x, y, w);
+                double statePopulation = stateSnapshot.Key == st.Key ? stateSnapshot.PopulationTotal : sp.Total;
+                double stateGrowth = stateSnapshot.Key == st.Key ? stateSnapshot.PopulationGrowth : sp.LastGrowth;
+                string sum = $"{People(statePopulation)}  {(stateGrowth >= 0 ? "+" : "-")}{People(Math.Abs(stateGrowth))}/mo";
+                bool open = Collapse("people", "People", sum, DeltaColor(stateGrowth, 0.5), x, y, w);
                 y += 26 * S;
                 if (open) y = DrawStatePopulation(st, x, y, w, false) + 4 * S;
             }
             if (st.Owner != null && G.Politics.PopsEnabled && G.Population.HasPops(st))
             {
-                var stMoods = G.Politics.PopGroupRows(st.Owner, new[] { st });
-                double stAvg = stMoods.Count > 0 ? stMoods.Sum(g => g.Opinion * g.Size) / stMoods.Sum(g => g.Size) : 0;
-                bool open = Collapse("politics_here", "Politics", stMoods.Count > 0 ? $"opinion {stAvg:+0;-0;0}" : "", stAvg >= 10 ? Gui.Good : stAvg > -10 ? Gui.TextDim : Gui.Bad, x, y, w);
+                var stMoods = stateSnapshot.Key == st.Key ? stateSnapshot.Moods : System.Collections.Immutable.ImmutableArray<RenderPopMood>.Empty;
+                if (stMoods.Length == 0) stMoods = G.Politics.PopGroupRows(st.Owner, new[] { st }).Select(g => new RenderPopMood(g.Name, g.Size, g.Reaction, g.Opinion, g.Objective, g.Grievance, g.Radicalism, g.PreferredParty)).ToImmutableArray();
+                double stAvg = stMoods.Length > 0 ? stMoods.Sum(g => g.Opinion * g.Size) / stMoods.Sum(g => g.Size) : 0;
+                bool open = Collapse("politics_here", "Politics", stMoods.Length > 0 ? $"opinion {stAvg:+0;-0;0}" : "", stAvg >= 10 ? Gui.Good : stAvg > -10 ? Gui.TextDim : Gui.Bad, x, y, w);
                 y += 26 * S;
                 if (open) y = DrawStatePolitics(l, st, x, y, w) + 4 * S;
             }
-            if (st.Buildings.Count > 0)
+            if (stateSnapshot.Buildings.Length > 0)
             {
-                int levels = st.Buildings.Values.Sum();
+                int levels = stateSnapshot.Buildings.Sum(b => b.Level);
                 bool open = Collapse("buildings", "Buildings", $"{levels} levels", Gui.TextDim, x, y, w);
                 y += 26 * S;
                 if (open)
                 {
                     float tile = 46 * S, ih = 26 * S, cx = x + 4 * S, rowY = y;
-                    foreach (var b in st.Buildings.OrderBy(b => b.Key))
+                    foreach (var b in stateSnapshot.Buildings)
                     {
                         if (cx + tile > x + w && cx > x + 4 * S) { cx = x + 4 * S; rowY += 36 * S; }
                         string name = G.Data.BuildingTypes.TryGetValue(b.Key, out var bt) ? bt.Name : Localisation.GetOrPretty(b.Key);
-                        double dmg = st.Damaged.GetValueOrDefault(b.Key);
+                        double dmg = b.Damaged;
                         var cell = new Rectangle(cx, rowY, tile - 4 * S, 32 * S);
                         var ir = new Rectangle(cx, rowY + 3 * S, ih, ih);
                         if (!BuildingIcon(b.Key, ir, false))
@@ -169,18 +179,18 @@ public sealed partial class Hud
                             var m = Gui.Measure(ini, 15);
                             Gui.Label(ini, ir.X + (ir.Width - m.X) / 2, ir.Y + (ir.Height - m.Y) / 2, 15, Gui.TextDim);
                         }
-                        Gui.Label(b.Value.ToString(), cx + ih + 3 * S, rowY + 7 * S, 15, dmg >= 0.05 ? Gui.Bad : Gui.Text);
+                        Gui.Label(b.Level.ToString(), cx + ih + 3 * S, rowY + 7 * S, 15, dmg >= 0.05 ? Gui.Bad : Gui.Text);
                         if (dmg >= 0.05) Raylib.DrawRectangleLinesEx(ir, 1, Gui.Bad);
                         if (Gui.Hover(cell))
-                            Gui.Tooltip($"{name}\nLevel {b.Value}" + (dmg >= 0.05 ? $"\n{dmg:0.#} levels bombed" : ""));
+                            Gui.Tooltip($"{name}\nLevel {b.Level}" + (dmg >= 0.05 ? $"\n{dmg:0.#} levels bombed" : ""));
                         cx += tile + 8 * S;
                     }
                     y = rowY + 36 * S + 4 * S;
                 }
             }
             // everything else behind one fold
-            var rivers = l.Neighbors.Count(a => a.River);
-            var mods = G.Modifiers.Of(l).Concat(G.Modifiers.Of(st)).Count(m => !m.Def.Hidden);
+            var rivers = locationSnapshot.RiverBorders;
+            var mods = locationSnapshot.Modifiers.Length + stateSnapshot.Modifiers.Length;
             bool details = Collapse("details", "Details", mods > 0 ? $"{mods} modifier(s)" : "", Gui.TextDim, x, y, w);
             y += 26 * S;
             if (details)
@@ -195,13 +205,15 @@ public sealed partial class Hud
                 Flags("Cores", st.Cores, "Core: people here count as part of this nation");
                 Flags("Claims", st.Claims, "Claim: may be taken by a peace deal");
                 if (rivers > 0) Row("Rivers", $"{rivers} border(s) with a river");
-                if (l.Fort > 0) Row("Fort", l.Fort.ToString());
-                y += DrawModifierList(l, x, y, w);
-                y += DrawModifierList(st, x, y, w);
+                if (locationSnapshot.Fort > 0) Row("Fort", locationSnapshot.Fort.ToString());
+                y += DrawModifierList(locationSnapshot.Modifiers, x, y, w);
+                y += DrawModifierList(stateSnapshot.Modifiers, x, y, w);
                 y += 4 * S;
             }
         }
-        if (l.SiegeProgress > 0) Row("Siege", $"{l.SiegeProgress:0} h by {l.Sieger?.Tag}", Gui.Bad);
+        double siegeProgress = locationSnapshot.Index == l.Index ? locationSnapshot.SiegeProgress : l.SiegeProgress;
+        string? siegerTag = locationSnapshot.Index == l.Index ? locationSnapshot.SiegerTag : l.Sieger?.Tag;
+        if (siegeProgress > 0) Row("Siege", $"{siegeProgress:0} h by {siegerTag}", Gui.Bad);
         if (l.Owner != null && Gui.Button(new Rectangle(x, y, 170 * S, 28 * S), "Open " + l.Owner.Name, true, "Open the owner's country panel"))
         {
             Ui.SelectedCountry = l.Owner;
@@ -210,15 +222,18 @@ public sealed partial class Hud
         }
         y += 36 * S;
 
-        var divs = G.Warfare.DivisionsAt(l);
-        if (divs.Count > 0)
+        if (locationSnapshot.DivisionCount > 0)
         {
             Gui.Section("Units here", x, y, w);
             y += 30 * S;
-            foreach (var g in divs.GroupBy(d => d.Owner))
+            var divisionsHere = _app.Snapshot.Divisions.Where(d => d.LocationKey == locationSnapshot.Key).ToList();
+            foreach (var g in divisionsHere.GroupBy(d => d.OwnerTag, StringComparer.OrdinalIgnoreCase))
             {
-                float fx = FlagChip(g.Key, x, y + 1 * S, 16 * S);
-                Gui.Label($"{g.Count()} division(s)", x + fx, y, 15);
+                var owner = G.World.Countries.FirstOrDefault(c => c.Tag.Equals(g.Key, StringComparison.OrdinalIgnoreCase));
+                float fx = owner != null ? FlagChip(owner, x, y + 1 * S, 16 * S) : 0;
+                var ownerSnapshot = _app.Snapshot.Countries.FirstOrDefault(c => c.Tag.Equals(g.Key, StringComparison.OrdinalIgnoreCase));
+                string ownerName = ownerSnapshot.Tag != null ? ownerSnapshot.Name : g.Key;
+                Gui.Label($"{g.Count()} division(s) · {ownerName}", x + fx, y, 15);
                 y += lh;
             }
         }
@@ -237,18 +252,21 @@ public sealed partial class Hud
     {
         var c = Ui.SelectedCountry;
         if (c == null) { Ui.Left = LeftPanel.None; return; }
+        var countrySnapshot = _app.Snapshot.Countries.FirstOrDefault(x => x.Tag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
         var r = LeftRect(Raylib.GetScreenHeight() - TopH - 20 * S);
-        Gui.Panel(r, c.Name);
+        string snapshotCountryName = countrySnapshot.Name ?? "";
+        string snapshotCountryTag = countrySnapshot.Tag ?? "";
+        Gui.Panel(r, snapshotCountryName.Length > 0 ? snapshotCountryName : c.Name);
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + 36 * S, lh = 21 * S;
         Gui.Flag(c, new Rectangle(x, y, 84 * S, 56 * S));
         float tx = x + 94 * S;
-        Gui.Label(c.Tag, tx, y, 15, Gui.TextDim, FontKind.Bold);
-        string govLine = (c.Government.Length > 0 ? Localisation.GetOrPretty(c.Government) : "") + (c.PrimaryContinent is { } pcont ? (c.Government.Length > 0 ? "  ·  " : "") + pcont.DisplayName : "");
+        Gui.Label(snapshotCountryTag.Length > 0 ? snapshotCountryTag : c.Tag, tx, y, 15, Gui.TextDim, FontKind.Bold);
+        string govLine = (countrySnapshot.Government.Length > 0 ? Localisation.GetOrPretty(countrySnapshot.Government) : "") + (countrySnapshot.PrimaryContinentName is { } pcont ? (countrySnapshot.Government.Length > 0 ? "  ·  " : "") + pcont : "");
         if (govLine.Length > 0) Gui.Label(Gui.Fit(govLine, r.X + r.Width - tx - 12 * S, 15), tx, y + 18 * S, 15);
         float hx = tx;
-        hx += IconStat("province", c.OwnedStates.Count.ToString(), $"{c.OwnedStates.Count} states", hx, y + 36 * S);
-        hx += IconStat("army", G.World.Divisions.Count(d => d.Owner == c).ToString(), "Divisions", hx, y + 36 * S);
+        hx += IconStat("province", countrySnapshot.OwnedStateCount.ToString(), $"{countrySnapshot.OwnedStateCount} states", hx, y + 36 * S);
+        hx += IconStat("army", countrySnapshot.DivisionCount.ToString(), "Divisions", hx, y + 36 * S);
         if (Gui.Hover(new Rectangle(x, y, 84 * S, 56 * S))) Gui.Tooltip($"{c.Name} ({c.Tag})");
         y += 64 * S;
         y = DrawCountryTabs(c, x, y, r.Width - 24 * S);
@@ -256,84 +274,99 @@ public sealed partial class Hud
         if (_countryTab == 1) { DrawCountryPeople(c, r, x, y, r.Width - 24 * S); return; }
         if (_countryTab == 2) { DrawCountryFactions(c, r, x, y, r.Width - 24 * S); return; }
 
-        if (c.Ruler != null)
+        if (countrySnapshot.Ruler is { } rulerSnapshot)
         {
-            var ruler = c.Ruler;
-            Gui.Label($"Ruler: {ruler.DisplayName} ({ruler.Age(G.World.Date)})", x, y, 16);
+            Gui.Label($"Ruler: {rulerSnapshot.Name} ({rulerSnapshot.Age})", x, y, 16);
             y += lh;
-            Gui.Label(string.Join("  ", G.Data.Defines.CharacterStats.Select(s => $"{Abbrev(s)} {ruler.GetStat(s):0}")), x, y, 14, Gui.TextDim);
+            Gui.Label(string.Join("  ", rulerSnapshot.Stats.Select(s => $"{Abbrev(s.Key)} {s.Value:0}")), x, y, 14, Gui.TextDim);
             y += lh;
-            if (ruler.Traits.Count > 0)
+            if (rulerSnapshot.Traits.Length > 0)
             {
-                Gui.Label(string.Join(", ", ruler.Traits.Select(t => Localisation.Get(t.Name))), x, y, 14, Gui.TextDim);
+                Gui.Label(string.Join(", ", rulerSnapshot.Traits), x, y, 14, Gui.TextDim);
                 y += lh;
             }
-            if (c.Heir != null) { Gui.Label($"Heir: {c.Heir.DisplayName} ({c.Heir.Age(G.World.Date)})", x, y, 15, Gui.TextDim); y += lh; }
+            if (countrySnapshot.Heir is { } heirSnapshot) { Gui.Label($"Heir: {heirSnapshot.Name} ({heirSnapshot.Age})", x, y, 15, Gui.TextDim); y += lh; }
         }
 
-        foreach (var res in G.Resources.Defs.Where(d => d.Scope == Burger.Core.ScopeType.Country))
+        foreach (var resource in countrySnapshot.Resources)
         {
-            Gui.Label($"{Localisation.Get(res.Name)}: {G.Resources.Get(c, res):0.#}", x, y, 15, Gui.TextDim);
+            Gui.Label($"{Localisation.Get(resource.Name)}: {resource.Value:0.#}", x, y, 15, Gui.TextDim);
             y += lh;
         }
-        y += DrawModifierList(c, x, y, r.Width - 24 * S);
+        y += DrawModifierList(countrySnapshot.Modifiers, x, y, r.Width - 24 * S);
         var player = G.World.Player;
         var R = G.World.Relations;
         y += 4 * S;
         if (player != null && player != c && Has(FeatureSet.Diplomacy))
         {
-            double theirs = G.Diplomacy.Opinion(c, player), ours = G.Diplomacy.Opinion(player, c);
+            var relationSnapshot = _app.Snapshot.DiplomacyRelations.FirstOrDefault(relation =>
+                relation.FromTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase)
+                && relation.ToTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+            bool hasRelationSnapshot = relationSnapshot.FromTag != null;
+            double theirs = hasRelationSnapshot ? relationSnapshot.Opinion : G.Diplomacy.Opinion(c, player);
+            double ours = hasRelationSnapshot ? relationSnapshot.ReverseOpinion : G.Diplomacy.Opinion(player, c);
             var opR = new Rectangle(x, y, r.Width - 24 * S, lh);
             Gui.Label($"Opinion of us: {theirs:+0;-0;0}   Our opinion: {ours:+0;-0;0}", x, y, 15, theirs >= 0 ? Gui.Good : Gui.Bad);
             if (Gui.Hover(opR))
             {
-                var mods = R.Opinions.TryGetValue((c, player), out var list) ? list : new List<OpinionModifier>();
-                var parts = new List<string> { $"Base: {G.Rules.Diplomacy.BaseOpinion(G, c, player):+0;-0;0}" };
+                var parts = hasRelationSnapshot
+                    ? new List<string> { $"Base: {relationSnapshot.BaseOpinion:+0;-0;0}" }
+                    : new List<string> { $"Base: {G.Rules.Diplomacy.BaseOpinion(G, c, player):+0;-0;0}" };
                 void Part(string name, double v) { if (Math.Abs(v) >= 0.5) parts.Add($"{name}: {v:+0;-0;0}"); }
-                Part("Ideology", G.Politics.IdeologyOpinion(c, player));
-                Part("Religion", G.Population.ReligionOpinion(c, player));
-                Part("Our colonies", G.Population.ColonialOpinion(c, player));
-                parts.AddRange(mods.Select(m => $"{m.Name}: {m.Value:+0;-0;0}"));
+                Part("Ideology", hasRelationSnapshot ? relationSnapshot.IdeologyOpinion : G.Politics.IdeologyOpinion(c, player));
+                Part("Religion", hasRelationSnapshot ? relationSnapshot.ReligionOpinion : G.Population.ReligionOpinion(c, player));
+                Part("Our colonies", hasRelationSnapshot ? relationSnapshot.ColonialOpinion : G.Population.ColonialOpinion(c, player));
+                if (hasRelationSnapshot) parts.AddRange(relationSnapshot.OpinionModifiers.Select(m => $"{m.Name}: {m.Value:+0;-0;0}"));
+                else if (R.Opinions.TryGetValue((c, player), out var list)) parts.AddRange(list.Select(m => $"{m.Name}: {m.Value:+0;-0;0}"));
                 Gui.Tooltip(string.Join("\n", parts));
             }
             y += lh;
             var rel = new List<string>();
-            if (G.World.AtWar(player, c)) rel.Add("AT WAR");
-            if (R.AreAllied(player, c)) rel.Add("Allied");
-            if (R.OverlordOf(c) == player) rel.Add("Our subject");
-            if (R.OverlordOf(player) == c) rel.Add("Our overlord");
-            if (R.HasAccess(player, c)) rel.Add("We have access");
-            if (R.HasAccess(c, player)) rel.Add("They have access");
-            if (R.IsGuaranteeing(player, c)) rel.Add("We guarantee them");
-            if (R.IsGuaranteeing(c, player)) rel.Add("They guarantee us");
-            if (R.HasTruce(player, c, G.World.Date)) rel.Add("Truce");
-            if (R.HasPact(player, c, G.World.Date)) rel.Add("Non-aggression pact");
+            if (hasRelationSnapshot && relationSnapshot.AtWar || !hasRelationSnapshot && G.World.AtWar(player, c)) rel.Add("AT WAR");
+            if (hasRelationSnapshot && relationSnapshot.Allied || !hasRelationSnapshot && R.AreAllied(player, c)) rel.Add("Allied");
+            if (hasRelationSnapshot && relationSnapshot.FromIsOverlord || !hasRelationSnapshot && R.OverlordOf(c) == player) rel.Add("Our subject");
+            if (hasRelationSnapshot && relationSnapshot.ToIsOverlord || !hasRelationSnapshot && R.OverlordOf(player) == c) rel.Add("Our overlord");
+            if (hasRelationSnapshot && relationSnapshot.FromHasAccess || !hasRelationSnapshot && R.HasAccess(player, c)) rel.Add("We have access");
+            if (hasRelationSnapshot && relationSnapshot.ToHasAccess || !hasRelationSnapshot && R.HasAccess(c, player)) rel.Add("They have access");
+            if (hasRelationSnapshot && relationSnapshot.FromGuarantees || !hasRelationSnapshot && R.IsGuaranteeing(player, c)) rel.Add("We guarantee them");
+            if (hasRelationSnapshot && relationSnapshot.ToGuarantees || !hasRelationSnapshot && R.IsGuaranteeing(c, player)) rel.Add("They guarantee us");
+            if (hasRelationSnapshot && relationSnapshot.HasTruce || !hasRelationSnapshot && R.HasTruce(player, c, G.World.Date)) rel.Add("Truce");
+            if (hasRelationSnapshot && relationSnapshot.HasPact || !hasRelationSnapshot && R.HasPact(player, c, G.World.Date)) rel.Add("Non-aggression pact");
             Gui.Label(Gui.Fit(rel.Count == 0 ? "No relations" : string.Join(", ", rel), r.Width - 24 * S, 15), x, y, 15, rel.Contains("AT WAR") ? Gui.Bad : Gui.Text);
             y += lh;
             // subjects: liberty desire; anyone: war exhaustion and the casus belli we have
             if (R.OverlordOf(c) != null || R.OverlordOf(player) == c)
             {
                 var sub = R.OverlordOf(c) != null ? c : player;
-                double ld = G.Diplomacy.LibertyDesire(sub);
+                double ld = hasRelationSnapshot ? relationSnapshot.LibertyDesire : G.Diplomacy.LibertyDesire(sub);
                 var lr = new Rectangle(x, y, r.Width - 24 * S, lh);
                 Gui.Label($"Liberty desire ({sub.Tag}): {ld:0}%", x, y, 15, ld >= 50 ? Gui.Bad : Gui.Text);
                 if (Gui.Hover(lr)) Gui.Tooltip("How much the subject wants to be free (0-100): its strength and size compared to the overlord, its opinion of it, a different ideology or culture, the overlord losing a war and the tribute.\nAt 50 it no longer joins its overlord's wars and may fight a War of Independence.");
                 y += lh;
             }
-            if (G.Diplomacy.WarExhaustion(c) > 0.05) { Gui.Label($"War exhaustion: {G.Diplomacy.WarExhaustion(c):0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, Gui.TextDim); y += lh; }
+            double warExhaustion = hasRelationSnapshot ? relationSnapshot.WarExhaustion : G.Diplomacy.WarExhaustion(c);
+            if (warExhaustion > 0.05) { Gui.Label($"War exhaustion: {warExhaustion:0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, Gui.TextDim); y += lh; }
             var cbs = G.Diplomacy.ValidCasusBelli(player, c).Where(cb => cb.WarGoal != WarGoalType.Conquest).Select(cb => Localisation.Get(cb.Name)).ToList();
             if (cbs.Count > 0) { Gui.Label(Gui.Fit("Our casus belli: " + string.Join(", ", cbs), r.Width - 24 * S, 14), x, y, 14, Gui.Gold); y += lh; }
         }
         else if (player == c && Has(FeatureSet.Diplomacy))
         {
-            if (Has(FeatureSet.Economy)) { Gui.Label($"Gold {c.Gold:0}   Manpower {c.Manpower:0}", x, y, 15); y += lh; }
-            Gui.Label($"Diplomatic relations: {G.Diplomacy.RelationsUsed(c)}/{G.Diplomacy.MaxRelations(c)}", x, y, 15, Gui.TextDim);
+            if (Has(FeatureSet.Economy))
+            {
+                var playerSnapshot = _app.Snapshot.Player;
+                double gold = playerSnapshot?.Gold ?? c.Gold;
+                double manpower = playerSnapshot?.Manpower ?? c.Manpower;
+                Gui.Label($"Gold {gold:0}   Manpower {manpower:0}", x, y, 15);
+                y += lh;
+            }
+            Gui.Label($"Diplomatic relations: {countrySnapshot.DiplomaticRelationsUsed}/{countrySnapshot.DiplomaticRelationsMax}", x, y, 15, Gui.TextDim);
             y += lh;
             var allies = R.AlliesOf(c).ToList();
             if (allies.Count > 0) { Gui.Label("Allies", x, y + 1 * S, 14, AllyBlue); y += FlagRow(allies, x + 104 * S, y, r.Width - 24 * S - 104 * S, AllyBlue); }
             var subjects = R.SubjectsOf(c).ToList();
             if (subjects.Count > 0) { Gui.Label(Gui.Fit("Subjects: " + string.Join(", ", subjects.Select(a => $"{a.Tag} ({G.Diplomacy.LibertyDesire(a):0}% liberty)")), r.Width - 24 * S, 15), x, y, 15); y += lh; }
-            if (G.Diplomacy.WarExhaustion(c) > 0.05) { Gui.Label($"War exhaustion: {G.Diplomacy.WarExhaustion(c):0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, G.Diplomacy.WarExhaustion(c) >= 10 ? Gui.Bad : Gui.TextDim); y += lh; }
+            var selfRelation = _app.Snapshot.DiplomacyRelations.FirstOrDefault(r => r.FromTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && r.ToTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+            if (selfRelation.WarExhaustion > 0.05) { Gui.Label($"War exhaustion: {selfRelation.WarExhaustion:0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, selfRelation.WarExhaustion >= 10 ? Gui.Bad : Gui.TextDim); y += lh; }
         }
 
         if (G.Politics.Enabled) y = DrawCountryPolitics(c, x, y + 6 * S, r.Width - 24 * S);
@@ -386,29 +419,31 @@ public sealed partial class Hud
     /// <summary>The country's own relations (also shown on the map: allies blue, enemies red). Returns the new y.</summary>
     private float DrawCountryRelations(Country c, float x, float y, float w)
     {
-        var R = G.World.Relations;
-        var lines = new List<(string Label, List<Country> List, Color Col)>
+        var countrySnapshot = _app.Snapshot.Countries.FirstOrDefault(q => q.Tag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var lines = new[]
         {
-            ("At war with", G.World.WarsOf(c).SelectMany(war => war.EnemiesOf(c)).Distinct().Where(e => e.Exists).ToList(), Gui.Bad),
-            ("Allies", R.AlliesOf(c).ToList(), new Color(110, 160, 245, 255)),
-            ("Subjects", R.SubjectsOf(c).ToList(), new Color(140, 200, 235, 255)),
-            ("Overlord", R.OverlordOf(c) is { } ov ? new List<Country> { ov } : new List<Country>(), new Color(140, 200, 235, 255)),
-            ("Guarantees", R.Guarantees.Where(g => g.Guarantor == c).Select(g => g.Guaranteed).ToList(), Gui.Text),
-            ("Guaranteed by", R.GuarantorsOf(c).ToList(), Gui.Text),
-            ("Access through", R.MilitaryAccess.Where(m => m.Receiver == c).Select(m => m.Granter).ToList(), Gui.TextDim),
+            (1, "At war with", Gui.Bad), (2, "Allies", new Color(110, 160, 245, 255)),
+            (3, "Subjects", new Color(140, 200, 235, 255)), (4, "Overlord", new Color(140, 200, 235, 255)),
+            (5, "Guarantees", Gui.Text), (6, "Guaranteed by", Gui.Text), (7, "Access through", Gui.TextDim)
         };
-        if (lines.All(l => l.List.Count == 0))
+        if (countrySnapshot.Relations.IsDefaultOrEmpty)
         {
             Gui.Label($"{c.Name} has no allies, subjects or wars.", x, y, 14, Gui.TextDim);
             return y + 22 * S;
         }
         Gui.Section("Relations", x, y, w);
         y += 26 * S;
-        foreach (var (label, list, col) in lines)
+        foreach (var (kind, label, col) in lines)
         {
+            var relations = countrySnapshot.Relations.Where(q => q.Kind == kind).ToList();
+            var list = relations.Select(q => G.World.Countries.FirstOrDefault(country => country.Tag.Equals(q.Tag, StringComparison.OrdinalIgnoreCase))).Where(q => q != null).Cast<Country>().ToList();
             if (list.Count == 0) continue;
             Gui.Label(label, x, y + 1 * S, 13, col);
-            y += FlagRow(list, x + 104 * S, y, w - 104 * S, col, o => label == "Subjects" ? $"{G.Diplomacy.LibertyDesire(o):0}% liberty desire" : null) + 2 * S;
+            y += FlagRow(list, x + 104 * S, y, w - 104 * S, col, o =>
+            {
+                var relation = relations.FirstOrDefault(q => q.Tag.Equals(o.Tag, StringComparison.OrdinalIgnoreCase));
+                return label is "Subjects" or "Overlord" ? $"{relation.LibertyDesire:0}% liberty desire" : null;
+            }) + 2 * S;
         }
         if (Map.Mode == MapMode.Diplomacy && Map.DiplomacyFocus == c)
         {

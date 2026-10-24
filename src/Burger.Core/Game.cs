@@ -636,7 +636,7 @@ public sealed class Game
         if (Features.Has(F.Ai))
         {
             P("Ai.DailyTick", () => Ai.DailyTickSpread());
-            P("Ai.MonthlyTick", () => Ai.MonthlyTickSpread());
+            P("Ai.MonthlyTick", () => Ai.MonthlyTickSpread(streamEconomicWork));
         }
         if (Features.Has(F.Military)) P("Warfare.DailyTick", () => Warfare.DailyTick(hour));
         switch (hour)

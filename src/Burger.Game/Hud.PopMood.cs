@@ -2,6 +2,7 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Politics;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -11,6 +12,7 @@ public sealed partial class Hud
 {
     private int _peopleSort;       // 0 size, 1 opinion, 2 radicalism
     private int _peoplePage;
+    private readonly record struct PopDisplayRow(string Name, double Size, string Reaction, double Opinion, string Objective, double Grievance, double Radicalism, string PreferredParty);
     /// <summary>Seats sub-tabs (location panel and Politics overview) are switched off for now; set true to bring them back.</summary>
     internal static readonly bool SeatsTabs = false;
     private int _stateMoodSub;     // 0 groups, 1 seats
@@ -59,6 +61,15 @@ public sealed partial class Hud
         return tip;
     }
 
+    private string PopGroupTip(Country c, PopDisplayRow row)
+    {
+        string tip = $"{row.Name} · {People(row.Size)}\nWants: {ObjectiveText(row.Objective)}. {ObjectiveTip(row.Objective)}\n"
+            + $"Opinion {row.Opinion:+0;-0;0} · grievance {row.Grievance:0} · radicalism {row.Radicalism:0}";
+        if (row.PreferredParty.Length > 0)
+            tip += $"\nLeans to: {G.Politics.PartyDisplayName(c, row.PreferredParty)}";
+        return tip;
+    }
+
     // ------------------------------------------------------------------------------------- People sub-tab
     private float PeopleBodyHeight() => 58 * S + 24 * S + 28 * S + PeoplePageSize * 36 * S + 34 * S + 24 * S + 3 * 20 * S;
 
@@ -66,14 +77,17 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         if (!P.PopsEnabled) { Gui.Label("The population feature is not active.", x + 2 * S, y, 14, Gui.TextDim); return; }
-        var sum = P.PopSummaryOf(c);
+        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(q => q.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        bool hasSnapshot = overview.CountryTag != null && overview.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase);
+        double averageOpinion = hasSnapshot ? overview.PopulationOpinion : P.PopSummaryOf(c).AverageOpinion;
+        double unrest = hasSnapshot ? overview.PopulationUnrest : P.PopSummaryOf(c).UnrestShare;
+        double underground = hasSnapshot ? overview.PopulationUnderground : P.PopSummaryOf(c).Underground.Values.Sum();
         double stab = P.PopOpinionStability(c);
-        double underground = sum.Underground.Values.Sum();
         var tiles = new (string Label, string Value, Color Tone, float Fill, string Tip)[]
         {
-            ("OPINION", $"{sum.AverageOpinion:+0;-0;0}", sum.AverageOpinion >= 10 ? Gui.Good : sum.AverageOpinion > -10 ? Gui.Text : Gui.Bad, -1,
+            ("OPINION", $"{averageOpinion:+0;-0;0}", averageOpinion >= 10 ? Gui.Good : averageOpinion > -10 ? Gui.Text : Gui.Bad, -1,
                 $"Average opinion of the government, -100 to +100, weighted by people.\nAdds {stab:+0.0;-0.0;0} to stability."),
-            ("UNREST", $"{sum.UnrestShare:P0}", sum.UnrestShare < 0.1 ? Gui.Good : sum.UnrestShare < 0.3 ? Gui.Gold : Gui.Bad, (float)sum.UnrestShare,
+            ("UNREST", $"{unrest:P0}", unrest < 0.1 ? Gui.Good : unrest < 0.3 ? Gui.Gold : Gui.Bad, (float)unrest,
                 "Share of people who protest or are radicalising."),
             ("UNDERGROUND", $"{underground:P0}", underground < 0.02 ? Gui.Text : Gui.Gold, (float)Math.Min(1, underground * 4),
                 "People secretly backing banned parties. It feeds those movements' support even though the parties cannot stand."),
@@ -90,7 +104,9 @@ public sealed partial class Hud
         }
         y += tileH + 12 * S;
 
-        var rows = P.PopGroupRows(c);
+        var rows = hasSnapshot
+            ? overview.PopGroups.Select(m => new PopDisplayRow(m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToList()
+            : P.PopGroupRows(c).Select(m => new PopDisplayRow(m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToList();
         rows = _peopleSort switch
         {
             1 => rows.OrderBy(q => q.Opinion).ToList(),
@@ -153,8 +169,11 @@ public sealed partial class Hud
         var owner = st.Owner;
         var P = G.Politics;
         if (owner == null || !P.PopsEnabled || !G.Population.HasPops(st)) return y;
-        var moods = P.MoodsOf(st);
-        if (moods == null || moods.Count == 0) { Gui.Label("Moods appear after the first month.", x, y, 13, Gui.TextDim); return y + 20 * S; }
+        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(q => q.Key == st.Key);
+        bool hasSnapshot = stateSnapshot.Key == st.Key;
+        var snapshotMoods = hasSnapshot ? stateSnapshot.Moods : System.Collections.Immutable.ImmutableArray<RenderPopMood>.Empty;
+        var moods = hasSnapshot ? null : P.MoodsOf(st);
+        if (moods == null && snapshotMoods.Length == 0) { Gui.Label("Moods appear after the first month.", x, y, 13, Gui.TextDim); return y + 20 * S; }
 
         if (!SeatsTabs) _stateMoodSub = 0;
         float sw = (w - 4 * S) / 2;
@@ -181,6 +200,27 @@ public sealed partial class Hud
                 y += 20 * S;
             }
             if (seats.Count > 8) { Gui.Label($"+{seats.Count - 8} more", x, y, 12, Gui.TextDim); y += 18 * S; }
+            return y + 2 * S;
+        }
+
+        if (hasSnapshot)
+        {
+            double snapshotAvg = snapshotMoods.Length > 0 ? snapshotMoods.Sum(g => g.Opinion * g.Size) / snapshotMoods.Sum(g => g.Size) : 0;
+            Gui.Label($"Opinion here {snapshotAvg:+0;-0;0}", x, y, 14, snapshotAvg >= 10 ? Gui.Good : snapshotAvg > -10 ? Gui.Text : Gui.Bad, FontKind.Bold);
+            OpinionBar(new Rectangle(x + 120 * S, y + 7 * S, w - 124 * S, 6 * S), snapshotAvg);
+            y += 22 * S;
+            foreach (var g in snapshotMoods)
+            {
+                var rect = new Rectangle(x, y, w, 34 * S);
+                Gui.Label(Gui.Fit(g.Name, w * 0.6f, 13, FontKind.Bold), x, y, 13, Gui.Text, FontKind.Bold);
+                string rt = $"{g.Reaction} ({g.Opinion:+0;-0;0})";
+                Gui.Label(rt, x + w - Gui.Measure(rt, 13).X, y, 13, ReactionColor(g.Reaction));
+                OpinionBar(new Rectangle(x, y + 19 * S, w * 0.4f, 5 * S), g.Opinion);
+                Gui.Label(Gui.Fit(ObjectiveText(g.Objective), w * 0.55f, 12), x + w * 0.4f + 8 * S, y + 16 * S, 12, Gui.TextDim);
+                if (Gui.Hover(rect)) Gui.Tooltip($"{g.Name} · {People(g.Size)}\nWants: {ObjectiveText(g.Objective)}. {ObjectiveTip(g.Objective)}\nOpinion {g.Opinion:0} · grievance {g.Grievance:0} · radicalism {g.Radicalism:0}" +
+                    (g.PreferredParty.Length > 0 ? $"\nLeans to: {P.PartyDisplayName(owner, g.PreferredParty)}" : ""));
+                y += 34 * S;
+            }
             return y + 2 * S;
         }
 

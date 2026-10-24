@@ -25,15 +25,17 @@ public sealed partial class Hud
         var F = G.Focus;
         var focuses = F.FocusesOf(player).ToList();
         if (focuses.Count == 0) { Gui.Label("No focus tree for this country.", x, y, 15, Gui.TextDim); return; }
+        var focusSnapshot = _app.Snapshot.Focuses.ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
         var cur = F.Current(player);
-        double days = cur == null ? 0 : G.Rules.Focus.Days(G, player, cur);
-        if (cur != null)
+        var curSnapshot = _app.Snapshot.CurrentFocusKey is { } currentKey && focusSnapshot.TryGetValue(currentKey, out var currentValue) ? currentValue : default;
+        double days = curSnapshot.Key.Length == 0 ? 0 : curSnapshot.Days;
+        if (curSnapshot.Key.Length > 0)
         {
-            Gui.Label($"Working on {cur.Name}: {F.Progress(player):0} of {days:0} days", x, y, 15, Gui.Gold, FontKind.Bold);
-            Gui.Bar(new Rectangle(x, y + 22 * S, w - 90 * S, 10 * S), (float)Math.Clamp(F.Progress(player) / Math.Max(1, days), 0, 1), new Color(110, 170, 230, 255));
+            Gui.Label($"Working on {curSnapshot.Name}: {_app.Snapshot.CurrentFocusProgress:0} of {days:0} days", x, y, 15, Gui.Gold, FontKind.Bold);
+            Gui.Bar(new Rectangle(x, y + 22 * S, w - 90 * S, 10 * S), (float)Math.Clamp(_app.Snapshot.CurrentFocusProgress / Math.Max(1, days), 0, 1), new Color(110, 170, 230, 255));
             if (Gui.Button(new Rectangle(x + w - 80 * S, y + 12 * S, 76 * S, 26 * S), "Drop", true, "Stop this focus (the progress is lost)", false, 13)) F.Cancel(player);
         }
-        else Gui.Label($"Pick a focus to work on. Completed: {F.DoneCount(player)} of {focuses.Count}", x, y, 15, Gui.TextDim);
+        else Gui.Label($"Pick a focus to work on. Completed: {_app.Snapshot.Focuses.Count(f => f.Done)} of {focuses.Count}", x, y, 15, Gui.TextDim);
         y += 46 * S;
 
         // the detail strip at the bottom
@@ -57,7 +59,7 @@ public sealed partial class Hud
                 if (F.Defs.TryGetValue(p, out var pf) && pf.Tree == f.Tree)
                 {
                     var a = Box(pf); var b = Box(f);
-                    var col = F.IsDone(player, pf.Key) ? new Color(120, 200, 130, 255) : new Color(120, 120, 135, 255);
+                    var col = focusSnapshot.TryGetValue(pf.Key, out var prerequisite) && prerequisite.Done ? new Color(120, 200, 130, 255) : new Color(120, 120, 135, 255);
                     float ax = a.X + a.Width / 2, ay = a.Y + a.Height, bx = b.X + b.Width / 2, by = b.Y, mid = (ay + by) / 2;
                     float t = 2 * S;
                     Raylib.DrawLineEx(new Vector2(ax, ay), new Vector2(ax, mid), t, col);
@@ -76,11 +78,12 @@ public sealed partial class Hud
         foreach (var f in focuses)
         {
             var box = Box(f);
-            bool done = F.IsDone(player, f.Key), busy = cur == f, sel = _focusSelected == f.Key;
-            string? why = done ? "Completed" : F.CannotStart(player, f);
+            var state = focusSnapshot.GetValueOrDefault(f.Key);
+            bool done = state.Done, busy = state.Busy, sel = _focusSelected == f.Key;
+            string? why = done ? "Completed" : state.BlockReason;
             Card(box, done ? new Color(40, 62, 46, 255) : busy ? new Color(40, 55, 80, 255) : why == null ? new Color(58, 58, 68, 255) : new Color(32, 33, 38, 255), busy || sel);
             Gui.Label(Gui.Fit(f.Name, cw - 12 * S, 14, FontKind.Bold), box.X + 6 * S, box.Y + 5 * S, 14, done ? Gui.Good : why == null ? Gui.Text : Gui.TextDim, FontKind.Bold);
-            string sub = done ? "done" : busy ? $"{F.Progress(player):0}/{days:0} days" : why == null ? $"{G.Rules.Focus.Days(G, player, f):0} days" : "locked";
+            string sub = done ? "done" : busy ? $"{_app.Snapshot.CurrentFocusProgress:0}/{state.Days:0} days" : why == null ? $"{state.Days:0} days" : "locked";
             Gui.Label(sub, box.X + 6 * S, box.Y + box.Height - 20 * S, 12, busy ? Gui.Gold : Gui.TextDim);
             if (Gui.Hover(box) && Raylib.IsMouseButtonPressed(MouseButton.Left)) _focusSelected = f.Key;
         }
@@ -93,17 +96,18 @@ public sealed partial class Hud
             Gui.Label("Click a focus to see what it needs and what it gives.", strip.X + 10 * S, strip.Y + 10 * S, 14, Gui.TextDim);
             return;
         }
-        string? block = F.IsDone(player, s.Key) ? "Completed" : F.CannotStart(player, s);
+        var selectedState = focusSnapshot.GetValueOrDefault(s.Key);
+        string? block = selectedState.Done ? "Completed" : selectedState.BlockReason;
         float tx = strip.X + 10 * S, ty = strip.Y + 8 * S, tw = strip.Width - 140 * S;
-        Gui.Label(s.Name + $"  ({G.Rules.Focus.Days(G, player, s):0} days)", tx, ty, 16, Gui.Gold, FontKind.Bold);
+        Gui.Label(s.Name + $"  ({selectedState.Days:0} days)", tx, ty, 16, Gui.Gold, FontKind.Bold);
         if (s.Desc.Length > 0) Gui.Label(Gui.Fit(s.Desc, tw, 13), tx, ty + 22 * S, 13, Gui.TextDim);
-        var needs = F.Requirements(player, s).Select(q => (q.Ok ? "[OK] " : "[X] ") + q.Text).ToList();
-        if (s.Prerequisite.Count > 0) needs.Insert(0, "After one of: " + string.Join(", ", s.Prerequisite.Select(k => (F.IsDone(player, k) ? "[OK] " : "[X] ") + (F.Defs.TryGetValue(k, out var d) ? d.Name : k))));
-        if (s.Requires.Count > 0) needs.Insert(0, "After all of: " + string.Join(", ", s.Requires.Select(k => (F.IsDone(player, k) ? "[OK] " : "[X] ") + (F.Defs.TryGetValue(k, out var d) ? d.Name : k))));
+        var needs = selectedState.Requirements.Select(q => (q.Ok ? "[OK] " : "[X] ") + q.Text).ToList();
+        if (s.Prerequisite.Count > 0) needs.Insert(0, "After one of: " + string.Join(", ", s.Prerequisite.Select(k => (focusSnapshot.GetValueOrDefault(k).Done ? "[OK] " : "[X] ") + (F.Defs.TryGetValue(k, out var d) ? d.Name : k))));
+        if (s.Requires.Count > 0) needs.Insert(0, "After all of: " + string.Join(", ", s.Requires.Select(k => (focusSnapshot.GetValueOrDefault(k).Done ? "[OK] " : "[X] ") + (F.Defs.TryGetValue(k, out var d) ? d.Name : k))));
         if (s.MutuallyExclusive.Count > 0) needs.Add("Excludes: " + string.Join(", ", s.MutuallyExclusive.Select(k => F.Defs.TryGetValue(k, out var d) ? d.Name : k)));
         Gui.Label(Gui.Fit("Needs: " + (needs.Count == 0 ? "nothing" : string.Join("; ", needs)), tw, 13), tx, ty + 44 * S, 13, Gui.Text);
-        var reward = F.DescribeReward(player, s);
-        Gui.Label(Gui.Fit("Gives: " + (reward.Count == 0 ? "-" : string.Join("; ", reward)), tw, 13), tx, ty + 64 * S, 13, Gui.Good);
+        var reward = selectedState.Reward;
+        Gui.Label(Gui.Fit("Gives: " + (reward.Length == 0 ? "-" : string.Join("; ", reward)), tw, 13), tx, ty + 64 * S, 13, Gui.Good);
         if (block != null && block != "Completed") Gui.Label(Gui.Fit(block, tw, 13), tx, ty + 84 * S, 13, new Color(220, 120, 110, 255));
         if (block == null && Gui.Button(new Rectangle(strip.X + strip.Width - 120 * S, strip.Y + strip.Height / 2 - 16 * S, 106 * S, 32 * S), "Start", true, "Work on this focus", false, 14))
             Ui.SetStatus(F.Start(player, s) ?? $"Focus: {s.Name}");

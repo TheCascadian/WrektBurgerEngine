@@ -4,6 +4,7 @@ using Burger.Core.Characters;
 using Burger.Core.Diplomacy;
 using Burger.Core.Model;
 using Burger.Core.Warfare;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -436,7 +437,9 @@ public sealed partial class Hud
             gy += 30 * S;
             foreach (var a in grp.Armies.ToList())
             {
-                Gui.Label(Gui.Fit($"{a.Name}: {a.Divisions.Count} divisions", gw - 220 * S, 13), gx + 8 * S, gy + 4 * S, 13, Gui.Text);
+                var armySnapshot = _app.Snapshot.Armies.FirstOrDefault(q => q.Id == a.Id);
+                bool hasArmySnapshot = armySnapshot.Id == a.Id && armySnapshot.OwnerTag != null && armySnapshot.OwnerTag.Equals(p.Tag, StringComparison.OrdinalIgnoreCase);
+                Gui.Label(Gui.Fit($"{(hasArmySnapshot ? armySnapshot.Name : a.Name)}: {(hasArmySnapshot ? armySnapshot.DivisionCount : a.Divisions.Count)} divisions", gw - 220 * S, 13), gx + 8 * S, gy + 4 * S, 13, Gui.Text);
                 double bonus = O.CombinedArmsBonus(a);
                 Gui.Label($"Combined arms {bonus:+0%;-0%;+0%}", gx + gw - 210 * S, gy + 4 * S, 12, bonus > 0 ? Gui.Good : Gui.TextDim);
                 var rowR = new Rectangle(gx + 8 * S, gy, gw - 90 * S, 26 * S);
@@ -485,11 +488,16 @@ public sealed partial class Hud
             y += h + 6 * S;
             if (_scMarshalFor == grp)
             {
-                foreach (var ch in ScCourt(p).Where(c => O.CannotSetMarshal(grp, c) == null).OrderByDescending(c => c.GetStat(G.Data.Defines.GeneralStat)).Take(6))
+                var marshalStat = G.Data.Defines.GeneralStat;
+                var marshalSnapshots = _app.Snapshot.Characters.Where(c => c.CountryTag == p.Tag).ToDictionary(c => c.Id);
+                double MarshalStat(Character c) => marshalSnapshots.TryGetValue(c.Id, out var snapshot)
+                    ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(marshalStat, StringComparison.OrdinalIgnoreCase)).Value
+                    : c.GetStat(marshalStat);
+                foreach (var ch in ScCourt(p).Where(c => O.CannotSetMarshal(grp, c) == null).OrderByDescending(MarshalStat).Take(6))
                 {
                     var cb = new Rectangle(x + 14 * S, y, w - 14 * S, 28 * S);
                     Card(cb, new Color(30, 32, 38, 255));
-                    Gui.Label(Gui.Fit($"{ch.DisplayName}, martial {ch.GetStat(G.Data.Defines.GeneralStat):0}", cb.Width - 100 * S, 13), cb.X + 8 * S, cb.Y + 6 * S, 13, Gui.Text);
+                    Gui.Label(Gui.Fit($"{(marshalSnapshots.GetValueOrDefault(ch.Id).Name ?? ch.DisplayName)}, martial {MarshalStat(ch):0}", cb.Width - 100 * S, 13), cb.X + 8 * S, cb.Y + 6 * S, 13, Gui.Text);
                     var who = ch;
                     if (ScButton(cb, 76 * S, "Appoint", true, $"{ch.DisplayName} commands the group")) { ScResult(O.SetMarshal(g2, who)); _scMarshalFor = null; }
                     y += 32 * S;
@@ -506,7 +514,9 @@ public sealed partial class Hud
             {
                 var box = new Rectangle(x, y, w, 32 * S);
                 Card(box, Ui.SelectedArmy == a ? new Color(60, 52, 34, 255) : new Color(36, 38, 44, 255), Ui.SelectedArmy == a);
-                Gui.Label(Gui.Fit($"{a.Name}: {a.Divisions.Count} divisions", w - 40 * S - groups.Count * 34 * S, 13), box.X + 8 * S, box.Y + 7 * S, 13, Gui.Text);
+                var armySnapshot = _app.Snapshot.Armies.FirstOrDefault(q => q.Id == a.Id);
+                bool hasArmySnapshot = armySnapshot.Id == a.Id && armySnapshot.OwnerTag != null && armySnapshot.OwnerTag.Equals(p.Tag, StringComparison.OrdinalIgnoreCase);
+                Gui.Label(Gui.Fit($"{(hasArmySnapshot ? armySnapshot.Name : a.Name)}: {(hasArmySnapshot ? armySnapshot.DivisionCount : a.Divisions.Count)} divisions", w - 40 * S - groups.Count * 34 * S, 13), box.X + 8 * S, box.Y + 7 * S, 13, Gui.Text);
                 double bonus = O.CombinedArmsBonus(a);
                 if (Gui.Hover(box)) { Gui.Tooltip(O.DescribeBonus(a) + (groups.Count > 0 ? "\nNumbers add it to that army group" : "")); if (Gui.Clicked(new Rectangle(box.X, box.Y, box.Width - groups.Count * 34 * S, box.Height))) Ui.SelectedArmy = a; }
                 for (int i = 0; i < groups.Count; i++)
@@ -764,9 +774,19 @@ public sealed partial class Hud
         var pr = new Rectangle(box.X + 3 * S, box.Y + 3 * S, 30 * S, 30 * S);
         DrawPortrait(ch, pr, false, false);
         var nameR = new Rectangle(box.X + 38 * S, box.Y, w - 130 * S, box.Height);
-        Gui.Label(Gui.Fit(ch.DisplayName, nameR.Width, 13, FontKind.Bold), nameR.X, box.Y + 2 * S, 13, Gui.Text, FontKind.Bold);
+        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        bool hasSnapshot = snapshot.Id == ch.Id && snapshot.Name != null;
+        string displayName = hasSnapshot ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
+        Gui.Label(Gui.Fit(displayName, nameR.Width, 13, FontKind.Bold), nameR.X, box.Y + 2 * S, 13, Gui.Text, FontKind.Bold);
         Gui.Label(Gui.Fit(info, nameR.Width, 12), nameR.X, box.Y + 19 * S, 12, Gui.TextDim);
-        if (Gui.Hover(nameR)) { Gui.Tooltip($"{ch.DisplayName}: click to open the sheet\n" + string.Join("  ", G.Data.Defines.CharacterStats.Select(st => $"{st} {ch.GetStat(st):0}"))); if (Gui.Clicked(nameR)) OpenSheet(ch); }
+        if (Gui.Hover(nameR))
+        {
+            string stats = hasSnapshot
+                ? string.Join("  ", snapshot.Stats.Select(st => $"{st.Key} {st.Value:0}"))
+                : string.Join("  ", G.Data.Defines.CharacterStats.Select(st => $"{st} {ch.GetStat(st):0}"));
+            Gui.Tooltip($"{displayName}: click to open the sheet\n" + stats);
+            if (Gui.Clicked(nameR)) OpenSheet(ch);
+        }
         if (ScButton(box, 80 * S, button, why == null, why ?? tip)) click();
         return y + 40 * S;
     }
@@ -774,6 +794,11 @@ public sealed partial class Hud
     private float ScCouncil(Country p, float x, float y, float w)
     {
         var P = G.Politics;
+        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == p.Tag).ToDictionary(q => q.Id);
+        double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
+            ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
+            : ch.GetStat(stat);
+        int AgeOf(Character ch) => characterSnapshots.TryGetValue(ch.Id, out var snapshot) ? snapshot.Age : ch.Age(G.World.Date);
         Gui.Section("Council", x, y, w);
         y += 26 * S;
         y = ScText($"Five posts held by any adult of the country, whatever their party. Each minister adds {2}% of their skill to the post's effect; appointing costs {P.PowerName}.", x, y, w, 13);
@@ -787,14 +812,14 @@ public sealed partial class Hud
             if (Gui.Button(new Rectangle(x + w - 100 * S, y, 100 * S, 24 * S), m == null ? "Appoint" : "Replace", true, $"Choose a councillor ({post.Cost:0} {P.PowerName})", _cabinetPick == post.Key, 13))
                 _cabinetPick = _cabinetPick == post.Key ? null : post.Key;
             y += 30 * S;
-            if (m != null) y += CharRow(m, x, y, w, $"{Localisation.GetOrPretty(post.Stat)} {m.GetStat(post.Stat):0}") + 2 * S;
+            if (m != null) y += CharRow(m, x, y, w, $"{Localisation.GetOrPretty(post.Stat)} {StatOf(m, post.Stat):0}") + 2 * S;
             else { Gui.Label("Vacant", x + 8 * S, y, 13, Gui.TextDim); y += 22 * S; }
             if (_cabinetPick == post.Key)
                 foreach (var cand in P.Candidates(p, post).Take(6).ToList())
                 {
                     var pos = post; var who = cand;
                     string? why = P.CannotAppoint(p, post, cand);
-                    y = ScCandidateRow(cand, $"{Localisation.GetOrPretty(post.Stat)} {cand.GetStat(post.Stat):0}, age {cand.Age(G.World.Date)}", "Appoint", why, $"Appoint for {post.Cost:0} {P.PowerName}",
+                    y = ScCandidateRow(cand, $"{Localisation.GetOrPretty(post.Stat)} {StatOf(cand, post.Stat):0}, age {AgeOf(cand)}", "Appoint", why, $"Appoint for {post.Cost:0} {P.PowerName}",
                         () => Confirm($"Appoint {who.DisplayName} to {pos.Name} for {pos.Cost:0} {P.PowerName}?", () => { var err = P.Appoint(p, pos, who); if (err != null) Ui.SetStatus(err); else _cabinetPick = null; }), x + 12 * S, y, w - 12 * S);
                 }
             y += 4 * S;
@@ -805,6 +830,12 @@ public sealed partial class Hud
     private float ScGovernors(Country p, float x, float y, float w)
     {
         var T = G.Titles;
+        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == p.Tag).ToDictionary(q => q.Id);
+        double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
+            ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
+            : ch.GetStat(stat);
+        int AgeOf(Character ch) => characterSnapshots.TryGetValue(ch.Id, out var snapshot) ? snapshot.Age : ch.Age(G.World.Date);
+        string NameOf(Character ch) => characterSnapshots.TryGetValue(ch.Id, out var snapshot) ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
         string power = G.Politics.Enabled ? G.Politics.PowerName : "gold";
         Gui.Section("Governors", x, y, w);
         y += 26 * S;
@@ -816,16 +847,16 @@ public sealed partial class Hud
             if (Gui.Button(new Rectangle(x + w - 120 * S, y, 120 * S, 24 * S), gov == null ? "Fill vacancy" : "Replace", true, $"Choose a governor for {duchy.Name} ({T.GovernorCost:0} {power})", _scGovPick == duchy, 13))
                 _scGovPick = _scGovPick == duchy ? null : duchy;
             y += 30 * S;
-            if (gov != null) y += CharRow(gov.Governor, x, y, w, $"finesse {gov.Governor.GetStat("finesse"):0}, since {new GameDate(gov.Since).ToDisplay()}") + 2 * S;
+            if (gov != null) y += CharRow(gov.Governor, x, y, w, $"finesse {StatOf(gov.Governor, "finesse"):0}, since {new GameDate(gov.Since).ToDisplay()}") + 2 * S;
             else { Gui.Label("Vacant", x + 8 * S, y, 13, Gui.Bad); y += 22 * S; }
             if (_scGovPick == duchy)
             {
-                var cands = ScCourt(p).Where(c => !c.IsRuler).OrderByDescending(c => c.GetStat("finesse")).Take(8).ToList();
+                var cands = ScCourt(p).Where(c => !c.IsRuler).OrderByDescending(c => StatOf(c, "finesse")).Take(8).ToList();
                 foreach (var cand in cands)
                 {
                     var d = duchy; var who = cand;
                     string? why = T.CannotAppointGovernor(p, duchy, cand);
-                    y = ScCandidateRow(cand, $"finesse {cand.GetStat("finesse"):0}, age {cand.Age(G.World.Date)}", "Appoint", why, $"{cand.DisplayName} governs {duchy.Name}",
+                    y = ScCandidateRow(cand, $"finesse {StatOf(cand, "finesse"):0}, age {AgeOf(cand)}", "Appoint", why, $"{NameOf(cand)} governs {duchy.Name}",
                         () => Confirm($"Appoint {who.DisplayName} governor of {d.Name} for {T.GovernorCost:0} {power}?", () => { ScResult(T.AppointGovernor(p, d, who)); _scGovPick = null; }), x + 12 * S, y, w - 12 * S);
                 }
                 if (cands.Count == 0) { Gui.Label("No one at court can govern.", x + 12 * S, y, 13, Gui.TextDim); y += 22 * S; }
@@ -844,7 +875,16 @@ public sealed partial class Hud
         var vassal = T.VassalOf(st);
         var gov = T.DuchyOf(st) is { } duchy ? T.GovernorOf(st.Owner, duchy) : null;
         if (vassal != null) { Gui.Label("VASSAL (HOLDS THE COUNTY)", x, y + used, 11, Gui.TextDim, FontKind.Bold); used += 14 * S; used += CharRow(vassal, x, y + used, w, $"tax {T.TaxShare(vassal):P0}, levy {T.LevyShare(vassal):P0}"); }
-        if (gov != null) { Gui.Label($"GOVERNOR OF {gov.Duchy.Name.ToUpperInvariant()}", x, y + used, 11, Gui.TextDim, FontKind.Bold); used += 14 * S; used += CharRow(gov.Governor, x, y + used, w, $"finesse {gov.Governor.GetStat("finesse"):0}"); }
+        if (gov != null)
+        {
+            var governorSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == gov.Governor.Id);
+            double finesse = governorSnapshot.Id == gov.Governor.Id
+                ? governorSnapshot.Stats.FirstOrDefault(q => q.Key.Equals("finesse", StringComparison.OrdinalIgnoreCase)).Value
+                : gov.Governor.GetStat("finesse");
+            Gui.Label($"GOVERNOR OF {gov.Duchy.Name.ToUpperInvariant()}", x, y + used, 11, Gui.TextDim, FontKind.Bold);
+            used += 14 * S;
+            used += CharRow(gov.Governor, x, y + used, w, $"finesse {finesse:0}");
+        }
         else if (st.Owner == G.World.Player && T.DuchyOf(st) != null) { Gui.Label("No governor in this region.", x, y + used, 13, Gui.TextDim); used += 20 * S; }
         return used + (used > 0 ? 6 * S : 0);
     }
@@ -856,21 +896,9 @@ public sealed partial class Hud
     {
         var p = G.World.Player;
         if (p == null || Ui.EditorActive) return;
-        var lines = new List<(string Text, Color Tint, string Tip, int Tab)>();
-        if (G.Raising.Enabled && G.Raising.IsMobilised(p))
-            lines.Add(($"Mobilised: {G.Raising.MobilisedDaysLeft(p)} days left", Gui.Gold, "The realm is under arms. -5 stability was paid; afterwards the people rest 90 days.", 3));
-        if (G.Raising.Enabled && G.Raising.HasLevies(p))
-            lines.Add(("Levies stand: tax -10%", Gui.Gold, "Disbanded 30 days after the peace.", 3));
-        if (G.Reputation.Enabled && G.Reputation.CoalitionAgainst(p) is { } coal)
-            lines.Add(($"Coalition against you: {coal.Members.Count} countries", Gui.Bad, string.Join(", ", coal.Members.Select(c => c.Name)) + "\nIt dissolves when your aggressive expansion falls below 10.", 1));
-        if (G.Factions.Enabled && G.Factions.FactionOf(p).Count > 1 && G.Factions.Goals.TryGetValue(G.Factions.LeaderOf(p), out var goal) && G.Factions.DaysLeft(goal) > 0)
-            lines.Add(($"Faction goal: war on {goal.Target.Name} ({G.Factions.DaysLeft(goal)} days)", G.Factions.Supports(p, goal) ? Gui.Good : Gui.Gold, "Members that do not join lose 25 opinion with the leader.", 1));
-        if (G.GreatPowers.Enabled)
-            foreach (var cr in G.GreatPowers.Crises.Where(c => c.Powers.Contains(p) || c.Target == p))
-                lines.Add(($"Crisis over {cr.Target.Name}", Gui.Bad, "Two great powers have more than 50 influence there.", 0));
-        if (G.Conferences.Enabled)
-            foreach (var c in G.Conferences.Active.Where(c => c.Leader == p || c.Loser == p || c.Turns.Any(t => t.Winner == p)))
-                lines.Add(($"Peace conference: {G.Conferences.DaysToNext(c)} days to the next turn", Gui.Gold, "Click to see the conference.", -1));
+        var lines = _app.Snapshot.StatecraftBanners
+            .Select(b => (Text: b.Text, Tint: b.Tone switch { 0 => Gui.Good, 2 => Gui.Bad, _ => Gui.Gold }, Tip: b.Tip, Tab: b.Tab))
+            .ToList();
         if (lines.Count == 0) return;
         int sw = Raylib.GetScreenWidth();
         float bw = 360 * S, bh = 24 * S, y = TopH + 6 * S;

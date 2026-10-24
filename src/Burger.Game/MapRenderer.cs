@@ -3,6 +3,7 @@ using Burger.Core;
 using Burger.Core.Geography;
 using Burger.Core.Map;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -836,6 +837,7 @@ public sealed unsafe class MapRenderer : IDisposable
     }
 
     public Vector3 LocationPos(Location l, float lift = 0) => WorldPos(l.CenterX, l.CenterY, lift);
+    public Vector3 LocationPos(float centerX, float centerY, float lift = 0) => WorldPos(centerX, centerY, lift);
 
     /// <summary>Finds the first terrain location intersected by the mouse ray.</summary>
     /// <param name="screen">Mouse position relative to the map viewport.</param>
@@ -1209,6 +1211,94 @@ public sealed unsafe class MapRenderer : IDisposable
         Dirty = false;
     }
 
+    private void UpdateLut(RenderSnapshot snapshot)
+    {
+        if (CustomMode != null || Mode is not (MapMode.Political or MapMode.States or MapMode.Locations or MapMode.Terrain or MapMode.Continents or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Supply or MapMode.Air or MapMode.Ideology or MapMode.Spheres or MapMode.Titles or MapMode.Diplomacy or MapMode.Time or MapMode.Provinces)
+            || (Mode == MapMode.Diplomacy && DiplomacyFocus != null && DiplomacyFocus.Tag != snapshot.PlayerTag)
+            || ((Mode is MapMode.Time or MapMode.Provinces) && (GeoDay != null || GeoDebug || GeoBase)))
+        {
+            UpdateLut();
+            return;
+        }
+        var countries = snapshot.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
+        var relations = snapshot.DiplomacyRelations.ToDictionary(r => $"{r.FromTag}|{r.ToTag}", StringComparer.OrdinalIgnoreCase);
+        string? focusTag = DiplomacyFocus?.Tag ?? snapshot.PlayerTag;
+        int block = LutWidth * _blockRows;
+        Array.Clear(_lut);
+        _visibilityVersion = snapshot.VisibilityVersion;
+        foreach (var l in snapshot.Locations)
+        {
+            int i = l.Index;
+            bool charted = l.IsCharted;
+            Color col = new(0, 0, 0, 0);
+            if (charted)
+            {
+                if (Mode == MapMode.Political && !l.IsWater && l.OwnerTag is { } ownerTag && countries.TryGetValue(ownerTag, out var owner)) col = C(owner.Color, 230);
+                else if (Mode == MapMode.States && l.StateIndex >= 0) col = HashColor(l.StateIndex + 7);
+                else if (Mode == MapMode.Locations) col = C(l.MapColor, 230);
+                else if (Mode == MapMode.Ideology && l.OwnerTag is { } ideologyOwner && countries.TryGetValue(ideologyOwner, out var ideologyCountry)) col = C(ideologyCountry.IdeologyColor, 225);
+                else if (Mode == MapMode.Spheres && l.OwnerTag is { } sphereOwner && countries.TryGetValue(sphereOwner, out var sphereCountry)) col = C(sphereCountry.SphereColor, sphereCountry.IsSpherePower ? 240 : 150);
+                else if (Mode == MapMode.Titles) col = C(l.TitleColor, 120);
+                else if (Mode == MapMode.Diplomacy && focusTag != null && l.OwnerTag is { } diplomacyOwner && relations.TryGetValue($"{focusTag}|{diplomacyOwner}", out var relation))
+                {
+                    col = relation.Kind switch
+                    {
+                        0 => new Color(70, 200, 70, 225),
+                        1 => new Color(200, 40, 40, 210),
+                        2 => new Color(50, 110, 220, 200),
+                        3 => new Color(110, 190, 230, 200),
+                        4 => new Color(150, 150, 150, 200),
+                        _ => new Color((int)(150 - 50 * Math.Clamp((relation.Opinion + 100) / 200, 0, 1)), (int)(112 + 30 * Math.Clamp((relation.Opinion + 100) / 200, 0, 1)), (int)(100 + 12 * Math.Clamp((relation.Opinion + 100) / 200, 0, 1)), 120)
+                    };
+                }
+                else if (Mode == MapMode.Time && l.HasGeoData) col = C(l.GeoTimeColor, 230);
+                else if (Mode == MapMode.Provinces && l.HasGeoData) col = C(l.GeoProvinceColor, 230);
+                else if (Mode == MapMode.Terrain) col = C(l.TerrainColor, 230);
+                else if (Mode == MapMode.Continents) col = C(l.ContinentColor, 230);
+                else if (Mode == MapMode.Culture) col = C(l.CultureColor, 225);
+                else if (Mode == MapMode.Religion) col = C(l.ReligionColor, 225);
+                else if (Mode == MapMode.Development && l.DevelopmentLevel > 0) col = new Color((int)Math.Clamp(60 + 190 * Math.Clamp((l.DevelopmentLevel - 1) / 19, 0, 1), 0, 255), (int)Math.Clamp(72 + 130 * Math.Clamp((l.DevelopmentLevel - 1) / 19, 0, 1), 0, 255), (int)Math.Clamp(100 - 40 * Math.Clamp((l.DevelopmentLevel - 1) / 19, 0, 1), 0, 255), 225);
+                else if (Mode == MapMode.Supply && l.SupplyValue > 0.05)
+                {
+                    float t = (float)Math.Clamp(l.SupplyValue / 6.0, 0, 1);
+                    col = t < 0.5f ? new Color(210, (int)(60 + 300 * t), 50, 215) : new Color((int)(210 - 300 * (t - 0.5f)), 210, 60, 215);
+                }
+                else if (Mode == MapMode.Air && l.AirRegionIndex > 0)
+                {
+                    if (l.AirContested)
+                    {
+                        float t = (float)l.AirShare;
+                        col = t < 0.5f ? new Color(215, (int)(60 + 300 * t), 50, 215) : new Color((int)(215 - 300 * (t - 0.5f)), 205, 70, 215);
+                    }
+                    else
+                    {
+                        var hc = HashColor(l.AirRegionIndex * 3 + 5);
+                        col = new Color((byte)(hc.R * 0.55 + 40), (byte)(hc.G * 0.55 + 40), (byte)(hc.B * 0.55 + 50), (byte)190);
+                    }
+                }
+            }
+            _lut[i] = col;
+            int ownerId = charted && l.OwnerTag is { } ownerTag2 && countries.TryGetValue(ownerTag2, out var owner2) ? owner2.Index + 1 : 0;
+            int stateId = charted && l.StateIndex >= 0 ? l.StateIndex + 1 : 0;
+            if (Mode == MapMode.Air) stateId = l.AirRegionIndex;
+            if (Mode is MapMode.Time or MapMode.Provinces) stateId = l.GeoProvinceIndex;
+            _lut[block + i] = new Color(ownerId & 0xFF, (ownerId >> 8) & 0xFF, stateId & 0xFF, (stateId >> 8) & 0xFF);
+            int flags = 0;
+            if (l.IsWater) flags |= 1;
+            if (l.IsOccupied && Mode == MapMode.Political) flags |= 2;
+            if (l.Index == (Selected?.Index ?? -1)) flags |= 4;
+            if (l.Index == (Hovered?.Index ?? -1)) flags |= 8;
+            if (l.IsLake) flags |= 16;
+            if (!charted) flags |= 32;
+            if (Mode == MapMode.Time && l.GeoTimeHatched) flags |= 128;
+            var stripe = l.ControllerTag is { } controllerTag && countries.TryGetValue(controllerTag, out var controller) ? controller.Color : Rgb.Black;
+            _lut[block * 2 + i] = new Color(stripe.R, stripe.G, stripe.B, (byte)flags);
+            if (!charted) _lut[block * 3 + i] = new Color(0, 0, 255, 255);
+        }
+        Raylib.UpdateTexture(_lutTex, _lut);
+        Dirty = false;
+    }
+
     private Color DiplomacyColor(Country me, Country other)
     {
         var w = _game.World;
@@ -1239,11 +1329,11 @@ public sealed unsafe class MapRenderer : IDisposable
     /// Direction to the sun. It depends only on the game's date and hour, never on the camera or the view mode: on the globe it is the
     /// true sun (noon on the prime meridian at 12:00, tilted by the season); on the flat map it swings east to west across the day.
     /// </summary>
-    private Vector3 SunDirection()
+    private Vector3 SunDirection(RenderSnapshot? snapshot = null)
     {
         if (!UserSettings.SunCycle) return Globe ? Vector3.Normalize(new Vector3(0.45f, 0.35f, 0.82f)) : Vector3.Normalize(new Vector3(-0.35f, 1f, -0.45f));
-        var d = _game.World.Date;
-        float hour = d.Hour + _game.Clock.HourFraction; // the clock's progress inside the hour keeps the sun moving smoothly at slow speeds
+        var d = snapshot is { Tick: > 0 } ? snapshot.Date : _game.World.Date;
+        float hour = d.Hour + (snapshot is { Tick: > 0 } ? snapshot.HourFraction : _game.Clock.HourFraction); // the clock's progress inside the hour keeps the sun moving smoothly at slow speeds
         if (Globe)
         {
             float decl = 23.44f * MathF.PI / 180f * MathF.Sin(MathF.Tau * (d.DayOfYear - 80) / 365f);
@@ -1279,28 +1369,29 @@ public sealed unsafe class MapRenderer : IDisposable
         }
     }
 
-    public void Draw(Camera3D cam, float time)
+    public void Draw(Camera3D cam, float time) => Draw(RenderSnapshot.Empty, cam, time);
+
+    public void Draw(RenderSnapshot snapshot, Camera3D cam, float time)
     {
-        if (_game.VisibilityVersion != _visibilityVersion) Dirty = true;
-        var explore = _game.Exploration;
-        if (explore.Version != _tiVersion)
+        if (snapshot.VisibilityVersion != _visibilityVersion) Dirty = true;
+        if (snapshot.ExplorationVersion != _tiVersion)
         {
-            _tiVersion = explore.Version;
-            var fresh = explore.DrainRevealed();
+            _tiVersion = snapshot.ExplorationVersion;
+            var fresh = snapshot.NewlyChartedLocations;
             _revealing.Clear();
             // newly charted lands burn off the chart one after another (a staggered start up to 0.8 s); a huge batch (a loaded game) just appears
-            if (explore.Enabled && fresh.Count <= 700)
+            if (snapshot.ExplorationEnabled && fresh.Length <= 700)
                 foreach (int idx in fresh)
                     _revealing[idx] = -(unchecked((uint)idx * 2654435761u) % 1000u / 1000f) * 0.8f / RevealSeconds;
             Dirty = true;
         }
-        if (Mode is MapMode.Provinces or MapMode.Time && _game.Geo.Enabled && _game.Geo.Version != _geoVersion) { _geoVersion = _game.Geo.Version; Dirty = true; }
-        if (Dirty) UpdateLut();
+        if (Mode is MapMode.Provinces or MapMode.Time && snapshot.GeoEnabled && snapshot.GeoVersion != _geoVersion) { _geoVersion = snapshot.GeoVersion; Dirty = true; }
+        if (Dirty) UpdateLut(snapshot);
         AdvanceReveal();
-        Raylib.SetShaderValue(_shader, _locTi, explore.Enabled && _game.World.Player != null ? 1f : 0f, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locTi, snapshot.ExplorationEnabled && snapshot.Player != null ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locTime, time, ShaderUniformDataType.Float);
         if (Globe) DrawSpace(cam);
-        Raylib.SetShaderValue(_shader, _locSun, SunDirection(), ShaderUniformDataType.Vec3);
+        Raylib.SetShaderValue(_shader, _locSun, SunDirection(snapshot), ShaderUniformDataType.Vec3);
         float camH = Viewport.HeightOf(cam);
         Raylib.SetShaderValue(_shader, _locGlobe, Globe ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locGlobeRadius, GlobeRadius, ShaderUniformDataType.Float);
@@ -1321,7 +1412,7 @@ public sealed unsafe class MapRenderer : IDisposable
         Raylib.SetShaderValue(_shader, _locStripe, stripe, ShaderUniformDataType.Float);
         // the Provinces map mode draws only real province borders: the thin lines between the locations inside one province would hide merges
         Raylib.SetShaderValue(_shader, _locGeoBase, GeoBase && Mode == MapMode.Provinces ? 1.0f : 0.0f, ShaderUniformDataType.Float);
-        bool provincesOnly = Mode == MapMode.Provinces && CustomMode == null && _game.Geo.Enabled;
+        bool provincesOnly = Mode == MapMode.Provinces && CustomMode == null && snapshot.GeoEnabled;
         Raylib.SetShaderValue(_shader, _locShowBorders, camH < 120 && !provincesOnly ? 1.0f : 0.0f, ShaderUniformDataType.Float);
         // state borders fade out when zoomed out (country borders stay)
         float stateFade = Math.Clamp((StrategicZoom * 0.6f - camH) / (StrategicZoom * 0.25f), 0f, 1f);
@@ -1335,13 +1426,13 @@ public sealed unsafe class MapRenderer : IDisposable
         if (!Dirty && (hoverIdx != _lastHovered || selIdx != _lastSelected))
         {
             if (_lastHovered >= 0 && _lastHovered != hoverIdx && _lastHovered != selIdx)
-                UpdateLutFlags(_lastHovered);
+                UpdateLutFlags(snapshot, _lastHovered);
             if (_lastSelected >= 0 && _lastSelected != hoverIdx && _lastSelected != selIdx)
-                UpdateLutFlags(_lastSelected);
+                UpdateLutFlags(snapshot, _lastSelected);
             if (hoverIdx >= 0 && hoverIdx != _lastHovered && hoverIdx != _lastSelected)
-                UpdateLutFlags(hoverIdx);
+                UpdateLutFlags(snapshot, hoverIdx);
             if (selIdx >= 0 && selIdx != _lastHovered && selIdx != _lastSelected)
-                UpdateLutFlags(selIdx);
+                UpdateLutFlags(snapshot, selIdx);
         }
         _lastHovered = hoverIdx;
         _lastSelected = selIdx;
@@ -1378,6 +1469,29 @@ public sealed unsafe class MapRenderer : IDisposable
     }
 
     private int _lastHovered = -1, _lastSelected = -1;
+
+    private void UpdateLutFlags(RenderSnapshot snapshot, int index)
+    {
+        var location = snapshot.Locations.FirstOrDefault(l => l.Index == index);
+        if (location.Index != index) return;
+        int flags = 0;
+        if (location.IsWater) flags |= 1;
+        if (location.IsOccupied && Mode == MapMode.Political) flags |= 2;
+        if (location.Index == (Selected?.Index ?? -1)) flags |= 4;
+        if (location.Index == (Hovered?.Index ?? -1)) flags |= 8;
+        if (location.IsLake) flags |= 16;
+        if (!location.IsCharted) flags |= 32;
+        if (Mode == MapMode.Time && location.GeoTimeHatched) flags |= 128;
+        var controller = location.ControllerTag is { } tag
+            ? snapshot.Countries.FirstOrDefault(c => string.Equals(c.Tag, tag, StringComparison.OrdinalIgnoreCase))
+            : default;
+        var cell = new Color(controller.Color.R, controller.Color.G, controller.Color.B, (byte)flags);
+        int block = LutWidth * _blockRows;
+        _lut[block * 2 + index] = cell;
+        var src = stackalloc Color[1];
+        src[0] = cell;
+        Raylib.UpdateTextureRec(_lutTex, new Rectangle(index % LutWidth, _blockRows * 2 + index / LutWidth, 1, 1), src);
+    }
 
     /// <summary>Time mode hatches land whose owner holds it with a control level other than core or direct.</summary>
     private bool TimeHatched(Location l, int day)

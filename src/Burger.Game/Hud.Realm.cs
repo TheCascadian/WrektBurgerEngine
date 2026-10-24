@@ -5,6 +5,7 @@ using Burger.Core.Modding;
 using Burger.Core.Multiplayer;
 using Burger.Core.Politics;
 using Burger.Core.Society;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -124,6 +125,12 @@ public sealed partial class Hud
 
     private static string Mods(Dictionary<string, double> m, double weight = 1) => SocietyData.Describe(m, weight).Replace(", ", "\n");
 
+    private int SnapshotAge(Character ch, GameDate now)
+    {
+        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        return snapshot.Id == ch.Id && snapshot.Name != null ? snapshot.Age : ch.Age(now);
+    }
+
     private string PowerText(Country p, double cost)
         => G.Politics.Enabled ? $"{cost:0} {G.Politics.PowerName.ToLowerInvariant()}" : "free";
 
@@ -138,18 +145,25 @@ public sealed partial class Hud
         DrawPortrait(ch, pr, false, false);
         PortraitFrame(pr, ch.Female ? new Color(200, 150, 180, 255) : new Color(130, 160, 200, 255));
         var dyn = G.Dynasties;
+        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        bool hasSnapshot = snapshot.Id == ch.Id && snapshot.Name != null;
+        string displayName = hasSnapshot ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
+        int age = hasSnapshot ? snapshot.Age : ch.Age(G.World.Date);
         bool sick = SickMark(ch, pr);
-        Gui.Label(Gui.Fit(ch.DisplayName, w - 56 * S, 14, FontKind.Bold), x + 46 * S, y + 3 * S, 14, ch.Alive ? Gui.Text : Gui.TextDim, FontKind.Bold);
-        int age = ch.Age(G.World.Date);
+        Gui.Label(Gui.Fit(displayName, w - 56 * S, 14, FontKind.Bold), x + 46 * S, y + 3 * S, 14, ch.Alive ? Gui.Text : Gui.TextDim, FontKind.Bold);
         string sub = $"{(ch.Female ? "F" : "M")} {age}" + (extra.Length > 0 ? "  ·  " + extra : "");
         Gui.Label(Gui.Fit(sub, w - 56 * S, 12), x + 46 * S, y + 22 * S, 12, Gui.TextDim);
         if (Gui.Hover(box))
         {
-            var tip = new List<string> { ch.DisplayName, $"Age {age}" };
+            var tip = new List<string> { displayName, $"Age {age}" };
             if (dyn.Enabled) tip.Add("Claim: " + dyn.ClaimLabel(ch));
             if (sick && dyn.DiseaseOf(ch) is { } d) tip.Add($"Ill: {d.Name} (until {new GameDate(dyn.SickUntil(ch)).ToDisplay()})");
-            tip.Add(string.Join("  ", G.Data.Defines.CharacterStats.Select(s => $"{s} {ch.GetStat(s):0}")));
-            if (ch.Traits.Count > 0) tip.Add(string.Join(", ", ch.Traits.Select(t => t.Name)));
+            if (hasSnapshot)
+                tip.Add(string.Join("  ", snapshot.Stats.Select(s => $"{s.Key} {s.Value:0}")));
+            else
+                tip.Add(string.Join("  ", G.Data.Defines.CharacterStats.Select(s => $"{s} {ch.GetStat(s):0}")));
+            if (hasSnapshot && snapshot.Traits.Length > 0) tip.Add(string.Join(", ", snapshot.Traits));
+            else if (ch.Traits.Count > 0) tip.Add(string.Join(", ", ch.Traits.Select(t => t.Name)));
             Gui.Tooltip(string.Join("\n", tip));
         }
         return h + 3 * S;
@@ -385,7 +399,7 @@ public sealed partial class Hud
             Gui.Label("Regency", x + 66 * S, y + 4 * S, 15, Gui.Gold, FontKind.Header);
             Gui.Label(Gui.Fit($"{regent.DisplayName} rules for {child.DisplayName}", w - 74 * S, 13), x + 66 * S, y + 24 * S, 13, Gui.Text);
             Gui.Label($"{S_.RegencyEndsIn(p)} years to go  ·  stability {G.Rules.Society.RegencyStability(G):+0;-0}", x + 66 * S, y + 42 * S, 12, Gui.TextDim);
-            if (Gui.Hover(banner)) Gui.Tooltip($"{child.DisplayName} is {child.Age(G.World.Date)} and cannot rule yet. {regent.DisplayName} governs with their own abilities until {child.DisplayName} is {G.Rules.Society.RegencyAge(G)}.");
+            if (Gui.Hover(banner)) Gui.Tooltip($"{child.DisplayName} is {SnapshotAge(child, G.World.Date)} and cannot rule yet. {regent.DisplayName} governs with their own abilities until {child.DisplayName} is {G.Rules.Society.RegencyAge(G)}.");
             y += 72 * S;
         }
 
@@ -464,7 +478,7 @@ public sealed partial class Hud
         y += CharRow(ruler, x, y, w, "Ruler", true);
         if (ruler.Spouse is { Alive: true } spouse) y += CharRow(spouse, x + 14 * S, y, w - 14 * S, "Spouse");
         foreach (var con in D.Concubines(ruler)) y += CharRow(con, x + 14 * S, y, w - 14 * S, "Concubine");
-        foreach (var kid in ruler.Children.Where(k => k.Alive).OrderByDescending(k => D.Claim(k)).ThenByDescending(k => k.Age(G.World.Date)).Take(10))
+        foreach (var kid in ruler.Children.Where(k => k.Alive).OrderByDescending(k => D.Claim(k)).ThenByDescending(k => SnapshotAge(k, G.World.Date)).Take(10))
         {
             string extra = kid == p.Heir ? "Heir" : D.Claim(kid) < 1 ? D.ClaimLabel(kid) : "Child";
             y += CharRow(kid, x + 28 * S, y, w - 28 * S, extra, kid == p.Heir);
@@ -484,7 +498,7 @@ public sealed partial class Hud
                 Gui.Label(Gui.Fit(country?.Name ?? "Abroad", w - 90 * S, 13, FontKind.Bold), x + 12 * S, y + 3 * S, 13, Gui.Text, FontKind.Bold);
                 string n = $"{members.Count} member(s)";
                 Gui.Label(n, x + w - Gui.Measure(n, 12).X - 6 * S, y + 5 * S, 12, Gui.TextDim);
-                if (Gui.Hover(row)) Gui.Tooltip(string.Join("\n", members.Take(12).Select(m => $"{m.DisplayName}, {m.Age(G.World.Date)}" + (m.IsRuler ? " (ruler)" : ""))));
+                if (Gui.Hover(row)) Gui.Tooltip(string.Join("\n", members.Take(12).Select(m => $"{m.DisplayName}, {SnapshotAge(m, G.World.Date)}" + (m.IsRuler ? " (ruler)" : ""))));
                 y += 28 * S;
             }
         }

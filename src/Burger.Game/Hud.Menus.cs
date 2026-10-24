@@ -160,6 +160,30 @@ public sealed partial class Hud
         LodRow(x, ref y, w, "Water", ref UserSettings.LodWater, "Waves, glints and coast foam on the sea.");
         LodRow(x, ref y, w, "Rivers", ref UserSettings.LodRiver, "River shine, flow and white water.");
         LodRow(x, ref y, w, "Terrain", ref UserSettings.LodTerrain, "Blending between terrain types. Low is the cheapest.");
+        y += 8 * S;
+        Gui.Label("Game Performance", x, y, 16, Gui.Gold);
+        y += 28 * S;
+        if (Gui.Button(new Rectangle(x, y, w, 30 * S), $"Game frame rate: {UserSettings.EffectiveGameFrameRate} FPS", true,
+                "Cycles the game cap through 30, 60, and 120 FPS in the menu, singleplayer, and multiplayer.", false, 15))
+        {
+            UserSettings.GameFrameRate = UserSettings.GameFrameRate switch { 30 => 60, 60 => 120, _ => 30 };
+            UserSettings.Save();
+            _app.ApplyTargetFps();
+        }
+        y += 34 * S;
+        if (Gui.Button(new Rectangle(x, y, w, 30 * S), UserSettings.CountryLabels ? "Country labels: on" : "Country labels: off", true,
+                "Disable country labels in the menu, singleplayer, and multiplayer to reduce rendering and layout work.", UserSettings.CountryLabels, 15))
+        {
+            UserSettings.CountryLabels = !UserSettings.CountryLabels;
+            UserSettings.Save();
+        }
+        y += 34 * S;
+        if (Gui.Button(new Rectangle(x, y, w, 30 * S), UserSettings.HoverPicking ? "Hover picking: on" : "Hover picking: off", true,
+                "Disable exact province hover picking in the menu, singleplayer, and multiplayer.", UserSettings.HoverPicking, 15))
+        {
+            UserSettings.HoverPicking = !UserSettings.HoverPicking;
+            UserSettings.Save();
+        }
     }
 
     /// <summary>One feature's level: click to step Low, Default, High, Max. Greyed out (but still readable) while LOD is off.</summary>

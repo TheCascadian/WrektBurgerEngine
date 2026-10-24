@@ -1,5 +1,6 @@
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -7,6 +8,106 @@ namespace Burger.Runtime;
 public sealed partial class Hud
 {
     private void DrawWarsPanel()
+    {
+        var wars = _app.Snapshot.Wars.OrderByDescending(w => w.IsMine).ToList();
+        var r = RightRect(2000);
+        Gui.Panel(r, "Wars");
+        if (Gui.CloseButton(r)) { Ui.Right = RightPanel.None; return; }
+        float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
+        if (wars.Count == 0) { Gui.Label("The world is at peace.", x, y, 16, Gui.TextDim); return; }
+        var country = new Dictionary<string, Country?>(StringComparer.OrdinalIgnoreCase);
+        Country? Live(string tag)
+        {
+            if (!country.TryGetValue(tag, out var c)) country[tag] = c = G.World.Countries.FirstOrDefault(v => v.Tag == tag);
+            return c;
+        }
+        float CardH(RenderWar war) => (212 + Math.Clamp(war.Goals.Length, 1, 3) * 16 + 10 + (war.IsMine ? 32 : 0)) * S;
+        float top = Gui.BeginScroll("wars", new Rectangle(x, y, w, r.Height - 46 * S), wars.Sum(war => CardH(war) + 8 * S));
+        float wy = top;
+        foreach (var war in wars)
+        {
+            float cardH = CardH(war);
+            var box = new Rectangle(x, wy, w - 8 * S, cardH);
+            Card(box, war.IsMine ? new Color(52, 34, 32, 255) : new Color(34, 36, 42, 255), war.IsMine);
+            float ix = x + 10 * S, iw = w - 28 * S;
+            var attacker = war.Attackers.First(c => c.IsLeader);
+            var defender = war.Defenders.First(c => c.IsLeader);
+            Color atkCol = C(attacker.Color), defCol = C(defender.Color);
+            string since = war.StartDate.ToDisplay();
+            float sinceW = Gui.Measure(since, 13).X;
+            Gui.Label(Gui.Fit(war.Name, iw - sinceW - 10 * S, 16, FontKind.Bold), ix, wy + 6 * S, 16, Gui.Gold, FontKind.Bold);
+            Gui.Label(since, ix + iw - sinceW, wy + 8 * S, 13, Gui.TextDim);
+            Raylib.DrawRectangle((int)ix, (int)(wy + 29 * S), (int)iw, 1, new Color(255, 255, 255, 28));
+            float ry = wy + 36 * S;
+            foreach (var (label, col, members) in new[] { ("ATTACK", atkCol, war.Attackers), ("DEFEND", defCol, war.Defenders) })
+            {
+                Raylib.DrawRectangle((int)ix, (int)(ry + 2 * S), (int)(4 * S), (int)(14 * S), col);
+                Gui.Label(label, ix + 10 * S, ry + 2 * S, 12, Gui.TextDim, FontKind.Bold);
+                float fw = 24 * S, fh = 16 * S, fx = ix + 66 * S, avail = iw - 66 * S;
+                int fit = Math.Max(1, (int)(avail / (fw + 4 * S)));
+                int shown = Math.Min(fit, members.Length);
+                for (int i = 0; i < shown; i++)
+                {
+                    var member = members[i];
+                    var fr = new Rectangle(fx + i * (fw + 4 * S), ry + 1 * S, fw, fh);
+                    if (Live(member.Tag) is { } live) Gui.Flag(live, fr);
+                    Raylib.DrawRectangleLinesEx(fr, member.IsLeader ? 2 : 1, member.IsLeader ? Gui.Gold : new Color(0, 0, 0, 160));
+                    if (Gui.Hover(fr)) Gui.Tooltip($"{member.Name} ({member.Tag})\n{(member.IsLeader ? "War leader" : "Ally")}\nExhaustion: {member.Exhaustion:0.0}");
+                }
+                if (members.Length > shown) Gui.Label($"+{members.Length - shown}", fx + shown * (fw + 4 * S), ry + 1 * S, 14, Gui.TextDim, FontKind.Bold);
+                ry += 20 * S;
+            }
+            string aTag = war.AttackerLeaderTag, dTag = war.DefenderLeaderTag;
+            Gui.Icon("ui_war_score", new Rectangle(ix, wy + 78 * S, 14 * S, 14 * S));
+            Gui.Label("WAR SCORE", ix + 18 * S, wy + 80 * S, 11, Gui.TextDim, FontKind.Bold);
+            var bar = new Rectangle(ix, wy + 96 * S, iw, 16 * S);
+            Raylib.DrawRectangleRec(bar, new Color(18, 19, 22, 255));
+            float score = Math.Clamp((float)war.WarScore / 100f, -1f, 1f), mid = bar.X + bar.Width / 2;
+            var fill = score >= 0 ? new Rectangle(mid, bar.Y, bar.Width / 2 * score, bar.Height) : new Rectangle(mid + bar.Width / 2 * score, bar.Y, -bar.Width / 2 * score, bar.Height);
+            Raylib.DrawRectangleRec(fill, score >= 0 ? atkCol : defCol);
+            Raylib.DrawRectangleLinesEx(bar, 1, new Color(255, 255, 255, 40));
+            Raylib.DrawLine((int)mid, (int)bar.Y - 2, (int)mid, (int)(bar.Y + bar.Height + 2), Color.White);
+            Gui.Label($"{dTag} {Math.Max(0, -war.WarScore):0}", bar.X + 4, bar.Y + 1 * S, 13, Color.White, FontKind.Bold);
+            string rightScore = $"{aTag} {Math.Max(0, war.WarScore):0}";
+            Gui.Label(rightScore, bar.X + bar.Width - Gui.Measure(rightScore, 13, FontKind.Bold).X - 4, bar.Y + 1 * S, 13, Color.White, FontKind.Bold);
+            string verdict = Math.Abs(war.WarScore) < 5 ? "Undecided - neither side is ahead" : war.IsMine ? ($"We are {(war.Attackers.Any(c => c.Tag == _app.Snapshot.PlayerTag) == war.WarScore > 0 ? "winning" : "losing")} by {Math.Abs(war.WarScore):0}") : (war.WarScore > 0 ? $"Attackers ({aTag}) ahead by {war.WarScore:0}" : $"Defenders ({dTag}) ahead by {-war.WarScore:0}");
+            Gui.Label(verdict, ix, wy + 116 * S, 14, war.IsMine && war.WarScore < 0 ? Gui.Bad : Gui.Text, FontKind.Bold);
+            int still = (_app.Snapshot.Date.TotalDays - war.LastChangeDay) / 30;
+            Gui.Icon("ui_exhaustion", new Rectangle(ix, wy + 136 * S, 14 * S, 14 * S));
+            Gui.Label("EXHAUSTION", ix + 18 * S, wy + 138 * S, 11, Gui.TextDim, FontKind.Bold);
+            float colW = (iw - 12 * S) / 2;
+            for (int ci = 0; ci < 2; ci++)
+            {
+                var member = ci == 0 ? attacker : defender;
+                float cx = ix + ci * (colW + 12 * S);
+                Gui.Label($"{member.Tag} {member.Exhaustion:0.0}", cx, wy + 152 * S, 13, member.Exhaustion >= war.MaxExhaustion * 0.5 ? Gui.Bad : Gui.Text);
+                var eb = new Rectangle(cx, wy + 170 * S, colW, 6 * S);
+                Raylib.DrawRectangleRec(eb, new Color(18, 19, 22, 255));
+                Raylib.DrawRectangleRec(new Rectangle(eb.X, eb.Y, eb.Width * (float)Math.Clamp(member.Exhaustion / war.MaxExhaustion, 0, 1), eb.Height), member.Exhaustion >= war.MaxExhaustion * 0.5 ? Gui.Bad : ci == 0 ? atkCol : defCol);
+            }
+            if (still >= 6) Gui.Label($"Front has not moved for {still} months", ix + 18 * S, wy + 180 * S, 12, still >= 12 ? Gui.Bad : Gui.TextDim);
+            Gui.Icon("ui_war_goals", new Rectangle(ix, wy + 194 * S, 14 * S, 14 * S));
+            Gui.Label("WAR GOALS", ix + 18 * S, wy + 196 * S, 11, Gui.TextDim, FontKind.Bold);
+            for (int i = 0; i < Math.Min(war.Goals.Length, 3); i++)
+            {
+                var goal = war.Goals[i];
+                float gy = wy + (212 + i * 16) * S;
+                if (i == 2 && war.Goals.Length > 3) { Gui.Label($"+{war.Goals.Length - 2} more war goals", ix, gy, 13, Gui.TextDim); break; }
+                if (Live(goal.HolderTag) is { } holder) Gui.Flag(holder, new Rectangle(ix, gy + 1 * S, 20 * S, 13 * S));
+                Gui.Label(Gui.Fit($"{Localisation.Get(goal.CasusBelliName)} vs {goal.TargetTag}  ({goal.GoalStateCount} states)", iw - 28 * S, 13), ix + 26 * S, gy, 13, Gui.Text);
+            }
+            if (war.IsMine && Gui.Button(new Rectangle(ix, wy + cardH - 34 * S, 150 * S, 24 * S), "Negotiate peace", !war.CivilWar, war.CivilWar ? "A civil war ends only when one side is defeated" : $"Send a peace offer to {war.DefenderLeaderName}", false, 14))
+            {
+                var liveWar = G.World.Wars.FirstOrDefault(v => v.Id == war.Id);
+                var enemy = liveWar == null ? null : Live(war.AttackerLeaderTag == _app.Snapshot.PlayerTag ? war.DefenderLeaderTag : war.AttackerLeaderTag);
+                if (liveWar != null && enemy != null) OpenPeace(liveWar, enemy);
+            }
+            wy += cardH + 8 * S;
+        }
+        Gui.EndScroll();
+    }
+
+    private void DrawWarsPanelLegacy()
     {
         var player = G.World.Player;
         var r = RightRect(2000);

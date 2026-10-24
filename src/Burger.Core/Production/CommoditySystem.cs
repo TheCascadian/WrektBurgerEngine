@@ -110,12 +110,15 @@ public sealed class CommoditySystem
     }
     public readonly Dictionary<Country, Dictionary<string, Balance>> Books = new();
     private readonly Dictionary<Country, Dictionary<string, double>> _usedThisMonth = new();
+    private readonly Dictionary<Country, (int Day, int Version, List<(string Commodity, double Satisfied)> Rows)> _shortagesCache = new();
+    private int _balanceVersion;
     private const int SettlementBatchSize = 1;
     private readonly List<string> _settlementCommodities = new();
     private readonly List<Country> _settlementCountries = new();
     private int _settlementIndex;
     private bool _settlementStarted;
     private bool _settlementComplete;
+    private bool _settlementRolloverPending;
 
     public CommoditySystem(Game game)
     {
@@ -129,11 +132,14 @@ public sealed class CommoditySystem
             {
                 Books.Clear();
                 _usedThisMonth.Clear();
+                _shortagesCache.Clear();
+                _balanceVersion = 0;
                 _settlementCommodities.Clear();
                 _settlementCountries.Clear();
                 _settlementIndex = 0;
                 _settlementStarted = false;
                 _settlementComplete = false;
+                _settlementRolloverPending = false;
             }
         });
     }
@@ -229,6 +235,7 @@ public sealed class CommoditySystem
         if (!Enabled || units <= 0 || !_equipUse.TryGetValue(e.Key, out var use)) return;
         if (!_usedThisMonth.TryGetValue(c, out var d)) _usedThisMonth[c] = d = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var (k, per) in use) d[k] = d.GetValueOrDefault(k) + per * units;
+        _shortagesCache.Remove(c);
     }
 
     /// <summary>The total yearly deposits of a commodity in the states of a country (for the AI and the interface).</summary>
@@ -241,9 +248,16 @@ public sealed class CommoditySystem
 
     /// <summary>Commodities the country is short of (satisfied under 85%), worst first.</summary>
     public List<(string Commodity, double Satisfied)> Shortages(Country c)
-        => Defs.Values.Where(k => k.IsActive(_game.World.Date)).Select(k => (k.Key, Balance: BalanceOf(c, k.Key)))
-                     .Where(x => x.Balance.Demand > 0.0001 && x.Balance.Satisfied < 0.85)
-                     .Select(x => (x.Key, x.Balance.Satisfied)).OrderBy(x => x.Satisfied).ToList();
+    {
+        int day = _game.World.Date.TotalDays;
+        if (_shortagesCache.TryGetValue(c, out var cached) && cached.Day == day && cached.Version == _balanceVersion)
+            return cached.Rows;
+        var rows = Defs.Values.Where(k => k.IsActive(_game.World.Date)).Select(k => (k.Key, Balance: BalanceOf(c, k.Key)))
+            .Where(x => x.Balance.Demand > 0.0001 && x.Balance.Satisfied < 0.85)
+            .Select(x => (x.Key, x.Balance.Satisfied)).OrderBy(x => x.Satisfied).ThenBy(x => x.Key, StringComparer.OrdinalIgnoreCase).ToList();
+        _shortagesCache[c] = (day, _balanceVersion, rows);
+        return rows;
+    }
 
     /// <summary>Food shortage factor used by population growth in the following month.</summary>
     public double PopulationGrowthFactor(Country c)
@@ -295,7 +309,18 @@ public sealed class CommoditySystem
         // Finish that snapshot before replacing its commodity and country lists, otherwise pending
         // commodities would be discarded and the new month would mix economic periods.
         if (_settlementStarted && !_settlementComplete)
-            ProcessSettlementToCompletion();
+        {
+            if (!streamEconomicWork)
+                ProcessSettlementToCompletion();
+            else
+            {
+                // Do not turn a live month boundary into an unbounded settlement hitch.
+                // DailyTick finishes the old deterministic work and opens the current month
+                // with one bounded batch.
+                _settlementRolloverPending = true;
+                return;
+            }
+        }
         BeginSettlement();
         if (!streamEconomicWork)
             ProcessSettlementToCompletion();
@@ -304,8 +329,24 @@ public sealed class CommoditySystem
     /// <summary>Processes the next deterministic commodity batch after the month has started.</summary>
     public void DailyTick()
     {
-        if (!Enabled || !_settlementStarted || _settlementComplete) return;
+        if (!Enabled || !_settlementStarted) return;
+        if (_settlementComplete)
+        {
+            if (_settlementRolloverPending)
+            {
+                _settlementRolloverPending = false;
+                BeginSettlement();
+                ProcessSettlementBatch();
+            }
+            return;
+        }
         ProcessSettlementBatch();
+        if (_settlementComplete && _settlementRolloverPending)
+        {
+            _settlementRolloverPending = false;
+            BeginSettlement();
+            ProcessSettlementBatch();
+        }
     }
 
     private void BeginSettlement()
@@ -323,6 +364,7 @@ public sealed class CommoditySystem
         _settlementIndex = 0;
         _settlementStarted = true;
         _settlementComplete = false;
+        _settlementRolloverPending = false;
     }
 
     private void ProcessSettlementBatch()
@@ -417,6 +459,8 @@ public sealed class CommoditySystem
             b.Satisfied = totals.Satisfied;
             b.Price = totals.Price;
         }
+        _balanceVersion++;
+        _shortagesCache.Clear();
         if (_game.Profiling)
         {
             long t3 = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -461,6 +505,7 @@ public sealed class CommoditySystem
     {
         root.Add("settlement_started", _settlementStarted ? "1" : "0");
         root.Add("settlement_complete", _settlementComplete ? "1" : "0");
+        root.Add("settlement_rollover_pending", _settlementRolloverPending ? "1" : "0");
         root.Add("settlement_index", _settlementIndex.ToString(CultureInfo.InvariantCulture));
         foreach (var (c, used) in _usedThisMonth.OrderBy(x => x.Key.Tag, StringComparer.Ordinal))
         {
@@ -491,10 +536,13 @@ public sealed class CommoditySystem
     {
         Books.Clear();
         _usedThisMonth.Clear();
+        _shortagesCache.Clear();
+        _balanceVersion = 0;
         _settlementCommodities.Clear();
         _settlementCountries.Clear();
         _settlementStarted = root.GetInt("settlement_started") != 0;
         _settlementComplete = root.GetInt("settlement_complete") != 0;
+        _settlementRolloverPending = root.GetInt("settlement_rollover_pending") != 0;
         _settlementIndex = Math.Max(0, root.GetInt("settlement_index"));
         if (_settlementStarted || _settlementComplete)
         {

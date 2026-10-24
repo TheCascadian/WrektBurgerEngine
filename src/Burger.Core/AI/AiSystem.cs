@@ -52,6 +52,8 @@ public class AiSystem
     private readonly EconomicWorkScheduler<Country> _industryWork = new();
     private readonly HashSet<int> _queuedIndustryCountries = new();
     private const int IndustryWorkPerDay = 2;
+    private const int BackgroundDailyStride = 3;
+    private int _industryQueueMonth = int.MinValue;
 
     private enum EconomicActionKind { Import, ExpandConstruction, UpgradeIndustry, Research, Wait }
 
@@ -230,6 +232,7 @@ public class AiSystem
         _industryWork.Clear();
         _queuedIndustryCountries.Clear();
         _economicReviewDay.Clear();
+        _industryQueueMonth = int.MinValue;
     }
 
     private void RunMonthlyActionBundle(Country c, bool includeIndustry)
@@ -281,11 +284,28 @@ public class AiSystem
         if (_hourSlice >= 0) countries.RemoveAll(c => c.Index % 24 != _hourSlice);
         ForEachAi(countries, c =>
         {
+            if (IsBackgroundCountry(c) && (day + c.Index) % BackgroundDailyStride != 0) return;
             var rng = Game.Rngs.Ai(c);
             if ((day + c.Index) % 2 == 0 && military) Game.P("Ai.Military", () => ManageMilitary(c, new AiRng(Game, rng)));
             if ((day + c.Index) % 2 == 1 && navy) Game.P("Ai.Fleets", () => MoveFleets(c));
             if (air) Game.P("Ai.Air", () => AssignAirWings(c));
         }, serialOnly: true);   // armies, fleets and air wings move shared divisions and location indexes: always in country order
+    }
+
+    /// <summary>
+    /// Countries with no war, border, or direct relationship to the player use a slower daily
+    /// military cadence in single-player. Multiplayer keeps the full cadence because each peer
+    /// may have a different player country and must execute identical work.
+    /// </summary>
+    private bool IsBackgroundCountry(Country c)
+    {
+        if (Game.ModNet.IsMultiplayer || Game.World.Player == null || c == Game.World.Player) return false;
+        if (Game.World.WarsOf(c).Any()) return false;
+        var player = Game.World.Player;
+        if (BorderCache.ContainsKey((c.Index, player.Index))) return false;
+        return !Game.World.Relations.AreAllied(c, player)
+            && !Game.World.Relations.AreOverlordAndSubject(c, player)
+            && !Game.World.Relations.AreOverlordAndSubject(player, c);
     }
 
     private int _sliceDay = -1;
@@ -295,14 +315,23 @@ public class AiSystem
     /// The monthly AI of one country is done in one hour of the month (the first 28 days, by the country's number) instead of all hundreds at the turn of the month: no hitch on the first. Call every hour.
     /// A project whose AI overrides <see cref="MonthlyTick()"/> still gets it once, on day 1.
     /// </summary>
-    public void MonthlyTickSpread()
+    public void MonthlyTickSpread(bool streamEconomicWork = false)
     {
         int day = Game.World.Date.Day, hour = Game.World.Date.Hour;
         _overridesMonthly ??= GetType().GetMethod(nameof(MonthlyTick))?.DeclaringType != typeof(AiSystem);
         if (_overridesMonthly == true) { if (day == 1 && hour == 0) MonthlyTick(); return; }
         if (day > 28) return;
         _sliceDay = (day - 1) * 24 + hour;
-        try { MonthlyTick(); } finally { _sliceDay = -1; }
+        try
+        {
+            if (streamEconomicWork && day == 1 && hour == 0 && _industryQueueMonth != Game.World.Date.TotalDays)
+            {
+                QueueIndustryWork(ActiveAiCountries());
+                _industryQueueMonth = Game.World.Date.TotalDays;
+            }
+            MonthlyTick(streamEconomicWork);
+        }
+        finally { _sliceDay = -1; }
     }
 
     /// <summary>Runs the monthly AI pass synchronously for direct/headless callers.</summary>
@@ -317,11 +346,11 @@ public class AiSystem
         var countries = ActiveAiCountries();
         if (_sliceDay >= 0) countries.RemoveAll(c => c.Index % (28 * 24) != _sliceDay);
         if (_sliceDay >= 0 && countries.Count == 0) return;   // (most hours of the month have no country of their own)
-        if (streamEconomicWork && _sliceDay < 0)
+        if (streamEconomicWork)
         {
-            QueueIndustryWork(countries);
-            // The live clock drains the complete bundle from the existing bounded queue in DailyTick.
-            // This month-boundary hand-off must not execute per-country actions inline.
+            // Industry is queued once at the month boundary and drained by the daily budget.
+            // Other monthly actions are already partitioned by _sliceDay.
+            ForEachAi(countries, c => RunMonthlyActionBundle(c, includeIndustry: false));
             if (diplomacy) _ = BorderCache;
             return;
         }

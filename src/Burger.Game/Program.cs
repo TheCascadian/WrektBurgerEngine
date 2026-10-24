@@ -13,6 +13,10 @@ public sealed class AppOptions
     public string? LoadSave;
     public int Width = 1600;
     public int Height = 900;
+    public bool? VSync;
+    public int? GameFrameRate;
+    public bool? CountryLabels;
+    public bool? HoverPicking;
     public bool Hidden;
     public string? HostTag, JoinCode;
     /// <summary>Take a screenshot after this many frames and quit (for automated tests).</summary>
@@ -60,6 +64,10 @@ public static class Program
   --load       load a save file
   --log-dir <folder>     write error.log and --perf output to this folder
   --monitor N  open the window on monitor N (0 = first); BURGER_MONITOR does the same
+  --vsync on|off  override VSync for this run (diagnostic profiling)
+  --fps 30|60|120       override the persisted global game cap for this run
+  --country-labels on|off  override country labels for this run
+  --hover-picking on|off   override exact province hover picking for this run
   --screenshot <file.png> [--frames N] [--days D]   render, save a screenshot and quit (testing)
   --figure-sheet <file.png> [--figure KEY]          render a figure and its animations to an image and quit
   --figure-frames <folder> [--figure KEY] [--figure-clip a,b]  render each (or the named) animation as frames on a turntable (see tools/figure-gifs.sh)
@@ -95,6 +103,14 @@ public static class Program
                     case "--days": opt.TicksBeforeScreenshot = int.Parse(Next()) * 24; break;
                     case "--hidden": opt.Hidden = true; break;
                     case "--monitor": opt.Monitor = int.Parse(Next()); break;
+                    case "--vsync": opt.VSync = Next().Equals("on", StringComparison.OrdinalIgnoreCase); break;
+                    case "--fps": case "--menu-fps":
+                        int gameFps = int.Parse(Next());
+                        if (gameFps is not (30 or 60 or 120)) throw new ArgumentException("--fps must be 30, 60, or 120");
+                        opt.GameFrameRate = gameFps;
+                        break;
+                    case "--country-labels": case "--menu-labels": opt.CountryLabels = Next().Equals("on", StringComparison.OrdinalIgnoreCase); break;
+                    case "--hover-picking": case "--menu-hover": opt.HoverPicking = Next().Equals("on", StringComparison.OrdinalIgnoreCase); break;
                     case "--figure-sheet": opt.FigureSheet = Path.GetFullPath(Next()); break;
                     case "--figure-frames": opt.FigureFrames = Path.GetFullPath(Next()); break;
                     case "--figure-gif": opt.FigureGifs = Path.GetFullPath(Next()); break;

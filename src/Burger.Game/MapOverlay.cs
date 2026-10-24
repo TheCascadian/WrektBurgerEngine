@@ -1,6 +1,8 @@
 using System.Numerics;
+using System.Collections.Immutable;
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -12,6 +14,7 @@ public sealed class MapOverlay
     private readonly MapRenderer _map;
     private readonly CountryLabels _countryLabels;
     private Burger.Core.Production.TradeTransaction? _selectedTrade;
+    private string? _selectedTradeKey;
     // Unit, route and order overlays reuse the same location anchors. Keep the cache local to the
     // overlay and invalidate it with camera/map state so interaction rectangles use the same pixels.
     private readonly Dictionary<(Location Location, int Lift, bool Standing), Vector2> _locationScreen = new();
@@ -24,6 +27,24 @@ public sealed class MapOverlay
     private int _projectionHeight = -1;
     private bool _projectionBelowFigure;
     private float _projectionUnitLift;
+    private ImmutableArray<RenderCountry> _lookupCountries;
+    private ImmutableArray<RenderLocation> _lookupLocations;
+    private Dictionary<string, RenderCountry> _countryLookup = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, RenderLocation> _locationLookup = new(StringComparer.Ordinal);
+
+    private void EnsureSnapshotLookups(RenderSnapshot snapshot)
+    {
+        if (!_lookupCountries.Equals(snapshot.Countries))
+        {
+            _countryLookup = snapshot.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
+            _lookupCountries = snapshot.Countries;
+        }
+        if (!_lookupLocations.Equals(snapshot.Locations))
+        {
+            _locationLookup = snapshot.Locations.ToDictionary(l => l.Key, StringComparer.Ordinal);
+            _lookupLocations = snapshot.Locations;
+        }
+    }
 
     /// <summary>Unit counters, fleets, battles and order arrows on the map (the Units button, H). Kept for the whole session like the fog shading.</summary>
     public static bool ShowUnits = true;
@@ -81,11 +102,11 @@ public sealed class MapOverlay
 
     private Vector2 ProjectStand(Location location, Camera3D cam) => ProjectLocation(location, LiftFor(location), cam, true);
 
-    public MapOverlay(Game game, MapRenderer map)
+    public MapOverlay(Game game, MapRenderer map, Func<RenderSnapshot>? snapshotProvider = null)
     {
         _game = game;
         _map = map;
-        _countryLabels = new CountryLabels(game, map);
+        _countryLabels = new CountryLabels(game, map, snapshotProvider);
     }
 
     /// <summary>The names are laid out again at once (the map changed under the same game).</summary>
@@ -144,6 +165,59 @@ public sealed class MapOverlay
     /// <summary>Draws unit counters and handles clicks on them. Returns true if a counter was clicked.</summary>
     /// <summary>Unit counters drawn this frame (screen rectangle, owner, divisions) - used for box selection.</summary>
     public readonly List<(Rectangle Rect, Country Owner, List<Division> Divisions)> Counters = new();
+    public readonly List<(Rectangle Rect, string OwnerTag, ImmutableArray<int> DivisionIds)> SnapshotCounters = new();
+
+    /// <summary>Snapshot-backed unit counters. Selection resolves IDs only when the user issues a command.</summary>
+    public bool DrawUnits(RenderSnapshot snapshot, Camera3D cam, UiState ui, bool mouseOverUi)
+    {
+        SnapshotCounters.Clear();
+        if (!ShowUnits || Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
+        EnsureSnapshotLookups(snapshot);
+        var countries = _countryLookup;
+        var locations = _locationLookup;
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
+        var perLocation = new Dictionary<string, int>(StringComparer.Ordinal);
+        bool clicked = false;
+        bool shift = Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift);
+        foreach (var g in snapshot.Divisions.Where(d => locations.TryGetValue(d.LocationKey, out var l) && !l.IsWater).GroupBy(d => (d.LocationKey, d.OwnerTag)))
+        {
+            if (!locations.TryGetValue(g.Key.LocationKey, out var location) || !countries.TryGetValue(g.Key.OwnerTag, out var owner)) continue;
+            if (!location.IsCharted && g.Key.OwnerTag != snapshot.PlayerTag) continue;
+            int slot = perLocation.TryGetValue(g.Key.LocationKey, out var existing) ? existing : 0;
+            perLocation[g.Key.LocationKey] = slot + 1;
+            var screen = Viewport.SnapToScreen(_map.LocationPos(location.CenterX, location.CenterY), cam);
+            if (!OnScreen(screen)) continue;
+            float cw = 50 * scale, ch = 22 * scale, statH = 7 * scale, pillGap = 2 * scale;
+            float slotStep = ch + statH + pillGap + 9 * scale;
+            var rect = new Rectangle(screen.X - cw / 2, screen.Y - ch / 2 - slot * slotStep, cw, ch);
+            var statRect = new Rectangle(rect.X, rect.Y, rect.Width, statH);
+            rect.Y += statH + pillGap;
+            var counterRect = new Rectangle(rect.X, statRect.Y, rect.Width, rect.Bottom() - statRect.Y);
+            var ids = g.Select(d => d.Id).ToImmutableArray();
+            SnapshotCounters.Add((counterRect, g.Key.OwnerTag, ids));
+            bool selected = g.Any(d => ui.SelectedDivisions.Any(x => x.Id == d.Id));
+            Raylib.DrawRectangleRec(new Rectangle(counterRect.X - 2, counterRect.Y - 2, counterRect.Width + 4, counterRect.Height + 4), selected ? new Color(255, 230, 120, 255) : new Color(0, 0, 0, 200));
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y, statRect.Width, 3 * scale), (float)g.Average(d => d.Strength), new Color(90, 200, 90, 255));
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y + 3.5f * scale, statRect.Width, 3 * scale), (float)g.Average(d => d.Organisation), new Color(80, 160, 240, 255));
+            Raylib.DrawRectangleRec(rect, C(owner.Color));
+            string text = g.Count().ToString();
+            var m = Gui.Measure(text, 16 * scale / Gui.Scale);
+            Raylib.DrawRectangleRec(new Rectangle(rect.X, rect.Y, rect.Width * 0.45f, rect.Height), new Color(0, 0, 0, 110));
+            Gui.Label(text, rect.X + rect.Width * 0.225f - m.X / 2, rect.Y + (rect.Height - m.Y) / 2, 16 * scale / Gui.Scale, Color.White);
+            var sym = new Rectangle(rect.X + rect.Width * 0.55f, rect.Y + rect.Height * 0.22f, rect.Width * 0.35f, rect.Height * 0.56f);
+            Raylib.DrawRectangleLinesEx(sym, 1.5f, Color.White);
+            Raylib.DrawLineEx(new Vector2(sym.X, sym.Y), new Vector2(sym.X + sym.Width, sym.Y + sym.Height), 1.5f, Color.White);
+            Raylib.DrawLineEx(new Vector2(sym.X + sym.Width, sym.Y), new Vector2(sym.X, sym.Y + sym.Height), 1.5f, Color.White);
+            if (!mouseOverUi && Gui.Clicked(counterRect) && g.Key.OwnerTag == snapshot.PlayerTag)
+            {
+                if (!shift) ui.SelectedDivisions.Clear();
+                var byId = _game.World.Divisions.ToDictionary(d => d.Id);
+                foreach (var id in ids) if (byId.TryGetValue(id, out var division) && !ui.SelectedDivisions.Contains(division)) ui.SelectedDivisions.Add(division);
+                ui.SelectedArmy = null; ui.SelectedFleet = null; clicked = true;
+            }
+        }
+        return clicked;
+    }
 
     public bool DrawUnits(Camera3D cam, UiState ui, bool mouseOverUi)
     {
@@ -452,6 +526,45 @@ public sealed class MapOverlay
         if (_selectedTrade != null) DrawSelectedTrade(_selectedTrade);
     }
 
+    public void DrawTradeRoutes(RenderSnapshot snapshot, Camera3D cam, bool enabled)
+    {
+        if (!enabled) return;
+        float s = Gui.Scale;
+        foreach (var route in snapshot.BlockedTradeRoutes)
+        {
+            var from = Viewport.SnapToScreen(_map.LocationPos(route.FromX, route.FromY, 0.12f), cam);
+            var to = Viewport.SnapToScreen(_map.LocationPos(route.ToX, route.ToY, 0.12f), cam);
+            Raylib.DrawLineEx(from, to, 3 * s, new Color(220, 75, 65, 190));
+            var mid = (from + to) * 0.5f;
+            Raylib.DrawLineEx(mid + new Vector2(-6, -6) * s, mid + new Vector2(6, 6) * s, 2 * s, Color.Red);
+            Raylib.DrawLineEx(mid + new Vector2(6, -6) * s, mid + new Vector2(-6, 6) * s, 2 * s, Color.Red);
+            var bounds = new Rectangle(Math.Min(from.X, to.X) - 8 * s, Math.Min(from.Y, to.Y) - 8 * s, Math.Abs(to.X - from.X) + 16 * s, Math.Abs(to.Y - from.Y) + 16 * s);
+            if (Gui.Hover(bounds) && !Gui.MouseOverUi) Gui.Tooltip($"Blocked sea route\n{route.FromName} → {route.ToName}\n{route.DistanceKm:0.#} km · capacity {route.Capacity:0.#}");
+        }
+        foreach (var transaction in snapshot.RecentTrades)
+        {
+            var from = Viewport.SnapToScreen(_map.LocationPos(transaction.FromX, transaction.FromY, 0.12f), cam);
+            var to = Viewport.SnapToScreen(_map.LocationPos(transaction.ToX, transaction.ToY, 0.12f), cam);
+            bool selected = _selectedTradeKey == transaction.Key;
+            var color = selected ? Gui.Gold : transaction.Kind switch { "Sea" => new Color(80, 170, 245, 185), "Caravan" => new Color(205, 155, 70, 185), _ => new Color(100, 210, 130, 185) };
+            Raylib.DrawLineEx(from, to, Math.Max(1.5f, (selected ? 3 : 2) * s), color);
+            Raylib.DrawCircleV(from, 3 * s, color);
+            var bounds = new Rectangle(Math.Min(from.X, to.X) - 8 * s, Math.Min(from.Y, to.Y) - 8 * s, Math.Abs(to.X - from.X) + 16 * s, Math.Abs(to.Y - from.Y) + 16 * s);
+            if (Gui.Hover(bounds) && !Gui.MouseOverUi)
+            {
+                Gui.Tooltip($"{transaction.Commodity}: {transaction.Quantity:0.#} units\n{transaction.Seller} → {transaction.Buyer}\n{transaction.Kind} · {transaction.DistanceKm:0.#} km · transport {transaction.TransportCost:0.##}\nprice {transaction.Price:0.##} · tariff {transaction.Tariff:0.##}");
+                if (Gui.Clicked(bounds)) _selectedTradeKey = transaction.Key;
+            }
+            var delta = to - from;
+            if (delta.LengthSquared() > 25)
+            {
+                delta = Vector2.Normalize(delta);
+                var side = new Vector2(-delta.Y, delta.X);
+                Raylib.DrawTriangle(to, to - delta * 10 * Gui.Scale + side * 4 * Gui.Scale, to - delta * 10 * Gui.Scale - side * 4 * Gui.Scale, color);
+            }
+        }
+    }
+
     private void DrawSelectedTrade(Burger.Core.Production.TradeTransaction trade)
     {
         float s = Gui.Scale;
@@ -538,6 +651,71 @@ public sealed class MapOverlay
         return clicked;
     }
 
+    /// <summary>Snapshot-backed fleet counters; fleet IDs are resolved only on selection.</summary>
+    public bool DrawFleets(RenderSnapshot snapshot, Camera3D cam, UiState ui, bool mouseOverUi)
+    {
+        if (!ShowUnits || Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
+        EnsureSnapshotLookups(snapshot);
+        var countries = _countryLookup;
+        var locations = _locationLookup;
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
+        var perLocation = new Dictionary<string, int>(StringComparer.Ordinal);
+        bool clicked = false;
+        foreach (var fleet in snapshot.Fleets)
+        {
+            if (!countries.TryGetValue(fleet.OwnerTag, out var owner) || !locations.TryGetValue(fleet.LocationKey, out var location)) continue;
+            if (!location.IsCharted && fleet.OwnerTag != snapshot.PlayerTag) continue;
+            int slot = perLocation.TryGetValue(fleet.LocationKey, out var existing) ? existing : 0;
+            perLocation[fleet.LocationKey] = slot + 1;
+            var screen = Viewport.SnapToScreen(_map.LocationPos(fleet.CenterX, fleet.CenterY, 0.35f), cam);
+            if (fleet.HasNextLocation)
+            {
+                var next = Viewport.SnapToScreen(_map.LocationPos(fleet.NextCenterX, fleet.NextCenterY, 0.35f), cam);
+                screen = Vector2.Lerp(screen, next, 0.5f);
+            }
+            if (!OnScreen(screen)) continue;
+            float cw = 46 * scale, ch = 20 * scale;
+            var rect = new Rectangle(screen.X - cw / 2, screen.Y + 16 * scale + slot * (ch + 8 * scale), cw, ch);
+            bool fleetSelected = ui.SelectedFleet?.Id == fleet.Id;
+            Raylib.DrawRectangleRec(new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 7 * scale), fleetSelected ? new Color(120, 210, 255, 255) : new Color(0, 0, 0, 200));
+            Raylib.DrawRectangleRec(rect, C(owner.Color));
+            var hull = new Vector2(rect.X + rect.Width * 0.62f, rect.Y + rect.Height * 0.62f);
+            float hw = rect.Width * 0.3f;
+            Raylib.DrawTriangle(hull + new Vector2(-hw, 0), hull + new Vector2(-hw * 0.7f, rect.Height * 0.22f), hull + new Vector2(hw, 0), Color.White);
+            Raylib.DrawLineEx(hull, hull + new Vector2(0, -rect.Height * 0.45f), 1.5f, Color.White);
+            string text = fleet.Ships.ToString();
+            var m = Gui.Measure(text, 15 * scale / Gui.Scale);
+            Gui.Label(text, rect.X + rect.Width * 0.2f - m.X / 2, rect.Y + (rect.Height - m.Y) / 2, 15 * scale / Gui.Scale, Color.White);
+            Gui.Bar(new Rectangle(rect.X, rect.Y + rect.Height + 1, rect.Width, 3 * scale), (float)fleet.HpFraction, new Color(120, 200, 250, 255));
+            if (fleet.InBattle)
+            {
+                var battle = new Vector2(rect.X + rect.Width + 8 * scale, rect.Y + rect.Height / 2);
+                Raylib.DrawCircleV(battle, 7 * scale, new Color(170, 30, 30, 240));
+                Raylib.DrawLineEx(battle + new Vector2(-4, -4) * scale, battle + new Vector2(4, 4) * scale, 2, Color.White);
+                Raylib.DrawLineEx(battle + new Vector2(4, -4) * scale, battle + new Vector2(-4, 4) * scale, 2, Color.White);
+            }
+            if (!mouseOverUi && Gui.Clicked(rect) && fleet.OwnerTag == snapshot.PlayerTag)
+            {
+                var live = _game.Navy.Fleets.FirstOrDefault(f => f.Id == fleet.Id);
+                if (live != null) { ui.SelectedFleet = live; ui.SelectedDivisions.Clear(); ui.SelectedArmy = null; clicked = true; }
+            }
+        }
+        if (ui.SelectedFleet is { } selected && snapshot.Fleets.FirstOrDefault(f => f.Id == selected.Id) is { Id: var selectedId } routeFleet && routeFleet.Id == selectedId)
+        {
+            var from = _map.LocationPos(routeFleet.CenterX, routeFleet.CenterY, 0.35f);
+            foreach (var point in routeFleet.Route)
+            {
+                var to = _map.LocationPos(point.X, point.Y, 0.35f);
+                var a = Viewport.SnapToScreen(from, cam);
+                var b = Viewport.SnapToScreen(to, cam);
+                Raylib.DrawLineEx(a, b, 3, new Color(120, 210, 255, 220));
+                Raylib.DrawCircleV(b, 4, new Color(120, 210, 255, 220));
+                from = to;
+            }
+        }
+        return clicked;
+    }
+
     /// <summary>Air bases of the player that hold wings (air feature): a plane badge with the number of planes. Returns true if one was clicked.</summary>
     public bool DrawAirBases(Camera3D cam, bool mouseOverUi)
     {
@@ -575,7 +753,96 @@ public sealed class MapOverlay
         return clicked;
     }
 
+    /// <summary>Snapshot-backed air-base badges; wing IDs are resolved only when opening the air UI.</summary>
+    public bool DrawAirBases(RenderSnapshot snapshot, Camera3D cam, bool mouseOverUi)
+    {
+        if (Viewport.HeightOf(cam) > _map.StrategicZoom) return false;
+        float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
+        bool clicked = false;
+        foreach (var g in snapshot.AirWings.Where(w => w.OwnerTag == snapshot.PlayerTag).GroupBy(w => w.BaseKey))
+        {
+            var first = g.First();
+            var s = Viewport.SnapToScreen(_map.LocationPos(first.CenterX, first.CenterY, 0.35f), cam);
+            if (!OnScreen(s)) continue;
+            float cw = 46 * scale, ch = 18 * scale;
+            var rect = new Rectangle(s.X - cw / 2, s.Y - 34 * scale, cw, ch);
+            Raylib.DrawRectangleRec(new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4), new Color(0, 0, 0, 200));
+            Raylib.DrawRectangleRec(rect, new Color(70, 90, 120, 240));
+            var center = new Vector2(rect.X + rect.Width * 0.24f, rect.Y + rect.Height / 2);
+            float h = rect.Height * 0.38f;
+            Raylib.DrawLineEx(center + new Vector2(0, -h), center + new Vector2(0, h), 2, Color.White);
+            Raylib.DrawTriangle(center + new Vector2(0, -h * 0.3f), center + new Vector2(-h, h * 0.25f), center + new Vector2(h, h * 0.25f), Color.White);
+            string text = $"{g.Sum(w => w.Planes):0}";
+            var m = Gui.Measure(text, 13 * scale / Gui.Scale);
+            Gui.Label(text, rect.X + rect.Width * 0.62f - m.X / 2, rect.Y + (rect.Height - m.Y) / 2, 13 * scale / Gui.Scale, Color.White);
+            if (!mouseOverUi && Gui.Clicked(rect)) clicked = true;
+        }
+        return clicked;
+    }
+
     /// <summary>Front lines of the player's armies and paths of selected divisions.</summary>
+    public void DrawOrders(RenderSnapshot snapshot, Camera3D cam, UiState ui)
+    {
+        if (!ShowUnits) return;
+        foreach (var army in snapshot.ArmyOrders)
+        {
+            if (army.OwnerTag != snapshot.PlayerTag || !army.HasEnemy) continue;
+            bool selected = ui.SelectedArmy?.Id == army.Id;
+            var col = army.Mode == "Offensive" ? new Color(225, 60, 50, selected ? 255 : 200) : new Color(90, 200, 90, selected ? 255 : 190);
+            float thick = selected ? 5 : 3.5f;
+            foreach (var pair in army.FrontPairs)
+            {
+                Vector2? prev = null;
+                foreach (var point in pair.Border)
+                {
+                    var current = Viewport.SnapToScreen(_map.LocationPos(point.X, point.Y, 0.15f), cam);
+                    if (prev != null && Vector2.Distance(prev.Value, current) < 80) Raylib.DrawLineEx(prev.Value, current, thick, col);
+                    prev = current;
+                }
+                if (pair.Border.Length == 1 && prev is { } only) Raylib.DrawCircleV(only, thick, col);
+            }
+            if (army.Fallback.Length > 0)
+            {
+                var points = army.Fallback.OrderBy(p => p.X).ThenBy(p => p.Y).ToArray();
+                Vector2? prev = null;
+                foreach (var point in points)
+                {
+                    var current = Viewport.SnapToScreen(_map.LocationPos(point.X, point.Y, 0.3f), cam);
+                    if (prev is { } from)
+                    {
+                        float length = Vector2.Distance(from, current);
+                        var direction = (current - from) / Math.Max(1, length);
+                        for (float distance = 0; distance < length; distance += 14)
+                            Raylib.DrawLineEx(from + direction * distance, from + direction * Math.Min(length, distance + 8), selected ? 4 : 3, new Color(250, 210, 70, selected ? 250 : 200));
+                    }
+                    Raylib.DrawCircleV(current, selected ? 5 : 4, new Color(250, 210, 70, selected ? 250 : 200));
+                    prev = current;
+                }
+            }
+            foreach (var point in army.FrontLimit)
+            {
+                var current = Viewport.SnapToScreen(_map.LocationPos(point.X, point.Y, 0.3f), cam);
+                Raylib.DrawCircleLines((int)current.X, (int)current.Y, 7, new Color(120, 230, 120, 230));
+                Raylib.DrawCircleLines((int)current.X, (int)current.Y, 8, new Color(0, 0, 0, 160));
+            }
+            if (army.HasObjective && army.FrontPairs.Length > 0)
+            {
+                float startX = army.FrontPairs.Average(p => p.OwnX), startY = army.FrontPairs.Average(p => p.OwnY);
+                var from = Viewport.SnapToScreen(_map.LocationPos(startX, startY, 0.4f), cam);
+                var to = Viewport.SnapToScreen(_map.LocationPos(army.ObjectiveX, army.ObjectiveY, 0.4f), cam);
+                var direction = to - from;
+                if (direction.LengthSquared() > 64)
+                {
+                    direction = Vector2.Normalize(direction);
+                    Raylib.DrawLineEx(from, to, selected ? 9 : 6, new Color(0, 0, 0, 120));
+                    Raylib.DrawLineEx(from, to, selected ? 6 : 4, col);
+                    var side = new Vector2(-direction.Y, direction.X);
+                    Raylib.DrawTriangle(to, to - direction * 22 + side * 10, to - direction * 22 - side * 10, col);
+                }
+            }
+        }
+    }
+
     public void DrawOrders(Camera3D cam, UiState ui)
     {
         if (!ShowUnits) return;
@@ -669,19 +936,24 @@ public sealed class MapOverlay
                     Raylib.DrawCircleLines((int)p.X, (int)p.Y, 8, new Color(0, 0, 0, 160));
                 }
         }
-        // movement arrows for selected divisions
-        foreach (var d in ui.SelectedDivisions)
+        _ = ppu;
+    }
+
+    public void DrawDivisionOrders(RenderSnapshot snapshot, Camera3D cam, UiState ui)
+    {
+        if (!ShowUnits) return;
+        var selected = ui.SelectedDivisions.Select(d => d.Id).ToHashSet();
+        foreach (var d in snapshot.Divisions)
         {
-            if (d.Path.Count == 0) continue;
-            var from = ProjectLocation(d.Location, 0.3f, cam);
-            foreach (var l in d.Path)
+            if (!selected.Contains(d.Id) || d.Route.IsEmpty) continue;
+            var from = Viewport.SnapToScreen(_map.LocationPos(d.CenterX, d.CenterY, 0.3f), cam);
+            foreach (var point in d.Route)
             {
-                var to = ProjectLocation(l, 0.3f, cam);
-                Raylib.DrawLineEx(from, to, 3, d.AttackTarget == l ? new Color(230, 60, 60, 230) : new Color(250, 220, 90, 220));
+                var to = Viewport.SnapToScreen(_map.LocationPos(point.X, point.Y, 0.3f), cam);
+                Raylib.DrawLineEx(from, to, 3, new Color(250, 220, 90, 220));
                 from = to;
             }
             Raylib.DrawCircleV(from, 5, new Color(250, 220, 90, 230));
         }
-        _ = ppu;
     }
 }

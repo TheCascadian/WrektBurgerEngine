@@ -1,7 +1,9 @@
 using Burger.Core.Memories;
+using System.Collections.Immutable;
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -234,9 +236,15 @@ public sealed partial class Hud
 
     private void DrawRosterRow(Character c, Rectangle row, Country country, GameDate now)
     {
+        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == c.Id);
+        bool hasSnapshot = snapshot.Id == c.Id && snapshot.Name != null;
+        string name = hasSnapshot ? snapshot.Name ?? c.DisplayName : c.DisplayName;
+        int age = hasSnapshot ? snapshot.Age : c.Age(now);
+        double loyalty = hasSnapshot ? snapshot.Loyalty : c.Loyalty;
+        double health = hasSnapshot ? snapshot.Health : c.Health;
         bool selected = Ui.SelectedCharacter == c;
         var roles = RolesOf(c, country);
-        string tip = c.DisplayName + $"\nAge {c.Age(now)} · Loyalty {c.Loyalty:0} · Health {c.Health:0}" +
+        string tip = name + $"\nAge {age} · Loyalty {loyalty:0} · Health {health:0}" +
             (roles.Count > 0 ? "\n" + string.Join(", ", roles.Select(q => q.Text)) : "");
         if (Gui.Button(row, "", true, tip, selected, 14)) { Ui.SelectedCharacter = c; OpenSheet(c); }
 
@@ -248,27 +256,33 @@ public sealed partial class Hud
         float tx = thumb.X + thumb.Width + 8 * S;
         float meterW = 54 * S;
         float textW = row.X + row.Width - tx - meterW - 12 * S;
-        Gui.Label(Gui.Fit(c.DisplayName, textW, 15, FontKind.Bold), tx, row.Y + 5 * S, 15, selected ? Color.White : Gui.Text, FontKind.Bold);
+        Gui.Label(Gui.Fit(name, textW, 15, FontKind.Bold), tx, row.Y + 5 * S, 15, selected ? Color.White : Gui.Text, FontKind.Bold);
 
         // one-row summary: the main role (coloured) and the age
         string sub = roles.Count > 0 ? roles[0].Text : "Citizen";
         Color subColor = roles.Count > 0 ? Gui.Lighter(roles[0].Tint, 0.25f) : Gui.TextDim;
         float sw = Gui.Measure(sub, 13, FontKind.Bold).X;
         Gui.Label(Gui.Fit(sub, textW, 13, FontKind.Bold), tx, row.Y + 25 * S, 13, subColor, FontKind.Bold);
-        Gui.Label($"· {c.Age(now)}", tx + Math.Min(sw, textW) + 6 * S, row.Y + 25 * S, 13, Gui.TextDim);
+        Gui.Label($"· {age}", tx + Math.Min(sw, textW) + 6 * S, row.Y + 25 * S, 13, Gui.TextDim);
 
         // loyalty and health at a glance
         float mx = row.X + row.Width - meterW - 6 * S;
-        Gui.Bar(new Rectangle(mx, row.Y + 11 * S, meterW, 6 * S), (float)(c.Loyalty / 100), new Color(214, 170, 70, 255));
-        Gui.Bar(new Rectangle(mx, row.Y + 24 * S, meterW, 6 * S), (float)(c.Health / 100), c.Health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255));
+        Gui.Bar(new Rectangle(mx, row.Y + 11 * S, meterW, 6 * S), (float)(loyalty / 100), new Color(214, 170, 70, 255));
+        Gui.Bar(new Rectangle(mx, row.Y + 24 * S, meterW, 6 * S), (float)(health / 100), health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255));
         var meters = new Rectangle(mx, row.Y + 6 * S, meterW, 28 * S);
-        if (Gui.Hover(meters)) Gui.Tooltip($"Loyalty {c.Loyalty:0}\nHealth {c.Health:0}");
+        if (Gui.Hover(meters)) Gui.Tooltip($"Loyalty {loyalty:0}\nHealth {health:0}");
     }
 
     /// <summary>Draws the selected character's dossier starting at y and returns the height used.</summary>
     private float DrawCharacterDossier(Character ch, Country country, float x, float y, float w, GameDate now, Country? player)
     {
         float start = y;
+        var characterSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        bool hasSnapshot = characterSnapshot.Id == ch.Id && characterSnapshot.Name != null;
+        string displayName = hasSnapshot ? characterSnapshot.Name ?? ch.DisplayName : ch.DisplayName;
+        int age = hasSnapshot ? characterSnapshot.Age : ch.Age(now);
+        double loyalty = hasSnapshot ? characterSnapshot.Loyalty : ch.Loyalty;
+        double health = hasSnapshot ? characterSnapshot.Health : ch.Health;
         var roles = RolesOf(ch, country);
 
         // ---- header: portrait (animated when it can be) and identity
@@ -296,7 +310,7 @@ public sealed partial class Hud
 
         float hx = x + pw + 12 * S, hw = w - pw - 12 * S;
         float hy = y;
-        Gui.Label(Gui.Fit(ch.DisplayName, hw, 20, FontKind.Header), hx, hy, 20, Gui.Gold, FontKind.Header);
+        Gui.Label(Gui.Fit(displayName, hw, 20, FontKind.Header), hx, hy, 20, Gui.Gold, FontKind.Header);
         hy += 28 * S;
         float cx = hx;
         float chipRowH = 22 * S;
@@ -307,11 +321,11 @@ public sealed partial class Hud
             cx += Chip(role.Text, cx, hy, role.Tint, role.Tip) + 4 * S;
         }
         if (roles.Count > 0) hy += chipRowH;
-        Gui.Label($"{(ch.Female ? "Female" : "Male")} · age {ch.Age(now)} · born {ch.BirthDate.ToDisplay()}", hx, hy, 13, Gui.TextDim);
+        Gui.Label($"{(ch.Female ? "Female" : "Male")} · age {age} · born {ch.BirthDate.ToDisplay()}", hx, hy, 13, Gui.TextDim);
         hy += 20 * S;
-        MeterRow("Loyalty", ch.Loyalty, new Color(214, 170, 70, 255), hx, hy, hw, $"Loyalty {ch.Loyalty:0}/100\nHow reliably this character serves {country.Name}.");
+        MeterRow("Loyalty", loyalty, new Color(214, 170, 70, 255), hx, hy, hw, $"Loyalty {loyalty:0}/100\nHow reliably this character serves {country.Name}.");
         hy += 20 * S;
-        MeterRow("Health", ch.Health, ch.Health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255), hx, hy, hw, $"Health {ch.Health:0}/100\nLow health raises the chance of death.");
+        MeterRow("Health", health, health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255), hx, hy, hw, $"Health {health:0}/100\nLow health raises the chance of death.");
         hy += 22 * S;
         y = Math.Max(y + ph, hy) + 10 * S;
 
@@ -327,7 +341,9 @@ public sealed partial class Hud
             {
                 int col = i % perRow, rowN = i / perRow;
                 var t = new Rectangle(x + col * (tw + gap), y + rowN * (th + gap), tw, th);
-                DrawStatTile(ch, stats[i], t);
+                var statSnapshot = hasSnapshot ? characterSnapshot.Stats.FirstOrDefault(s => s.Key.Equals(stats[i], StringComparison.OrdinalIgnoreCase)) : default;
+                if (hasSnapshot && statSnapshot.Key != null) DrawSnapshotStatTile(statSnapshot.Key, statSnapshot.Value, t);
+                else DrawStatTile(ch, stats[i], t);
             }
             y += (stats.Count + perRow - 1) / perRow * (th + gap) + 4 * S;
         }
@@ -343,13 +359,14 @@ public sealed partial class Hud
                 if (tx + cw > x + w && tx > x) { tx = x; y += 24 * S; }
                 tx += Chip(text, tx, y, tint, tip, 13) + 4 * S;
             }
-            foreach (var t in ch.Traits)
+            var traitNames = hasSnapshot ? characterSnapshot.Traits : ch.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray();
+            foreach (var name in traitNames)
             {
-                string name = Localisation.Get(t.Name);
                 float cw = ChipWidth(name, 13);
                 if (tx + cw > x + w && tx > x) { tx = x; y += 24 * S; }
-                string tip = $"{name}\n{Localisation.Get(t.Description)}" +
-                    (t.Modifiers.Count > 0 ? "\n" + string.Join("\n", t.Modifiers.Select(m => $"{Localisation.GetOrPretty(m.Key)}: {m.Value:+0.##;-0.##}")) : "");
+                var liveTrait = ch.Traits.FirstOrDefault(t => Localisation.Get(t.Name).Equals(name, StringComparison.Ordinal));
+                string tip = liveTrait == null ? name : $"{name}\n{Localisation.Get(liveTrait.Description)}" +
+                    (liveTrait.Modifiers.Count > 0 ? "\n" + string.Join("\n", liveTrait.Modifiers.Select(m => $"{Localisation.GetOrPretty(m.Key)}: {m.Value:+0.##;-0.##}")) : "");
                 tx += Chip(name, tx, y, new Color(214, 200, 170, 255), tip, 13) + 4 * S;
             }
             y += 30 * S;
@@ -470,5 +487,19 @@ public sealed partial class Hud
                 if (Math.Abs(tr.Mod(stat)) > 0.001) lines.Add($"{Localisation.Get(tr.Name)}: {tr.Mod(stat):+0.##;-0.##}");
             Gui.Tooltip(string.Join("\n", lines));
         }
+    }
+
+    private void DrawSnapshotStatTile(string stat, double total, Rectangle t)
+    {
+        string label = Localisation.GetOrPretty(stat);
+        Gui.Card(t, new Color(34, 36, 42, 255));
+        bool hasIcon = Gui.Icon(stat, new Rectangle(t.X + 5 * S, t.Y + 5 * S, 16 * S, 16 * S));
+        Gui.Label(Gui.Fit(label, t.Width - (hasIcon ? 28 : 10) * S, 12, FontKind.Bold), t.X + (hasIcon ? 25 : 6) * S, t.Y + 5 * S, 12, Gui.TextDim, FontKind.Bold);
+        string v = $"{total:0}";
+        var tone = total >= 8 ? Gui.TooltipGood : total <= 3 ? Gui.TooltipBad : Gui.Gold;
+        float vw = Gui.Measure(v, 22, FontKind.Header).X;
+        Gui.Label(v, t.X + (t.Width - vw) / 2, t.Y + 19 * S, 22, tone, FontKind.Header);
+        Gui.Bar(new Rectangle(t.X + 6 * S, t.Y + t.Height - 9 * S, t.Width - 12 * S, 4 * S), (float)(total / 10.0), tone);
+        if (Gui.Hover(t)) Gui.Tooltip($"{label}: {total:0.#} of 10");
     }
 }

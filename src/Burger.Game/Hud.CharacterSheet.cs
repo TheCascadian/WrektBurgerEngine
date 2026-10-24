@@ -1,5 +1,7 @@
+using System.Collections.Immutable;
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -58,7 +60,12 @@ public sealed partial class Hud
         var country = ch.Country;
         var home = country ?? G.World.Player;
         var roles = home != null ? RolesOf(ch, home) : new List<CharRole>();
-        int age = ch.Age(now);
+        var characterSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        bool hasSnapshot = characterSnapshot.Id == ch.Id && characterSnapshot.Name != null;
+        string displayName = hasSnapshot ? characterSnapshot.Name ?? ch.DisplayName : ch.DisplayName;
+        int age = hasSnapshot ? characterSnapshot.Age : ch.Age(now);
+        double loyalty = hasSnapshot ? characterSnapshot.Loyalty : ch.Loyalty;
+        double health = hasSnapshot ? characterSnapshot.Health : ch.Health;
         var dyn = G.Dynasties;
 
         // ---- identity
@@ -70,7 +77,7 @@ public sealed partial class Hud
         SickMark(ch, pr);
         DrawIntrigueOverlay(ch, pr);
         float hx = x + pw + 12 * S, hw = w - pw - 12 * S, hy = y;
-        Gui.Label(Gui.Fit(ch.DisplayName, hw, 21, FontKind.Header), hx, hy, 21, Gui.Gold, FontKind.Header);
+        Gui.Label(Gui.Fit(displayName, hw, 21, FontKind.Header), hx, hy, 21, Gui.Gold, FontKind.Header);
         hy += 30 * S;
         Gui.Label($"{(ch.Female ? "Woman" : "Man")} · {(ch.Alive ? $"age {age}" : $"died aged {age}")}", hx, hy, 14, Gui.Text);
         hy += 20 * S;
@@ -133,28 +140,34 @@ public sealed partial class Hud
             int perRow = Math.Min(stats.Count, 4);
             float tw = (w - gap * (perRow - 1)) / perRow, th = 54 * S;
             for (int i = 0; i < stats.Count; i++)
-                DrawStatTile(ch, stats[i], new Rectangle(x + i % perRow * (tw + gap), y + i / perRow * (th + gap), tw, th));
+            {
+                var tile = new Rectangle(x + i % perRow * (tw + gap), y + i / perRow * (th + gap), tw, th);
+                var statSnapshot = hasSnapshot ? characterSnapshot.Stats.FirstOrDefault(s => s.Key.Equals(stats[i], StringComparison.OrdinalIgnoreCase)) : default;
+                if (hasSnapshot && statSnapshot.Key != null) DrawSnapshotStatTile(statSnapshot.Key, statSnapshot.Value, tile);
+                else DrawStatTile(ch, stats[i], tile);
+            }
             y += (stats.Count + perRow - 1) / perRow * (th + gap);
         }
-        Gui.Label($"Loyalty {ch.Loyalty:0}", x, y, 13, Gui.TextDim);
-        Gui.Bar(new Rectangle(x + 90 * S, y + 6 * S, w * 0.32f, 6 * S), (float)(ch.Loyalty / 100), new Color(214, 170, 70, 255));
-        Gui.Label($"Health {ch.Health:0}", x + w * 0.5f, y, 13, Gui.TextDim);
-        Gui.Bar(new Rectangle(x + w * 0.5f + 80 * S, y + 6 * S, w * 0.32f - 30 * S, 6 * S), (float)(ch.Health / 100), ch.Health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255));
+        Gui.Label($"Loyalty {loyalty:0}", x, y, 13, Gui.TextDim);
+        Gui.Bar(new Rectangle(x + 90 * S, y + 6 * S, w * 0.32f, 6 * S), (float)(loyalty / 100), new Color(214, 170, 70, 255));
+        Gui.Label($"Health {health:0}", x + w * 0.5f, y, 13, Gui.TextDim);
+        Gui.Bar(new Rectangle(x + w * 0.5f + 80 * S, y + 6 * S, w * 0.32f - 30 * S, 6 * S), (float)(health / 100), health < 40 ? Gui.TooltipBad : new Color(104, 190, 108, 255));
         y += 24 * S;
         if (dyn.Enabled && dyn.IsSick(ch) && dyn.DiseaseOf(ch) is { } ill)
         {
             Gui.Label($"Ill with {ill.Name.ToLowerInvariant()} until {new GameDate(dyn.SickUntil(ch)).ToDisplay()}; it may kill.", x, y, 13, Gui.Bad);
             y += 20 * S;
         }
-        if (ch.Traits.Count > 0)
+        var traitNames = hasSnapshot ? characterSnapshot.Traits : ch.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray();
+        if (traitNames.Length > 0)
         {
             float tx = x;
-            foreach (var t in ch.Traits)
+            foreach (var name in traitNames)
             {
-                string name = Localisation.Get(t.Name);
                 float cwid = ChipWidth(name, 13);
                 if (tx + cwid > x + w && tx > x) { tx = x; y += 24 * S; }
-                string tip = $"{name}\n{Localisation.Get(t.Description)}" + (t.Modifiers.Count > 0 ? "\n" + string.Join("\n", t.Modifiers.Select(m => $"{Localisation.GetOrPretty(m.Key)}: {m.Value:+0.##;-0.##}")) : "");
+                var liveTrait = ch.Traits.FirstOrDefault(t => Localisation.Get(t.Name).Equals(name, StringComparison.Ordinal));
+                string tip = liveTrait == null ? name : $"{name}\n{Localisation.Get(liveTrait.Description)}" + (liveTrait.Modifiers.Count > 0 ? "\n" + string.Join("\n", liveTrait.Modifiers.Select(m => $"{Localisation.GetOrPretty(m.Key)}: {m.Value:+0.##;-0.##}")) : "");
                 tx += Chip(name, tx, y, new Color(214, 200, 170, 255), tip, 13) + 4 * S;
             }
             y += 30 * S;

@@ -286,7 +286,8 @@ public sealed partial class Hud
             Map.Dirty = true;
         }
         // map modes that change every day (supply) refresh daily
-        if (G.World.Date.TotalDays != _lastDay) { _lastDay = G.World.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (G.World.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Institution or MapMode.Spheres or MapMode.Titles)) Map.Dirty = true; }
+        var snapshot = _app.Snapshot;
+        if (snapshot.Date.TotalDays != _lastDay) { _lastDay = snapshot.Date.TotalDays; if (Map.Mode is MapMode.Supply or MapMode.Air || (snapshot.Date.Day == 1 && Map.Mode is MapMode.Population or MapMode.Culture or MapMode.Religion or MapMode.Development or MapMode.Institution or MapMode.Spheres or MapMode.Titles)) Map.Dirty = true; }
         DrawTopBar();
         if (Ui.EditorActive) DrawEditor();
         else
@@ -346,46 +347,46 @@ public sealed partial class Hud
         Gui.Block(bar);
         Gui.TopBarBackground(bar);
         float x = 8 * S;
+        var playerState = _app.Snapshot.Player;
         var player = G.World.Player;
-        if (player != null)
+        if (player != null && playerState is { } state)
         {
             var flagR = new Rectangle(x, 6 * S, 51 * S, 34 * S);
             Gui.Flag(player, flagR);
             if (Gui.Hover(flagR)) Gui.Tooltip("Open your country (diplomacy, ruler)");
             if (Gui.Clicked(flagR)) { Ui.SelectedCountry = player; Ui.Left = LeftPanel.Country; }
             x += 58 * S;
-            Gui.LabelShadow(player.Name, x, 3 * S, 18, Gui.Gold, FontKind.Header);
-            Gui.Label(player.Ruler != null ? player.Ruler.DisplayName : "", x, 25 * S, 14, Gui.TextDim);
-            x += Math.Max(150 * S, Gui.Measure(player.Name, 18, FontKind.Header).X + 16);
+            Gui.LabelShadow(state.Name, x, 3 * S, 18, Gui.Gold, FontKind.Header);
+            Gui.Label(state.RulerName, x, 25 * S, 14, Gui.TextDim);
+            x += Math.Max(150 * S, Gui.Measure(state.Name, 18, FontKind.Header).X + 16);
             Separator(ref x);
             if (Has(FeatureSet.Economy))
             {
-                double net = player.LastIncome - player.LastExpenses;
-                Stat(ref x, "Gold", Num(player.Gold), $"{(net >= 0 ? "+" : "")}{Num(net, 1)}",
-                    $"Treasury: {player.Gold:0.0}\nIncome: +{player.LastIncome:0.0}/month\nArmy upkeep: -{player.LastExpenses:0.0}/month", net >= 0 ? Gui.Good : Gui.Bad);
-                Stat(ref x, "Manpower", Num(player.Manpower), $"+{Num(player.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
+                double net = state.LastIncome - state.LastExpenses;
+                Stat(ref x, "Gold", Num(state.Gold), $"{(net >= 0 ? "+" : "")}{Num(net, 1)}",
+                    $"Treasury: {state.Gold:0.0}\nIncome: +{state.LastIncome:0.0}/month\nArmy upkeep: -{state.LastExpenses:0.0}/month", net >= 0 ? Gui.Good : Gui.Bad);
+                Stat(ref x, "Manpower", Num(state.Manpower), $"+{Num(state.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
             }
             if (Has(FeatureSet.Military) && !Has(FeatureSet.Economy))
-                Stat(ref x, "Manpower", Num(player.Manpower), $"+{Num(player.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
+                Stat(ref x, "Manpower", Num(state.Manpower), $"+{Num(state.LastManpowerGain)}", "Manpower: used to train and reinforce divisions\nMonthly gain shown in green", Gui.Good);
             if (Has(FeatureSet.Production))
             {
-                int civ = G.Production.CivilianFactories(player), mil = G.Production.MilitaryFactories(player), dock = G.Production.Dockyards(player);
+                int civ = state.CivilianFactories, mil = state.MilitaryFactories, dock = state.Dockyards;
                 Stat(ref x, "Factories", $"{civ} / {mil}" + (dock > 0 ? $" / {dock}" : ""), "",
                     $"Civilian factories: {civ} (construction and consumer goods)\nMilitary factories: {mil} (equipment)" + (dock > 0 ? $"\nDockyards: {dock} (ships)" : "") + "\n\nProduction menu: P", Gui.TextDim);
             }
             if (Has(FeatureSet.Military))
             {
-                int divs = G.World.Divisions.Count(d => d.Owner == player);
-                Stat(ref x, "Divisions", divs.ToString(), player.Recruitment.Count > 0 ? $"+{player.Recruitment.Count}" : "",
-                    $"{divs} divisions, {player.Recruitment.Count} in training\nMilitary menu: F1, recruit: R", Gui.TextDim);
+                int divs = state.Divisions;
+                Stat(ref x, "Divisions", divs.ToString(), state.Recruitment > 0 ? $"+{state.Recruitment}" : "",
+                    $"{divs} divisions, {state.Recruitment} in training\nMilitary menu: F1, recruit: R", Gui.TextDim);
             }
             if (G.Envoys.Enabled)
             {
-                var E = G.Envoys;
-                Stat(ref x, "Envoys", $"{E.Free(player)}/{E.Total(player)}", E.Busy(player) > 0 ? $"back in {E.NextBackIn(player)}d" : "",
-                    $"Envoys: {E.Free(player)} free of {E.Total(player)}\nEach diplomatic action sends one away for 30 days.\n3 to start, +1 for every 2 ranks among the great powers, +1 at 25%, 50% and 75% of the technologies, at most 8.", E.Free(player) == 0 ? Gui.Bad : Gui.TextDim);
+                Stat(ref x, "Envoys", $"{state.EnvoysFree}/{state.EnvoysTotal}", state.EnvoysBusy > 0 ? $"back in {state.NextEnvoyBackIn}d" : "",
+                    $"Envoys: {state.EnvoysFree} free of {state.EnvoysTotal}\nEach diplomatic action sends one away for 30 days.\n3 to start, +1 for every 2 ranks among the great powers, +1 at 25%, 50% and 75% of the technologies, at most 8.", state.EnvoysFree == 0 ? Gui.Bad : Gui.TextDim);
             }
-            DrawResources(ref x, player);
+            DrawResources(ref x, _app.Snapshot);
         }
         else
         {
@@ -394,29 +395,29 @@ public sealed partial class Hud
 
         // right side: date, speed and the world-wide buttons
         float rx = sw - 8 * S;
-        var clock = G.Clock;
-        string date = G.World.Date.ToDisplay(G.Clock.Speed <= 1);
+        var snapshot = _app.Snapshot;
+        string date = snapshot.Date.ToDisplay(snapshot.Speed <= 1);
         float dateTextW = Gui.Measure(date, 15, FontKind.Bold).X;
         float dw = Math.Max(210 * S, dateTextW + 66 * S);
         rx -= dw;
         var dateR = new Rectangle(rx, 6 * S, dw, 34 * S);
         Gui.ButtonFrame(dateR, true, Gui.Hover(dateR), false);
-        if (clock.Paused) Gui.Gradient(new Rectangle(dateR.X + 1, dateR.Y + 1, dateR.Width - 2, dateR.Height - 2), new Color(150, 52, 40, 255), new Color(90, 26, 20, 255));
+        if (snapshot.Paused) Gui.Gradient(new Rectangle(dateR.X + 1, dateR.Y + 1, dateR.Width - 2, dateR.Height - 2), new Color(150, 52, 40, 255), new Color(90, 26, 20, 255));
         Gui.Label(Gui.Fit(date, dateR.Width - 58 * S, 15, FontKind.Bold), dateR.X + 8 * S, dateR.Y + 9 * S, 15, Color.White, FontKind.Bold);
         var stateR = new Rectangle(dateR.X + dateR.Width - 48 * S, dateR.Y + 8 * S, 42 * S, 18 * S);
-        var stateColor = clock.Paused ? Gui.Bad : Gui.Good;
+        var stateColor = snapshot.Paused ? Gui.Bad : Gui.Good;
         Gui.Gradient(stateR, Gui.Lighter(stateColor, 0.12f), Gui.Darker(stateColor, 0.28f));
         Raylib.DrawRectangleLinesEx(stateR, 1, new Color(0, 0, 0, 180));
-        Gui.LabelCentered(clock.Paused ? "PAUSE" : "LIVE", stateR, 10, Color.White, FontKind.Bold);
-        if (Gui.Hover(dateR)) Gui.Tooltip($"{date}\n{(clock.Paused ? "Paused" : $"Running at {clock.ActualDaysPerSecond:0.#} days per second")}\nSpace: pause/unpause; 1-5: speed; + / -: adjust speed\nWheel: zoom; middle-drag / WASD: pan");
+        Gui.LabelCentered(snapshot.Paused ? "PAUSE" : "LIVE", stateR, 10, Color.White, FontKind.Bold);
+        if (Gui.Hover(dateR)) Gui.Tooltip($"{date}\n{(snapshot.Paused ? "Paused" : $"Running at {snapshot.ActualDaysPerSecond:0.#} days per second")}\nSpace: pause/unpause; 1-5: speed; + / -: adjust speed\nWheel: zoom; middle-drag / WASD: pan");
         Gui.Block(dateR);
-        if (Gui.Clicked(dateR)) SetPace(!clock.Paused, null);
+        if (Gui.Clicked(dateR)) SetPace(!snapshot.Paused, null);
         rx -= 5 * 18 * S + 10 * S;
         for (int i = 1; i <= 5; i++)
         {
             // speed pips: filled up to the current speed
             var r = new Rectangle(rx + (i - 1) * 18 * S, 13 * S, 15 * S, 20 * S);
-            bool on = i <= clock.Speed;
+            bool on = i <= snapshot.Speed;
             bool hover = Gui.Hover(r);
             Gui.Gradient(r, on ? Gui.Lighter(Gui.Gold, 0.2f) : new Color(60, 58, 54, 255), on ? Gui.Darker(Gui.Gold, 0.35f) : new Color(30, 29, 27, 255));
             Raylib.DrawRectangleLinesEx(r, 1, hover ? Color.White : new Color(0, 0, 0, 200));
@@ -428,8 +429,8 @@ public sealed partial class Hud
         if (Has(FeatureSet.Diplomacy))
         {
             // observers see the button too (all wars of the world)
-            int wars = player != null ? G.World.WarsOf(player).Count() : 0;
-            int allWars = G.World.Wars.Count;
+            int wars = snapshot.Player != null ? snapshot.Wars.Count(w => w.IsMine) : 0;
+            int allWars = snapshot.Wars.Length;
             string wl = allWars > 0 ? $"Wars ({allWars})" : "Wars";
             float ww = Math.Max(78 * S, Gui.Measure(wl, 15, FontKind.Bold).X + 18 * S);
             rx -= ww;
@@ -630,15 +631,15 @@ public sealed partial class Hud
     // ===============================================================================================
     private void DrawNotifications()
     {
-        var list = G.Notifications;
-        int n = Math.Min(6, list.Count);
+        var list = _app.Snapshot.Notifications;
+        int n = Math.Min(6, list.Length);
         float w = 420 * S, lineH = 22 * S;
         float x = Raylib.GetScreenWidth() - w - 8 * S;
         float y = Raylib.GetScreenHeight() - MapModeBarH - 16 * S - n * lineH;
-        for (int i = list.Count - n; i < list.Count; i++)
+        for (int i = list.Length - n; i < list.Length; i++)
         {
             var note = list[i];
-            int age = G.World.Date.TotalDays - note.Date.TotalDays;
+            int age = _app.Snapshot.Date.TotalDays - note.Date.TotalDays;
             if (age > 60) { y += lineH; continue; }
             var col = note.Kind switch
             {
@@ -655,8 +656,8 @@ public sealed partial class Hud
             Gui.Label(Gui.Fit(note.Text, w - 16 * S, 14), x + 9 * S, y + 3 * S, 14, col);
             if (Gui.Hover(r))
             {
-                Gui.Tooltip($"{note.Date.ToDisplay()}\n{note.Text}" + (note.Location != null ? "\n(click to view)" : ""));
-                if (note.Location != null && Gui.Clicked(r)) Cam.LookAt(Map.LocationPos(note.Location), 30);
+                Gui.Tooltip($"{note.Date.ToDisplay()}\n{note.Text}" + (note.LocationKey != null ? "\n(click to view)" : ""));
+                if (note.LocationKey != null && Gui.Clicked(r)) Cam.LookAtFlat(note.LocationX, note.LocationY, 30);
                 Gui.Block(r);
             }
             y += lineH;
@@ -679,28 +680,28 @@ public sealed partial class Hud
     // ===============================================================================================
     private void DrawSelectedDivisions()
     {
-        Ui.SelectedDivisions.RemoveAll(d => !G.World.Divisions.Contains(d));
-        if (Ui.SelectedDivisions.Count == 0) return;
+        var selectedIds = Ui.SelectedDivisions.Select(d => d.Id).ToHashSet();
+        var selected = _app.Snapshot.Divisions.Where(d => selectedIds.Contains(d.Id)).ToList();
+        if (selected.Count == 0) return;
         float w = Math.Min(760 * S, Raylib.GetScreenWidth() - 900 * S);
         w = Math.Max(w, 520 * S);
         float h = 118 * S;
         var r = new Rectangle((Raylib.GetScreenWidth() - w) / 2, Raylib.GetScreenHeight() - h - 8 * S, w, h);
-        Gui.Panel(r, $"{Ui.SelectedDivisions.Count} division(s) selected - right-click the map to move/attack");
+        Gui.Panel(r, $"{selected.Count} division(s) selected - right-click the map to move/attack");
         float y = r.Y + 32 * S;
         float x = r.X + 8 * S;
-        foreach (var d in Ui.SelectedDivisions.Take(6))
+        foreach (var d in selected.Take(6))
         {
             var row = new Rectangle(x, y, 118 * S, 44 * S);
             Raylib.DrawRectangleRec(row, new Color(36, 40, 48, 255));
             Gui.Label(d.Name.Length > 16 ? d.Name[..15] + "." : d.Name, x + 4, y + 2, 13);
-            Gui.Bar(new Rectangle(x + 4, y + 21 * S, 108 * S, 7 * S), (float)d.StrengthFraction, new Color(90, 200, 90, 255));
-            Gui.Bar(new Rectangle(x + 4, y + 31 * S, 108 * S, 7 * S), (float)d.OrgFraction, new Color(80, 160, 240, 255));
+            Gui.Bar(new Rectangle(x + 4, y + 21 * S, 108 * S, 7 * S), (float)d.Strength, new Color(90, 200, 90, 255));
+            Gui.Bar(new Rectangle(x + 4, y + 31 * S, 108 * S, 7 * S), (float)d.Organisation, new Color(80, 160, 240, 255));
             if (Gui.Hover(row))
-                Gui.Tooltip($"{d.Name} ({d.Template.Name})\nLocation: {d.Location.DisplayName}\nStrength {d.Strength:0}/{d.MaxStrength:0}\nOrganisation {d.Org:0.0}/{d.MaxOrg:0}\n" +
-                            $"Army: {d.Army?.Name ?? "none"}\n" + string.Join("\n", d.Template.Stats.Select(kv => $"{Localisation.GetOrPretty(kv.Key)}: {kv.Value:0.##}")));
+                Gui.Tooltip($"{d.Name} ({d.TemplateName})\nLocation: {d.LocationName}\nStrength {d.StrengthValue:0}/{d.MaxStrength:0}\nOrganisation {d.OrganisationValue:0.0}/{d.MaxOrganisation:0}\nArmy: {d.ArmyName ?? "none"}");
             x += 122 * S;
         }
-        if (Ui.SelectedDivisions.Count > 6) Gui.Label($"+{Ui.SelectedDivisions.Count - 6}", x + 4, y + 12 * S, 16);
+        if (selected.Count > 6) Gui.Label($"+{selected.Count - 6}", x + 4, y + 12 * S, 16);
         float by = r.Y + h - 34 * S;
         float bx = r.X + 8 * S;
         if (Gui.Button(new Rectangle(bx, by, 90 * S, 28 * S), "Stop", true, "Cancel movement (Delete)")) foreach (var d in Ui.SelectedDivisions) G.Warfare.StopDivision(d);

@@ -21,9 +21,10 @@ public sealed partial class Hud
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
         var N = G.Navy;
         var fleets = N.FleetsOf(player).ToList();
-        int ships = fleets.Sum(f => f.Ships.Count);
+        var snapshotFleets = _app.Snapshot.Fleets.Where(f => f.OwnerTag != null && f.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase)).ToList();
+        int ships = snapshotFleets.Sum(f => f.Ships);
         double capacity = N.TransportCapacity(player);
-        Gui.Label($"Ships: {ships}   Fleets: {fleets.Count}", x, y, 15);
+        Gui.Label($"Ships: {ships}   Fleets: {snapshotFleets.Count}", x, y, 15);
         string transport = $"Transports: {N.DivisionsAtSea(player)}/{capacity:0} divisions";
         var tm = Gui.Measure(transport, 15);
         Gui.Label(transport, x + w - tm.X, y, 15, capacity > 0 ? Gui.Text : Gui.TextDim);
@@ -53,17 +54,23 @@ public sealed partial class Hud
         float fy = top;
         foreach (var f in fleets)
         {
+            var fleetSnapshot = _app.Snapshot.Fleets.FirstOrDefault(q => q.Id == f.Id);
+            bool hasFleetSnapshot = fleetSnapshot.Id == f.Id && fleetSnapshot.OwnerTag != null && fleetSnapshot.OwnerTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase);
             var box = new Rectangle(x, fy, w - 8 * S, rowH);
             bool sel = Ui.SelectedFleet == f;
             Card(box, sel ? new Color(40, 52, 66, 255) : new Color(36, 38, 44, 255), sel);
-            Gui.Label(Gui.Fit(f.Name, box.Width - 120 * S, 16, FontKind.Bold), box.X + 8 * S, box.Y + 5 * S, 16, Gui.Gold, FontKind.Bold);
-            string status = f.Battle != null ? "In battle" : f.Retreating ? "Retreating" : f.Path.Count > 0 ? $"Sailing to {f.Path[^1].DisplayName}" : f.InPort ? $"In port: {f.Location.DisplayName}" : $"At sea: {f.Location.DisplayName}";
-            Gui.Label(Gui.Fit(status, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 27 * S, 13, f.Battle != null ? Gui.Bad : Gui.TextDim);
-            string comp = string.Join(", ", f.Ships.GroupBy(s => s.Type).Select(g => $"{g.Count()} {g.Key.Name}"));
+            string fleetName = hasFleetSnapshot ? fleetSnapshot.Name : f.Name;
+            Gui.Label(Gui.Fit(fleetName, box.Width - 120 * S, 16, FontKind.Bold), box.X + 8 * S, box.Y + 5 * S, 16, Gui.Gold, FontKind.Bold);
+            string status = hasFleetSnapshot
+                ? fleetSnapshot.InBattle ? "In battle" : fleetSnapshot.Retreating ? "Retreating" : fleetSnapshot.HasNextLocation ? $"Sailing to {fleetSnapshot.LocationName}" : fleetSnapshot.InPort ? $"In port: {fleetSnapshot.LocationName}" : $"At sea: {fleetSnapshot.LocationName}"
+                : f.Battle != null ? "In battle" : f.Retreating ? "Retreating" : f.Path.Count > 0 ? $"Sailing to {f.Path[^1].DisplayName}" : f.InPort ? $"In port: {f.Location.DisplayName}" : $"At sea: {f.Location.DisplayName}";
+            Gui.Label(Gui.Fit(status, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 27 * S, 13, hasFleetSnapshot && fleetSnapshot.InBattle || !hasFleetSnapshot && f.Battle != null ? Gui.Bad : Gui.TextDim);
+            string comp = hasFleetSnapshot ? fleetSnapshot.Composition : string.Join(", ", f.Ships.GroupBy(s => s.Type).Select(g => $"{g.Count()} {g.Key.Name}"));
             Gui.Label(Gui.Fit(comp, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 45 * S, 13);
             var hp = new Rectangle(box.X + 8 * S, box.Y + 68 * S, 130 * S, 9 * S);
-            Gui.Bar(hp, (float)f.HpFraction, new Color(120, 200, 250, 255));
-            if (Gui.Hover(hp)) Gui.Tooltip($"Condition {f.HpFraction:P0}. Damaged ships repair in a friendly port (faster with naval bases).");
+            double hpFraction = hasFleetSnapshot ? fleetSnapshot.HpFraction : f.HpFraction;
+            Gui.Bar(hp, (float)hpFraction, new Color(120, 200, 250, 255));
+            if (Gui.Hover(hp)) Gui.Tooltip($"Condition {hpFraction:P0}. Damaged ships repair in a friendly port (faster with naval bases).");
             // buttons
             float bx = box.X + box.Width - 112 * S;
             if (Gui.Button(new Rectangle(bx, box.Y + 5 * S, 104 * S, 22 * S), sel ? "Selected" : "Select", true, "Select this fleet, then right-click a sea location or a port to sail there", sel, 13))

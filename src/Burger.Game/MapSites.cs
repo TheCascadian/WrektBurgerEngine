@@ -2,6 +2,7 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Figures;
 using Burger.Core.Sites;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -55,6 +56,33 @@ public sealed class MapSites : IDisposable
         // a rebuilt site leaves its old model behind: free what the sites no longer use
         if (_uploaded.Count > live.Count + 8)
             foreach (var old in _uploaded.Where(m => !_game.Sites.Sites.Any(s => s.Model == m)).ToList()) { _renderer.Forget(old); _uploaded.Remove(old); _skins.Remove(old); }
+    }
+
+    /// <summary>Snapshot-backed site rendering; simulation-owned site instances are not traversed.</summary>
+    public void Draw(RenderSnapshot snapshot, Camera3D cam)
+    {
+        if (!Show || _map.Globe || Viewport.HeightOf(cam) > ShowBelow || snapshot.Sites.IsDefaultOrEmpty) return;
+        _renderer.Begin(cam);
+        var live = new HashSet<FigureModel>();
+        foreach (var site in snapshot.Sites)
+        {
+            if (!site.IsVisible) continue;
+            var model = _game.Figures.Find(site.ModelKey);
+            if (model == null) continue;
+            var pos = _map.LocationPos(site.CenterX, site.CenterY);
+            if (Vector3.DistanceSquared(pos, cam.Target) > ShowBelow * ShowBelow * 4) continue;
+            live.Add(model);
+            if (!_skins.TryGetValue(model, out var skin))
+            {
+                skin = new Matrix4x4[model.Rig.Count];
+                Array.Fill(skin, Matrix4x4.Identity);
+                _skins[model] = skin;
+            }
+            _uploaded.Add(model);
+            _renderer.Draw(model, skin, Matrix4x4.CreateScale(MetresToWorld) * Matrix4x4.CreateTranslation(pos), Color.White);
+        }
+        if (_uploaded.Count > live.Count + 8)
+            foreach (var old in _uploaded.Where(m => !live.Contains(m)).ToList()) { _renderer.Forget(old); _uploaded.Remove(old); _skins.Remove(old); }
     }
 
     public void Dispose() => _renderer.Dispose();

@@ -156,7 +156,7 @@ public sealed class DevelopmentSystem
     public int Gained(State s) => Math.Max(0, Level(s) - StartLevel(s));
     public double Literacy(State s) => s.Index < _literacy.Length ? _literacy[s.Index] : 0;
     public double Urbanization(State s) => s.Index < _urban.Length ? _urban[s.Index] : 0;
-    /// <summary>The months the institutions spread before the start date are counted in the background while the game starts; whatever reads the presence waits for them first.</summary>
+    /// <summary>The months the institutions spread before the start date are completed during loading.</summary>
     private Task? _catchUp;
     private void WaitForCatchUp()
     {
@@ -368,7 +368,11 @@ public sealed class DevelopmentSystem
         foreach (var i in spreading) Appear(i);
         Links();   // built once, before the institutions (which are independent of each other) spread on every core
         var runs = spreading.Select(i => CatchUp(i, Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30))).ToList();
-        _catchUp = Task.Run(() => Parallel.ForEach(runs, run => run()));
+        // Run this one-time historical preparation in the load phase.  It is
+        // deliberately bounded below so nested parallel loops cannot flood the
+        // shared runtime worker pool once the window is interactive.
+        foreach (var run in runs) run();
+        _catchUp = null;
     }
 
     /// <summary>
@@ -400,6 +404,7 @@ public sealed class DevelopmentSystem
         int chunks = (n + Chunk - 1) / Chunk;
         var anyOf = new bool[chunks];
         bool parallel = n >= 4 * Chunk;
+        var options = new ParallelOptions { MaxDegreeOfParallelism = 2 };
         void Look(int c)
         {
             bool any = false;
@@ -425,9 +430,9 @@ public sealed class DevelopmentSystem
         {
             for (int m = 0; m < months; m++)
             {
-                if (parallel) Parallel.For(0, chunks, Look); else for (int c = 0; c < chunks; c++) Look(c);
+                if (parallel) Parallel.For(0, chunks, options, Look); else for (int c = 0; c < chunks; c++) Look(c);
                 if (!anyOf.Any(a => a)) break;
-                if (parallel) Parallel.For(0, chunks, Apply); else for (int c = 0; c < chunks; c++) Apply(c);
+                if (parallel) Parallel.For(0, chunks, options, Apply); else for (int c = 0; c < chunks; c++) Apply(c);
             }
         };
     }

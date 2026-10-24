@@ -1,10 +1,12 @@
 using System.Numerics;
+using System.Collections.Immutable;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
 using Burger.Core.Multiplayer;
 using Burger.Core.Population;
 using Burger.Core.Production;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -18,6 +20,10 @@ public sealed partial class Hud
     private bool _ledgerWorld;
     private GlobalTradeLedgerCache? _globalTradeLedgerCache;
     private IndustryLedgerCache? _industryLedgerCache;
+    private Task<GlobalTradeLedgerCache?>? _globalLedgerBuild;
+    private Task<IndustryLedgerCache?>? _industryLedgerBuild;
+    private ImmutableArray<RenderCommodityBalance> _ledgerBalanceSource;
+    private Dictionary<string, Dictionary<string, RenderCommodityBalance>> _ledgerBalanceIndex = new(StringComparer.OrdinalIgnoreCase);
     private Game? _ledgerFallbackGame;
     private Country? _ledgerFallbackSubject;
     private int _ledgerFallbackMapVersion = -1;
@@ -182,6 +188,23 @@ public sealed partial class Hud
         return hash.ToHashCode();
     }
 
+    private Dictionary<string, Dictionary<string, RenderCommodityBalance>> LedgerBalanceIndex(RenderSnapshot snapshot)
+    {
+        // Build once per immutable balance array. BuildFast snapshots reuse this array between
+        // economic refreshes, so movement ticks do not rebuild the index while a ledger is open.
+        if (_ledgerBalanceSource.Equals(snapshot.CommodityBalances)) return _ledgerBalanceIndex;
+        var index = new Dictionary<string, Dictionary<string, RenderCommodityBalance>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var balance in snapshot.CommodityBalances)
+        {
+            if (!index.TryGetValue(balance.CountryTag, out var byCommodity))
+                index[balance.CountryTag] = byCommodity = new Dictionary<string, RenderCommodityBalance>(StringComparer.OrdinalIgnoreCase);
+            byCommodity[balance.CommodityKey] = balance;
+        }
+        _ledgerBalanceSource = snapshot.CommodityBalances;
+        _ledgerBalanceIndex = index;
+        return index;
+    }
+
     /// <summary>Detects same-day building and method changes without re-reading market balances.</summary>
     private int LedgerSubjectStamp(Country? country)
     {
@@ -336,9 +359,10 @@ public sealed partial class Hud
         Gui.Panel(r, "Population");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
+        var snapshotPlayer = _app.Snapshot.Player;
         var states = player.OwnedStates;
-        double total = P.TotalOf(player);
-        double growth = states.Sum(s => P.HasPops(s) ? P.Of(s).LastGrowth : 0);
+        double total = snapshotPlayer?.Population ?? P.TotalOf(player);
+        double growth = snapshotPlayer?.PopulationGrowth ?? states.Sum(s => P.HasPops(s) ? P.Of(s).LastGrowth : 0);
         Gui.Label($"{People(total)} people", x, y, 18, Gui.Gold, FontKind.Bold);
         string gtxt = $"{(growth >= 0 ? "+" : "-")}{People(Math.Abs(growth))}";
         float gw = Gui.Measure(gtxt, 14, FontKind.Bold).X + 24 * S;
@@ -346,7 +370,7 @@ public sealed partial class Hud
         y += 28 * S;
         // the cultures, religions and classes below count the people outside our colonies
         var home = P.HomeStates(player).ToList();
-        double homeTotal = home.Sum(P.TotalOf);
+        double homeTotal = snapshotPlayer?.HomePopulation ?? home.Sum(P.TotalOf);
         double colonial = total - homeTotal;
         if (colonial >= 1)
         {
@@ -358,7 +382,9 @@ public sealed partial class Hud
         var cp = P.Of(player);
         Gui.Label(Gui.Fit($"{P.Culture(cp.Culture)?.Name ?? "-"}" + (P.ReligionEnabled ? $" · {P.Religion(cp.Religion)?.Name ?? "-"}" : ""), w, 14), x, y, 14);
         y += 22 * S;
-        var (acc, faith) = P.Shares(player);
+        var (acc, faith) = snapshotPlayer is { } ps
+            ? (ps.AcceptedCultureShare, ps.StateReligionShare)
+            : P.Shares(player);
         // only worth a line when something is off; the numbers stay in the tooltip of the line above
         bool shares = acc < 0.99 || (P.ReligionEnabled && faith < 0.9);
         if (shares) Gui.Label($"Accepted culture {acc:P0}" + (P.ReligionEnabled ? $" · state religion {faith:P0}" : ""), x, y, 13, acc >= 0.9 ? Gui.TextDim : Gui.Bad);
@@ -370,15 +396,17 @@ public sealed partial class Hud
 
         Gui.Section("Cultures", x, y, w, "ui_cultures");
         y += 26 * S;
-        var cultures = P.Breakdown(home, p => p.Culture);
+        var cultureSnapshot = snapshotPlayer?.CultureBreakdown ?? ImmutableArray<RenderPopulationShare>.Empty;
+        var cultures = snapshotPlayer is { } ? cultureSnapshot.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(home, p => p.Culture);
         float pr = 52 * S, listX = x + 2 * pr + 14 * S;
         float pieTop = y;
         Pie(new Vector2(x + pr, y + pr), pr, Parts(cultures, CultInfo), "Cultures", People);
         float lw = x + w - listX;
         foreach (var (key, size) in cultures.Take(5))
         {
-            var (name, col) = CultInfo(key);
-            bool accepted = P.IsAccepted(player, key);
+            var share = cultureSnapshot.FirstOrDefault(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            var (name, col) = snapshotPlayer is { } ? (share.Name, share.Color) : CultInfo(key);
+            bool accepted = snapshotPlayer is { } ? share.Accepted : P.IsAccepted(player, key);
             Raylib.DrawRectangleRec(new Rectangle(listX, y + 4 * S, 10 * S, 10 * S), C(col));
             Gui.Label(Gui.Fit($"{name}{(key == cp.Culture ? " (primary)" : accepted ? " (accepted)" : "")}", lw - 130 * S, 13), listX + 14 * S, y, 13, accepted ? Gui.Text : Gui.TextDim);
             Gui.Label($"{size / Math.Max(1, homeTotal):P0}", listX + lw - 112 * S, y, 13);
@@ -401,12 +429,14 @@ public sealed partial class Hud
         {
             Gui.Section("Religions", x, y, w, "ui_religions");
             y += 26 * S;
-            var rel = P.Breakdown(home, p => p.Religion);
+            var religionSnapshot = snapshotPlayer?.ReligionBreakdown ?? ImmutableArray<RenderPopulationShare>.Empty;
+            var rel = snapshotPlayer is { } ? religionSnapshot.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(home, p => p.Religion);
             pieTop = y;
             Pie(new Vector2(x + pr, y + pr), pr, Parts(rel, RelInfo), "Religions", People);
             foreach (var (key, size) in rel.Take(5))
             {
-                var (name, col) = RelInfo(key);
+                var share = religionSnapshot.FirstOrDefault(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+                var (name, col) = snapshotPlayer is { } ? (share.Name, share.Color) : RelInfo(key);
                 Raylib.DrawRectangleRec(new Rectangle(listX, y + 4 * S, 10 * S, 10 * S), C(col));
                 Gui.Label(Gui.Fit(name + (key == cp.Religion ? " (state religion)" : ""), lw - 60 * S, 13), listX + 14 * S, y, 13);
                 string pct = $"{size / Math.Max(1, homeTotal):P0}";
@@ -419,7 +449,8 @@ public sealed partial class Hud
         {
             Gui.Section("Social classes", x, y, w, "ui_classes");
             y += 26 * S;
-            ShareBar(new Rectangle(x, y, w, 16 * S), P.Breakdown(home, p => p.Type), ClassInfo, "Social classes");
+            var classSnapshot = snapshotPlayer?.ClassBreakdown ?? ImmutableArray<RenderPopulationShare>.Empty;
+            ShareBar(new Rectangle(x, y, w, 16 * S), snapshotPlayer is { } ? classSnapshot.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(home, p => p.Type), ClassInfo, "Social classes");
             y += 26 * S;
         }
         if (P.ColonizationEnabled)
@@ -478,32 +509,35 @@ public sealed partial class Hud
         // most populous states
         Gui.Section("States by population", x, y, w, "ui_states_pop");
         y += 26 * S;
-        var list = states.Where(P.HasPops).OrderByDescending(P.TotalOf).ToList();
+        var stateSnapshots = _app.Snapshot.States.Where(s => s.OwnerTag != null && s.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase) && s.PopulationTotal > 0)
+            .OrderByDescending(s => s.PopulationTotal).ToList();
         const int topN = 6;
-        if (list.Count > topN)
+        if (stateSnapshots.Count > topN)
         {
-            if (Gui.Button(new Rectangle(x + w - 110 * S, y - 26 * S, 110 * S, 20 * S), _popAllStates ? "Show top 6" : $"Show all {list.Count}", true, null, false, 12)) _popAllStates = !_popAllStates;
-            if (!_popAllStates) list = list.Take(topN).ToList();
+            if (Gui.Button(new Rectangle(x + w - 110 * S, y - 26 * S, 110 * S, 20 * S), _popAllStates ? "Show top 6" : $"Show all {stateSnapshots.Count}", true, null, false, 12)) _popAllStates = !_popAllStates;
+            if (!_popAllStates) stateSnapshots = stateSnapshots.Take(topN).ToList();
         }
-        FitEnd("pop", r, y + list.Count * 22 * S);
-        float top = Gui.BeginScroll("popstates", new Rectangle(x, y, w, Math.Min(list.Count * 22 * S, r.Y + r.Height - y - 10 * S)), list.Count * 22 * S);
+        FitEnd("pop", r, y + stateSnapshots.Count * 22 * S);
+        float top = Gui.BeginScroll("popstates", new Rectangle(x, y, w, Math.Min(stateSnapshots.Count * 22 * S, r.Y + r.Height - y - 10 * S)), stateSnapshots.Count * 22 * S);
         float ly = top;
-        foreach (var s in list)
+        foreach (var stateSnapshot in stateSnapshots)
         {
-            var sp = P.Of(s);
-            double cap = P.Capacity(s);
+            var s = states.FirstOrDefault(q => q.Key.Equals(stateSnapshot.Key, StringComparison.OrdinalIgnoreCase));
+            if (s == null) continue;
+            double totalState = stateSnapshot.PopulationTotal;
+            double cap = stateSnapshot.PopulationCapacity;
             var row = new Rectangle(x, ly, w - 10 * S, 20 * S);
             bool hover = Gui.Hover(row);
             if (hover) Raylib.DrawRectangleRec(row, new Color(255, 255, 255, 18));
             bool core = s.Cores.Contains(player);
             if (core) Raylib.DrawRectangleRec(new Rectangle(x, ly + 2 * S, 3 * S, 16 * S), Gui.Gold);
             Gui.Label(Gui.Fit(s.DisplayName, w * 0.5f, 14), x + 8 * S, ly + 1 * S, 14, core ? Gui.Text : Gui.TextDim);
-            string pt = People(sp.Total);
+            string pt = People(totalState);
             Gui.Label(pt, x + w * 0.66f - Gui.Measure(pt, 14, FontKind.Bold).X, ly + 1 * S, 14, Gui.Text, FontKind.Bold);
-            Gui.Bar(new Rectangle(x + w * 0.70f, ly + 6 * S, w * 0.26f, 8 * S), (float)Math.Min(1, sp.Total / Math.Max(1, cap)), new Color(200, 170, 90, 255));
+            Gui.Bar(new Rectangle(x + w * 0.70f, ly + 6 * S, w * 0.26f, 8 * S), (float)Math.Min(1, totalState / Math.Max(1, cap)), new Color(200, 170, 90, 255));
             if (hover)
             {
-                Gui.Tooltip($"{s.DisplayName}: {People(sp.Total)} people (room for {People(cap)})\n{(s.Cores.Contains(player) ? "Core state" : "Not a core state")}\nClick to look at it");
+                Gui.Tooltip($"{s.DisplayName}: {People(totalState)} people (room for {People(cap)})\n{(s.Cores.Contains(player) ? "Core state" : "Not a core state")}\nClick to look at it");
                 if (Gui.Clicked(row))
                 {
                     var loc = s.Locations.FirstOrDefault(l => l.IsLand) ?? s.Locations[0];
@@ -523,17 +557,17 @@ public sealed partial class Hud
     private float DrawStateMoods(State st, float x, float y, float w)
     {
         if (st.Owner == null || !G.Politics.PopsEnabled) return y;
-        var moods = G.Politics.MoodsOf(st);
-        if (moods == null || moods.Count == 0) return y;
-        foreach (var pop in G.Population.Of(st).Pops.Where(q => q.Size > 0).OrderByDescending(q => q.Size).Take(3))
+        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        var moods = stateSnapshot.Key == st.Key ? stateSnapshot.Moods : ImmutableArray<RenderPopMood>.Empty;
+        if (moods.Length == 0) return y;
+        foreach (var m in moods)
         {
-            if (!moods.TryGetValue(Burger.Core.Politics.PoliticsSystem.PopKey(pop), out var m)) continue;
             var tone = m.Reaction switch { "Approve" => Gui.Good, "Comply" => Gui.Text, "Disapprove" => Gui.Gold, _ => Gui.Bad };
             var row = new Rectangle(x, y, w, 18 * S);
-            string line = $"{G.Politics.PopGroupName(pop)}: {m.Reaction} ({m.Opinion:+0;-0;0})";
+            string line = $"{m.Name}: {m.Reaction} ({m.Opinion:+0;-0;0})";
             Gui.Label(Gui.Fit(line, w, 13), x, y, 13, tone);
             if (Gui.Hover(row))
-                Gui.Tooltip($"{G.Politics.PopGroupName(pop)} · {People(pop.Size)}\nWants: {Localisation.GetOrPretty(m.Objective)}\nOpinion {m.Opinion:0} · grievance {m.Grievance:0} · radicalism {m.Radicalism:0}"
+                Gui.Tooltip($"{m.Name} · {People(m.Size)}\nWants: {Localisation.GetOrPretty(m.Objective)}\nOpinion {m.Opinion:0} · grievance {m.Grievance:0} · radicalism {m.Radicalism:0}"
                     + (m.PreferredParty.Length > 0 ? $"\nLeans to: {G.Politics.PartyDisplayName(st.Owner, m.PreferredParty)}" : ""));
             y += 18 * S;
         }
@@ -546,17 +580,21 @@ public sealed partial class Hud
         if (!P.Enabled) return y;
         var player = G.World.Player;
         var sp = P.Of(st);
+        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        bool hasSnapshot = stateSnapshot.Key == st.Key;
         if (header) { Gui.Section("People", x, y, w, "ui_people"); y += 26 * S; }
-        double cap = P.Capacity(st);
-        Gui.Label($"{People(sp.Total)} people", x, y, 15, Gui.Gold);
-        string g = $"{(sp.LastGrowth >= 0 ? "+" : "-")}{People(Math.Abs(sp.LastGrowth))}/month";
+        double total = hasSnapshot ? stateSnapshot.PopulationTotal : sp.Total;
+        double growth = hasSnapshot ? stateSnapshot.PopulationGrowth : sp.LastGrowth;
+        double cap = hasSnapshot ? stateSnapshot.PopulationCapacity : P.Capacity(st);
+        Gui.Label($"{People(total)} people", x, y, 15, Gui.Gold);
+        string g = $"{(growth >= 0 ? "+" : "-")}{People(Math.Abs(growth))}/month";
         float gx = x + 110 * S;
-        Gui.Label(g, gx, y + 2 * S, 13, DeltaColor(sp.LastGrowth, 0.5));
-        Gui.Label($"room for {People(cap)}", gx + Gui.Measure(g, 13).X + 10 * S, y + 2 * S, 13, sp.Total >= cap ? Gui.Bad : Gui.TextDim);
+        Gui.Label(g, gx, y + 2 * S, 13, DeltaColor(growth, 0.5));
+        Gui.Label($"room for {People(cap)}", gx + Gui.Measure(g, 13).X + 10 * S, y + 2 * S, 13, total >= cap ? Gui.Bad : Gui.TextDim);
         if (Gui.Hover(new Rectangle(x, y, w, 20 * S)))
             Gui.Tooltip("People grow towards the state's room (capacity); buildings and modifiers (pop_growth, pop_capacity) change both.\nTax and manpower grow with the people.");
         y += 22 * S;
-        if (sp.Pops.Count > 0)
+        if (hasSnapshot ? !stateSnapshot.CultureBreakdown.IsDefaultOrEmpty : sp.Pops.Count > 0)
         {
             // small pies: cultures, religions, classes
             float r = 30 * S, px = x;
@@ -568,12 +606,29 @@ public sealed partial class Hud
                 Gui.Label(Gui.Fit(top, 2 * r + 60 * S, 12), px + 2 * r + 6 * S, y + r - 2 * S, 12);
                 px += 2 * r + 76 * S;
             }
-            SmallPie("Cultures", P.Breakdown(new[] { st }, p => p.Culture), CultInfo);
-            if (P.ReligionEnabled) SmallPie("Religions", P.Breakdown(new[] { st }, p => p.Religion), RelInfo);
-            if (P.ClassesEnabled) SmallPie("Classes", P.Breakdown(new[] { st }, p => p.Type), ClassInfo);
+            var cultureParts = hasSnapshot ? stateSnapshot.CultureBreakdown.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(new[] { st }, p => p.Culture);
+            SmallPie("Cultures", cultureParts, key => hasSnapshot ? (stateSnapshot.CultureBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Name,
+                stateSnapshot.CultureBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Color) : CultInfo(key));
+            if (P.ReligionEnabled)
+            {
+                var religionParts = hasSnapshot ? stateSnapshot.ReligionBreakdown.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(new[] { st }, p => p.Religion);
+                SmallPie("Religions", religionParts, key => hasSnapshot ? (stateSnapshot.ReligionBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Name,
+                    stateSnapshot.ReligionBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Color) : RelInfo(key));
+            }
+            if (P.ClassesEnabled)
+            {
+                var classParts = hasSnapshot ? stateSnapshot.ClassBreakdown.Select(q => (q.Key, q.Size)).ToList() : P.Breakdown(new[] { st }, p => p.Type);
+                SmallPie("Classes", classParts, key => hasSnapshot ? (stateSnapshot.ClassBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Name,
+                    stateSnapshot.ClassBreakdown.First(q => q.Key.Equals(key, StringComparison.OrdinalIgnoreCase)).Color) : ClassInfo(key));
+            }
             y += 2 * r + 8 * S;
-            string major = P.Culture(P.MajorityCulture(st))?.Name ?? "-";
-            string text = $"Mostly {major}" + (P.ReligionEnabled ? $", {P.Religion(P.MajorityReligion(st))?.Name}" : "");
+            string major = hasSnapshot
+                ? stateSnapshot.CultureBreakdown.FirstOrDefault(q => q.Primary).Name ?? "-"
+                : P.Culture(P.MajorityCulture(st))?.Name ?? "-";
+            string religion = hasSnapshot
+                ? stateSnapshot.ReligionBreakdown.FirstOrDefault(q => q.Primary).Name ?? "-"
+                : P.Religion(P.MajorityReligion(st))?.Name ?? "-";
+            string text = $"Mostly {major}" + (P.ReligionEnabled ? $", {religion}" : "");
             Gui.Label(Gui.Fit(text, w, 13), x, y, 13, Gui.TextDim);
             y += 20 * S;
             y = DrawStateMoods(st, x, y, w);
@@ -662,9 +717,36 @@ public sealed partial class Hud
     }
 
     // ------------------------------------------------------------------------------------- ledger
-    private GlobalTradeLedgerCache GetGlobalTradeLedgerCache(float w)
+    private GlobalTradeLedgerCache? GetGlobalTradeLedgerCache(float w)
+    {
+        var cache = _globalTradeLedgerCache;
+        bool stale = cache == null || cache.Game != G || cache.Day != G.World.Date.TotalDays ||
+                     cache.MapVersion != G.MapVersion || cache.Scale != S || cache.PanelWidth != w ||
+                     cache.HistoryCount != G.TradeNetwork.History.Count ||
+                     cache.ActiveRouteCount != G.TradeNetwork.ActiveRoutes.Count;
+        if (_globalLedgerBuild is { IsCompleted: true } task)
+        {
+            _globalLedgerBuild = null;
+            try { cache = task.GetAwaiter().GetResult(); _globalTradeLedgerCache = cache; }
+            catch (Exception ex) { Log.Error($"Ledger cache build failed: {ex.GetType().Name}: {ex.Message}"); }
+        }
+        // First-open and active-play refreshes never block the render thread; the last complete cache remains visible until replacement completes.
+        if (stale && _globalLedgerBuild == null)
+            _globalLedgerBuild = Task.Run(() => BuildGlobalTradeLedgerCache(w));
+        return cache;
+    }
+
+    private GlobalTradeLedgerCache? BuildGlobalTradeLedgerCache(float w)
     {
         var market = G.Commodities;
+        var balanceIndex = LedgerBalanceIndex(_app.Snapshot);
+        (double Output, double Import, double Export, double Demand, double PopulationUse, double MilitaryUse, double Stockpile, double Price, double Satisfied) BalanceOf(Country country, string key)
+        {
+            if (balanceIndex.TryGetValue(country.Tag, out var byCommodity) && byCommodity.TryGetValue(key, out var snapshot))
+                return (snapshot.Output, snapshot.Import, snapshot.Export, snapshot.Demand, snapshot.PopulationUse, snapshot.MilitaryUse, snapshot.Stockpile, snapshot.Price, snapshot.Satisfied);
+            var live = market.BalanceOf(country, key);
+            return (live.Output, live.Import, live.Export, live.Demand, live.PopulationUse, live.MilitaryUse, live.Stockpile, live.Price, live.Satisfied);
+        }
         var subject = LedgerSubject;
         int day = G.World.Date.TotalDays;
         int subjectStamp = LedgerPolicyStamp(subject);
@@ -700,7 +782,7 @@ public sealed partial class Hud
                 double output = 0, imports = 0, exports = 0, demand = 0, stockpile = 0, satisfied = 0, price = 0;
                 foreach (var country in cache.Countries)
                 {
-                    var balance = market.BalanceOf(country, def.Key);
+                    var balance = BalanceOf(country, def.Key);
                     output += balance.Output;
                     imports += balance.Import;
                     exports += balance.Export;
@@ -750,7 +832,7 @@ public sealed partial class Hud
             if (_ledgerCommodity != null && market.Defs.TryGetValue(_ledgerCommodity, out var selectedDef))
             {
                 foreach (var (country, balance) in cache.Countries
-                    .Select(country => (country, balance: market.BalanceOf(country, selectedDef.Key)))
+                    .Select(country => (country, balance: BalanceOf(country, selectedDef.Key)))
                     .OrderByDescending(item => item.balance.Demand)
                     .Take(4))
                 {
@@ -770,9 +852,34 @@ public sealed partial class Hud
 
     private IndustryLedgerCache? GetIndustryLedgerCache(float w)
     {
+        var cache = _industryLedgerCache;
+        bool stale = cache == null || cache.Game != G || cache.Day != G.World.Date.TotalDays ||
+                     cache.MapVersion != G.MapVersion || cache.Country != LedgerSubject ||
+                     cache.Scale != S || cache.PanelWidth != w;
+        if (_industryLedgerBuild is { IsCompleted: true } task)
+        {
+            _industryLedgerBuild = null;
+            try { cache = task.GetAwaiter().GetResult(); _industryLedgerCache = cache; }
+            catch (Exception ex) { Log.Error($"Industry ledger cache build failed: {ex.GetType().Name}: {ex.Message}"); }
+        }
+        if (stale && _industryLedgerBuild == null)
+            _industryLedgerBuild = Task.Run(() => BuildIndustryLedgerCache(w));
+        return cache;
+    }
+
+    private IndustryLedgerCache? BuildIndustryLedgerCache(float w)
+    {
         var country = LedgerSubject;
         if (country == null) return null;
         var market = G.Commodities;
+        var balanceIndex = LedgerBalanceIndex(_app.Snapshot);
+        (double Output, double Import, double Export, double Demand, double PopulationUse, double MilitaryUse, double Stockpile, double Price, double Satisfied) BalanceOf(Country owner, string key)
+        {
+            if (balanceIndex.TryGetValue(owner.Tag, out var byCommodity) && byCommodity.TryGetValue(key, out var snapshot))
+                return (snapshot.Output, snapshot.Import, snapshot.Export, snapshot.Demand, snapshot.PopulationUse, snapshot.MilitaryUse, snapshot.Stockpile, snapshot.Price, snapshot.Satisfied);
+            var live = market.BalanceOf(owner, key);
+            return (live.Output, live.Import, live.Export, live.Demand, live.PopulationUse, live.MilitaryUse, live.Stockpile, live.Price, live.Satisfied);
+        }
         int day = G.World.Date.TotalDays;
         int subjectStamp = LedgerSubjectStamp(country);
         var cache = _industryLedgerCache;
@@ -802,7 +909,7 @@ public sealed partial class Hud
         };
         foreach (var def in market.Defs.Values.Where(k => k.IsActive(G.World.Date)).OrderBy(k => k.Category).ThenBy(k => k.Name))
         {
-            var balance = market.BalanceOf(country, def.Key);
+            var balance = BalanceOf(country, def.Key);
             double industryDemand = Math.Max(0, balance.Demand - balance.PopulationUse);
             double met = balance.Demand > 0.0001 ? balance.Satisfied : 1;
             cache.Rows.Add(new IndustryLedgerRow
@@ -871,20 +978,19 @@ public sealed partial class Hud
             ? "No queued construction projects"
             : $"{cache.Construction.Count} queued / {cache.ConstructionCapacity:0.##}/day capacity applied / {cache.ConstructionLabour:0.#} labour / {cache.ConstructionFactories} factories";
 
-        var shortage = market.Shortages(country).FirstOrDefault();
-        if (shortage.Commodity != null)
+        var shortageRow = cache.Rows.FirstOrDefault(row => row.Demand > 0.0001 && row.Satisfied < 0.85);
+        if (shortageRow != null)
         {
-            cache.ShortageCommodity = shortage.Commodity;
-            var shortageRow = cache.Rows.FirstOrDefault(row => row.Def.Key.Equals(shortage.Commodity, StringComparison.OrdinalIgnoreCase));
-            cache.ShortageAmount = shortageRow == null ? 0.1 : Math.Max(0.1, shortageRow.Demand - shortageRow.Output);
+            cache.ShortageCommodity = shortageRow.Def.Key;
+            cache.ShortageAmount = Math.Max(0.1, shortageRow.Demand - shortageRow.Output);
             cache.Supplier = G.World.Countries
                 .Where(c => c.Exists && c != country)
-                .Select(c => (country: c, balance: market.BalanceOf(c, shortage.Commodity)))
+                .Select(c => (country: c, balance: BalanceOf(c, shortageRow.Def.Key)))
                 .Where(item => item.balance.Output > item.balance.Demand)
                 .OrderBy(item => item.country.Index)
                 .Select(item => item.country)
                 .FirstOrDefault();
-            string buildKey = shortage.Commodity is "grain" or "fish" or "animal_products" ? "farm" : shortage.Commodity is "salt" or "textiles" or "pottery" or "glass" ? "workshop" : "market";
+            string buildKey = cache.ShortageCommodity is "grain" or "fish" or "animal_products" ? "farm" : cache.ShortageCommodity is "salt" or "textiles" or "pottery" or "glass" ? "workshop" : "market";
             cache.Build = G.Data.BuildingTypes.GetValueOrDefault(buildKey);
             cache.BuildState = country.OwnedStates.OrderByDescending(G.Population.TotalOf).FirstOrDefault();
             cache.CanBuild = cache.Build != null && cache.BuildState != null && (cache.Build.Category == "factory" && G.Production.Enabled && G.Production.CivilianFactories(country) > 0
@@ -1065,6 +1171,11 @@ public sealed partial class Hud
     {
         var market = G.Commodities;
         var cache = GetGlobalTradeLedgerCache(w);
+        if (cache == null)
+        {
+            Gui.Label("Updating world market…", x, y, 14, Gui.TextDim);
+            return;
+        }
         var countries = cache.Countries;
         var rows = cache.Rows;
         var subject = cache.Subject;

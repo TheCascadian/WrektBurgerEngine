@@ -1,5 +1,6 @@
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -16,6 +17,7 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) { Ui.Left = LeftPanel.None; return; }
+        var snapshot = _app.Snapshot;
         var r = FitRect("army");
         Gui.Panel(r, "");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
@@ -43,13 +45,15 @@ public sealed partial class Hud
         }
 
         var armies = G.World.ArmiesOf(player).ToList();
+        int armyCount = snapshot.ArmyOrders.Count(a => a.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase));
+        int unassignedCount = snapshot.Divisions.Count(d => d.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase) && d.ArmyName == null);
         var unassigned = G.World.Divisions.Where(d => d.Owner == player && d.Army == null).ToList();
         var enemies = G.World.WarsOf(player).SelectMany(war => war.EnemiesOf(player)).Distinct().Where(e => e.Exists).ToList();
         // fronts can also be held at peace against any neighbour
         foreach (var nb in Burger.Core.Scripting.Builtins.NeighborCountries(G, player).OrderBy(n => n.Name))
             if (!enemies.Contains(nb)) enemies.Add(nb);
 
-        Gui.Section($"Armies ({armies.Count})", x, y, w - 150 * S);
+        Gui.Section($"Armies ({armyCount})", x, y, w - 150 * S);
         if (Gui.Button(new Rectangle(r.X + r.Width - 140 * S, y - 2, 128 * S, 24 * S), "+ New army", true, "Create an empty army (select divisions and use 'To army' to fill it)", false, 14))
             Ui.SelectedArmy = G.Warfare.CreateArmy(player);
         y += 26 * S;
@@ -57,7 +61,7 @@ public sealed partial class Hud
         bool plans = G.Features.Has(Burger.Core.Modding.FeatureSet.BattlePlans);
         float armyBase = 96 * S, armyPlan = plans ? 26 * S : 0, armyAdd = Ui.SelectedDivisions.Count > 0 ? 24 * S : 0;
         float HeightOf(Army a) => armyBase + (Ui.SelectedArmy == a ? armyPlan : 0) + armyAdd;
-        float contentH = armies.Sum(a => HeightOf(a) + 6 * S) + (unassigned.Count > 0 ? 40 * S : 0);
+        float contentH = armies.Sum(a => HeightOf(a) + 6 * S) + (unassignedCount > 0 ? 40 * S : 0);
         float listH = Math.Max(60 * S, Math.Min(contentH, r.Y + r.Height - y - 50 * S));
         FitEnd("army", r, y + contentH + 8 * S + 30 * S);
         float top = Gui.BeginScroll("armies", new Rectangle(x, y, w, listH), contentH);
@@ -65,40 +69,48 @@ public sealed partial class Hud
         foreach (var army in armies)
         {
             float armyH = HeightOf(army);
+            var armySnapshot = snapshot.Armies.FirstOrDefault(a => a.Id == army.Id);
+            bool hasArmySnapshot = armySnapshot.Id == army.Id && armySnapshot.OwnerTag != null && armySnapshot.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase);
+            string armyMode = hasArmySnapshot ? armySnapshot.Mode : army.Mode.ToString();
+            bool hasFront = hasArmySnapshot ? armySnapshot.FrontEnemyTag != null : army.FrontEnemy != null;
             var box = new Rectangle(x, ay, w - 8 * S, armyH);
             bool sel = Ui.SelectedArmy == army;
             Card(box, sel ? new Color(70, 58, 34, 255) : new Color(36, 38, 44, 255), sel);
-            bool attacking = army.Mode == ArmyMode.Offensive && army.FrontEnemy != null;
-            Stripe(box, attacking ? Gui.Bad : army.FrontEnemy != null ? Gui.Gold : new Color(90, 96, 108, 255));
-            Gui.Label(army.Name, x + 10 * S, ay + 4, 16, Gui.Gold, FontKind.Bold);
+            bool attacking = armyMode == nameof(ArmyMode.Offensive) && hasFront;
+            Stripe(box, attacking ? Gui.Bad : hasFront ? Gui.Gold : new Color(90, 96, 108, 255));
+            Gui.Label(hasArmySnapshot ? armySnapshot.Name : army.Name, x + 10 * S, ay + 4, 16, Gui.Gold, FontKind.Bold);
             bool chars = G.Features.Has(Burger.Core.Modding.FeatureSet.Characters);
-            if (chars || army.General != null)
+            bool hasGeneral = hasArmySnapshot ? armySnapshot.GeneralName != null : army.General != null;
+            if (chars || hasGeneral)
             {
-                string general = army.General != null ? $"{army.General.DisplayName}  {army.General.GetStat(G.Data.Defines.GeneralStat):0}" : "No general";
-                Gui.Label(Gui.Fit(general, w * 0.7f, 14), x + 10 * S, ay + 24 * S, 14, army.General != null ? Gui.Text : Gui.Bad);
+                string general = hasGeneral ? $"{(hasArmySnapshot ? armySnapshot.GeneralName : army.General!.DisplayName)}  {(hasArmySnapshot ? armySnapshot.GeneralStat : army.General!.GetStat(G.Data.Defines.GeneralStat)):0}" : "No general";
+                Gui.Label(Gui.Fit(general, w * 0.7f, 14), x + 10 * S, ay + 24 * S, 14, hasGeneral ? Gui.Text : Gui.Bad);
                 if (Gui.Hover(new Rectangle(x + 10 * S, ay + 24 * S, w * 0.6f, 18 * S)))
-                    Gui.Tooltip(army.General != null ? $"General: {army.General.DisplayName}\n{Localisation.GetOrPretty(G.Data.Defines.GeneralStat)}: {army.General.GetStat(G.Data.Defines.GeneralStat):0}" : "This army has no general. Click 'General' to choose one.");
+                    Gui.Tooltip(hasGeneral ? $"General: {(hasArmySnapshot ? armySnapshot.GeneralName : army.General!.DisplayName)}\n{Localisation.GetOrPretty(G.Data.Defines.GeneralStat)}: {(hasArmySnapshot ? armySnapshot.GeneralStat : army.General!.GetStat(G.Data.Defines.GeneralStat)):0}" : "This army has no general. Click 'General' to choose one.");
             }
-            double str = army.Divisions.Count == 0 ? 0 : army.Divisions.Average(d => d.StrengthFraction);
-            string stat = $"{army.Divisions.Count} div. · {str:P0}";
+            double str = hasArmySnapshot ? armySnapshot.StrengthFraction : army.Divisions.Count == 0 ? 0 : army.Divisions.Average(d => d.StrengthFraction);
+            int divisionCount = hasArmySnapshot ? armySnapshot.DivisionCount : army.Divisions.Count;
+            string stat = $"{divisionCount} div. · {str:P0}";
             Gui.Label(stat, x + w - 16 * S - Gui.Measure(stat, 14).X, ay + 4, 14, str < 0.5 ? Gui.Bad : Gui.TextDim);
             Gui.Bar(new Rectangle(x + w - 16 * S - 90 * S, ay + 24 * S, 90 * S, 7 * S), (float)str, str < 0.5 ? Gui.Bad : Gui.Good);
-            if (Gui.Hover(new Rectangle(x + w - 160 * S, ay + 2, 150 * S, 30 * S))) Gui.Tooltip($"{army.Divisions.Count} divisions\nAverage strength {str:P0}");
+            if (Gui.Hover(new Rectangle(x + w - 160 * S, ay + 2, 150 * S, 30 * S))) Gui.Tooltip($"{divisionCount} divisions\nAverage strength {str:P0}");
             // orders line: a flag for the front, a pictogram for what the army is doing
             float fy = ay + 44 * S;
-            if (army.Mode == ArmyMode.Fallback && army.Fallback.Count > 0)
-                Gui.Label($"Fallback line ({army.Fallback.Count} locations)", x + 10 * S, fy, 14, Gui.TextDim);
-            else if (army.FrontEnemy != null)
+            if (armyMode == nameof(ArmyMode.Fallback) && (hasArmySnapshot ? armySnapshot.FallbackCount > 0 : army.Fallback.Count > 0))
+                Gui.Label($"Fallback line ({(hasArmySnapshot ? armySnapshot.FallbackCount : army.Fallback.Count)} locations)", x + 10 * S, fy, 14, Gui.TextDim);
+            else if (hasFront)
             {
-                float fx0 = x + 10 * S + FlagChip(army.FrontEnemy, x + 10 * S, fy, 15 * S, attacking ? Gui.Bad : null, "Front against this country");
-                Gui.Label(attacking ? "Attack" + (army.Objective != null ? " > " + army.Objective.DisplayName : "") : "Hold the front", fx0, fy, 14, attacking ? Gui.Bad : Gui.TextDim);
+                var front = hasArmySnapshot ? G.World.Countries.FirstOrDefault(c => c.Tag == armySnapshot.FrontEnemyTag) : army.FrontEnemy;
+                float fx0 = x + 10 * S + (front != null ? FlagChip(front, x + 10 * S, fy, 15 * S, attacking ? Gui.Bad : null, "Front against this country") : 0);
+                string? objective = hasArmySnapshot ? armySnapshot.ObjectiveName : army.Objective?.DisplayName;
+                Gui.Label(attacking ? "Attack" + (objective != null ? " > " + objective : "") : "Hold the front", fx0, fy, 14, attacking ? Gui.Bad : Gui.TextDim);
             }
-            else if (army.MoveTarget != null) Gui.Label("Moving to " + army.MoveTarget.DisplayName, x + 10 * S, fy, 14, Gui.TextDim);
+            else if (hasArmySnapshot ? armySnapshot.MoveTargetName != null : army.MoveTarget != null) Gui.Label("Moving to " + (hasArmySnapshot ? armySnapshot.MoveTargetName : army.MoveTarget!.DisplayName), x + 10 * S, fy, 14, Gui.TextDim);
             else Gui.Label("No orders", x + 10 * S, fy, 14, Gui.TextDim);
-            if (army.Divisions.Count > 0)
+            if (hasArmySnapshot ? armySnapshot.LocationName != null : army.Divisions.Count > 0)
             {
-                double sup = army.Divisions.Average(d => d.Supply);
-                string where = $"{army.Divisions[0].Location.DisplayName} · supply {sup:P0}";
+                double sup = hasArmySnapshot ? armySnapshot.Supply : army.Divisions.Average(d => d.Supply);
+                string where = $"{(hasArmySnapshot ? armySnapshot.LocationName : army.Divisions[0].Location.DisplayName)} · supply {sup:P0}";
                 Gui.Label(Gui.Fit(where, w * 0.45f, 13), x + w - 40 * S - Math.Min(w * 0.45f, Gui.Measure(where, 13).X), fy + 1 * S, 13, sup < 0.5 ? Gui.Bad : Gui.TextDim);
             }
 
@@ -175,9 +187,9 @@ public sealed partial class Hud
                 foreach (var d in Ui.SelectedDivisions) G.Warfare.AssignToArmy(d, army);
             ay += armyH + 6 * S;
         }
-        if (unassigned.Count > 0)
+        if (unassignedCount > 0)
         {
-            if (Gui.Button(new Rectangle(x, ay + 4, w - 8 * S, 28 * S), $"{unassigned.Count} division(s) without army - select them", true, null, false, 14))
+            if (Gui.Button(new Rectangle(x, ay + 4, w - 8 * S, 28 * S), $"{unassignedCount} division(s) without army - select them", true, null, false, 14))
             {
                 Ui.SelectedDivisions.Clear();
                 Ui.SelectedDivisions.AddRange(unassigned);
@@ -188,7 +200,8 @@ public sealed partial class Hud
         y += listH + 8 * S;
 
         // new divisions are made in the recruit menu only
-        string trainLabel = player.Recruitment.Count > 0 ? $"Recruit & train ({player.Recruitment.Count} in training)" : "Recruit & train...";
+        int recruitment = snapshot.Player?.Recruitment ?? player.Recruitment.Count;
+        string trainLabel = recruitment > 0 ? $"Recruit & train ({recruitment} in training)" : "Recruit & train...";
         if (Gui.Button(new Rectangle(x, y, w, 30 * S), trainLabel, true, "Open the recruit menu (R)", false, 15)) { Ui.Left = LeftPanel.Recruit; return; }
 
         if (Ui.ChoosingGeneralFor != null) DrawGeneralChooser(Ui.ChoosingGeneralFor, r);
@@ -273,9 +286,14 @@ public sealed partial class Hud
         var player = G.World.Player!;
         string stat = G.Data.Defines.GeneralStat;
         var now = G.World.Date;
+        var characterSnapshots = _app.Snapshot.Characters.Where(c => c.CountryTag == player.Tag).ToDictionary(c => c.Id);
+        double StatOf(Character c) => characterSnapshots.TryGetValue(c.Id, out var snapshot)
+            ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
+            : c.GetStat(stat);
+        int AgeOf(Character c) => characterSnapshots.TryGetValue(c.Id, out var snapshot) ? snapshot.Age : c.Age(now);
         var candidates = G.World.CharactersOf(player)
-            .Where(c => c.Age(now) >= G.Data.Defines.AdultAge)
-            .OrderByDescending(c => c.IsGeneral).ThenByDescending(c => c.GetStat(stat)).ToList();
+            .Where(c => AgeOf(c) >= G.Data.Defines.AdultAge)
+            .OrderByDescending(c => c.IsGeneral).ThenByDescending(StatOf).ToList();
         float w = 330 * S, h = Math.Min(460 * S, 70 * S + candidates.Count * 30 * S);
         var r = new Rectangle(anchor.X + anchor.Width + 8 * S, anchor.Y, w, h);
         Gui.Panel(r, $"General for {army.Name}");
@@ -290,8 +308,11 @@ public sealed partial class Hud
         foreach (var c in candidates)
         {
             var busy = G.World.Armies.FirstOrDefault(a => a.General == c && a != army);
-            string label = $"{c.DisplayName}  {Localisation.GetOrPretty(stat)} {c.GetStat(stat):0}{(c.IsRuler ? " (ruler)" : "")}{(busy != null ? " *" : "")}";
-            string tip = $"Age {c.Age(now)}\nTraits: {string.Join(", ", c.Traits.Select(t => Localisation.Get(t.Name)))}" +
+            var snapshot = characterSnapshots.GetValueOrDefault(c.Id);
+            string name = snapshot.Name ?? c.DisplayName;
+            string traits = snapshot.Traits.Length > 0 ? string.Join(", ", snapshot.Traits) : string.Join(", ", c.Traits.Select(t => Localisation.Get(t.Name)));
+            string label = $"{name}  {Localisation.GetOrPretty(stat)} {StatOf(c):0}{(c.IsRuler ? " (ruler)" : "")}{(busy != null ? " *" : "")}";
+            string tip = $"Age {AgeOf(c)}\nTraits: {traits}" +
                          (busy != null ? $"\nCurrently leads {busy.Name}" : "");
             if (Gui.Button(new Rectangle(r.X + 8, y, w - 30, 26 * S), label, true, tip, army.General == c, 14))
             {

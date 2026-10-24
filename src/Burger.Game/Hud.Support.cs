@@ -77,7 +77,9 @@ public sealed partial class Hud
         var sup = G.Support;
         int max = sup.MaxVolunteers(player), abroad = sup.VolunteersOf(player).Count();
         int free = Math.Max(0, max - abroad);
-        int idle = G.World.Divisions.Count(d => d.Owner == player && d.VolunteerFrom == null && !d.InBattle);
+        int idle = _app.Snapshot.Player is { } playerSnapshot && playerSnapshot.Tag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase)
+            ? playerSnapshot.IdleDivisions
+            : G.World.Divisions.Count(d => d.Owner == player && d.VolunteerFrom == null && !d.InBattle);
         y += Gui.Wrapped($"Volunteer divisions land in {c.Name}'s capital and fight in its wars without us joining them. They come home when {c.Name} is at peace. " +
                          $"We may have {max} abroad ({abroad} now).", x, y, w, 14) + 10 * S;
         int can = Math.Min(free, idle);

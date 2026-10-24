@@ -2,6 +2,7 @@ using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Particles;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -80,6 +81,25 @@ public sealed class MapParticles : IDisposable
             at ??= cam.Target;
             if (!Emit(req.Effect, at.Value, Vector3.UnitY, MapFigures.HeightFor(cam) / 1.8f))
                 Burger.Core.Log.Warn($"particles: unknown effect '{req.Effect}'");
+        }
+        for (int i = 0; i < _count; i++)
+        {
+            ref var p = ref _pool[i];
+            p.Age += dt;
+            if (p.Age >= p.Life) { _pool[i--] = _pool[--_count]; continue; }
+            p.Vel *= MathF.Max(0, 1 - p.Drag * dt);
+            p.Vel.Y -= p.Gravity * dt;
+            p.Pos += p.Vel * dt;
+        }
+    }
+
+    public void Update(RenderSnapshot snapshot, float dt, Camera3D cam)
+    {
+        foreach (var request in snapshot.ParticleEvents)
+        {
+            var at = request.HasPosition ? _map.LocationPos(request.X, request.Y) : cam.Target;
+            if (!Emit(request.Effect, at, Vector3.UnitY, MapFigures.HeightFor(cam) / 1.8f))
+                Burger.Core.Log.Warn($"particles: unknown effect '{request.Effect}'");
         }
         for (int i = 0; i < _count; i++)
         {

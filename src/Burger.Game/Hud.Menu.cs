@@ -21,6 +21,7 @@ public sealed partial class Hud
     {
         var player = G.World.Player;
         if (player == null) return;
+        var playerSnapshot = _app.Snapshot.Player;
         var items = new List<(string Label, string Tip, bool Active, Action Click, MenuIcon? Icon, PanelDef? Panel, int Badge)>();
         if (G.Politics.Enabled)
             items.Add(("Politics", "Government, parliament, laws, cabinet, characters and political movements (O)", NavGroupOf(Ui.Left) == LeftPanel.Politics, () => ToggleLeft(LeftPanel.Politics), MenuIcon.Politics, null, G.Politics.MovementsOf(player).Count()));
@@ -34,14 +35,14 @@ public sealed partial class Hud
         if (G.Tech.Enabled)
             items.Add(("Research", "Research: technologies unlock units, ships and planes and strengthen your divisions (T)", Ui.Left == LeftPanel.Technology, () => ToggleLeft(LeftPanel.Technology), MenuIcon.Designer, null, G.Tech.SlotsOf(player).Count() < G.Rules.Tech.Slots(G, player) ? 1 : 0));
         if (Has(FeatureSet.Production))
-            items.Add(("Production", "Factories, production lines, construction and the equipment stockpile (P)", Ui.Left == LeftPanel.Production, () => ToggleLeft(LeftPanel.Production), MenuIcon.Production, null, player.Construction.Count));
+            items.Add(("Production", "Factories, production lines, construction and the equipment stockpile (P)", Ui.Left == LeftPanel.Production, () => ToggleLeft(LeftPanel.Production), MenuIcon.Production, null, playerSnapshot?.Construction ?? 0));
         if (Has(FeatureSet.Military))
         {
-            items.Add(("Army", "Armies, generals and fronts, recruiting and division designer (F1)", NavGroupOf(Ui.Left) == LeftPanel.Military, () => ToggleLeft(LeftPanel.Military), MenuIcon.Military, null, player.Recruitment.Count));
+            items.Add(("Army", "Armies, generals and fronts, recruiting and division designer (F1)", NavGroupOf(Ui.Left) == LeftPanel.Military, () => ToggleLeft(LeftPanel.Military), MenuIcon.Military, null, playerSnapshot?.Recruitment ?? 0));
             if (Has(FeatureSet.Air))
-                items.Add(("Air", "Air wings, air bases and missions", Ui.Left == LeftPanel.Air, () => ToggleLeft(LeftPanel.Air), MenuIcon.Air, null, G.Air.OrdersOf(player).Count));
+                items.Add(("Air", "Air wings, air bases and missions", Ui.Left == LeftPanel.Air, () => ToggleLeft(LeftPanel.Air), MenuIcon.Air, null, playerSnapshot?.AirOrders ?? 0));
             if (Has(FeatureSet.Navy))
-                items.Add(("Navy", "Fleets, ships and transports (N)", Ui.Left == LeftPanel.Navy, () => ToggleLeft(LeftPanel.Navy), MenuIcon.Navy, null, G.Navy.OrdersOf(player).Count));
+                items.Add(("Navy", "Fleets, ships and transports (N)", Ui.Left == LeftPanel.Navy, () => ToggleLeft(LeftPanel.Navy), MenuIcon.Navy, null, playerSnapshot?.NavyOrders ?? 0));
         }
         if (G.Population.Enabled)
             items.Add(("People", "Population, cultures, religions and colonies (U)", Ui.Left == LeftPanel.Population, () => ToggleLeft(LeftPanel.Population), MenuIcon.Population, null, 0));
@@ -354,9 +355,12 @@ public sealed partial class Hud
         if (Gui.CloseButton(r)) { Ui.Right = RightPanel.None; return; }
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
         var player = G.World.Player;
-        var countries = G.World.Countries.Where(c => c.Exists)
-            .OrderByDescending(c => c.OwnedStates.Sum(s => s.Locations.Count)).ToList();
-        Gui.Label($"{countries.Count} countries, {G.World.Wars.Count} war(s)", x, y, 14, Gui.TextDim);
+        var snapshot = _app.Snapshot;
+        var countries = snapshot.Countries.Where(c => c.Exists)
+            .OrderByDescending(c => c.LocationCount).ToList();
+        var liveCountries = G.World.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
+        var relations = snapshot.DiplomacyRelations.ToDictionary(r => r.ToTag, StringComparer.OrdinalIgnoreCase);
+        Gui.Label($"{countries.Count} countries, {snapshot.Wars.Length} war(s)", x, y, 14, Gui.TextDim);
         y += 24 * S;
         if (G.GreatPowers.Enabled)
         {
@@ -383,18 +387,18 @@ public sealed partial class Hud
         {
             var box = new Rectangle(x, cy, w - 8 * S, rowH);
             bool hover = Gui.Hover(box);
-            bool atWar = player != null && c != player && G.World.AtWar(player, c);
-            Card(box, c == player ? new Color(60, 52, 34, 255) : hover ? new Color(50, 50, 56, 255) : new Color(36, 38, 44, 255), c == player);
+            bool atWar = relations.TryGetValue(c.Tag, out var relation) && relation.Kind == 1;
+            bool isPlayer = c.IsPlayer || (player != null && c.Tag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase));
+            Card(box, isPlayer ? new Color(60, 52, 34, 255) : hover ? new Color(50, 50, 56, 255) : new Color(36, 38, 44, 255), isPlayer);
             Gui.Label($"{rank++}", box.X + 6 * S, box.Y + 13 * S, 14, Gui.TextDim, FontKind.Bold);
-            Gui.Flag(c, new Rectangle(box.X + 28 * S, box.Y + 7 * S, 45 * S, 30 * S));
+            liveCountries.TryGetValue(c.Tag, out var liveCountry);
+            if (liveCountry != null) Gui.Flag(liveCountry, new Rectangle(box.X + 28 * S, box.Y + 7 * S, 45 * S, 30 * S));
             Gui.Label(Gui.Fit(c.Name, box.Width - 200 * S, 16, FontKind.Bold), box.X + 82 * S, box.Y + 4 * S, 16, atWar ? Gui.Bad : Gui.Text, FontKind.Bold);
-            int locs = c.OwnedStates.Sum(s => s.Locations.Count);
-            int divs = G.World.Divisions.Count(d => d.Owner == c);
-            Gui.Label($"{c.OwnedStates.Count} states, {locs} locations", box.X + 82 * S, box.Y + 24 * S, 13, Gui.TextDim);
-            string right = Has(FeatureSet.Military) ? $"{divs} div." : "";
+            Gui.Label($"{c.OwnedStateCount} states, {c.LocationCount} locations", box.X + 82 * S, box.Y + 24 * S, 13, Gui.TextDim);
+            string right = Has(FeatureSet.Military) ? $"{c.DivisionCount} div." : "";
             var m = Gui.Measure(right, 13, FontKind.Bold);
             Gui.Label(right, box.X + box.Width - m.X - 8 * S, box.Y + 6 * S, 13, Gui.Text, FontKind.Bold);
-            int wars = G.World.WarsOf(c).Count();
+            int wars = c.WarCount;
             if (wars > 0)
             {
                 string ws = wars == 1 ? "at war" : $"{wars} wars";
@@ -403,12 +407,13 @@ public sealed partial class Hud
             }
             if (hover)
             {
-                Gui.Tooltip($"{c.Name} ({c.Tag})\nRuler: {c.Ruler?.DisplayName ?? "none"}\nClick to open it and move the camera there");
+                Gui.Tooltip($"{c.Name} ({c.Tag})\nRuler: {liveCountry?.Ruler?.DisplayName ?? "none"}\nClick to open it and move the camera there");
                 if (Gui.Clicked(box))
                 {
-                    Ui.SelectedCountry = c;
+                    if (liveCountry == null) continue;
+                    Ui.SelectedCountry = liveCountry;
                     Ui.Left = LeftPanel.Country;
-                    if (c.Capital != null) Cam.LookAt(Map.LocationPos(c.Capital));
+                    if (liveCountry.Capital != null) Cam.LookAt(Map.LocationPos(liveCountry.Capital));
                 }
             }
             Gui.Block(box);

@@ -33,6 +33,13 @@ public static class UserSettings
     public static bool SunCycle = true;
     /// <summary>Days per real second at speed 1; 0 = the game's default (0.5). Lets the clock run slower than the default.</summary>
     public static double Speed1DaysPerSecond;
+    /// <summary>Global presentation cap for menu, singleplayer, and multiplayer. Only 30, 60, and 120 are accepted.</summary>
+    public static int GameFrameRate = 60;
+    public static int EffectiveGameFrameRate => GameFrameRate switch { 30 => 30, 120 => 120, _ => 60 };
+    /// <summary>Draw country labels in every game screen.</summary>
+    public static bool CountryLabels = true;
+    /// <summary>Update exact province hover picking in every game screen.</summary>
+    public static bool HoverPicking = true;
 
     /// <summary>Level of detail: on, small map details fade out when zoomed out (faster); off, they stay at every zoom (slower on weak graphics cards).</summary>
     public static bool LodEnabled = true;
@@ -76,6 +83,9 @@ public static class UserSettings
                 else if (parts[0] == "lod_river") LodRiver = Math.Clamp((int)v, 0, 3);
                 else if (parts[0] == "lod_terrain") LodTerrain = Math.Clamp((int)v, 0, 3);
                 else if (parts[0] == "speed1_days_per_second") Speed1DaysPerSecond = Math.Max(0, v);
+                else if (parts[0] is "game_frame_rate" or "menu_frame_rate") GameFrameRate = v switch { 30 => 30, 120 => 120, _ => 60 };
+                else if (parts[0] is "country_labels" or "menu_labels") CountryLabels = v != 0;
+                else if (parts[0] is "hover_picking" or "menu_hover") HoverPicking = v != 0;
             }
         }
         catch { /* settings are a convenience: the defaults will do */ }
@@ -102,6 +112,9 @@ public static class UserSettings
                 $"lod_river = {LodRiver}",
                 $"lod_terrain = {LodTerrain}",
                 $"speed1_days_per_second = {Speed1DaysPerSecond.ToString("0.####", CultureInfo.InvariantCulture)}",
+                $"game_frame_rate = {EffectiveGameFrameRate}",
+                $"country_labels = {(CountryLabels ? 1 : 0)}",
+                $"hover_picking = {(HoverPicking ? 1 : 0)}",
             });
         }
         catch { }

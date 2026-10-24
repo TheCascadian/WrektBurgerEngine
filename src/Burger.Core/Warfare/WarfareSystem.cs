@@ -948,7 +948,14 @@ public sealed class WarfareSystem
     }
 
     // all border pairs of one war side, shared by every army of that side (cached for the current hour)
-    private readonly Dictionary<(War, Country), (long Stamp, List<(Location Own, Location Enemy)> Pairs)> _borderCache = new();
+    private sealed class BorderCacheEntry
+    {
+        public long ControllerStamp;
+        public Country[] OwnSide = Array.Empty<Country>();
+        public Country[] EnemySide = Array.Empty<Country>();
+        public List<(Location Own, Location Enemy)> Pairs = new();
+    }
+    private readonly Dictionary<(War, Country), BorderCacheEntry> _borderCache = new();
 
     private readonly Dictionary<(Country, Country), (long Stamp, List<(Location Own, Location Enemy)> Pairs)> _peaceBorderCache = new();
 
@@ -972,24 +979,34 @@ public sealed class WarfareSystem
 
     private List<(Location Own, Location Enemy)> BorderPairs(War war, Country owner)
     {
-        long stamp = Location.ControllerVersion * 1000003L + war.Attackers.Count * 1009L + war.Defenders.Count;
-        var key = war.SideOf(owner).FirstOrDefault() ?? owner; // one list per war side, shared by all its members
-        if (_borderCache.TryGetValue((war, key), out var c) && c.Stamp == stamp) return c.Pairs;
+        var ownSide = war.SideOf(owner).OrderBy(c => c.Index).ToArray();
+        var enemySide = war.EnemiesOf(owner).OrderBy(c => c.Index).ToArray();
+        var key = ownSide.FirstOrDefault() ?? owner; // one list per war side, shared by all its members
+        if (_borderCache.TryGetValue((war, key), out var c)
+            && c.ControllerStamp == Location.ControllerVersion
+            && c.OwnSide.SequenceEqual(ownSide)
+            && c.EnemySide.SequenceEqual(enemySide)) return c.Pairs;
         if (_borderCache.Count > 256) _borderCache.Clear();
-        var ownSide = war.SideOf(owner).ToHashSet();
-        var enemySide = war.EnemiesOf(owner).ToHashSet();
+        var own = ownSide.ToHashSet();
+        var enemy = enemySide.ToHashSet();
         var pairs = new List<(Location Own, Location Enemy)>();
         foreach (var l in _game.World.Locations)
         {
-            if (l.Controller == null || !ownSide.Contains(l.Controller) || !l.IsPassable) continue;
+            if (l.Controller == null || !own.Contains(l.Controller) || !l.IsPassable) continue;
             foreach (var adj in l.Neighbors)
             {
                 if (adj.Kind == AdjacencyKind.Sea || !adj.To.IsPassable) continue;
                 var ec = adj.To.Controller;
-                if (ec != null && enemySide.Contains(ec)) pairs.Add((l, adj.To));
+                if (ec != null && enemy.Contains(ec)) pairs.Add((l, adj.To));
             }
         }
-        _borderCache[(war, key)] = (stamp, pairs);
+        _borderCache[(war, key)] = new BorderCacheEntry
+        {
+            ControllerStamp = Location.ControllerVersion,
+            OwnSide = ownSide,
+            EnemySide = enemySide,
+            Pairs = pairs,
+        };
         return pairs;
     }
 

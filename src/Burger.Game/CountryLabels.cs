@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using Burger.Core;
 using Burger.Core.Model;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -43,7 +44,7 @@ public sealed class CountryLabels
     private sealed record CountryInput(int Index, string Tag, string Name, int CapitalIndex);
     private sealed record BuildInput(int Version, int Width, int Height, int[] PixelLocation,
         LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex, Label[] Previous, bool Quick);
-    private sealed record BuildResult(int Version, Label[] Labels);
+    private sealed record BuildResult(int Version, Label[] Labels, bool Full);
     private sealed class Job
     {
         public readonly CountryInput Country; public readonly int Group; public readonly List<LocationInput> Locs; public readonly int[] Idx; public readonly long Key; public readonly Label? Same;
@@ -51,12 +52,38 @@ public sealed class CountryLabels
         public Job(CountryInput country, int group, List<LocationInput> locs, int[] idx, long key, Label? same) { Country = country; Group = group; Locs = locs; Idx = idx; Key = key; Same = same; }
     }
 
+    // FitAngle is called repeatedly for each candidate direction. Reuse its numeric work arrays
+    // on each bounded worker instead of allocating them for every angle and country.
+    private sealed class FitScratch
+    {
+        public double[] U = Array.Empty<double>();
+        public double[] V = Array.Empty<double>();
+        public double[] SortedU = Array.Empty<double>();
+        public double[] Vmin = Array.Empty<double>();
+        public double[] Vmax = Array.Empty<double>();
+        public int[] Count = Array.Empty<int>();
+        public List<double>[] BinValues = Array.Empty<List<double>>();
+        public List<(double Lo, double Hi)>[] Segments = Array.Empty<List<(double Lo, double Hi)>>();
+
+        public void Ensure(int n)
+        {
+            if (U.Length < n) { U = new double[n]; V = new double[n]; SortedU = new double[n]; }
+            if (Vmin.Length == 24) return;
+            Vmin = new double[24]; Vmax = new double[24]; Count = new int[24];
+            BinValues = Enumerable.Range(0, 24).Select(_ => new List<double>()).ToArray();
+            Segments = Enumerable.Range(0, 24).Select(_ => new List<(double, double)>()).ToArray();
+        }
+    }
+
+    private static readonly ThreadLocal<FitScratch> FitScratchPool = new(() => new FitScratch());
+
     private const double BuildDebounceSeconds = 0.4;
     private const double MinBuildIntervalSeconds = 1.0;
     /// <summary>A rebuild starts at most this long after the first change, even if changes keep coming (a war raises them every tick).</summary>
     private const double MaxDebounceSeconds = 1.5;
     private readonly Game _game;
     private readonly MapRenderer _map;
+    private readonly Func<RenderSnapshot>? _snapshotProvider;
     private readonly List<Label> _labels = new();
     private bool _dirty = true;
     private int _version;
@@ -65,12 +92,16 @@ public sealed class CountryLabels
     private long _lastInvalidationTicks = Stopwatch.GetTimestamp();
     private double _lastBuildStartedAt = double.NegativeInfinity;
     private Task<BuildResult>? _buildTask;
-    private bool _needFull;
+    private bool _fullLayoutPending;
+    private const int MaxFitParallelism = 2;
+    private const int QuickFitSamples = 6000;
+    private const int FullFitSamples = 12000;
 
-    public CountryLabels(Game game, MapRenderer map)
+    public CountryLabels(Game game, MapRenderer map, Func<RenderSnapshot>? snapshotProvider = null)
     {
         _game = game;
         _map = map;
+        _snapshotProvider = snapshotProvider;
         game.MapChanged += MarkDirty;
         // the names of the date the world was made for (read from the cache of an earlier run when there is one)
         if (game.Timeline.Enabled) PrecomputeStep(game.Timeline);
@@ -104,7 +135,7 @@ public sealed class CountryLabels
             }
             _labels.Clear();
             _labels.AddRange(labels);
-            _needFull = true;
+            _fullLayoutPending = !fromCache;
             Log.Info($"Country names laid out in {swl.ElapsedMilliseconds} ms ({labels.Length} names, {(fromCache ? "from the cache" : "new")})");
             _lastBuildStartedAt = Raylib.GetTime();
             _dirty = true;
@@ -112,18 +143,19 @@ public sealed class CountryLabels
         catch (Exception ex) { Log.Error($"Country-label first layout failed: {ex.GetType().Name}: {ex.Message}"); }
     }
 
-    // ------------------------------------------------------------------------------------- every start date, laid out ahead of time
+    // ------------------------------------------------------------------------------------- a small warm cache for the start screen
     private readonly Dictionary<Burger.Core.GameDate, Label[]> _cache = new();
     private Queue<Burger.Core.History.Snapshot>? _ahead;
     private Task<Label[]>? _aheadTask;
     private Burger.Core.GameDate _aheadDate;
     private int[][]? _landNeighbors;
     private List<State>? _statesByKey;
+    private double _lastAheadScheduleAt = double.NegativeInfinity;
+    private const double AheadScheduleIntervalSeconds = 0.15;
 
-    /// <summary>
-    /// While the start screen is up, the names of every start date are laid out one date after another in the background (suggested dates first),
-    /// so that picking a date shows them at once. Call every frame of the start screen.
-    /// </summary>
+    private const int MenuPrecomputeDateLimit = 3;
+
+    /// <summary>While the start screen is up, warm only the first few suggested dates in the background.</summary>
     public void PrecomputeStep(Burger.Core.History.TimelineSystem tl)
     {
         if (!tl.Enabled) return;
@@ -140,26 +172,26 @@ public sealed class CountryLabels
             _aheadTask = null;
         }
         if (_aheadTask != null || _diskComplete) return;
+        if (Raylib.GetTime() - _lastAheadScheduleAt < AheadScheduleIntervalSeconds) return;
         if (tl.FusedGroups.Count > 0) return;   // a game on fused states: the layouts of the other dates belong to the fine states of the start screen
-        // first every date quickly (so that all of them show at once soon), then every date in full; the full layouts are kept for the next run
+        // Warm only a bounded set; laying out every historical start date keeps all CPU cores busy behind an otherwise idle menu.
         if (_ahead == null || _ahead.Count == 0)
         {
-            if (_aheadFull) { SaveDiskCache(tl); _diskComplete = true; return; }
-            _aheadFull = _ahead != null;
             var first = tl.Eras.SelectMany(e => e.Suggested).Distinct().Select(tl.SnapshotFor).Where(sn => sn != null).Select(sn => sn!);
-            _ahead = new Queue<Burger.Core.History.Snapshot>(first.Concat(tl.Snapshots).DistinctBy(sn => sn.Date));
+            _ahead = new Queue<Burger.Core.History.Snapshot>(first.Concat(tl.Snapshots).DistinctBy(sn => sn.Date).Take(MenuPrecomputeDateLimit));
         }
-        while (_ahead.Count > 0 && !_aheadFull && _cache.ContainsKey(_ahead.Peek().Date)) _ahead.Dequeue();
-        if (_ahead.Count == 0) return;
+        while (_ahead.Count > 0 && _cache.ContainsKey(_ahead.Peek().Date)) _ahead.Dequeue();
+        if (_ahead.Count == 0) { _diskComplete = true; return; }
         var snap = _ahead.Dequeue();
         BuildInput input;
-        try { input = CaptureSnapshotInput(tl, snap, !_aheadFull); }
+        try { input = CaptureSnapshotInput(tl, snap, true); }
         catch (Exception ex) { Log.Error($"Could not snapshot the names of a start date: {ex.GetType().Name}: {ex.Message}"); return; }
         _aheadDate = snap.Date;
+        _lastAheadScheduleAt = Raylib.GetTime();
         _aheadTask = Task.Run(() => BuildLabels(input));
     }
 
-    private bool _diskTried, _diskComplete, _aheadFull;
+    private bool _diskTried, _diskComplete;
     private const int DiskVersion = 1;
 
     private string? DiskPath(Burger.Core.History.TimelineSystem tl)
@@ -294,6 +326,8 @@ public sealed class CountryLabels
     {
         var world = _game.World;
         var map = world.Map;
+        var snapshot = _snapshotProvider?.Invoke();
+        var snapshotCountries = snapshot?.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
         _landNeighbors ??= world.Locations.Select(l => l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray()).ToArray();   // (the neighbours do not change once the map is loaded)
         var locations = new LocationInput[world.Locations.Count];
         foreach (var l in world.Locations)
@@ -301,11 +335,20 @@ public sealed class CountryLabels
             // Adjacency and province geometry do not change after map load; only owner/name/capital
             // state is copied here. PixelLocation is likewise immutable after MapLoader finishes.
             int[] landNeighbors = _landNeighbors[l.Index];
-            locations[l.Index] = new LocationInput(l.Index, (_game.Exploration.IsCharted(l) ? l.Owner?.Index : null) ?? -1, l.IsWater,
+            int ownerIndex = l.Owner?.Index ?? -1;
+            if (snapshot != null && (uint)l.Index < (uint)snapshot.Locations.Length)
+            {
+                var renderLocation = snapshot.Locations[l.Index];
+                ownerIndex = renderLocation.IsCharted && renderLocation.OwnerTag != null && snapshotCountries != null && snapshotCountries.TryGetValue(renderLocation.OwnerTag, out var renderCountry)
+                    ? renderCountry.Index : -1;
+            }
+            locations[l.Index] = new LocationInput(l.Index, ownerIndex, l.IsWater,
                 l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, landNeighbors);
         }
         var countries = world.Countries.Where(c => c.Exists)
-            .Select(c => new CountryInput(c.Index, c.Tag, c.Name, c.Capital?.Index ?? -1)).ToArray();
+            .Select(c => new CountryInput(c.Index, c.Tag,
+                snapshotCountries != null && snapshotCountries.TryGetValue(c.Tag, out var renderCountry) ? renderCountry.Name : c.Name,
+                c.Capital?.Index ?? -1)).ToArray();
         return new BuildInput(version, map.Width, map.Height, map.PixelLocation, locations,
             countries.ToDictionary(c => c.Index), _labels.ToArray(), quick);
     }
@@ -325,7 +368,8 @@ public sealed class CountryLabels
                 _labels.AddRange(result.Labels);
                 // Publish the most recent completed snapshot even if newer map changes arrived while
                 // it was being built; retain it until a coalesced follow-up is ready.
-                _dirty = result.Version != _version || _needFull;
+                _dirty = result.Version != _version;
+                if (!result.Full) _fullLayoutPending = true;
                 if (_dirty) _firstDirtyTicks = Stopwatch.GetTimestamp();
             }
             catch (Exception ex)
@@ -337,17 +381,18 @@ public sealed class CountryLabels
         }
 
         if (_tiSeen != _game.Exploration.Version) { _tiSeen = _game.Exploration.Version; MarkDirty(); }
-        if (!_dirty || _buildTask != null) return;
+        if ((!_dirty && !_fullLayoutPending) || _buildTask != null) return;
         double now = Raylib.GetTime();
         // the first layout of a game (a new map, a new start date) is built at once: there is nothing on screen to keep still
         bool first = double.IsNegativeInfinity(_lastBuildStartedAt);
-        bool refine = _needFull;
+        bool refine = _fullLayoutPending && _game.Clock.Paused;
+        if (_fullLayoutPending && !refine && !_dirty) return;
         if (!first && !refine && (now - _lastBuildStartedAt < MinBuildIntervalSeconds ||
             Stopwatch.GetElapsedTime(_lastInvalidationTicks).TotalSeconds < BuildDebounceSeconds &&
             Stopwatch.GetElapsedTime(_firstDirtyTicks).TotalSeconds < MaxDebounceSeconds)) return;
 
         BuildInput input;
-        try { input = CaptureInput(_version, first); }
+        try { input = CaptureInput(_version, first || !refine); }
         catch (Exception ex)
         {
             _lastBuildStartedAt = now;
@@ -355,13 +400,13 @@ public sealed class CountryLabels
             return;
         }
         _lastBuildStartedAt = now;
-        _needFull = first;       // the first pass is quick; the full layout follows at once
+        if (refine) _fullLayoutPending = false;
         _buildTask = Task.Run(() =>
         {
             var sw = Stopwatch.StartNew();
             var labels = BuildLabels(input);
             if (first) Log.Info($"Country labels: {labels.Length} names laid out in {sw.ElapsedMilliseconds} ms (first pass)");
-            return new BuildResult(input.Version, labels);
+            return new BuildResult(input.Version, labels, refine);
         });
     }
 
@@ -474,8 +519,10 @@ public sealed class CountryLabels
                 jobs.Add(new Job(country, grp.Key, locs, idx, key, input.Previous.FirstOrDefault(pl => pl.Key == key && (input.Quick || !pl.Quick))));
             }
         }
-        // the fits are independent of each other: lay them out on every core
-        Parallel.ForEach(jobs.Where(j => j.Same == null), j => j.Fitted = Fit(j.Country, j.Locs, j.Group, block, blockGroup, input, input.Quick));
+        // The fits are independent, but unbounded parallelism multiplies each fit's temporary
+        // geometry buffers and can starve the simulation/render threads. Keep this worker bounded.
+        Parallel.ForEach(jobs.Where(j => j.Same == null), new ParallelOptions { MaxDegreeOfParallelism = MaxFitParallelism },
+            j => j.Fitted = Fit(j.Country, j.Locs, j.Group, block, blockGroup, input, input.Quick));
         foreach (var job in jobs)
         {
             var country = job.Country; var idx = job.Idx; long key = job.Key;
@@ -565,9 +612,11 @@ public sealed class CountryLabels
         int minX = int.MaxValue, minY = int.MaxValue, maxX = 0, maxY = 0;
         foreach (var l in locs) { minX = Math.Min(minX, l.MinX); minY = Math.Min(minY, l.MinY); maxX = Math.Max(maxX, l.MaxX); maxY = Math.Max(maxY, l.MaxY); }
         long area = (long)(maxX - minX + 1) * (maxY - minY + 1);
+        int maxSamples = quick ? QuickFitSamples : FullFitSamples;
         int step = Math.Max(1, (int)Math.Sqrt(area / (quick ? 5000.0 : 25000.0)));
-        var xs = new List<float>();
-        var ys = new List<float>();
+        while ((long)((maxX - minX) / step + 1) * ((maxY - minY) / step + 1) > maxSamples) step++;
+        var xs = new List<float>(Math.Min(maxSamples, 1024));
+        var ys = new List<float>(Math.Min(maxSamples, 1024));
         bool Inside(int x, int y)
         {
             if (x < 0 || y < 0 || x >= md.Width || y >= md.Height) return false;
@@ -583,6 +632,8 @@ public sealed class CountryLabels
             foreach (var l in locs) { xs.Add(l.CenterX); ys.Add(l.CenterY); xs.Add(l.MinX); ys.Add(l.CenterY); xs.Add(l.MaxX); ys.Add(l.CenterY); }
         }
         int m = xs.Count;
+        var scratch = FitScratchPool.Value!;
+        scratch.Ensure(m);
         double mx = xs.Average(), my = ys.Average();
         double cxx = 0, cyy = 0, cxy = 0;
         for (int i = 0; i < m; i++) { double dx = xs[i] - mx, dy = ys[i] - my; cxx += dx * dx; cyy += dy * dy; cxy += dx * dy; }
@@ -649,21 +700,26 @@ public sealed class CountryLabels
         {
         var result = new List<Label>();
         double ca = Math.Cos(ang), sa = Math.Sin(ang);
-        var us = new double[m];
-        var vs = new double[m];
+        var us = scratch.U;
+        var vs = scratch.V;
         for (int i = 0; i < m; i++)
         {
             double dx = xs[i] - mx, dy = ys[i] - my;
             us[i] = dx * ca + dy * sa;
             vs[i] = -dx * sa + dy * ca;
         }
-        var sortedU = us.OrderBy(v => v).ToArray();
+        Array.Copy(us, scratch.SortedU, m);
+        Array.Sort(scratch.SortedU, 0, m);
+        var sortedU = scratch.SortedU;
         double u0 = sortedU[(int)(m * 0.03)], u1 = sortedU[Math.Min(m - 1, (int)(m * 0.97))];
         if (u1 - u0 < 1) { u0 -= 2; u1 += 2; }
         const int bins = 24;
-        var vmin = Enumerable.Repeat(double.MaxValue, bins).ToArray();
-        var vmax = Enumerable.Repeat(double.MinValue, bins).ToArray();
-        var cnt = new int[bins];
+        var vmin = scratch.Vmin;
+        var vmax = scratch.Vmax;
+        var cnt = scratch.Count;
+        Array.Fill(vmin, double.MaxValue);
+        Array.Fill(vmax, double.MinValue);
+        Array.Clear(cnt);
         for (int i = 0; i < m; i++)
         {
             int b = (int)((us[i] - u0) / (u1 - u0) * bins);
@@ -673,10 +729,10 @@ public sealed class CountryLabels
             vmax[b] = Math.Max(vmax[b], vs[i]);
         }
         // the land in each bin as separate stretches across the line (a bay or gulf splits a bin in two)
-        var segs = new List<(double Lo, double Hi)>[bins];
+        var segs = scratch.Segments;
         {
-            var binVs = new List<double>[bins];
-            for (int b = 0; b < bins; b++) binVs[b] = new List<double>();
+            var binVs = scratch.BinValues;
+            for (int b = 0; b < bins; b++) { binVs[b].Clear(); segs[b].Clear(); }
             for (int i = 0; i < m; i++)
             {
                 int b = (int)((us[i] - u0) / (u1 - u0) * bins);
@@ -684,7 +740,6 @@ public sealed class CountryLabels
             }
             for (int b = 0; b < bins; b++)
             {
-                segs[b] = new List<(double, double)>();
                 var vl = binVs[b];
                 if (vl.Count == 0) continue;
                 vl.Sort();

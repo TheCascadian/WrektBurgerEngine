@@ -1,6 +1,8 @@
+using System.Collections.Immutable;
 using Burger.Core.Development;
 using Burger.Core.Model;
 using Burger.Core.Multiplayer;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -12,7 +14,9 @@ public sealed partial class Hud
     {
         var D = G.Development;
         float lh = 24 * S;
-        int level = D.Level(st);
+        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        bool hasSnapshot = stateSnapshot.Key == st.Key;
+        int level = hasSnapshot ? stateSnapshot.DevelopmentLevel : D.Level(st);
         var player = G.World.Player;
         string why = player != null ? D.CannotDevelop(player, st) ?? "" : "Choose a country first";
         double cost = player != null ? D.Cost(player, st) : 0;
@@ -41,12 +45,15 @@ public sealed partial class Hud
             }
         }
         if (Gui.Hover(new Rectangle(x, y, w - btnW - 4 * S, lh)))
-            Gui.Tooltip($"Development {level} (started at {D.StartLevel(st)}, {D.Gained(st)} gained)\nEach level gained adds {G.Rules.Development.TaxPerLevel(G):P0} tax, {G.Rules.Development.ManpowerPerLevel(G):P0} manpower and {G.Rules.Development.RoomPerLevel(G):0} rooms (building slots).");
+            Gui.Tooltip($"Development {level} (started at {(hasSnapshot ? stateSnapshot.DevelopmentStartLevel : D.StartLevel(st))}, {(hasSnapshot ? stateSnapshot.DevelopmentGained : D.Gained(st))} gained)\nEach level gained adds {G.Rules.Development.TaxPerLevel(G):P0} tax, {G.Rules.Development.ManpowerPerLevel(G):P0} manpower and {G.Rules.Development.RoomPerLevel(G):0} rooms (building slots).");
         y += lh + 2 * S;
 
-        var have = D.Institutions.Where(i => D.HasAppeared(i)).ToList();
-        var adopted = have.Where(i => D.Adopted(i, st)).ToList();
-        string summary = $"Literacy {D.Literacy(st):P0}  ·  Urban {D.Urbanization(st):P0}" + (have.Count > 0 ? $"  ·  {adopted.Count}/{have.Count} institutions" : "");
+        var institutionSnapshot = hasSnapshot ? stateSnapshot.Institutions : ImmutableArray<RenderInstitution>.Empty;
+        var have = hasSnapshot ? institutionSnapshot.ToList() : D.Institutions.Where(i => D.HasAppeared(i)).Select(i => new RenderInstitution(i.Key, i.Name, D.Presence(i, st), D.Adopted(i, st))).ToList();
+        int adoptedCount = hasSnapshot ? institutionSnapshot.Count(i => i.Adopted) : have.Count(i => i.Adopted);
+        double literacy = hasSnapshot ? stateSnapshot.Literacy : D.Literacy(st);
+        double urbanization = hasSnapshot ? stateSnapshot.Urbanization : D.Urbanization(st);
+        string summary = $"Literacy {literacy:P0}  ·  Urban {urbanization:P0}" + (have.Count > 0 ? $"  ·  {adoptedCount}/{have.Count} institutions" : "");
         bool open = Collapse("society", "Society", summary, Gui.TextDim, x, y, w);
         y += 26 * S;
         if (!open) return y;
@@ -64,22 +71,22 @@ public sealed partial class Hud
             Raylib.DrawRectangleRec(new Rectangle(bar.X, bar.Y, bar.Width * (float)Math.Clamp(v, 0, 1), bar.Height), new Color(110, 170, 210, 255));
             if (Gui.Hover(c)) Gui.Tooltip(tip);
         }
-        Meter(0, "Literacy", D.Literacy(st), "Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
-        Meter(1, "Urbanization", D.Urbanization(st), "Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
+        Meter(0, "Literacy", literacy, "Share of people who can read. Rises 0.2% a year where schools exist (scribes, priests and nobles), faster with some institutions.");
+        Meter(1, "Urbanization", urbanization, "Share of people in towns. Rises 0.1% a year where markets exist (craft and trade people), faster with some institutions.");
         y += 44 * S;
         if (have.Count > 0)
         {
             float cx = x;
             foreach (var i in have)
             {
-                bool got = D.Adopted(i, st);
+                bool got = i.Adopted;
                 var m = Gui.Measure(i.Name, 13);
                 float cw = m.X + 14 * S;
                 if (cx + cw > x + w) { cx = x; y += 24 * S; }
                 var chip = new Rectangle(cx, y, cw, 20 * S);
                 Raylib.DrawRectangleRounded(chip, 0.4f, 4, got ? new Color(40, 90, 60, 255) : new Color(40, 44, 54, 255));
                 Gui.Label(i.Name, cx + 7 * S, y + 2 * S, 13, got ? Gui.Text : Gui.TextDim);
-                if (Gui.Hover(chip)) Gui.Tooltip($"{i.Name}: {D.Presence(i, st):P0}" + (got ? " (adopted)" : " (not adopted)"));
+                if (Gui.Hover(chip)) Gui.Tooltip($"{i.Name}: {i.Presence:P0}" + (got ? " (adopted)" : " (not adopted)"));
                 cx += cw + 4 * S;
             }
             y += 26 * S;

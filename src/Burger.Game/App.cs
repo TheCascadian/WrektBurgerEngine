@@ -4,6 +4,7 @@ using Burger.Core.Figures;
 using Burger.Core.Map;
 using Burger.Core.Model;
 using Burger.Core.Save;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -14,6 +15,9 @@ public enum AppScreen { Menu, Playing, Error }
 public sealed partial class App
 {
     public Game? Game { get; private set; }
+    /// <summary>Latest detached simulation state available to render-facing code.</summary>
+    public RenderSnapshot Snapshot => _snapshots.Current;
+    private readonly RenderSnapshotStore _snapshots = new();
     private readonly List<Burger.Core.Model.Location> _geoWar = new();
     public MapRenderer? Renderer { get; private set; }
     public CameraController? Camera { get; private set; }
@@ -38,6 +42,17 @@ public sealed partial class App
     private Action? _pending;
     private RenderPerf? _renderPerf;
     private Bench? _bench;
+    private Game? _pickGame;
+    private MapRenderer? _pickMap;
+    private Task<SnapshotBuildResult>? _snapshotBuild;
+    private bool _snapshotDirty;
+    private long _snapshotRevision;
+    private double _lastSnapshotBuildAt = double.NegativeInfinity;
+    private long _snapshotBuilds;
+    private double _snapshotBuildMs;
+    private long _snapshotBuildBytes;
+
+    private readonly record struct SnapshotBuildResult(RenderSnapshot Snapshot, double Milliseconds, long AllocatedBytes, long Revision);
 
     public App(AppOptions options) { _opt = options; }
 
@@ -48,9 +63,10 @@ public sealed partial class App
     public void Run()
     {
         _gameRoot = _opt.GameRoot;
-        var flags = ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint | ConfigFlags.VSyncHint;
+        var flags = ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint;
+        if (_opt.VSync != false) flags |= ConfigFlags.VSyncHint;
         if (Environment.GetEnvironmentVariable("BURGER_NO_MSAA") == "1") flags &= ~ConfigFlags.Msaa4xHint; // fullscreen test: 4x MSAA framebuffer resize
-        if (_opt.Bench) flags &= ~ConfigFlags.VSyncHint;
+        if (_opt.Bench || _opt.VSync == false) flags &= ~ConfigFlags.VSyncHint;
         if (_opt.Hidden) flags |= ConfigFlags.HiddenWindow;
         Raylib.SetConfigFlags(flags);
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
@@ -64,8 +80,11 @@ public sealed partial class App
         }
         Raylib.SetExitKey(KeyboardKey.Null);
         UserSettings.Load();
+        if (_opt.CountryLabels is { } labels) UserSettings.CountryLabels = labels;
+        if (_opt.HoverPicking is { } hover) UserSettings.HoverPicking = hover;
+        if (_opt.GameFrameRate is { } fps) UserSettings.GameFrameRate = fps;
         Media.AudioEnabled = UserSettings.PortraitSound;
-        Raylib.SetTargetFPS(_opt.Bench ? 0 : 120);
+        ApplyTargetFps();
         // raylib defaults to near 0.01 / far 1000, which clips the far rows of the 1638-unit map; widen the range (set before any BeginMode3D)
         Rlgl.SetClipPlanes(0.5, 6000.0);
         Assets.Font = Raylib.GetFontDefault();
@@ -131,6 +150,8 @@ public sealed partial class App
         _perfSim += Game?.Clock.LastUpdateMs ?? 0;
         if (_perfTime < 10) return;
         int day = Game?.World.Date.TotalDays ?? 0;
+            Log.Info($"PERF config screen={_screen} size={Raylib.GetScreenWidth()}x{Raylib.GetScreenHeight()} vsync={_opt.VSync != false} target_fps={(_opt.Bench ? 0 : UserSettings.EffectiveGameFrameRate)} country_labels={UserSettings.CountryLabels} hover_picking={UserSettings.HoverPicking}");
+            Log.Info($"PERF snapshots builds={_snapshotBuilds} avg_ms={(_snapshotBuilds == 0 ? 0 : _snapshotBuildMs / _snapshotBuilds):0.0} avg_alloc_kb={(_snapshotBuilds == 0 ? 0 : _snapshotBuildBytes / (double)_snapshotBuilds / 1024):0.0} pending={_snapshotBuild != null}");
             Log.Info($"PERF fps {_perfFrames / _perfTime:0.0}, frame {_perfTime * 1000 / _perfFrames:0.0} ms, simulation {_perfSim / _perfFrames:0.0} ms/frame, {(day - _perfDay) / _perfTime:0.0} days/s");
             if (_renderPerf != null)
                 Log.Info("PERF render " + _renderPerf.Report(_perfTime, _perfSim, _perfFrames));
@@ -193,6 +214,11 @@ public sealed partial class App
             try { game = adopt ?? Burger.Core.Game.Load(_gameRoot, compileScripts: true, seed: seed, startDate: seed == null ? _menuDate : null); }
             finally { Burger.Core.Game.MapLoaded -= prewarm; }
             Game = game;
+            game.MapChanged += () => { _snapshotDirty = true; _snapshotRevision++; };
+            _snapshotDirty = true;
+            _snapshotRevision++;
+            _snapshots.Publish(RenderSnapshotBuilder.Build(game, 0, game.Clock.HourFraction));
+            _snapshotDirty = false;
             if (adopt == null && seed == null) // multiplayer games use the same settings on every machine
             {
                 game.HistoricalBias = _opt.Bias ?? UserSettings.EffectiveBias;
@@ -216,7 +242,7 @@ public sealed partial class App
             if (keptRenderer != null && keptRenderer.CanRebind(game)) { Renderer = keptRenderer; Renderer.Rebind(game); keptRenderer = null; }
             else { keptRenderer?.Dispose(); keptRenderer = null; var rsw = System.Diagnostics.Stopwatch.StartNew(); Renderer = MapRenderer.Create(game); Log.Info($"Map renderer built in {rsw.ElapsedMilliseconds} ms"); }
             Camera = new CameraController(Renderer);
-            Overlay = new MapOverlay(game, Renderer);
+            Overlay = new MapOverlay(game, Renderer, () => Snapshot);
             Particles = new MapParticles(game, Renderer);
             Figures = new MapFigures(game, Renderer) { Particles = Particles };
             Sites = new MapSites(game, Renderer);
@@ -310,6 +336,7 @@ public sealed partial class App
             _menuSelection = game.World.GetCountry(keepTag) is { Exists: true } kept ? kept : game.World.GetCountry(game.Data.Info.DefaultTag) is { Exists: true } def ? def : game.World.Countries.Where(c => c.Playable && c.Exists).OrderByDescending(c => c.OwnedStates.Count).FirstOrDefault();
             if (_menuSelection?.Capital != null) Camera.LookAt(Renderer.LocationPos(_menuSelection.Capital), Camera.MaxDistance * 0.5f);
             _screen = AppScreen.Menu;
+            ApplyTargetFps();
             if (_opt.Open == "play") _menuPage = MenuPage.Play; // --open play: the start screen of a new game (screenshots)
         }
         catch (Exception ex)
@@ -318,6 +345,7 @@ public sealed partial class App
             Log.Error("Game failed to load: " + ex.Message);
             Game = null;
             _screen = AppScreen.Error;
+            ApplyTargetFps();
         }
     }
 
@@ -333,6 +361,7 @@ public sealed partial class App
     {
         if (Game == null || Renderer == null || Camera == null) return;
         _screen = AppScreen.Playing;
+        ApplyTargetFps();
         Game.Clock.Paused = true;
         Renderer.DiplomacyFocus = null;
         Renderer.Dirty = true;
@@ -523,14 +552,14 @@ public sealed partial class App
     {
         Raylib.ClearBackground(Renderer != null && Renderer.Globe ? new Color(2, 3, 9, 255) : new Color(12, 22, 38, 255)); // space behind the globe
         Raylib.BeginMode3D(cam);
-        if (!Bench.Skip.Contains("map")) Renderer!.Draw(cam, (float)Raylib.GetTime());
-        if (_screen == AppScreen.Playing && Sites != null) Sites.Draw(cam);
+        if (!Bench.Skip.Contains("map")) Renderer!.Draw(Snapshot, cam, (float)Raylib.GetTime());
+        if (_screen == AppScreen.Playing && Sites != null) Sites.Draw(Snapshot, cam);
         if (_screen == AppScreen.Playing && Figures != null)
         {
             Overlay!.CounterBelowFigure = Figures.Visible(cam);
             float fdt = Math.Min(Raylib.GetFrameTime(), 0.1f);
-            Figures.Draw(cam, fdt);
-            if (Particles != null) { Particles.Update(fdt, cam); Particles.Draw(cam); }
+            Figures.Draw(Snapshot, cam, fdt);
+            if (Particles != null) { Particles.Update(Snapshot, fdt, cam); Particles.Draw(cam); }
         }
         Raylib.EndMode3D();
     }
@@ -540,6 +569,8 @@ public sealed partial class App
         var game = Game!;
         var map = Renderer!;
         var cam = Camera!;
+        TryPublishSnapshotBuild();
+        if (game.Clock.Paused) ScheduleSnapshotBuild(game, _snapshots.Current.Tick);
         _renderPerf?.Begin();
         if (_bench != null && _bench.Step(cam, map, _renderPerf!)) { _quit = true; return; }
         _hud!.HandleKeys();
@@ -547,38 +578,63 @@ public sealed partial class App
         cam.Update(dt, Gui.MouseOverUi, false, !_hud.KeyboardCaptured);
         // Always raycast against the heightfield. The sea-level shortcut used while moving
         // can land hundreds of provinces away on large, high-relief maps such as Earth1930.
-        var hovered = Gui.MouseOverUi ? null : PickCached(map, cam);
+        var hovered = UserSettings.HoverPicking && !Gui.MouseOverUi ? PickCached(map, cam) : null;
         if (hovered != map.Hovered) { map.Hovered = hovered; map.Dirty = true; }
         _renderPerf?.Mark(1);
 
         Raylib.BeginDrawing();
         DrawWorld(cam.Camera);
         _renderPerf?.Mark(2);
-        Overlay!.DrawLabels(cam.Camera);
+        if (UserSettings.CountryLabels) Overlay!.DrawLabels(cam.Camera);
         _renderPerf?.Mark(3);
-        Overlay.DrawTradeRoutes(cam.Camera, Ui.Right == RightPanel.Ledger);
-        Overlay.DrawOrders(cam.Camera, Ui);
+        Overlay!.DrawTradeRoutes(Snapshot, cam.Camera, Ui.Right == RightPanel.Ledger);
+        Overlay.DrawOrders(Snapshot, cam.Camera, Ui);
+        Overlay.DrawDivisionOrders(Snapshot, cam.Camera, Ui);
         _renderPerf?.Mark(4);
-        Overlay.DrawUnits(cam.Camera, Ui, Gui.MouseOverUi);
+        Overlay.DrawUnits(Snapshot, cam.Camera, Ui, Gui.MouseOverUi);
         _renderPerf?.Mark(5);
-        Overlay.DrawFleets(cam.Camera, Ui, Gui.MouseOverUi);
+        Overlay.DrawFleets(Snapshot, cam.Camera, Ui, Gui.MouseOverUi);
         _renderPerf?.Mark(6);
-        if (Overlay.DrawAirBases(cam.Camera, Gui.MouseOverUi)) Ui.Left = LeftPanel.Air;
+        if (Overlay.DrawAirBases(Snapshot, cam.Camera, Gui.MouseOverUi)) Ui.Left = LeftPanel.Air;
         _renderPerf?.Mark(7);
         HandleMapLeftMouse(hovered);
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Right)) _hud.OnMapRightClick(hovered);
         if (hovered != null && !Gui.MouseOverUi) DrawHoverInfo(hovered);
         _renderPerf?.Mark(8);
-        if (!Bench.Skip.Contains("ui")) _hud.Draw();
+        if (!Bench.Skip.Contains("ui"))
+        {
+            var leftBefore = Ui.Left;
+            var rightBefore = Ui.Right;
+            long uiStart = System.Diagnostics.Stopwatch.GetTimestamp();
+            _hud.Draw();
+            if (leftBefore != Ui.Left || rightBefore != Ui.Right)
+            {
+                double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - uiStart) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                Log.Info($"PERF ui-open left={leftBefore}->{Ui.Left} right={rightBefore}->{Ui.Right} draw_ms={ms:0.0}");
+            }
+        }
         Gui.EndFrame();
         _renderPerf?.Mark(9);
         Raylib.EndDrawing();
         _renderPerf?.End(Raylib.GetFrameTime() * 1000.0);
 
-        if (Mp != null) return; // the session runs the ticks
+        if (Mp != null)
+        {
+            ScheduleSnapshotBuild(game, _snapshots.Current.Tick + 1);
+            return; // the session runs the ticks
+        }
+        if (_snapshotBuild != null) return; // keep the mutable simulation stable while its detached snapshot is built
         try
         {
-            game.Clock.Update(dt);
+            int ticks = game.Clock.Update(dt);
+            if (ticks > 0)
+            {
+                long tick = _snapshots.Current.Tick + 1;
+                _snapshots.Publish(RenderSnapshotBuilder.BuildFast(game, _snapshots.Current, tick, game.Clock.HourFraction));
+                _snapshotDirty = true;
+                _snapshotRevision++;
+                ScheduleSnapshotBuild(game, tick);
+            }
         }
         catch (Exception ex)
         {
@@ -586,6 +642,46 @@ public sealed partial class App
             Log.Error($"Simulation error: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
             Ui.SetStatus("Simulation error - game paused (see F2)");
         }
+    }
+
+    private void ScheduleSnapshotBuild(Game game, long tick)
+    {
+        // A full snapshot reads the mutable simulation graph. During live play the fast
+        // snapshot keeps movement current; expensive HUD projections refresh when paused,
+        // where the graph is stable and the build cannot steal time from simulation.
+        if (_screen == AppScreen.Playing && !game.Clock.Paused) return;
+        TryPublishSnapshotBuild();
+        if (!_snapshotDirty) return;
+        double now = Raylib.GetTime();
+        if (_snapshotBuild != null || now - _lastSnapshotBuildAt < 1.0) return;
+        _lastSnapshotBuildAt = now;
+        float hour = game.Clock.HourFraction;
+        long revision = _snapshotRevision;
+        _snapshotBuild = Task.Run(() =>
+        {
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var snapshot = RenderSnapshotBuilder.Build(game, tick, hour);
+            sw.Stop();
+            return new SnapshotBuildResult(snapshot, sw.Elapsed.TotalMilliseconds, GC.GetAllocatedBytesForCurrentThread() - before, revision);
+        });
+    }
+
+    private void TryPublishSnapshotBuild()
+    {
+        if (_snapshotBuild is not { IsCompleted: true } task) return;
+        try
+        {
+            var result = task.GetAwaiter().GetResult();
+            _snapshots.Publish(result.Snapshot);
+            _snapshotDirty = result.Revision != _snapshotRevision;
+            _snapshotBuilds++;
+            _snapshotBuildMs += result.Milliseconds;
+            _snapshotBuildBytes += result.AllocatedBytes;
+            Log.Info($"PERF snapshot build {result.Milliseconds:0.0} ms, {result.AllocatedBytes / 1024.0:0.0} KB");
+        }
+        catch (Exception ex) { Log.Error($"Render snapshot build failed: {ex.GetType().Name}: {ex.Message}"); }
+        finally { _snapshotBuild = null; }
     }
 
     // Exact heightfield pick, but only re-run when the mouse, camera or window actually changed (a still frame reuses the last answer).
@@ -602,15 +698,22 @@ public sealed partial class App
         var screen = new Vector2(Viewport.W, Viewport.H);
         var origin = Viewport.Origin;
         var c = cam.Camera;
-        if (_pickValid && mouse == _pickMouse && screen == _pickScreen
+        if (_pickValid && ReferenceEquals(_pickGame, Game) && ReferenceEquals(_pickMap, map)
+            && mouse == _pickMouse && screen == _pickScreen
             && origin == _pickOrigin
             && c.Position == _pickCam.Position && c.Target == _pickCam.Target && c.Up == _pickCam.Up && c.FovY == _pickCam.FovY)
             return _pickResult;
         // Always use the exact heightfield pick. Caching avoids repeat work on unchanged frames;
         // a coarser movement step would reintroduce province offsets.
         _pickResult = map.Pick(mouse, c);
+        _pickGame = Game; _pickMap = map;
         _pickMouse = mouse; _pickScreen = screen; _pickOrigin = origin; _pickCam = c; _pickValid = true;
         return _pickResult;
+    }
+
+    internal void ApplyTargetFps()
+    {
+        Raylib.SetTargetFPS(_opt.Bench ? 0 : (_opt.GameFrameRate ?? UserSettings.EffectiveGameFrameRate));
     }
 
     // ---------------------------------------------------------------------------------------- click or drag-select
@@ -649,6 +752,20 @@ public sealed partial class App
         if (!shift) Ui.SelectedDivisions.Clear();
         Ui.SelectedArmy = null;
         Ui.SelectedFleet = null;
+        if (Overlay.SnapshotCounters.Count > 0)
+        {
+            var byId = Game!.World.Divisions.ToDictionary(d => d.Id);
+            foreach (var (rect, ownerTag, divisionIds) in Overlay.SnapshotCounters)
+            {
+                if (!string.Equals(ownerTag, Snapshot.PlayerTag, StringComparison.OrdinalIgnoreCase)) continue;
+                var c = new Vector2(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+                if (!Raylib.CheckCollisionPointRec(c, box)) continue;
+                foreach (var id in divisionIds)
+                    if (byId.TryGetValue(id, out var d) && !Ui.SelectedDivisions.Contains(d)) Ui.SelectedDivisions.Add(d);
+            }
+            Ui.SetStatus(Ui.SelectedDivisions.Count == 0 ? "No divisions of yours in the box" : $"{Ui.SelectedDivisions.Count} division(s) selected - right-click to move");
+            return;
+        }
         foreach (var (rect, owner, divisions) in Overlay.Counters)
         {
             if (owner != player) continue;
@@ -735,13 +852,17 @@ public sealed partial class App
         var map = Renderer!;
         var cam = Camera!;
         cam.Update(dt, Gui.MouseOverUi, false, true);
-        var hovered = Gui.MouseOverUi ? null : map.Pick(Gui.Mouse, cam.Camera);
+        var hovered = UserSettings.HoverPicking && !Gui.MouseOverUi ? PickCached(map, cam) : null;
+        if (hovered != map.Hovered) { map.Hovered = hovered; map.Dirty = true; }
         if (map.Mode != MapMode.Political) { map.Mode = MapMode.Political; map.Dirty = true; }
 
         Raylib.BeginDrawing();
         DrawWorld(cam.Camera);
-        Overlay!.DrawLabels(cam.Camera);
-        Overlay.PrecomputeLabels(game.Timeline);
+        if (UserSettings.CountryLabels)
+        {
+            Overlay!.DrawLabels(cam.Camera);
+            Overlay.PrecomputeLabels(game.Timeline);
+        }
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Left) && hovered?.Owner != null && hovered.Owner.Playable)
         {
             _menuSelection = hovered.Owner;

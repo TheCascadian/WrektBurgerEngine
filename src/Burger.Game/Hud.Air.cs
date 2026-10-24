@@ -55,9 +55,14 @@ public sealed partial class Hud
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
         var A = G.Air;
         var wings = A.WingsOf(player).ToList();
-        Gui.Label($"Wings: {wings.Count}   Planes: {wings.Sum(x2 => x2.Planes):0}", x, y, 15);
+        var snapshotWings = _app.Snapshot.AirWings.Where(w => w.OwnerTag != null && w.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase)).ToList();
+        Gui.Label($"Wings: {snapshotWings.Count}   Planes: {snapshotWings.Sum(x2 => x2.Planes):0}", x, y, 15);
         string sky = "";
-        if (player.Capital?.State is { } cs && A.RegionOf(cs) is { } home)
+        if (_app.Snapshot.Player is { } playerSnapshot && playerSnapshot.Tag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase))
+        {
+            sky = playerSnapshot.HomeAirContested ? $"Home sky: {playerSnapshot.HomeAirShare:P0}" : "Home sky: quiet";
+        }
+        else if (player.Capital?.State is { } cs && A.RegionOf(cs) is { } home)
         {
             var (share, contested) = A.Superiority(home, player);
             sky = contested ? $"Home sky: {share:P0}" : "Home sky: quiet";
@@ -87,18 +92,24 @@ public sealed partial class Hud
         float wy = top;
         foreach (var wing in wings.ToList())
         {
+            var wingSnapshot = _app.Snapshot.AirWings.FirstOrDefault(q => q.Id == wing.Id);
+            bool hasWingSnapshot = wingSnapshot.Id == wing.Id && wingSnapshot.OwnerTag != null && wingSnapshot.OwnerTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase);
             var box = new Rectangle(x, wy, w - 8 * S, rowH);
             bool ordering = Ui.OrderingWing == wing;
             Card(box, ordering ? new Color(40, 52, 66, 255) : new Color(36, 38, 44, 255), ordering);
-            Gui.Label(Gui.Fit(wing.Name, box.Width - 130 * S, 16, FontKind.Bold), box.X + 8 * S, box.Y + 5 * S, 16, Gui.Gold, FontKind.Bold);
+            Gui.Label(Gui.Fit(hasWingSnapshot ? wingSnapshot.Name : wing.Name, box.Width - 130 * S, 16, FontKind.Bold), box.X + 8 * S, box.Y + 5 * S, 16, Gui.Gold, FontKind.Bold);
             var bar = new Rectangle(box.X + box.Width - 120 * S, box.Y + 10 * S, 70 * S, 9 * S);
-            Gui.Bar(bar, (float)(wing.Planes / A.WingSize), new Color(120, 200, 250, 255));
-            Gui.Label($"{wing.Planes:0}/{A.WingSize:0}", bar.X + bar.Width + 6 * S, box.Y + 5 * S, 13, Gui.TextDim);
+            double planes = hasWingSnapshot ? wingSnapshot.Planes : wing.Planes;
+            Gui.Bar(bar, (float)(planes / A.WingSize), new Color(120, 200, 250, 255));
+            Gui.Label($"{planes:0}/{A.WingSize:0}", bar.X + bar.Width + 6 * S, box.Y + 5 * S, 13, Gui.TextDim);
             if (Gui.Hover(bar)) Gui.Tooltip(Has(FeatureSet.Production) ? "Planes. Lost planes are replaced from the stockpile." : "Planes. Lost planes are replaced slowly" + (Has(FeatureSet.Economy) ? " (costs gold)." : "."));
-            string where = $"{wing.Type.Name} at {wing.Base.DisplayName}";
+            string where = $"{(hasWingSnapshot ? wingSnapshot.TypeName : wing.Type.Name)} at {wing.Base.DisplayName}";
             Gui.Label(Gui.Fit(where, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 27 * S, 13);
-            string task = wing.Region == null || wing.Mission == AirMission.None ? "Idle" : $"{AirSystem.MissionName(wing.Mission)} over {wing.Region.DisplayName}" + (wing.Active ? "" : " (out of range or no base)");
-            Gui.Label(Gui.Fit(task, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 45 * S, 13, wing.Region == null ? Gui.TextDim : wing.Active ? Gui.Good : Gui.Bad);
+            bool hasRegion = hasWingSnapshot ? wingSnapshot.RegionName != null : wing.Region != null;
+            bool active = hasWingSnapshot ? wingSnapshot.Active : wing.Active;
+            string mission = hasWingSnapshot ? wingSnapshot.Mission : wing.Mission.ToString();
+            string task = !hasRegion || mission == nameof(AirMission.None) ? "Idle" : $"{(hasWingSnapshot ? mission : AirSystem.MissionName(wing.Mission))} over {(hasWingSnapshot ? wingSnapshot.RegionName : wing.Region!.DisplayName)}" + (active ? "" : " (out of range or no base)");
+            Gui.Label(Gui.Fit(task, box.Width - 16 * S, 13), box.X + 8 * S, box.Y + 45 * S, 13, !hasRegion ? Gui.TextDim : active ? Gui.Good : Gui.Bad);
             // missions
             float bx = box.X + 8 * S, by = box.Y + rowH - 30 * S, bw = 82 * S;
             foreach (var m in Missions)

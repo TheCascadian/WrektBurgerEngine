@@ -3,6 +3,7 @@ using Burger.Core;
 using Burger.Core.Model;
 using Burger.Core.Modding;
 using Burger.Core.Politics;
+using Burger.Core.Simulation;
 using Raylib_cs;
 
 namespace Burger.Runtime;
@@ -325,21 +326,18 @@ public sealed partial class Hud
 
     private void DrawGovernmentTab(Country c, Rectangle r, float x, float y, float w)
     {
-        var P = G.Politics;
-        var p = P.Of(c);
-        var partyOrder = P.PartyKeysOf(c)
-            .Union(p.PartyPopularity.Keys, StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(key => p.PartyPopularity.GetValueOrDefault(key))
-            .ThenByDescending(key => p.PartySeats.GetValueOrDefault(key))
-            .ThenBy(key => P.PartyDisplayName(c, key), StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(x =>
+            x.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var partyOrder = overview.Parties.IsDefault
+            ? new List<string>()
+            : overview.Parties.Select(party => party.Key).ToList();
 
         // The selected party drives the identity card; before any pick it is the ruling party.
         string selectedKey = string.Equals(_politicsSelectedPartyCountry, c.Tag, StringComparison.OrdinalIgnoreCase)
             && _politicsSelectedPartyKey != null && partyOrder.Contains(_politicsSelectedPartyKey, StringComparer.OrdinalIgnoreCase)
-            ? _politicsSelectedPartyKey : p.RulingOrganization;
+            ? _politicsSelectedPartyKey : overview.RulingOrganization;
 
-        int totalSeats = p.PartySeats.Values.Sum();
+        int totalSeats = overview.TotalSeats;
         int visibleParties = Math.Min(OverviewVisibleParties, partyOrder.Count);
         var notes = CollectPoliticsNotes(c);
         int visibleNotes = Math.Min(OverviewMaxNotes, notes.Count);
@@ -353,17 +351,16 @@ public sealed partial class Hud
         float notesH = visibleNotes > 0 ? visibleNotes * OverviewNoteRowHeight * S + 6 * S : 0;
 
         // Pulse: three figures a player checks every few months.
-        double stability = G.Rules.Politics.StabilityOf(G, c);
-        double power = P.PowerOf(c);
-        double governmentSupport = p.GovernmentOrganizations.Where(key => !PoliticsSystem.IsMinorityParty(key))
-            .Sum(key => p.PartyPopularity.GetValueOrDefault(key));
+        double stability = overview.Stability;
+        double power = overview.PoliticalPower;
+        double governmentSupport = overview.GovernmentSupport;
         Color stabilityTone = stability >= 60 ? Gui.Good : stability >= LowStabilityNote ? Gui.Gold : Gui.Bad;
         var pulse = new (string Label, string Value, Color Tone, float Fill, string Tip)[]
         {
             ("STABILITY", $"{stability:0}", stabilityTone, (float)(stability / 100),
                 $"Stability {stability:0}/100\nLow stability feeds extremists and political movements."),
-            (P.PowerName.ToUpperInvariant(), double.IsFinite(power) ? power.ToString("0") : "-", Gui.Gold, -1,
-                double.IsFinite(power) ? $"{power:0.#} {P.PowerName}\nSpent on laws, cabinet changes and suppressing movements." : "No political power resource is configured."),
+            (overview.PowerName.ToUpperInvariant(), double.IsFinite(power) ? power.ToString("0") : "-", Gui.Gold, -1,
+                double.IsFinite(power) ? $"{power:0.#} {overview.PowerName}\nSpent on laws, cabinet changes and suppressing movements." : "No political power resource is configured."),
             ("GOVT SUPPORT", $"{governmentSupport:P0}", governmentSupport >= 0.5 ? Gui.Good : Gui.Text, (float)governmentSupport,
                 $"Parties in government hold {governmentSupport:P1} of the popular support."),
         };
@@ -389,9 +386,9 @@ public sealed partial class Hud
         float chamberH = Math.Min(OverviewChamberHeight(w), Math.Max(60 * S, r.Bottom() - y - reserve));
         DrawParliament(c, new Rectangle(x, y, w, chamberH), selectedKey, listHover);
         y += chamberH + 3 * S;
-        string election = P.HoldsElections(c) && p.NextElection is { } nextElection
+        string election = overview.HoldsElections && overview.NextElection is { } nextElection
             ? $"Next election: {nextElection.ToDisplay()}" : "Elections not scheduled";
-        if (p.LastElection is { } lastElection) election += $" · last {lastElection.ToDisplay()}";
+        if (overview.LastElection is { } lastElection) election += $" · last {lastElection.ToDisplay()}";
         float elW = Gui.Measure(election, 14).X;
         if (elW + 24 * S < w) Gui.Icon("ui_election", new Rectangle(x + (w - elW) / 2 - 22 * S, y + 1 * S, 18 * S, 18 * S));
         Gui.LabelCentered(Gui.Fit(election, w, 14), new Rectangle(x, y, w, 20 * S), 14, Gui.TextDim);
@@ -431,18 +428,18 @@ public sealed partial class Hud
         float rowH = OverviewPartyRowHeight * S;
         for (int i = 0; i < visibleParties; i++)
         {
-            string key = partyOrder[i];
-            double support = p.PartyPopularity.GetValueOrDefault(key);
-            int seats = p.PartySeats.GetValueOrDefault(key);
-            string name = P.PartyDisplayName(c, key);
-            bool banned = P.IsPartyBanned(c, key);
-            bool rulingParty = string.Equals(p.RulingOrganization, key, StringComparison.OrdinalIgnoreCase);
-            bool governing = p.GovernmentOrganizations.Contains(key, StringComparer.OrdinalIgnoreCase);
+            var party = overview.Parties[i];
+            string key = party.Key;
+            double support = party.Popularity;
+            int seats = party.Seats;
+            string name = party.Name;
+            bool banned = party.Banned;
+            bool rulingParty = party.Ruling;
+            bool governing = party.Governing;
             string status = banned ? "Banned" : rulingParty ? "Leads the government" : governing ? "In government" : "Opposition";
-            var ideology = P.Ideology(P.IdeologyKeyOfParty(key));
             var details = new List<string> { name, status, $"Support {support:P1}", $"Seats {seats}/{totalSeats}" };
-            if (ideology != null) details.Add($"Ideology: {ideology.Name}");
-            if (P.LeaderOf(G.World.GetGenericScope(key)) is { } partyLeader) details.Add($"Leader: {partyLeader.DisplayName}");
+            if (!string.Equals(party.IdeologyName, "Unaligned", StringComparison.Ordinal)) details.Add($"Ideology: {party.IdeologyName}");
+            if (party.LeaderName != null) details.Add($"Leader: {party.LeaderName}");
             details.Add("Click to select; click the party card to open Organizations.");
 
             var row = new Rectangle(x, listY, columnW, rowH - 2 * S);
@@ -458,14 +455,14 @@ public sealed partial class Hud
             if (rulingParty) Raylib.DrawRectangleRec(new Rectangle(row.X + 1, row.Y + 3 * S, 3 * S, row.Height - 6 * S), Gui.Gold);
             else if (governing) Raylib.DrawRectangleRec(new Rectangle(row.X + 1, row.Y + 3 * S, 3 * S, row.Height - 6 * S), Gui.Darker(Gui.Gold, 0.45f));
             float contentTop = row.Y + (row.Height - 25 * S) / 2;
-            Raylib.DrawRectangleRec(new Rectangle(row.X + 9 * S, contentTop + 3 * S, 8 * S, 11 * S), C(P.PartyColor(key)));
+            Raylib.DrawRectangleRec(new Rectangle(row.X + 9 * S, contentTop + 3 * S, 8 * S, 11 * S), C(party.Color));
             string figures = seats > 0 ? $"{seats} · {support:P0}" : $"{support:P0}";
             float figuresW = Gui.Measure(figures, 14).X;
             Gui.Label(Gui.Fit(name, row.Width - figuresW - 40 * S, 14, FontKind.Bold), row.X + 22 * S, contentTop, 14,
                 banned ? Gui.TextDim : Gui.Text, FontKind.Bold);
             Gui.Label(figures, row.X + row.Width - 8 * S - figuresW, contentTop + 1 * S, 14, Gui.Gold);
             Gui.Bar(new Rectangle(row.X + 22 * S, contentTop + 17 * S, row.Width - 30 * S, 4 * S),
-                (float)Math.Clamp(support, 0, 1), C(P.PartyColor(key)));
+                (float)Math.Clamp(support, 0, 1), C(party.Color));
             listY += rowH;
         }
         _overviewListHoverKey = hoverKey;
@@ -701,8 +698,17 @@ public sealed partial class Hud
                 lines.Add($"Term: {term.Months} months, ends {hitSeat.TermEnd.ToDisplay()}"
                     + string.Concat(term.Sources.Select(t => $"\n  {t.Source}: {t.Value:+0%;-0%}")));
             }
-            if (hitSeat.State != null && P.MoodsOf(hitSeat.State) is { } moods && moods.TryGetValue(hitSeat.PopGroup, out var mood))
-                lines.Add($"Voters: {mood.Reaction}, opinion {mood.Opinion:+0;-0;0}, want {Localisation.GetOrPretty(mood.Objective)}");
+            if (hitSeat.State != null)
+            {
+                var stateSnapshot = _app.Snapshot.States.FirstOrDefault(q => q.Key == hitSeat.State.Key);
+                var snapshotMood = stateSnapshot.Key == hitSeat.State.Key
+                    ? stateSnapshot.Moods.FirstOrDefault(m => m.Name.Equals(hitSeat.PopGroup, StringComparison.OrdinalIgnoreCase))
+                    : default;
+                if (snapshotMood.Name != null)
+                    lines.Add($"Voters: {snapshotMood.Reaction}, opinion {snapshotMood.Opinion:+0;-0;0}, want {Localisation.GetOrPretty(snapshotMood.Objective)}");
+                else if (P.MoodsOf(hitSeat.State) is { } moods && moods.TryGetValue(hitSeat.PopGroup, out var mood))
+                    lines.Add($"Voters: {mood.Reaction}, opinion {mood.Opinion:+0;-0;0}, want {Localisation.GetOrPretty(mood.Objective)}");
+            }
             Gui.Tooltip(string.Join("\n", lines));
         }
         else if (!string.IsNullOrEmpty(activeParty) && p.PartySeats.ContainsKey(activeParty))
@@ -1297,6 +1303,12 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         double power = P.PowerOf(c);
+        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == c.Tag).ToDictionary(q => q.Id);
+        double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
+            ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
+            : ch.GetStat(stat);
+        int AgeOf(Character ch) => characterSnapshots.TryGetValue(ch.Id, out var snapshot) ? snapshot.Age : ch.Age(G.World.Date);
+        string NameOf(Character ch) => characterSnapshots.TryGetValue(ch.Id, out var snapshot) ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
         Gui.Label($"{P.PowerName}: {(double.IsFinite(power) ? power.ToString("0.#") : "not configured")}", x, y, 15, Gui.Gold, FontKind.Bold);
         y += 29 * S;
         float contentH = P.Positions.Count(q => !q.Council) * 74 * S;
@@ -1312,10 +1324,10 @@ public sealed partial class Hud
             float titleX = box.X + (hasIcon ? 34 : 8) * S;
             Gui.Label(Gui.Fit(pos.Name, box.Width - 140 * S, 17, FontKind.Bold), titleX, box.Y + 6 * S, 17, Gui.Gold, FontKind.Bold);
             var minister = P.MinisterOf(c, pos);
-            string who = minister == null ? "Vacant" : $"{minister.DisplayName} ({CandidateAffiliation(c, minister)}), {Localisation.GetOrPretty(pos.Stat)} {minister.GetStat(pos.Stat):0}";
+            string who = minister == null ? "Vacant" : $"{NameOf(minister)} ({CandidateAffiliation(c, minister)}), {Localisation.GetOrPretty(pos.Stat)} {StatOf(minister, pos.Stat):0}";
             Gui.Label(Gui.Fit(who, box.Width - 122 * S, 15), box.X + 8 * S, box.Y + 36 * S, 15, minister == null ? Gui.TextDim : Gui.Text);
             var effects = new Dictionary<string, double>(pos.Modifier);
-            if (minister != null) foreach (var kv in pos.PerPoint) effects[kv.Key] = effects.GetValueOrDefault(kv.Key) + kv.Value * minister.GetStat(pos.Stat);
+            if (minister != null) foreach (var kv in pos.PerPoint) effects[kv.Key] = effects.GetValueOrDefault(kv.Key) + kv.Value * StatOf(minister, pos.Stat);
             if (Gui.Hover(box))
                 Gui.Tooltip($"{pos.Name}\nGood ministers have high {Localisation.GetOrPretty(pos.Stat)}.\nPer point: {string.Join(", ", pos.PerPoint.Select(kv => ModifierText(kv.Key, kv.Value)))}" +
                             (minister != null ? $"\n\nNow: {string.Join(", ", effects.Select(kv => ModifierText(kv.Key, kv.Value)))}" : ""));
@@ -1327,7 +1339,7 @@ public sealed partial class Hud
                 foreach (var candidate in P.Candidates(c, pos).Take(5))
                 {
                     var row = new Rectangle(x + 12 * S, cy, w - 12 * S, 32 * S);
-                    string text = $"{candidate.DisplayName} - {CandidateAffiliation(c, candidate)}, {Localisation.GetOrPretty(pos.Stat)} {candidate.GetStat(pos.Stat):0}, age {candidate.Age(G.World.Date)}";
+                    string text = $"{NameOf(candidate)} - {CandidateAffiliation(c, candidate)}, {Localisation.GetOrPretty(pos.Stat)} {StatOf(candidate, pos.Stat):0}, age {AgeOf(candidate)}";
                     var reason = P.CannotAppoint(c, pos, candidate);
                     if (ActionButton(row, Gui.Fit(text, row.Width - 12 * S, 14), reason == null, reason ?? $"Appoint for {pos.Cost:0} {P.PowerName}" + (P.ExplainAppointment(c, pos, candidate) is { } why ? "\n" + why : ""), false, 14))
                     {
@@ -1432,26 +1444,32 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         if (!P.Enabled) return y;
-        var p = P.Of(c);
-        var ruling = P.Ideology(p.Ruling);
+        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(q => q.CountryTag != null && q.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        bool hasSnapshot = overview.CountryTag != null;
+        var p = hasSnapshot ? null : P.Of(c);
+        var rulingParty = hasSnapshot ? overview.Parties.FirstOrDefault(q => q.Ruling) : default;
+        var ruling = hasSnapshot ? rulingParty.IdeologyName : P.Ideology(p!.Ruling)?.Name;
+        var rulingColor = hasSnapshot ? rulingParty.Color : P.Ideology(p!.Ruling)?.Color ?? Rgb.Gray;
         Gui.Section("Politics", x, y, w);
         y += 26 * S;
-        Raylib.DrawRectangleRec(new Rectangle(x, y + 3 * S, 12 * S, 12 * S), C(ruling?.Color ?? Rgb.Gray));
-        Gui.Label(Gui.Fit($"{P.PartyName(c, p.RulingOrganization)} ({ruling?.Name})" + (p.GovernmentOrganizations.Count > 1 ? " + coalition" : ""), w - 20 * S, 14), x + 18 * S, y, 14);
+        Raylib.DrawRectangleRec(new Rectangle(x, y + 3 * S, 12 * S, 12 * S), C(rulingColor));
+        string rulingName = hasSnapshot ? rulingParty.Name : P.PartyName(c, p!.RulingOrganization);
+        string coalition = hasSnapshot ? (overview.Parties.Count(q => q.Governing) > 1 ? " + coalition" : "") : (p!.GovernmentOrganizations.Count > 1 ? " + coalition" : "");
+        Gui.Label(Gui.Fit($"{rulingName} ({ruling}){coalition}", w - 20 * S, 14), x + 18 * S, y, 14);
         y += 20 * S;
         {
             float pr = 26 * S;
-            var ordered = P.PartyKeysOf(c).OrderByDescending(key => p.PartyPopularity.GetValueOrDefault(key)).ToList();
-            Pie(new Vector2(x + pr, y + pr), pr, ordered.Select(key => (P.PartyLabel(key), p.PartyPopularity.GetValueOrDefault(key), P.PartyColor(key))).ToList(), "Party support");
+            var parties = hasSnapshot ? overview.Parties.OrderByDescending(q => q.Popularity).ToList() : P.PartyKeysOf(c).OrderByDescending(key => p!.PartyPopularity.GetValueOrDefault(key)).Select(key => new RenderPoliticsParty(key, P.PartyLabel(key), P.PartyColor(key), P.Ideology(P.Of(c).Ruling)?.Name ?? "", null, p!.PartyPopularity.GetValueOrDefault(key), 0, false, false, false)).ToList();
+            Pie(new Vector2(x + pr, y + pr), pr, parties.Select(q => (q.Name, q.Popularity, q.Color)).ToList(), "Party support");
             float ly = y;
-            foreach (var key in ordered.Take(4))
+            foreach (var party in parties.Take(4))
             {
-                Raylib.DrawRectangleRec(new Rectangle(x + 2 * pr + 10 * S, ly + 3 * S, 9 * S, 9 * S), C(P.PartyColor(key)));
-                Gui.Label(Gui.Fit($"{P.PartyDisplayName(c, key)} {p.PartyPopularity.GetValueOrDefault(key):P0}", w - 2 * pr - 26 * S, 14), x + 2 * pr + 24 * S, ly, 14);
+                Raylib.DrawRectangleRec(new Rectangle(x + 2 * pr + 10 * S, ly + 3 * S, 9 * S, 9 * S), C(party.Color));
+                Gui.Label(Gui.Fit($"{party.Name} {party.Popularity:P0}", w - 2 * pr - 26 * S, 14), x + 2 * pr + 24 * S, ly, 14);
                 ly += 16 * S;
             }
             y += Math.Max(2 * pr, ly - y) + 4 * S;
-            Gui.Label(P.HoldsElections(c) && p.NextElection is { } ne ? $"Next election: {ne.ToDisplay()}" : "No elections", x, y, 14, Gui.TextDim);
+            Gui.Label(hasSnapshot && overview.HoldsElections && overview.NextElection is { } ne ? $"Next election: {ne.ToDisplay()}" : "No elections", x, y, 14, Gui.TextDim);
             y += 20 * S;
         }
         double op = P.IdeologyOpinion(G.World.Player ?? c, c);
