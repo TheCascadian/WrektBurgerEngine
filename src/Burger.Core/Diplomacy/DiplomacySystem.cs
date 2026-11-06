@@ -470,13 +470,28 @@ public sealed partial class DiplomacySystem
     /// <summary>Peace cost of one term (for the peace window).</summary>
     public double TermCost(War war, PeaceTerm t, Country winner, Country loser) => Rules.PeaceTermCost(_game, war, t, winner, loser) * _game.Reputation.RivalCostFactor(winner, loser);
 
+    private readonly List<int> _warScoreLocations = new();
+
     public double ComputeWarScore(War war)
     {
         double occAtt = 0, occDef = 0, totAtt = 0, totDef = 0;
         var att = war.Attackers.ToHashSet();
         var def = war.Defenders.ToHashSet();
-        foreach (var l in _game.World.Locations)
+        // (every war, every day: only the land of its countries is looked at, not the whole map; in the order of the map, as the sums depend on it)
+        var stops = _warScoreLocations;
+        stops.Clear();
+        foreach (var side in new[] { att, def })
+            foreach (var member in side)
+            {
+                if (side == def && att.Contains(member)) continue;
+                foreach (var st in member.OwnedStates)
+                    foreach (var at in st.Locations) stops.Add(at.Index);
+            }
+        stops.Sort();
+        var locations = _game.World.Locations;
+        foreach (int index in stops)
         {
+            var l = locations[index];
             var owner = l.Owner;
             if (owner == null || l.IsWater) continue;
             bool ownerAtt = att.Contains(owner), ownerDef = def.Contains(owner);

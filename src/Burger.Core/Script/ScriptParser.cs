@@ -32,6 +32,15 @@ public static class ScriptParser
 
     public static Node ParseFile(string path, string? displayName = null)
     {
+        if (!_ahead.IsEmpty && _ahead.TryRemove(Path.GetFullPath(path), out var ahead) && ahead.Display == (displayName ?? path))
+        {
+            try
+            {
+                var (root, clean) = ahead.Job.GetAwaiter().GetResult();
+                if (clean) return root;   // (a file with errors is read again below, so that they are reported as always)
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        }
         string text;
         try
         {
@@ -44,6 +53,30 @@ public static class ScriptParser
         }
         return Parse(text, displayName ?? path);
     }
+
+    // The large data files take most of the time of a load and do not depend on each other: they are parsed on the other cores while the loading goes on with the small ones.
+    private sealed record AheadJob(string Display, Task<(Node Root, bool Clean)> Job);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, AheadJob> _ahead = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Starts parsing the large text files of a game folder in the background; <see cref="ParseFile"/> takes the results. End with <see cref="EndReadAhead"/>.</summary>
+    public static void ReadAhead(string root, long smallestBytes = 128 * 1024)
+    {
+        if (Environment.ProcessorCount < 2 || !Directory.Exists(root)) return;
+        foreach (var file in Directory.EnumerateFiles(root, "*.txt", SearchOption.AllDirectories))
+        {
+            if (new FileInfo(file).Length < smallestBytes) continue;
+            string display = Path.GetRelativePath(root, file).Replace('\\', '/');
+            _ahead[Path.GetFullPath(file)] = new AheadJob(display, Task.Run(() =>
+            {
+                var errors = new List<(string Message, string Where)>();
+                var node = ParseQuiet(File.ReadAllText(file, Encoding.UTF8), display, errors);
+                return (node, errors.Count == 0);
+            }));
+        }
+    }
+
+    /// <summary>Lets go of what nobody asked for.</summary>
+    public static void EndReadAhead() => _ahead.Clear();
 
     [ThreadStatic] private static List<(string Message, string Where)>? _sink;
 

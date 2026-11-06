@@ -149,6 +149,15 @@ public sealed partial class Hud
     {
         Gui.Label("Map detail", x, y, 16, Gui.Gold);
         y += 28 * S;
+        string quality = UserSettings.GraphicsChoice < 0 ? $"Graphics quality: Automatic (now {GraphicsQuality.Names[GraphicsQuality.Level]})" : $"Graphics quality: {GraphicsQuality.Names[UserSettings.GraphicsChoice]}";
+        if (Gui.Button(new Rectangle(x, y, w, 32 * S), quality, true,
+                "Automatic measures how long your graphics card takes for the map and picks the level that keeps the game smooth.\nHigh: everything. Medium: no edge smoothing, simpler water. Low: no trees or waves, the map at 80% resolution. Lowest: the map at 62% resolution, the least detail.", false, 15))
+        {
+            UserSettings.GraphicsChoice = UserSettings.GraphicsChoice >= 3 ? -1 : UserSettings.GraphicsChoice + 1;
+            UserSettings.Save();
+            if (UserSettings.GraphicsChoice >= 0) GraphicsQuality.Set(UserSettings.GraphicsChoice);
+        }
+        y += 38 * S;
         if (Gui.Button(new Rectangle(x, y, w, 32 * S), UserSettings.LodEnabled ? "Level of detail: on (faster)" : "Level of detail: off (full detail)", true,
                 "On: small details (water waves, river shine, terrain blending) fade out as you zoom out, which keeps weak graphics cards fast. The levels below choose how far each one lasts.\nOff: every detail stays at every zoom. Slower.",
                 UserSettings.LodEnabled, 15))

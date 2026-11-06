@@ -62,7 +62,7 @@ public sealed partial class Hud
     {
         var l = Ui.SelectedLocation;
         if (l == null) { Ui.Left = LeftPanel.None; return; }
-        var locationSnapshot = _app.Snapshot.Locations.FirstOrDefault(x => x.Index == l.Index);
+        var locationSnapshot = _app.Live.LocationRow(l);
         var r = FitRect("loc");
         bool unknown = locationSnapshot.Index == l.Index ? !locationSnapshot.IsCharted : !G.Exploration.IsCharted(l);
         Gui.Panel(r, unknown ? "Terra incognita" : l.DisplayName);
@@ -101,9 +101,7 @@ public sealed partial class Hud
         void CellsEnd() => y += (CellH + 6) * S;
 
         var st = l.State;
-        var stateSnapshot = locationSnapshot.StateKey is { } stateKey
-            ? _app.Snapshot.States.FirstOrDefault(s => s.Key == stateKey)
-            : default;
+        var stateSnapshot = st != null ? _app.Live.StateRow(st) : default;
         string terr = locationSnapshot.TerrainName + (locationSnapshot.IsCoastal ? " (coastal)" : "");
         if (locationSnapshot.IsWater) { Cell(0, 2, "Terrain", terr); Cell(1, 2, "Type", locationSnapshot.IsLake ? "Lake" : "Sea"); CellsEnd(); FitEnd("loc", r, y); return; }
         Cell(0, 2, "Terrain", terr);
@@ -122,7 +120,7 @@ public sealed partial class Hud
         if (st != null)
         {
             // tax and manpower against the average state of the owner: above is green, below is red
-            var peers = _app.Snapshot.States.Where(s => s.OwnerTag == locationSnapshot.OwnerTag && s.Key != stateSnapshot.Key).ToList();
+            var peers = l.Owner?.OwnedStates.Where(s => s != st).ToList() ?? new List<State>();
             double avgTax = peers.Count > 0 ? peers.Average(s => s.Tax) : stateSnapshot.Tax;
             double avgMan = peers.Count > 0 ? peers.Average(s => s.Manpower) : stateSnapshot.Manpower;
             void Stat2(int i, string k, double v, double avg, string text)
@@ -231,8 +229,7 @@ public sealed partial class Hud
             {
                 var owner = G.World.Countries.FirstOrDefault(c => c.Tag.Equals(g.Key, StringComparison.OrdinalIgnoreCase));
                 float fx = owner != null ? FlagChip(owner, x, y + 1 * S, 16 * S) : 0;
-                var ownerSnapshot = _app.Snapshot.Countries.FirstOrDefault(c => c.Tag.Equals(g.Key, StringComparison.OrdinalIgnoreCase));
-                string ownerName = ownerSnapshot.Tag != null ? ownerSnapshot.Name : g.Key;
+                string ownerName = owner != null ? owner.Name : g.Key;
                 Gui.Label($"{g.Count()} division(s) · {ownerName}", x + fx, y, 15);
                 y += lh;
             }
@@ -252,7 +249,7 @@ public sealed partial class Hud
     {
         var c = Ui.SelectedCountry;
         if (c == null) { Ui.Left = LeftPanel.None; return; }
-        var countrySnapshot = _app.Snapshot.Countries.FirstOrDefault(x => x.Tag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var countrySnapshot = _app.Live.CountryRow(c);
         var r = LeftRect(Raylib.GetScreenHeight() - TopH - 20 * S);
         string snapshotCountryName = countrySnapshot.Name ?? "";
         string snapshotCountryTag = countrySnapshot.Tag ?? "";
@@ -299,9 +296,7 @@ public sealed partial class Hud
         y += 4 * S;
         if (player != null && player != c && Has(FeatureSet.Diplomacy))
         {
-            var relationSnapshot = _app.Snapshot.DiplomacyRelations.FirstOrDefault(relation =>
-                relation.FromTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase)
-                && relation.ToTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+            var relationSnapshot = _app.Live.RelationRow(player, c);
             bool hasRelationSnapshot = relationSnapshot.FromTag != null;
             double theirs = hasRelationSnapshot ? relationSnapshot.Opinion : G.Diplomacy.Opinion(c, player);
             double ours = hasRelationSnapshot ? relationSnapshot.ReverseOpinion : G.Diplomacy.Opinion(player, c);
@@ -365,7 +360,7 @@ public sealed partial class Hud
             if (allies.Count > 0) { Gui.Label("Allies", x, y + 1 * S, 14, AllyBlue); y += FlagRow(allies, x + 104 * S, y, r.Width - 24 * S - 104 * S, AllyBlue); }
             var subjects = R.SubjectsOf(c).ToList();
             if (subjects.Count > 0) { Gui.Label(Gui.Fit("Subjects: " + string.Join(", ", subjects.Select(a => $"{a.Tag} ({G.Diplomacy.LibertyDesire(a):0}% liberty)")), r.Width - 24 * S, 15), x, y, 15); y += lh; }
-            var selfRelation = _app.Snapshot.DiplomacyRelations.FirstOrDefault(r => r.FromTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && r.ToTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+            var selfRelation = c == player ? _app.Live.RelationRow(c, c) : default;
             if (selfRelation.WarExhaustion > 0.05) { Gui.Label($"War exhaustion: {selfRelation.WarExhaustion:0.0} / {G.Diplomacy.MaxWarExhaustion:0}", x, y, 15, selfRelation.WarExhaustion >= 10 ? Gui.Bad : Gui.TextDim); y += lh; }
         }
 
@@ -419,7 +414,7 @@ public sealed partial class Hud
     /// <summary>The country's own relations (also shown on the map: allies blue, enemies red). Returns the new y.</summary>
     private float DrawCountryRelations(Country c, float x, float y, float w)
     {
-        var countrySnapshot = _app.Snapshot.Countries.FirstOrDefault(q => q.Tag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var countrySnapshot = _app.Live.CountryRow(c);
         var lines = new[]
         {
             (1, "At war with", Gui.Bad), (2, "Allies", new Color(110, 160, 245, 255)),

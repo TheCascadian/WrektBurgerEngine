@@ -127,7 +127,7 @@ public sealed partial class Hud
 
     private int SnapshotAge(Character ch, GameDate now)
     {
-        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        var snapshot = _app.Live.CharacterRow(ch);
         return snapshot.Id == ch.Id && snapshot.Name != null ? snapshot.Age : ch.Age(now);
     }
 
@@ -145,7 +145,7 @@ public sealed partial class Hud
         DrawPortrait(ch, pr, false, false);
         PortraitFrame(pr, ch.Female ? new Color(200, 150, 180, 255) : new Color(130, 160, 200, 255));
         var dyn = G.Dynasties;
-        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        var snapshot = _app.Live.CharacterRow(ch);
         bool hasSnapshot = snapshot.Id == ch.Id && snapshot.Name != null;
         string displayName = hasSnapshot ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
         int age = hasSnapshot ? snapshot.Age : ch.Age(G.World.Date);

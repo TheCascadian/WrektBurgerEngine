@@ -131,6 +131,9 @@ public sealed class World
     public IEnumerable<Army> ArmiesOf(Country c) => Armies.Where(a => a.Owner == c);
     public IEnumerable<War> WarsOf(Country c) => Wars.Where(w => w.Involves(c));
 
+    /// <summary>Changes whenever the lists of what the countries own are made anew (lists derived from them can be kept until then).</summary>
+    public int OwnershipVersion { get; private set; }
+
     public bool AtWar(Country a, Country b)
     {
         foreach (var w in Wars)
@@ -148,6 +151,7 @@ public sealed class World
     /// <summary>Rebuilds <see cref="Country.OwnedStates"/> caches. Call after changing state owners.</summary>
     public void RefreshOwnership()
     {
+        OwnershipVersion++;
         foreach (var c in Countries) c.OwnedStates.Clear();
         foreach (var s in States) s.Owner?.OwnedStates.Add(s);
     }

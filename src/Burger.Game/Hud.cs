@@ -152,6 +152,9 @@ public sealed partial class Hud
     // ===============================================================================================
     // Map clicks (called by App when the mouse is not over the UI)
     // ===============================================================================================
+    /// <summary>A background job is reading the game: the clock must wait until it is done.</summary>
+    public bool ReadingInBackground => _globalLedgerBuild is { IsCompleted: false } || _industryLedgerBuild is { IsCompleted: false };
+
     public void OnMapLeftClick(Location? loc)
     {
         if (Ui.EditorActive) { EditorClick(loc); return; }

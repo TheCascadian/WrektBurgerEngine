@@ -86,7 +86,7 @@ public class AiSystem
 
     // ---- border cache: which countries touch each other's land (the old Borders() scan was O(6400 locations) per pair) ----
     private long _borderStamp = -1;
-    private int _borderMapVersion = -1;
+    private int _borderMapVersion = -1, _borderControllers = -1;
     private ConcurrentDictionary<(int, int), bool> _borders = new();
 
     /// <summary>Cached answer for <see cref="Borders"/>: recomputed once per tick when ownership changed (<see cref="Game.MapVersion"/>).</summary>
@@ -102,9 +102,15 @@ public class AiSystem
                 {
                     if (_borderStamp != stamp || _borderMapVersion != version)
                     {
-                        _borders.Clear();
-                        _borderLists.Clear();
-                        ComputeAllBorders();
+                        // refreshed daily, but it only depends on who controls each location: nothing to count while no location changed hands
+                        int controllers = Location.ControllerVersion;
+                        if (controllers != _borderControllers || _landPairLocations != Game.World.Locations.Count)
+                        {
+                            _borders.Clear();
+                            _borderLists.Clear();
+                            ComputeAllBorders();
+                            _borderControllers = controllers;
+                        }
                         _borderStamp = stamp;
                         _borderMapVersion = version;
                     }

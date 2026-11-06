@@ -236,7 +236,7 @@ public sealed partial class Hud
 
     private void DrawRosterRow(Character c, Rectangle row, Country country, GameDate now)
     {
-        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == c.Id);
+        var snapshot = _app.Live.CharacterRow(c);
         bool hasSnapshot = snapshot.Id == c.Id && snapshot.Name != null;
         string name = hasSnapshot ? snapshot.Name ?? c.DisplayName : c.DisplayName;
         int age = hasSnapshot ? snapshot.Age : c.Age(now);
@@ -277,7 +277,7 @@ public sealed partial class Hud
     private float DrawCharacterDossier(Character ch, Country country, float x, float y, float w, GameDate now, Country? player)
     {
         float start = y;
-        var characterSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        var characterSnapshot = _app.Live.CharacterRow(ch);
         bool hasSnapshot = characterSnapshot.Id == ch.Id && characterSnapshot.Name != null;
         string displayName = hasSnapshot ? characterSnapshot.Name ?? ch.DisplayName : ch.DisplayName;
         int age = hasSnapshot ? characterSnapshot.Age : ch.Age(now);

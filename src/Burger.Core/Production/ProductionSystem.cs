@@ -425,17 +425,26 @@ public sealed class ProductionSystem
     // ------------------------------------------------------------------------------------- ticks
     public void DailyTick()
     {
+        foreach (var c in _game.World.Countries) DailyTickOf(c);
+    }
+
+    /// <summary>The day's work of a 24th of the countries (the live clock of a single player game does a part each hour: all of them at once stops the clock every day).</summary>
+    public void DailyTickPart(int hour)
+    {
         foreach (var c in _game.World.Countries)
-        {
-            if (!c.Exists) continue;
-            UpgradeEraBuildings(c);
-            // Idle countries (the common case with a large roster) have nothing to advance.
-            if (c.ProductionLines.Count > 0) Produce(c);
-            if (c.Construction.Count == 0) continue;
-            long t1 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            Construct(c);
-            if (_game.Profiling) _game.ProfileElapsed("Prod.Construct", System.Diagnostics.Stopwatch.GetTimestamp() - t1);
-        }
+            if (c.Index % 24 == hour) DailyTickOf(c);
+    }
+
+    private void DailyTickOf(Country c)
+    {
+        if (!c.Exists) return;
+        UpgradeEraBuildings(c);
+        // Idle countries (the common case with a large roster) have nothing to advance.
+        if (c.ProductionLines.Count > 0) Produce(c);
+        if (c.Construction.Count == 0) return;
+        long t1 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        Construct(c);
+        if (_game.Profiling) _game.ProfileElapsed("Prod.Construct", System.Diagnostics.Stopwatch.GetTimestamp() - t1);
     }
 
     /// <summary>Convert predecessor capacity into its researched modern counterpart one-for-one.</summary>

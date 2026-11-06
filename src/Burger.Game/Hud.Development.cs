@@ -14,7 +14,7 @@ public sealed partial class Hud
     {
         var D = G.Development;
         float lh = 24 * S;
-        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        var stateSnapshot = _app.Live.StateRow(st);
         bool hasSnapshot = stateSnapshot.Key == st.Key;
         int level = hasSnapshot ? stateSnapshot.DevelopmentLevel : D.Level(st);
         var player = G.World.Player;

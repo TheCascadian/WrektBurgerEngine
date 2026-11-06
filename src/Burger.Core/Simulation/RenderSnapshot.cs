@@ -18,7 +18,6 @@ public sealed record RenderSnapshot(
     int VisibilityVersion,
     int ExplorationVersion,
     bool ExplorationEnabled,
-    ImmutableArray<int> NewlyChartedLocations,
     bool GeoEnabled,
     int GeoVersion,
     int Speed,
@@ -27,10 +26,6 @@ public sealed record RenderSnapshot(
     string MapContentKey,
     string? PlayerTag,
     RenderPlayer? Player,
-    ImmutableArray<RenderCountry> Countries,
-    ImmutableArray<RenderCharacter> Characters,
-    ImmutableArray<RenderLocation> Locations,
-    ImmutableArray<RenderState> States,
     ImmutableArray<RenderDivision> Divisions,
     ImmutableArray<RenderArmySummary> Armies,
     ImmutableArray<RenderSite> Sites,
@@ -39,12 +34,6 @@ public sealed record RenderSnapshot(
     ImmutableArray<RenderTradeRoute> BlockedTradeRoutes,
     ImmutableArray<RenderTradeTransaction> RecentTrades,
     ImmutableArray<RenderResource> Resources,
-    ImmutableArray<RenderCommodityBalance> CommodityBalances,
-    ImmutableArray<RenderDecision> Decisions,
-    ImmutableArray<RenderFocus> Focuses,
-    string? CurrentFocusKey,
-    double CurrentFocusProgress,
-    ImmutableArray<RenderTechnology> Technologies,
     ImmutableArray<RenderResearchSlot> ResearchSlots,
     double TechnologyPoints,
     int TechnologySlotCount,
@@ -55,17 +44,11 @@ public sealed record RenderSnapshot(
     ImmutableArray<RenderArmyOrder> ArmyOrders,
     ImmutableArray<RenderNotification> Notifications,
     ImmutableArray<RenderWar> Wars,
-    ImmutableArray<RenderDiplomacyRelation> DiplomacyRelations,
     ImmutableArray<RenderParticleEvent> ParticleEvents,
-    ImmutableArray<RenderPoliticsOverview> PoliticsOverviews,
     ImmutableArray<RenderStatecraftBanner> StatecraftBanners)
 {
     public static RenderSnapshot Empty { get; } = new(
-        0, default, 0, 0, 0, false, ImmutableArray<int>.Empty, false, 0, 0, true, 0, "", null, null,
-        ImmutableArray<RenderCountry>.Empty,
-        ImmutableArray<RenderCharacter>.Empty,
-        ImmutableArray<RenderLocation>.Empty,
-        ImmutableArray<RenderState>.Empty,
+        0, default, 0, 0, 0, false, false, 0, 0, true, 0, "", null, null,
         ImmutableArray<RenderDivision>.Empty,
         ImmutableArray<RenderArmySummary>.Empty,
         ImmutableArray<RenderSite>.Empty,
@@ -74,12 +57,6 @@ public sealed record RenderSnapshot(
         ImmutableArray<RenderTradeRoute>.Empty,
         ImmutableArray<RenderTradeTransaction>.Empty,
         ImmutableArray<RenderResource>.Empty,
-        ImmutableArray<RenderCommodityBalance>.Empty,
-        ImmutableArray<RenderDecision>.Empty,
-        ImmutableArray<RenderFocus>.Empty,
-        null,
-        0,
-        ImmutableArray<RenderTechnology>.Empty,
         ImmutableArray<RenderResearchSlot>.Empty,
         0,
         0,
@@ -90,9 +67,7 @@ public sealed record RenderSnapshot(
         ImmutableArray<RenderArmyOrder>.Empty,
         ImmutableArray<RenderNotification>.Empty,
         ImmutableArray<RenderWar>.Empty,
-        ImmutableArray<RenderDiplomacyRelation>.Empty,
         ImmutableArray<RenderParticleEvent>.Empty,
-        ImmutableArray<RenderPoliticsOverview>.Empty,
         ImmutableArray<RenderStatecraftBanner>.Empty);
 }
 
@@ -173,11 +148,6 @@ public readonly record struct RenderLocation(
     double AirShare,
     bool AirContested,
     int AirRegionIndex,
-    bool HasGeoData,
-    Rgb GeoTimeColor,
-    Rgb GeoProvinceColor,
-    int GeoProvinceIndex,
-    bool GeoTimeHatched,
     int RiverBorders,
     int Fort,
     int DivisionCount,
@@ -215,13 +185,16 @@ public readonly record struct RenderDivision(
     ImmutableArray<RenderPoint> Route,
     bool InBattle,
     bool IsMoving,
-    bool Retreating);
+    bool Retreating,
+    Rgb OwnerColor,
+    bool Visible,
+    float MoveProgress);
 public readonly record struct RenderArmySummary(int Id, string Name, string OwnerTag, string? GeneralName, double GeneralStat, int DivisionCount, double StrengthFraction, string Mode, string? FrontEnemyTag, string? FrontEnemyName, string? ObjectiveName, int FallbackCount, string? MoveTargetName, string? LocationName, double Supply);
 
 public readonly record struct RenderSite(string LocationKey, float CenterX, float CenterY, string ModelKey, bool IsVisible);
 public readonly record struct RenderPoint(float X, float Y);
 public readonly record struct RenderFleet(int Id, string Name, string OwnerTag, string LocationKey, string LocationName, string Composition, float CenterX, float CenterY,
-    float NextCenterX, float NextCenterY, bool HasNextLocation, ImmutableArray<RenderPoint> Route, int Ships, double HpFraction, bool Retreating, bool InBattle, bool InPort);
+    float NextCenterX, float NextCenterY, bool HasNextLocation, ImmutableArray<RenderPoint> Route, int Ships, double HpFraction, bool Retreating, bool InBattle, bool InPort, Rgb OwnerColor, bool Visible);
 public readonly record struct RenderAirWing(int Id, string Name, string OwnerTag, string BaseKey, string TypeName, float CenterX, float CenterY, double Planes, bool Active, string Mission, string? RegionName);
 public readonly record struct RenderTradeRoute(float FromX, float FromY, float ToX, float ToY, string FromName, string ToName, double DistanceKm, double Capacity);
 public readonly record struct RenderTradeTransaction(string Key, float FromX, float FromY, float ToX, float ToY, string Commodity, double Quantity, string Seller, string Buyer, string Kind, double DistanceKm, double TransportCost, double Price, double Tariff);
@@ -258,7 +231,7 @@ public static class RenderSnapshotBuilder
             return new RenderDivision(d.Id, d.Owner.Tag, d.Location.Key, d.Location.CenterX, d.Location.CenterY,
                 hasNext ? next!.CenterX : 0, hasNext ? next!.CenterY : 0, hasNext, d.Location.IsWater, model.Key,
                 d.Name, d.Template.Name, d.Location.DisplayName, d.Army?.Name, d.Strength, d.MaxStrength, d.Org, d.MaxOrg,
-                d.StrengthFraction, d.OrgFraction, d.Supply, route, d.InBattle, d.IsMoving, d.Retreating);
+                d.StrengthFraction, d.OrgFraction, d.Supply, route, d.InBattle, d.IsMoving, d.Retreating, d.Owner.Color, game.IsVisible(d.Location), (float)d.MoveProgress);
         }).ToImmutableArray();
         var armies = game.World.Armies.Select(a => new RenderArmySummary(a.Id, a.Name, a.Owner.Tag,
             a.General?.DisplayName, a.General != null ? a.General.GetStat(game.Data.Defines.GeneralStat) : 0,
@@ -283,93 +256,344 @@ public static class RenderSnapshotBuilder
             ActualDaysPerSecond = game.Clock.ActualDaysPerSecond,
             Divisions = divisions,
             Armies = armies,
-            ConstructionQueue = constructionQueue
+            ConstructionQueue = constructionQueue,
+            ParticleEvents = TakeParticleEvents(game),
         };
     }
 
     public static RenderSnapshot Build(Game game, long tick, float hourFraction)
     {
         ArgumentNullException.ThrowIfNull(game);
-        var divisionCounts = game.World.Divisions.GroupBy(d => d.Owner.Tag).ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
-        var warCounts = game.World.Wars
-            .SelectMany(w => w.Attackers.Concat(w.Defenders))
+        return BuildLive(game, RenderSnapshot.Empty, tick, hourFraction);
+    }
+
+    // ---------------------------------------------------------------- rows of the panels (see LiveRows): one thing at a time, when a panel asks
+    /// <summary>Who has anything to do with whom at all, each list in the order of the countries.</summary>
+    public static Dictionary<Country, SortedSet<Country>> RelatedCountries(Game game)
+    {
+        var relatedTo = new Dictionary<Country, SortedSet<Country>>();
+        var byIndex = Comparer<Country>.Create((x, y) => x.Index.CompareTo(y.Index));
+        void Related(Country a, Country b)
+        {
+            if (a == b) return;
+            if (!relatedTo.TryGetValue(a, out var la)) relatedTo[a] = la = new SortedSet<Country>(byIndex);
+            la.Add(b);
+            if (!relatedTo.TryGetValue(b, out var lb)) relatedTo[b] = lb = new SortedSet<Country>(byIndex);
+            lb.Add(a);
+        }
+        var rel = game.World.Relations;
+        foreach (var war in game.World.Wars)
+            foreach (var a in war.Attackers)
+                foreach (var d in war.Defenders) Related(a, d);
+        foreach (var (a, b) in rel.Alliances) Related(a, b);
+        foreach (var (subject, value) in rel.Subjects) Related(subject, value.Overlord);
+        foreach (var (a, b) in rel.Guarantees) Related(a, b);
+        foreach (var (a, b) in rel.MilitaryAccess) Related(a, b);
+        return relatedTo;
+    }
+
+    public static Dictionary<string, int> DivisionCounts(Game game) =>
+        game.World.Divisions.GroupBy(d => d.Owner.Tag).ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
+
+    public static Dictionary<string, int> WarCounts(Game game) =>
+        game.World.Wars.SelectMany(w => w.Attackers.Concat(w.Defenders))
             .GroupBy(c => c.Tag, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => g.Count(), StringComparer.OrdinalIgnoreCase);
-        var countries = game.World.Countries
-            .Select(c =>
+
+    public static RenderCountry CountryRow(Game game, Country c, Dictionary<string, int> divisionCounts, Dictionary<string, int> warCounts, Dictionary<Country, SortedSet<Country>> relatedTo)
+    {
+        RenderCharacterSummary? CharacterSummary(Character? character) => character == null ? null : new RenderCharacterSummary(
+            character.DisplayName, character.Age(game.World.Date),
+            game.Data.Defines.CharacterStats.Select(key => new RenderCharacterStat(key, character.GetStat(key))).ToImmutableArray(),
+            character.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray());
+        var sphere = game.GreatPowers.Enabled ? game.GreatPowers.IsGreat(c) ? c : game.GreatPowers.SphereOf(c) : null;
+        var relationRows = new List<RenderCountryRelation>();
+        if (relatedTo.TryGetValue(c, out var related))
+        foreach (var target in related)
+        {
+            if (target == c || !target.Exists) continue;
+            if (game.World.AtWar(c, target)) relationRows.Add(new RenderCountryRelation(1, target.Tag, target.Name, 0));
+            if (game.World.Relations.AreAllied(c, target)) relationRows.Add(new RenderCountryRelation(2, target.Tag, target.Name, 0));
+            if (game.World.Relations.OverlordOf(target) == c) relationRows.Add(new RenderCountryRelation(3, target.Tag, target.Name, game.Diplomacy.LibertyDesire(target)));
+            if (game.World.Relations.OverlordOf(c) == target) relationRows.Add(new RenderCountryRelation(4, target.Tag, target.Name, game.Diplomacy.LibertyDesire(c)));
+            if (game.World.Relations.IsGuaranteeing(c, target)) relationRows.Add(new RenderCountryRelation(5, target.Tag, target.Name, 0));
+            if (game.World.Relations.IsGuaranteeing(target, c)) relationRows.Add(new RenderCountryRelation(6, target.Tag, target.Name, 0));
+            if (game.World.Relations.HasAccess(target, c)) relationRows.Add(new RenderCountryRelation(7, target.Tag, target.Name, 0));
+        }
+        return new RenderCountry(c.Index, c.Tag, c.Name, c.Color, c.Exists, c.Playable, c.IsPlayer, c.OwnedStates.Count,
+            c.OwnedStates.Sum(s => s.Locations.Count), divisionCounts.GetValueOrDefault(c.Tag), warCounts.GetValueOrDefault(c.Tag),
+            game.Politics.Enabled && game.Politics.RulingIdeology(c) is { } ideology ? ideology.Color : Rgb.Black,
+            sphere?.Color ?? new Rgb(96, 98, 104), sphere != null && game.GreatPowers.IsGreat(c),
+            game.Resources.Defs.Where(d => d.Scope == ScopeType.Country)
+                .Select(d => new RenderResource(d.Name, game.Resources.Get(c, d), game.Resources.MonthlyChange(c, d), d.Decimals, d.Min, d.Max, d.Desc))
+                .ToImmutableArray(), game.Diplomacy.RelationsUsed(c), game.Diplomacy.MaxRelations(c),
+            game.Modifiers.Of(c).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
+            Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray(), relationRows.ToImmutableArray(),
+            CharacterSummary(c.Ruler), CharacterSummary(c.Heir), c.Government, c.PrimaryContinent?.DisplayName);
+    }
+
+    public static RenderCharacter CharacterRow(Game game, Character ch) => new RenderCharacter(ch.Id, ch.DisplayName, ch.Country?.Tag, ch.Age(game.World.Date), ch.Female, ch.Alive, ch.Loyalty, ch.Health,
+        game.Data.Defines.CharacterStats.Select(key => new RenderCharacterStat(key, ch.GetStat(key))).ToImmutableArray(),
+        ch.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray());
+
+    public static RenderPoliticsOverview PoliticsRow(Game game, Country c)
+    {
+        var politics = game.Politics.Of(c);
+        var partyKeys = game.Politics.PartyKeysOf(c)
+            .Union(politics.PartyPopularity.Keys, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(key => politics.PartyPopularity.GetValueOrDefault(key))
+            .ThenByDescending(key => politics.PartySeats.GetValueOrDefault(key))
+            .ThenBy(key => game.Politics.PartyDisplayName(c, key), StringComparer.OrdinalIgnoreCase);
+        var parties = partyKeys.Select(key =>
+        {
+            var ideology = game.Politics.Ideology(game.Politics.IdeologyKeyOfParty(key));
+            var leader = game.Politics.LeaderOf(game.World.GetGenericScope(key));
+            return new RenderPoliticsParty(key, game.Politics.PartyDisplayName(c, key), game.Politics.PartyColor(key),
+                ideology?.Name ?? "Unaligned", leader?.DisplayName,
+                politics.PartyPopularity.GetValueOrDefault(key), politics.PartySeats.GetValueOrDefault(key),
+                game.Politics.IsPartyBanned(c, key),
+                string.Equals(politics.RulingOrganization, key, StringComparison.OrdinalIgnoreCase),
+                politics.GovernmentOrganizations.Contains(key, StringComparer.OrdinalIgnoreCase));
+        }).ToImmutableArray();
+        var governmentSupport = politics.GovernmentOrganizations
+            .Where(key => !PoliticsSystem.IsMinorityParty(key))
+            .Sum(key => politics.PartyPopularity.GetValueOrDefault(key));
+        var popSummary = game.Politics.PopsEnabled ? game.Politics.PopSummaryOf(c) : null;
+        var popGroups = game.Politics.PopsEnabled
+            ? game.Politics.PopGroupRows(c).Take(7).Select(m => new RenderPopMood(
+                m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToImmutableArray()
+            : ImmutableArray<RenderPopMood>.Empty;
+        return new RenderPoliticsOverview(c.Tag, true, game.Politics.PowerName, game.Politics.PowerOf(c),
+            game.Rules.Politics.StabilityOf(game, c), governmentSupport, politics.RulingOrganization,
+            politics.PartySeats.Values.Sum(), game.Politics.HoldsElections(c), politics.NextElection, politics.LastElection, parties,
+            popSummary?.AverageOpinion ?? 0, popSummary?.UnrestShare ?? 0,
+            popSummary?.Underground.Values.Sum() ?? 0, popGroups);
+    }
+
+    public static RenderLocation LocationRow(Game game, Location l)
+    {
+        return new RenderLocation(l.Index, l.Key, l.State?.Key, l.Owner?.Tag, l.Controller?.Tag, l.State?.Index ?? -1,
+        l.Terrain.Name, l.IsCoastal, l.Continent?.DisplayName, l.Continent?.IsOcean == true, l.State?.DisplayName, l.State?.Locations.Count ?? 0,
+        l.Owner?.Name, l.Controller?.Name, l.State?.Tax ?? 0, l.State?.Manpower ?? 0, l.SiegeProgress, l.Sieger?.Tag,
+        l.Terrain.DisplayColor, l.Continent?.Color ?? Rgb.Black,
+        game.Population.Enabled && l.State != null && game.Population.Culture(game.Population.MajorityCulture(l.State)) is { } culture ? culture.Color : Rgb.Black,
+        game.Population.Enabled && l.State != null && game.Population.Religion(game.Population.MajorityReligion(l.State)) is { } religion ? religion.Color : Rgb.Black,
+        game.Development.Enabled && l.State != null ? game.Development.Level(l.State) : 0,
+        game.Titles.Enabled && l.State != null && game.Titles.VassalOf(l.State) is { } vassal ? vassal.Country?.Color ?? Rgb.Black : l.Owner?.Color ?? Rgb.Black,
+        game.World.Player is { } mapPlayer && game.Features.HasSupply && l.IsLand ? game.Supply.SupplyAt(mapPlayer, l) : 0,
+        game.World.Player is { } airPlayer && game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } airRegion
+            ? game.Air.Superiority(airRegion, airPlayer).Share : 0,
+        game.World.Player is { } airPlayer2 && game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } contestedRegion
+            ? game.Air.Superiority(contestedRegion, airPlayer2).Contested : false,
+        game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } indexedRegion ? indexedRegion.Index + 1 : 0,
+        l.Neighbors.Count(a => a.River), l.Fort, game.World.Divisions.Count(d => d.Location == l),
+        l.IsWater, l.IsLake, l.IsOccupied, l.MapColor, game.IsVisible(l), l.CenterX, l.CenterY,
+        game.Modifiers.Of(l).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
+            Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray());
+    }
+
+    private static ImmutableArray<RenderPopulationShare> StatePopulationBreakdown(Game game, State state, Func<Pop, string?> selector, Func<string, (string Name, Rgb Color)> info, string? primary)
+        => game.Population.Breakdown(new[] { state }, selector).Select(x =>
+            new RenderPopulationShare(x.Key, info(x.Key).Name, info(x.Key).Color, x.Size,
+                x.Key.Equals(primary, StringComparison.OrdinalIgnoreCase), true)).ToImmutableArray();
+
+    public static RenderState StateRow(Game game, State s) => new RenderState(s.Key, s.Owner?.Tag, s.Tax, s.Manpower,
+        s.Cores.Select(c => c.Tag).ToImmutableArray(), s.Claims.Select(c => c.Tag).ToImmutableArray(),
+        s.Buildings.OrderBy(b => b.Key).Select(b => new RenderBuilding(b.Key, b.Value, s.Damaged.GetValueOrDefault(b.Key))).ToImmutableArray(),
+        game.Development.Enabled ? game.Development.Level(s) : 0,
+        game.Development.Enabled ? game.Development.StartLevel(s) : 0,
+        game.Development.Enabled ? game.Development.Gained(s) : 0,
+        game.Development.Enabled ? game.Development.Literacy(s) : 0,
+        game.Development.Enabled ? game.Development.Urbanization(s) : 0,
+        game.Population.Enabled ? game.Population.TotalOf(s) : 0,
+        game.Population.Enabled ? game.Population.Of(s).LastGrowth : 0,
+        game.Population.Enabled ? game.Population.Capacity(s) : 0,
+        game.Modifiers.Of(s).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
+            Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray(),
+        game.Politics.PopsEnabled && s.Owner != null
+            ? game.Politics.PopGroupRows(s.Owner, new[] { s }).Take(3).Select(m => new RenderPopMood(
+                m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToImmutableArray()
+            : ImmutableArray<RenderPopMood>.Empty,
+        game.Population.Enabled ? StatePopulationBreakdown(game, s, p => p.Culture,
+            key => (game.Population.Culture(key)?.Name ?? key, game.Population.Culture(key)?.Color ?? Rgb.Gray),
+            game.Population.MajorityCulture(s)) : ImmutableArray<RenderPopulationShare>.Empty,
+        game.Population.Enabled && game.Population.ReligionEnabled ? StatePopulationBreakdown(game, s, p => p.Religion,
+            key => (game.Population.Religion(key)?.Name ?? key, game.Population.Religion(key)?.Color ?? Rgb.Gray),
+            game.Population.MajorityReligion(s)) : ImmutableArray<RenderPopulationShare>.Empty,
+        game.Population.Enabled && game.Population.ClassesEnabled ? StatePopulationBreakdown(game, s, p => p.Type,
+            key => (game.Population.PopTypeByKey.TryGetValue(key, out var type) ? type.Name : key,
+                game.Population.PopTypeByKey.TryGetValue(key, out type) ? type.Color : Rgb.Gray), null) : ImmutableArray<RenderPopulationShare>.Empty,
+        game.Development.Enabled ? game.Development.Institutions.Where(i => game.Development.HasAppeared(i)).Select(i =>
+            new RenderInstitution(i.Key, i.Name, game.Development.Presence(i, s), game.Development.Adopted(i, s))).ToImmutableArray()
+            : ImmutableArray<RenderInstitution>.Empty);
+
+    public static RenderDiplomacyRelation RelationRow(Game game, Country diplomacyFocus, Country toCountry)
+    {
+        int kind = diplomacyFocus == toCountry ? 0 : game.World.AtWar(diplomacyFocus, toCountry) ? 1
+            : game.World.Relations.AreAllied(diplomacyFocus, toCountry) ? 2
+            : game.World.Relations.AreOverlordAndSubject(toCountry, diplomacyFocus) ? 3
+            : game.World.Relations.HasTruce(diplomacyFocus, toCountry, game.World.Date) ? 4 : 5;
+        var opinionModifiers = game.World.Relations.Opinions.TryGetValue((toCountry, diplomacyFocus), out var modifiers)
+            ? modifiers.Select(m => new RenderOpinionModifier(m.Name, m.Value)).ToImmutableArray()
+            : ImmutableArray<RenderOpinionModifier>.Empty;
+        return new RenderDiplomacyRelation(diplomacyFocus.Tag, toCountry.Tag, kind,
+            game.Diplomacy.Opinion(toCountry, diplomacyFocus), game.Diplomacy.Opinion(diplomacyFocus, toCountry),
+            game.World.AtWar(diplomacyFocus, toCountry), game.World.Relations.AreAllied(diplomacyFocus, toCountry),
+            game.World.Relations.OverlordOf(toCountry) == diplomacyFocus, game.World.Relations.OverlordOf(diplomacyFocus) == toCountry,
+            game.World.Relations.HasAccess(diplomacyFocus, toCountry), game.World.Relations.HasAccess(toCountry, diplomacyFocus),
+            game.World.Relations.IsGuaranteeing(diplomacyFocus, toCountry), game.World.Relations.IsGuaranteeing(toCountry, diplomacyFocus),
+            game.World.Relations.HasTruce(diplomacyFocus, toCountry, game.World.Date), game.World.Relations.HasPact(diplomacyFocus, toCountry, game.World.Date),
+            game.Diplomacy.LibertyDesire(toCountry), game.Diplomacy.WarExhaustion(toCountry),
+            game.Rules.Diplomacy.BaseOpinion(game, toCountry, diplomacyFocus),
+            game.Politics.IdeologyOpinion(toCountry, diplomacyFocus),
+            game.Population.ReligionOpinion(toCountry, diplomacyFocus),
+            game.Population.ColonialOpinion(toCountry, diplomacyFocus), opinionModifiers);
+    }
+
+    public static ImmutableArray<RenderDecision> DecisionRows(Game game)
+    {
+        var decisions = game.World.Player is { } decisionPlayer
+            ? game.Decisions.Defs.Values.Where(d => game.Decisions.IsVisible(d, decisionPlayer)).Select(d =>
+                new RenderDecision(d.Key, d.Name, d.Desc, d.Category, game.Decisions.CanTake(d, decisionPlayer),
+                    game.Decisions.Requirements(d, decisionPlayer).Select(r => new RenderRequirement(r.Text, r.Ok)).ToImmutableArray(),
+                    game.Decisions.DescribeEffect(d, decisionPlayer).ToImmutableArray())).ToImmutableArray()
+            : ImmutableArray<RenderDecision>.Empty;
+        return decisions;
+    }
+
+    public static (ImmutableArray<RenderFocus> Rows, string? CurrentKey, double CurrentProgress) FocusRows(Game game)
+    {
+        string? currentFocusKey = null;
+        double currentFocusProgress = 0;
+        var focuses = game.World.Player is { } focusPlayer
+            ? game.Focus.FocusesOf(focusPlayer).Select(f =>
             {
-                RenderCharacterSummary? CharacterSummary(Character? character) => character == null ? null : new RenderCharacterSummary(
-                    character.DisplayName, character.Age(game.World.Date),
-                    game.Data.Defines.CharacterStats.Select(key => new RenderCharacterStat(key, character.GetStat(key))).ToImmutableArray(),
-                    character.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray());
-                var sphere = game.GreatPowers.Enabled ? game.GreatPowers.IsGreat(c) ? c : game.GreatPowers.SphereOf(c) : null;
-                var relationRows = new List<RenderCountryRelation>();
-                foreach (var target in game.World.Countries)
-                {
-                    if (target == c || !target.Exists) continue;
-                    if (game.World.AtWar(c, target)) relationRows.Add(new RenderCountryRelation(1, target.Tag, target.Name, 0));
-                    if (game.World.Relations.AreAllied(c, target)) relationRows.Add(new RenderCountryRelation(2, target.Tag, target.Name, 0));
-                    if (game.World.Relations.OverlordOf(target) == c) relationRows.Add(new RenderCountryRelation(3, target.Tag, target.Name, game.Diplomacy.LibertyDesire(target)));
-                    if (game.World.Relations.OverlordOf(c) == target) relationRows.Add(new RenderCountryRelation(4, target.Tag, target.Name, game.Diplomacy.LibertyDesire(c)));
-                    if (game.World.Relations.IsGuaranteeing(c, target)) relationRows.Add(new RenderCountryRelation(5, target.Tag, target.Name, 0));
-                    if (game.World.Relations.IsGuaranteeing(target, c)) relationRows.Add(new RenderCountryRelation(6, target.Tag, target.Name, 0));
-                    if (game.World.Relations.HasAccess(target, c)) relationRows.Add(new RenderCountryRelation(7, target.Tag, target.Name, 0));
-                }
-                return new RenderCountry(c.Index, c.Tag, c.Name, c.Color, c.Exists, c.Playable, c.IsPlayer, c.OwnedStates.Count,
-                    c.OwnedStates.Sum(s => s.Locations.Count), divisionCounts.GetValueOrDefault(c.Tag), warCounts.GetValueOrDefault(c.Tag),
-                    game.Politics.Enabled && game.Politics.RulingIdeology(c) is { } ideology ? ideology.Color : Rgb.Black,
-                    sphere?.Color ?? new Rgb(96, 98, 104), sphere != null && game.GreatPowers.IsGreat(c),
-                    game.Resources.Defs.Where(d => d.Scope == ScopeType.Country)
-                        .Select(d => new RenderResource(d.Name, game.Resources.Get(c, d), game.Resources.MonthlyChange(c, d), d.Decimals, d.Min, d.Max, d.Desc))
-                        .ToImmutableArray(), game.Diplomacy.RelationsUsed(c), game.Diplomacy.MaxRelations(c),
-                    game.Modifiers.Of(c).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
-                    Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray(), relationRows.ToImmutableArray(),
-                    CharacterSummary(c.Ruler), CharacterSummary(c.Heir), c.Government, c.PrimaryContinent?.DisplayName);
+                var current = game.Focus.Current(focusPlayer);
+                bool done = game.Focus.IsDone(focusPlayer, f.Key);
+                double days = game.Rules.Focus.Days(game, focusPlayer, f);
+                if (current == f) { currentFocusKey = f.Key; currentFocusProgress = game.Focus.Progress(focusPlayer); }
+                string? blockReason = !done && current != f ? game.Focus.CannotStart(focusPlayer, f) : null;
+                return new RenderFocus(f.Key, f.Name, f.Desc, f.Tree.Key, f.X, f.Y, (int)Math.Round(days),
+                    f.Prerequisite.ToImmutableArray(), f.Requires.ToImmutableArray(), f.MutuallyExclusive.ToImmutableArray(), done,
+                    current == f, !done && blockReason == null, blockReason,
+                    game.Focus.Requirements(focusPlayer, f).Select(r => new RenderRequirement(r.Text, r.Ok)).ToImmutableArray(),
+                    game.Focus.DescribeReward(focusPlayer, f).ToImmutableArray());
+            }).ToImmutableArray()
+            : ImmutableArray<RenderFocus>.Empty;
+        return (focuses, currentFocusKey, currentFocusProgress);
+    }
+
+    public static ImmutableArray<RenderTechnology> TechnologyRows(Game game)
+    {
+        if (game.World.Player is not { } technologyPlayer || !game.Tech.Enabled) return ImmutableArray<RenderTechnology>.Empty;
+        var busyTechnologies = game.Tech.SlotsOf(technologyPlayer).Select(s => s.Tech.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return game.Tech.Defs.Values.Select(t => new RenderTechnology(t.Key, t.Name, t.Desc, t.Category, t.Year, t.Order,
+            game.Tech.Has(technologyPlayer, t.Key), busyTechnologies.Contains(t.Key), game.Tech.CannotResearch(technologyPlayer, t),
+            t.Requires.ToImmutableArray(), t.Unlocks.ToImmutableArray())).ToImmutableArray();
+    }
+
+    /// <summary>
+    /// What the top bar, the lists of the player's own realm and the map show: the numbers, wars, notifications, research, production, fleets, wings and trade. About a millisecond, so it can be refreshed
+    /// while the clock runs. (What the panels show of any other thing is read when they ask: see <see cref="LiveRows"/>.)
+    /// </summary>
+    public static RenderSnapshot BuildLive(Game game, RenderSnapshot previous, long tick, float hourFraction)
+    {
+        var (technologyPoints, technologySlotCount, knownTechnologyCount, researchSlots) = BuildResearch(game);
+        var (productionLines, constructionQueue, stockpile) = BuildProduction(game);
+        return BuildFast(game, previous, tick, hourFraction) with
+        {
+            VisibilityVersion = game.VisibilityVersion,
+            ExplorationVersion = game.Exploration.Version,
+            ExplorationEnabled = game.Exploration.Enabled,
+            GeoEnabled = game.Geo.Enabled,
+            GeoVersion = game.Geo.Version,
+            MapContentKey = game.World.Map.ContentKey,
+            PlayerTag = game.World.Player?.Tag,
+            Sites = BuildSites(game),
+            Fleets = BuildFleets(game),
+            AirWings = BuildAirWings(game),
+            BlockedTradeRoutes = BuildBlockedRoutes(game),
+            RecentTrades = BuildRecentTrades(game),
+            Player = BuildPlayer(game),
+            Resources = BuildResources(game),
+            Notifications = BuildNotifications(game),
+            Wars = BuildWars(game),
+            ArmyOrders = BuildArmyOrders(game),
+            ResearchSlots = researchSlots,
+            TechnologyPoints = technologyPoints,
+            TechnologySlotCount = technologySlotCount,
+            KnownTechnologyCount = knownTechnologyCount,
+            ProductionLines = productionLines,
+            ConstructionQueue = constructionQueue,
+            Stockpile = stockpile,
+            StatecraftBanners = game.World.Player is { } player ? BuildStatecraftBanners(game, player) : ImmutableArray<RenderStatecraftBanner>.Empty,
+        };
+    }
+
+    private static ImmutableArray<RenderSite> BuildSites(Game game)
+    {
+        var sites = game.Sites.Sites
+            .Where(s => s.Model != null)
+            .Select(s => new RenderSite(s.Location.Key, s.Location.CenterX, s.Location.CenterY, s.Model!.Key, game.IsVisible(s.Location)))
+            .ToImmutableArray();
+        return sites;
+    }
+
+    private static ImmutableArray<RenderFleet> BuildFleets(Game game)
+    {
+        var fleets = game.Navy.Fleets
+            .Where(f => f.Ships.Count > 0)
+            .Select(f =>
+            {
+                var next = f.Path.FirstOrDefault();
+                bool hasNext = next != null;
+                var route = f.Path.Select(l => new RenderPoint(l.CenterX, l.CenterY)).ToImmutableArray();
+                string composition = string.Join(", ", f.Ships.GroupBy(s => s.Type).Select(g => $"{g.Count()} {g.Key.Name}"));
+                return new RenderFleet(f.Id, f.Name, f.Owner.Tag, f.Location.Key, f.Location.DisplayName, composition, f.Location.CenterX, f.Location.CenterY,
+                    hasNext ? next!.CenterX : 0, hasNext ? next!.CenterY : 0, hasNext, route, f.Ships.Count, f.HpFraction,
+                    f.Retreating, f.Battle != null, f.InPort, f.Owner.Color, game.IsVisible(f.Location));
             })
             .ToImmutableArray();
-        var characters = game.World.Characters
-            .Select(ch => new RenderCharacter(ch.Id, ch.DisplayName, ch.Country?.Tag, ch.Age(game.World.Date), ch.Female, ch.Alive, ch.Loyalty, ch.Health,
-                game.Data.Defines.CharacterStats.Select(key => new RenderCharacterStat(key, ch.GetStat(key))).ToImmutableArray(),
-                ch.Traits.Select(t => Localisation.Get(t.Name)).ToImmutableArray()))
+        return fleets;
+    }
+
+    private static ImmutableArray<RenderAirWing> BuildAirWings(Game game)
+    {
+        var airWings = game.Air.Wings
+            .Select(w => new RenderAirWing(w.Id, w.Name, w.Owner.Tag, w.Base.Key, w.Type.Name, w.Base.Locations.Count == 0 ? 0 : w.Base.Locations.Average(l => l.CenterX),
+                w.Base.Locations.Count == 0 ? 0 : w.Base.Locations.Average(l => l.CenterY), w.Planes, w.Active,
+                w.Mission.ToString(), w.Region?.DisplayName))
             .ToImmutableArray();
-        var politicsOverviews = game.Politics.Enabled
-            ? game.World.Countries.Where(c => c.Exists).Select(c =>
+        return airWings;
+    }
+
+    private static ImmutableArray<RenderTradeRoute> BuildBlockedRoutes(Game game)
+    {
+        var blockedTradeRoutes = game.TradeNetwork.BlockadedRoutes
+            .Where(r => r.From.Locations.Count > 0 && r.To.Locations.Count > 0)
+            .Select(r => (From: r.From.Locations.FirstOrDefault(l => l.IsLand) ?? r.From.Locations[0], To: r.To.Locations.FirstOrDefault(l => l.IsLand) ?? r.To.Locations[0], Route: r))
+            .Select(x => new RenderTradeRoute(x.From.CenterX, x.From.CenterY, x.To.CenterX, x.To.CenterY, x.Route.From.DisplayName, x.Route.To.DisplayName, x.Route.DistanceKm, x.Route.Capacity))
+            .ToImmutableArray();
+        return blockedTradeRoutes;
+    }
+
+    private static ImmutableArray<RenderTradeTransaction> BuildRecentTrades(Game game)
+    {
+        var recentTrades = game.TradeNetwork.RecentHistory(24)
+            .Where(t => t.From.Locations.Count > 0 && t.To.Locations.Count > 0)
+            .Select((t, i) =>
             {
-                var politics = game.Politics.Of(c);
-                var partyKeys = game.Politics.PartyKeysOf(c)
-                    .Union(politics.PartyPopularity.Keys, StringComparer.OrdinalIgnoreCase)
-                    .OrderByDescending(key => politics.PartyPopularity.GetValueOrDefault(key))
-                    .ThenByDescending(key => politics.PartySeats.GetValueOrDefault(key))
-                    .ThenBy(key => game.Politics.PartyDisplayName(c, key), StringComparer.OrdinalIgnoreCase);
-                var parties = partyKeys.Select(key =>
-                {
-                    var ideology = game.Politics.Ideology(game.Politics.IdeologyKeyOfParty(key));
-                    var leader = game.Politics.LeaderOf(game.World.GetGenericScope(key));
-                    return new RenderPoliticsParty(key, game.Politics.PartyDisplayName(c, key), game.Politics.PartyColor(key),
-                        ideology?.Name ?? "Unaligned", leader?.DisplayName,
-                        politics.PartyPopularity.GetValueOrDefault(key), politics.PartySeats.GetValueOrDefault(key),
-                        game.Politics.IsPartyBanned(c, key),
-                        string.Equals(politics.RulingOrganization, key, StringComparison.OrdinalIgnoreCase),
-                        politics.GovernmentOrganizations.Contains(key, StringComparer.OrdinalIgnoreCase));
-                }).ToImmutableArray();
-                var governmentSupport = politics.GovernmentOrganizations
-                    .Where(key => !PoliticsSystem.IsMinorityParty(key))
-                    .Sum(key => politics.PartyPopularity.GetValueOrDefault(key));
-                var popSummary = game.Politics.PopsEnabled ? game.Politics.PopSummaryOf(c) : null;
-                var popGroups = game.Politics.PopsEnabled
-                    ? game.Politics.PopGroupRows(c).Take(7).Select(m => new RenderPopMood(
-                        m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToImmutableArray()
-                    : ImmutableArray<RenderPopMood>.Empty;
-                return new RenderPoliticsOverview(c.Tag, true, game.Politics.PowerName, game.Politics.PowerOf(c),
-                    game.Rules.Politics.StabilityOf(game, c), governmentSupport, politics.RulingOrganization,
-                    politics.PartySeats.Values.Sum(), game.Politics.HoldsElections(c), politics.NextElection, politics.LastElection, parties,
-                    popSummary?.AverageOpinion ?? 0, popSummary?.UnrestShare ?? 0,
-                    popSummary?.Underground.Values.Sum() ?? 0, popGroups);
-            }).ToImmutableArray()
-            : ImmutableArray<RenderPoliticsOverview>.Empty;
-        var statecraftBanners = game.World.Player is { } bannerPlayer
-            ? BuildStatecraftBanners(game, bannerPlayer)
-            : ImmutableArray<RenderStatecraftBanner>.Empty;
+                var from = t.From.Locations.FirstOrDefault(l => l.IsLand) ?? t.From.Locations[0];
+                var to = t.To.Locations.FirstOrDefault(l => l.IsLand) ?? t.To.Locations[0];
+                return new RenderTradeTransaction($"{t.Date.TotalDays}:{i}:{t.Commodity}:{t.From.Index}:{t.To.Index}", from.CenterX, from.CenterY, to.CenterX, to.CenterY,
+                    t.Commodity, t.Quantity, t.Seller.Name, t.Buyer.Name, t.RouteKind.ToString(), t.DistanceKm, t.TransportCost, t.Price, t.Tariff);
+            })
+            .ToImmutableArray();
+        return recentTrades;
+    }
+
+    private static RenderPlayer? BuildPlayer(Game game)
+    {
         RenderPlayer? playerSnapshot = null;
         if (game.World.Player is { } player)
         {
@@ -424,195 +648,28 @@ public static class RenderSnapshotBuilder
                 mobilisedDaysLeft, hasLevies, cultureBreakdown, religionBreakdown, classBreakdown,
                 game.World.Divisions.Count(d => d.Owner == player && d.VolunteerFrom == null && !d.InBattle));
         }
-        int geoDay = game.World.Date.TotalDays;
-        var geoProvinceIndices = game.Geo.Enabled
-            ? game.Geo.Snapshot(geoDay).Provinces.Select((p, i) => (p.Id, Index: i + 1)).ToDictionary(x => x.Id, x => x.Index, StringComparer.Ordinal)
-            : new Dictionary<string, int>(StringComparer.Ordinal);
-        (bool Has, Rgb Time, Rgb Province, int Index, bool Hatched) Geo(Location l)
-        {
-            if (!game.Geo.Enabled || !l.IsLand) return (false, Rgb.Black, Rgb.Black, 0, false);
-            var border = BorderView.At(game.Geo, l.Key, geoDay);
-            var owner = border?.Owner is { } ownerTag ? game.World.GetCountry(ownerTag) : null;
-            var province = game.Geo.ProvinceOfAtom(l.Key, geoDay);
-            int index = province != null && geoProvinceIndices.TryGetValue(province.Id, out var provinceIndex) ? provinceIndex : 0;
-            var provinceOwner = province != null && game.Geo.Owner(province.Id, geoDay) is { } provinceOwnerTag ? game.World.GetCountry(provinceOwnerTag) : null;
-            Rgb provinceColor = provinceOwner?.Color ?? new Rgb(120, 120, 120);
-            if (index > 0)
-            {
-                double shade = 0.78 + 0.22 * ((index * 0.6180339) % 1);
-                provinceColor = new Rgb((int)(provinceColor.R * shade), (int)(provinceColor.G * shade), (int)(provinceColor.B * shade));
-            }
-            return (true, owner?.Color ?? new Rgb(120, 120, 120), provinceColor, index, border != null && BorderControl.Hatched(border.Control));
-        }
-        var locationDivisionCounts = game.World.Divisions.GroupBy(d => d.Location.Index).ToDictionary(g => g.Key, g => g.Count());
-        var locations = game.World.Locations
-            .Select(l =>
-            {
-                var geo = Geo(l);
-                return new RenderLocation(l.Index, l.Key, l.State?.Key, l.Owner?.Tag, l.Controller?.Tag, l.State?.Index ?? -1,
-                l.Terrain.Name, l.IsCoastal, l.Continent?.DisplayName, l.Continent?.IsOcean == true, l.State?.DisplayName, l.State?.Locations.Count ?? 0,
-                l.Owner?.Name, l.Controller?.Name, l.State?.Tax ?? 0, l.State?.Manpower ?? 0, l.SiegeProgress, l.Sieger?.Tag,
-                l.Terrain.DisplayColor, l.Continent?.Color ?? Rgb.Black,
-                game.Population.Enabled && l.State != null && game.Population.Culture(game.Population.MajorityCulture(l.State)) is { } culture ? culture.Color : Rgb.Black,
-                game.Population.Enabled && l.State != null && game.Population.Religion(game.Population.MajorityReligion(l.State)) is { } religion ? religion.Color : Rgb.Black,
-                game.Development.Enabled && l.State != null ? game.Development.Level(l.State) : 0,
-                game.Titles.Enabled && l.State != null && game.Titles.VassalOf(l.State) is { } vassal ? vassal.Country?.Color ?? Rgb.Black : l.Owner?.Color ?? Rgb.Black,
-                game.World.Player is { } mapPlayer && game.Features.HasSupply && l.IsLand ? game.Supply.SupplyAt(mapPlayer, l) : 0,
-                game.World.Player is { } airPlayer && game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } airRegion
-                    ? game.Air.Superiority(airRegion, airPlayer).Share : 0,
-                game.World.Player is { } airPlayer2 && game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } contestedRegion
-                    ? game.Air.Superiority(contestedRegion, airPlayer2).Contested : false,
-                game.Features.Has(Burger.Core.Modding.FeatureSet.Air) && l.IsLand && game.Air.RegionOf(l) is { } indexedRegion ? indexedRegion.Index + 1 : 0,
-                geo.Has, geo.Time, geo.Province, geo.Index, geo.Hatched,
-                l.Neighbors.Count(a => a.River), l.Fort, locationDivisionCounts.GetValueOrDefault(l.Index),
-                l.IsWater, l.IsLake, l.IsOccupied, l.MapColor, game.IsVisible(l), l.CenterX, l.CenterY,
-                game.Modifiers.Of(l).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
-                    Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray());
-            })
-            .ToImmutableArray();
-        ImmutableArray<RenderPopulationShare> StatePopulationBreakdown(State state, Func<Pop, string?> selector, Func<string, (string Name, Rgb Color)> info, string? primary)
-            => game.Population.Breakdown(new[] { state }, selector).Select(x =>
-                new RenderPopulationShare(x.Key, info(x.Key).Name, info(x.Key).Color, x.Size,
-                    x.Key.Equals(primary, StringComparison.OrdinalIgnoreCase), true)).ToImmutableArray();
-        var states = game.World.States
-            .Select(s => new RenderState(s.Key, s.Owner?.Tag, s.Tax, s.Manpower,
-                s.Cores.Select(c => c.Tag).ToImmutableArray(), s.Claims.Select(c => c.Tag).ToImmutableArray(),
-                s.Buildings.OrderBy(b => b.Key).Select(b => new RenderBuilding(b.Key, b.Value, s.Damaged.GetValueOrDefault(b.Key))).ToImmutableArray(),
-                game.Development.Enabled ? game.Development.Level(s) : 0,
-                game.Development.Enabled ? game.Development.StartLevel(s) : 0,
-                game.Development.Enabled ? game.Development.Gained(s) : 0,
-                game.Development.Enabled ? game.Development.Literacy(s) : 0,
-                game.Development.Enabled ? game.Development.Urbanization(s) : 0,
-                game.Population.Enabled ? game.Population.TotalOf(s) : 0,
-                game.Population.Enabled ? game.Population.Of(s).LastGrowth : 0,
-                game.Population.Enabled ? game.Population.Capacity(s) : 0,
-                game.Modifiers.Of(s).Where(m => !m.Def.Hidden).Select(m => new RenderModifier(
-                    Localisation.Get(m.Def.Name), Localisation.Get(m.Def.Desc), game.Modifiers.Describe(m.Def), m.Expires?.ToDisplay())).ToImmutableArray(),
-                game.Politics.PopsEnabled && s.Owner != null
-                    ? game.Politics.PopGroupRows(s.Owner, new[] { s }).Take(3).Select(m => new RenderPopMood(
-                        m.Name, m.Size, m.Reaction, m.Opinion, m.Objective, m.Grievance, m.Radicalism, m.PreferredParty)).ToImmutableArray()
-                    : ImmutableArray<RenderPopMood>.Empty,
-                game.Population.Enabled ? StatePopulationBreakdown(s, p => p.Culture,
-                    key => (game.Population.Culture(key)?.Name ?? key, game.Population.Culture(key)?.Color ?? Rgb.Gray),
-                    game.Population.MajorityCulture(s)) : ImmutableArray<RenderPopulationShare>.Empty,
-                game.Population.Enabled && game.Population.ReligionEnabled ? StatePopulationBreakdown(s, p => p.Religion,
-                    key => (game.Population.Religion(key)?.Name ?? key, game.Population.Religion(key)?.Color ?? Rgb.Gray),
-                    game.Population.MajorityReligion(s)) : ImmutableArray<RenderPopulationShare>.Empty,
-                game.Population.Enabled && game.Population.ClassesEnabled ? StatePopulationBreakdown(s, p => p.Type,
-                    key => (game.Population.PopTypeByKey.TryGetValue(key, out var type) ? type.Name : key,
-                        game.Population.PopTypeByKey.TryGetValue(key, out type) ? type.Color : Rgb.Gray), null) : ImmutableArray<RenderPopulationShare>.Empty,
-                game.Development.Enabled ? game.Development.Institutions.Where(i => game.Development.HasAppeared(i)).Select(i =>
-                    new RenderInstitution(i.Key, i.Name, game.Development.Presence(i, s), game.Development.Adopted(i, s))).ToImmutableArray()
-                    : ImmutableArray<RenderInstitution>.Empty))
-            .ToImmutableArray();
-        var divisions = game.World.Divisions
-            .Select(d =>
-            {
-                var next = d.Path.FirstOrDefault();
-                bool hasNext = next != null && next.IsLand;
-                var route = d.Path.Where(l => l.IsLand).Select(l => new RenderPoint(l.CenterX, l.CenterY)).ToImmutableArray();
-                var model = game.Figures.SoldierFor(d);
-                return new RenderDivision(d.Id, d.Owner.Tag, d.Location.Key, d.Location.CenterX, d.Location.CenterY,
-                    hasNext ? next!.CenterX : 0, hasNext ? next!.CenterY : 0, hasNext, d.Location.IsWater, model.Key,
-                    d.Name, d.Template.Name, d.Location.DisplayName, d.Army?.Name, d.Strength, d.MaxStrength, d.Org, d.MaxOrg,
-                    d.StrengthFraction, d.OrgFraction, d.Supply, route, d.InBattle, d.IsMoving, d.Retreating);
-            })
-            .ToImmutableArray();
-        var armySummaries = game.World.Armies.Select(a => new RenderArmySummary(a.Id, a.Name, a.Owner.Tag,
-            a.General?.DisplayName, a.General != null ? a.General.GetStat(game.Data.Defines.GeneralStat) : 0,
-            a.Divisions.Count, a.Divisions.Count == 0 ? 0 : a.Divisions.Average(d => d.StrengthFraction), a.Mode.ToString(),
-            a.FrontEnemy?.Tag, a.FrontEnemy?.Name, a.Objective?.DisplayName, a.Fallback.Count,
-            a.MoveTarget?.DisplayName, a.Divisions.FirstOrDefault()?.Location.DisplayName,
-            a.Divisions.Count == 0 ? 0 : a.Divisions.Average(d => d.Supply))).ToImmutableArray();
-        var sites = game.Sites.Sites
-            .Where(s => s.Model != null)
-            .Select(s => new RenderSite(s.Location.Key, s.Location.CenterX, s.Location.CenterY, s.Model!.Key, game.IsVisible(s.Location)))
-            .ToImmutableArray();
-        var fleets = game.Navy.Fleets
-            .Where(f => f.Ships.Count > 0)
-            .Select(f =>
-            {
-                var next = f.Path.FirstOrDefault();
-                bool hasNext = next != null;
-                var route = f.Path.Select(l => new RenderPoint(l.CenterX, l.CenterY)).ToImmutableArray();
-                string composition = string.Join(", ", f.Ships.GroupBy(s => s.Type).Select(g => $"{g.Count()} {g.Key.Name}"));
-                return new RenderFleet(f.Id, f.Name, f.Owner.Tag, f.Location.Key, f.Location.DisplayName, composition, f.Location.CenterX, f.Location.CenterY,
-                    hasNext ? next!.CenterX : 0, hasNext ? next!.CenterY : 0, hasNext, route, f.Ships.Count, f.HpFraction,
-                    f.Retreating, f.Battle != null, f.InPort);
-            })
-            .ToImmutableArray();
-        var airWings = game.Air.Wings
-            .Select(w => new RenderAirWing(w.Id, w.Name, w.Owner.Tag, w.Base.Key, w.Type.Name, w.Base.Locations.Count == 0 ? 0 : w.Base.Locations.Average(l => l.CenterX),
-                w.Base.Locations.Count == 0 ? 0 : w.Base.Locations.Average(l => l.CenterY), w.Planes, w.Active,
-                w.Mission.ToString(), w.Region?.DisplayName))
-            .ToImmutableArray();
-        var blockedTradeRoutes = game.TradeNetwork.BlockadedRoutes
-            .Where(r => r.From.Locations.Count > 0 && r.To.Locations.Count > 0)
-            .Select(r => (From: r.From.Locations.FirstOrDefault(l => l.IsLand) ?? r.From.Locations[0], To: r.To.Locations.FirstOrDefault(l => l.IsLand) ?? r.To.Locations[0], Route: r))
-            .Select(x => new RenderTradeRoute(x.From.CenterX, x.From.CenterY, x.To.CenterX, x.To.CenterY, x.Route.From.DisplayName, x.Route.To.DisplayName, x.Route.DistanceKm, x.Route.Capacity))
-            .ToImmutableArray();
-        var recentTrades = game.TradeNetwork.RecentHistory(24)
-            .Where(t => t.From.Locations.Count > 0 && t.To.Locations.Count > 0)
-            .Select((t, i) =>
-            {
-                var from = t.From.Locations.FirstOrDefault(l => l.IsLand) ?? t.From.Locations[0];
-                var to = t.To.Locations.FirstOrDefault(l => l.IsLand) ?? t.To.Locations[0];
-                return new RenderTradeTransaction($"{t.Date.TotalDays}:{i}:{t.Commodity}:{t.From.Index}:{t.To.Index}", from.CenterX, from.CenterY, to.CenterX, to.CenterY,
-                    t.Commodity, t.Quantity, t.Seller.Name, t.Buyer.Name, t.RouteKind.ToString(), t.DistanceKm, t.TransportCost, t.Price, t.Tariff);
-            })
-            .ToImmutableArray();
+        return playerSnapshot;
+    }
+
+    private static ImmutableArray<RenderResource> BuildResources(Game game)
+    {
         var resources = game.World.Player is { } resourcePlayer
             ? game.Resources.Defs.Where(d => d.TopBar && d.Scope == ScopeType.Country)
                 .Select(d => new RenderResource(d.Name, game.Resources.Get(resourcePlayer, d), game.Resources.MonthlyChange(resourcePlayer, d), d.Decimals, d.Min, d.Max, d.Desc))
                 .ToImmutableArray()
             : ImmutableArray<RenderResource>.Empty;
-        var commodityBalances = game.Commodities.Defs.Values
-            .Where(def => def.IsActive(game.World.Date))
-            .SelectMany(def => game.World.Countries.Where(c => c.Exists).Select(country =>
-            {
-                var balance = game.Commodities.BalanceOf(country, def.Key);
-                return new RenderCommodityBalance(country.Tag, def.Key, balance.Output, balance.Import, balance.Export,
-                    balance.Demand, balance.PopulationUse, balance.MilitaryUse, balance.Stockpile, balance.Price, balance.Satisfied);
-            })).ToImmutableArray();
-        var decisions = game.World.Player is { } decisionPlayer
-            ? game.Decisions.Defs.Values.Where(d => game.Decisions.IsVisible(d, decisionPlayer)).Select(d =>
-                new RenderDecision(d.Key, d.Name, d.Desc, d.Category, game.Decisions.CanTake(d, decisionPlayer),
-                    game.Decisions.Requirements(d, decisionPlayer).Select(r => new RenderRequirement(r.Text, r.Ok)).ToImmutableArray(),
-                    game.Decisions.DescribeEffect(d, decisionPlayer).ToImmutableArray())).ToImmutableArray()
-            : ImmutableArray<RenderDecision>.Empty;
-        string? currentFocusKey = null;
-        double currentFocusProgress = 0;
-        var focuses = game.World.Player is { } focusPlayer
-            ? game.Focus.FocusesOf(focusPlayer).Select(f =>
-            {
-                var current = game.Focus.Current(focusPlayer);
-                bool done = game.Focus.IsDone(focusPlayer, f.Key);
-                double days = game.Rules.Focus.Days(game, focusPlayer, f);
-                if (current == f) { currentFocusKey = f.Key; currentFocusProgress = game.Focus.Progress(focusPlayer); }
-                string? blockReason = !done && current != f ? game.Focus.CannotStart(focusPlayer, f) : null;
-                return new RenderFocus(f.Key, f.Name, f.Desc, f.Tree.Key, f.X, f.Y, (int)Math.Round(days),
-                    f.Prerequisite.ToImmutableArray(), f.Requires.ToImmutableArray(), f.MutuallyExclusive.ToImmutableArray(), done,
-                    current == f, !done && blockReason == null, blockReason,
-                    game.Focus.Requirements(focusPlayer, f).Select(r => new RenderRequirement(r.Text, r.Ok)).ToImmutableArray(),
-                    game.Focus.DescribeReward(focusPlayer, f).ToImmutableArray());
-            }).ToImmutableArray()
-            : ImmutableArray<RenderFocus>.Empty;
-        double technologyPoints = 0;
-        int technologySlotCount = 0, knownTechnologyCount = 0;
-        var researchSlots = ImmutableArray<RenderResearchSlot>.Empty;
-        var technologies = ImmutableArray<RenderTechnology>.Empty;
-        if (game.World.Player is { } technologyPlayer && game.Tech.Enabled)
-        {
-            technologyPoints = game.Rules.Tech.MonthlyPoints(game, technologyPlayer);
-            technologySlotCount = game.Rules.Tech.Slots(game, technologyPlayer);
-            knownTechnologyCount = game.Tech.Count(technologyPlayer);
-            var liveSlots = game.Tech.SlotsOf(technologyPlayer).ToList();
-            var busyTechnologies = liveSlots.Select(s => s.Tech.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            researchSlots = liveSlots.Select(s => new RenderResearchSlot(s.Tech.Key, s.Tech.Name, s.Progress, game.Rules.Tech.Cost(game, technologyPlayer, s.Tech))).ToImmutableArray();
-            technologies = game.Tech.Defs.Values.Select(t => new RenderTechnology(t.Key, t.Name, t.Desc, t.Category, t.Year, t.Order,
-                game.Tech.Has(technologyPlayer, t.Key), busyTechnologies.Contains(t.Key), game.Tech.CannotResearch(technologyPlayer, t),
-                t.Requires.ToImmutableArray(), t.Unlocks.ToImmutableArray())).ToImmutableArray();
-        }
+        return resources;
+    }
+
+    private static (double Points, int Slots, int Known, ImmutableArray<RenderResearchSlot> Research) BuildResearch(Game game)
+    {
+        if (game.World.Player is not { } technologyPlayer || !game.Tech.Enabled) return (0, 0, 0, ImmutableArray<RenderResearchSlot>.Empty);
+        return (game.Rules.Tech.MonthlyPoints(game, technologyPlayer), game.Rules.Tech.Slots(game, technologyPlayer), game.Tech.Count(technologyPlayer),
+            game.Tech.SlotsOf(technologyPlayer).Select(s => new RenderResearchSlot(s.Tech.Key, s.Tech.Name, s.Progress, game.Rules.Tech.Cost(game, technologyPlayer, s.Tech))).ToImmutableArray());
+    }
+
+    private static (ImmutableArray<RenderProductionLine> Lines, ImmutableArray<RenderConstructionItem> Construction, ImmutableArray<RenderStockpileItem> Stockpile) BuildProduction(Game game)
+    {
         var productionLines = ImmutableArray<RenderProductionLine>.Empty;
         var constructionQueue = ImmutableArray<RenderConstructionItem>.Empty;
         var stockpile = ImmutableArray<RenderStockpileItem>.Empty;
@@ -629,6 +686,11 @@ public static class RenderSnapshotBuilder
             stockpile = game.Data.Equipment.Values.Select(e => new RenderStockpileItem(e.Key, e.Name, game.Production.Stock(productionPlayer, e.Key),
                 produced.GetValueOrDefault(e.Key), shortage.GetValueOrDefault(e.Key))).ToImmutableArray();
         }
+        return (productionLines, constructionQueue, stockpile);
+    }
+
+    private static ImmutableArray<RenderArmyOrder> BuildArmyOrders(Game game)
+    {
         var armyOrders = game.World.Armies.Select(army => new RenderArmyOrder(
             army.Id, army.Name, army.Owner.Tag, army.Mode.ToString(), army.FrontEnemy != null,
             army.FrontPairs.Select(pair =>
@@ -639,8 +701,18 @@ public static class RenderSnapshotBuilder
             army.Fallback.Select(l => new RenderPoint(l.CenterX, l.CenterY)).ToImmutableArray(),
             army.FrontLimit.Select(l => new RenderPoint(l.CenterX, l.CenterY)).ToImmutableArray(),
             army.Objective is { } objective, army.Objective?.CenterX ?? 0, army.Objective?.CenterY ?? 0)).ToImmutableArray();
+        return armyOrders;
+    }
+
+    private static ImmutableArray<RenderNotification> BuildNotifications(Game game)
+    {
         var notifications = game.Notifications.TakeLast(12).Select(note => new RenderNotification(
             note.Date, note.Text, note.Kind, note.Location?.Key, note.Location?.CenterX ?? 0, note.Location?.CenterY ?? 0)).ToImmutableArray();
+        return notifications;
+    }
+
+    private static ImmutableArray<RenderWar> BuildWars(Game game)
+    {
         var playerForWars = game.World.Player;
         var wars = game.World.Wars.Select(war =>
         {
@@ -653,31 +725,12 @@ public static class RenderSnapshotBuilder
                 attackers, defenders, goals, war.StartDate, war.WarScore, war.BattleScore, war.TickingScore, war.LastChangeDay,
                 game.Diplomacy.MaxWarExhaustion, playerForWars != null && war.Involves(playerForWars), war.Vars.HasFlag("civil_war"));
         }).ToImmutableArray();
-        var diplomacyRelations = game.World.Player is { } diplomacyFocus
-            ? countries.Select(to =>
-            {
-                var toCountry = game.World.GetCountry(to.Tag)!;
-                int kind = diplomacyFocus.Tag == to.Tag ? 0 : game.World.AtWar(diplomacyFocus, toCountry) ? 1
-                    : game.World.Relations.AreAllied(diplomacyFocus, toCountry) ? 2
-                    : game.World.Relations.AreOverlordAndSubject(toCountry, diplomacyFocus) ? 3
-                    : game.World.Relations.HasTruce(diplomacyFocus, toCountry, game.World.Date) ? 4 : 5;
-                var opinionModifiers = game.World.Relations.Opinions.TryGetValue((toCountry, diplomacyFocus), out var modifiers)
-                    ? modifiers.Select(m => new RenderOpinionModifier(m.Name, m.Value)).ToImmutableArray()
-                    : ImmutableArray<RenderOpinionModifier>.Empty;
-                return new RenderDiplomacyRelation(diplomacyFocus.Tag, to.Tag, kind,
-                    game.Diplomacy.Opinion(toCountry, diplomacyFocus), game.Diplomacy.Opinion(diplomacyFocus, toCountry),
-                    game.World.AtWar(diplomacyFocus, toCountry), game.World.Relations.AreAllied(diplomacyFocus, toCountry),
-                    game.World.Relations.OverlordOf(toCountry) == diplomacyFocus, game.World.Relations.OverlordOf(diplomacyFocus) == toCountry,
-                    game.World.Relations.HasAccess(diplomacyFocus, toCountry), game.World.Relations.HasAccess(toCountry, diplomacyFocus),
-                    game.World.Relations.IsGuaranteeing(diplomacyFocus, toCountry), game.World.Relations.IsGuaranteeing(toCountry, diplomacyFocus),
-                    game.World.Relations.HasTruce(diplomacyFocus, toCountry, game.World.Date), game.World.Relations.HasPact(diplomacyFocus, toCountry, game.World.Date),
-                    game.Diplomacy.LibertyDesire(toCountry), game.Diplomacy.WarExhaustion(toCountry),
-                    game.Rules.Diplomacy.BaseOpinion(game, toCountry, diplomacyFocus),
-                    game.Politics.IdeologyOpinion(toCountry, diplomacyFocus),
-                    game.Population.ReligionOpinion(toCountry, diplomacyFocus),
-                    game.Population.ColonialOpinion(toCountry, diplomacyFocus), opinionModifiers);
-            }).ToImmutableArray()
-            : ImmutableArray<RenderDiplomacyRelation>.Empty;
+        return wars;
+    }
+
+    /// <summary>The effects the game has asked for since the last snapshot: each is in one snapshot only.</summary>
+    private static ImmutableArray<RenderParticleEvent> TakeParticleEvents(Game game)
+    {
         var particleEvents = new List<RenderParticleEvent>();
         while (game.Particles.TryTake(out var request))
         {
@@ -694,11 +747,7 @@ public static class RenderSnapshotBuilder
                     break;
             }
         }
-        var newlyChartedLocations = game.Exploration.DrainRevealed().ToImmutableArray();
-        return new RenderSnapshot(tick, game.World.Date, hourFraction, game.VisibilityVersion, game.Exploration.Version, game.Exploration.Enabled, newlyChartedLocations,
-            game.Geo.Enabled, game.Geo.Version,
-            game.Clock.Speed, game.Clock.Paused, game.Clock.ActualDaysPerSecond, game.World.Map.ContentKey,
-            game.World.Player?.Tag, playerSnapshot, countries, characters, locations, states, divisions, armySummaries, sites, fleets, airWings, blockedTradeRoutes, recentTrades, resources, commodityBalances, decisions, focuses, currentFocusKey, currentFocusProgress, technologies, researchSlots, technologyPoints, technologySlotCount, knownTechnologyCount, productionLines, constructionQueue, stockpile, armyOrders, notifications, wars, diplomacyRelations, particleEvents.ToImmutableArray(), politicsOverviews, statecraftBanners);
+        return particleEvents.Count == 0 ? ImmutableArray<RenderParticleEvent>.Empty : particleEvents.ToImmutableArray();
     }
 
     private static ImmutableArray<RenderStatecraftBanner> BuildStatecraftBanners(Game game, Country player)

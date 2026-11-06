@@ -42,7 +42,7 @@ public sealed class CountryLabels
     private sealed record LocationInput(int Index, int OwnerIndex, bool IsWater, int PixelCount,
         float CenterX, float CenterY, int MinX, int MinY, int MaxX, int MaxY, int[] LandNeighbors);
     private sealed record CountryInput(int Index, string Tag, string Name, int CapitalIndex);
-    private sealed record BuildInput(int Version, int Width, int Height, int[] PixelLocation,
+    private sealed record BuildInput(int Version, int Width, int Height, Burger.Core.Map.PixelLocations PixelLocation,
         LocationInput[] Locations, Dictionary<int, CountryInput> CountryByIndex, Label[] Previous, bool Quick);
     private sealed record BuildResult(int Version, Label[] Labels, bool Full);
     private sealed class Job
@@ -135,6 +135,7 @@ public sealed class CountryLabels
             }
             _labels.Clear();
             _labels.AddRange(labels);
+            _labelsVersion++;
             _fullLayoutPending = !fromCache;
             Log.Info($"Country names laid out in {swl.ElapsedMilliseconds} ms ({labels.Length} names, {(fromCache ? "from the cache" : "new")})");
             _lastBuildStartedAt = Raylib.GetTime();
@@ -326,8 +327,6 @@ public sealed class CountryLabels
     {
         var world = _game.World;
         var map = world.Map;
-        var snapshot = _snapshotProvider?.Invoke();
-        var snapshotCountries = snapshot?.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
         _landNeighbors ??= world.Locations.Select(l => l.Neighbors.Where(a => a.Kind != AdjacencyKind.Sea).Select(a => a.To.Index).ToArray()).ToArray();   // (the neighbours do not change once the map is loaded)
         var locations = new LocationInput[world.Locations.Count];
         foreach (var l in world.Locations)
@@ -335,20 +334,12 @@ public sealed class CountryLabels
             // Adjacency and province geometry do not change after map load; only owner/name/capital
             // state is copied here. PixelLocation is likewise immutable after MapLoader finishes.
             int[] landNeighbors = _landNeighbors[l.Index];
-            int ownerIndex = l.Owner?.Index ?? -1;
-            if (snapshot != null && (uint)l.Index < (uint)snapshot.Locations.Length)
-            {
-                var renderLocation = snapshot.Locations[l.Index];
-                ownerIndex = renderLocation.IsCharted && renderLocation.OwnerTag != null && snapshotCountries != null && snapshotCountries.TryGetValue(renderLocation.OwnerTag, out var renderCountry)
-                    ? renderCountry.Index : -1;
-            }
+            int ownerIndex = (_game.Exploration.IsCharted(l) ? l.Owner?.Index : null) ?? -1;
             locations[l.Index] = new LocationInput(l.Index, ownerIndex, l.IsWater,
                 l.PixelCount, l.CenterX, l.CenterY, l.MinX, l.MinY, l.MaxX, l.MaxY, landNeighbors);
         }
         var countries = world.Countries.Where(c => c.Exists)
-            .Select(c => new CountryInput(c.Index, c.Tag,
-                snapshotCountries != null && snapshotCountries.TryGetValue(c.Tag, out var renderCountry) ? renderCountry.Name : c.Name,
-                c.Capital?.Index ?? -1)).ToArray();
+            .Select(c => new CountryInput(c.Index, c.Tag, c.Name, c.Capital?.Index ?? -1)).ToArray();
         return new BuildInput(version, map.Width, map.Height, map.PixelLocation, locations,
             countries.ToDictionary(c => c.Index), _labels.ToArray(), quick);
     }
@@ -366,6 +357,7 @@ public sealed class CountryLabels
                 foreach (var l in result.Labels) if (l.FromPoints != null && l.MorphAt < 0) l.MorphAt = now0;
                 _labels.Clear();
                 _labels.AddRange(result.Labels);
+                _labelsVersion++;
                 // Publish the most recent completed snapshot even if newer map changes arrived while
                 // it was being built; retain it until a coalesced follow-up is ready.
                 _dirty = result.Version != _version;
@@ -1031,7 +1023,7 @@ public sealed class CountryLabels
     /// </summary>
     private void PollChanges()
     {
-        if (++_pollFrame % 15 != 0) return;
+        if (++_pollFrame % 30 != 0) return;
         _game.RefreshNames();
         var h = new HashCode();
         foreach (var c in _game.World.Countries)
@@ -1039,44 +1031,56 @@ public sealed class CountryLabels
             if (!c.Exists) continue;
             h.Add(c.Index); h.Add(c.Name); h.Add(c.Capital?.Index ?? -1);
         }
-        foreach (var l in _game.World.Locations) h.Add(l.Owner?.Index ?? -1);
+        foreach (var st in _game.World.States) h.Add(st.Owner?.Index ?? -1);   // (a location's state only changes with a change of the map)
         int sig = h.ToHashCode();
         if (sig != _signature) { _signature = sig; MarkDirty(); }
     }
 
-    private readonly Dictionary<int, Dictionary<char, float>> _advBySize = new();   // glyph advances by pixel size, kept between frames
     private float[] _adv = new float[64];
-    private static readonly Dictionary<char, IntPtr> GlyphText = new();
-    private static unsafe sbyte* GlyphZ(char ch)
-    {
-        if (!GlyphText.TryGetValue(ch, out var ptr))
-        {
-            var bytes = System.Text.Encoding.UTF8.GetBytes(ch.ToString());
-            ptr = System.Runtime.InteropServices.Marshal.AllocHGlobal(bytes.Length + 1);
-            System.Runtime.InteropServices.Marshal.Copy(bytes, 0, ptr, bytes.Length);
-            System.Runtime.InteropServices.Marshal.WriteByte(ptr, bytes.Length, 0);
-            GlyphText[ch] = ptr;
-        }
-        return (sbyte*)ptr;
-    }
-
-    public unsafe void Draw(Camera3D cam, float minScreenFont = 3f)
+    /// <summary>Takes in a finished layout and starts the next if the map changed. Call with the world held: it reads the game.</summary>
+    public void Update()
     {
         PollChanges();
         RefreshLabels();
-        float ppu = _game.World.Map.Settings.PixelsPerUnit;
+    }
+
+    private readonly GlyphBatch _batch = new();
+    private Camera3D _batchCamera;
+    private int _batchW, _batchH, _batchLabelsVersion = -1, _labelsVersion;
+    private float _batchMinFont;
+    private bool _batchMorphing;
+
+    /// <summary>Draws the names. Reads only the labels themselves, so it needs no hold on the world.</summary>
+    public void Draw(Camera3D cam, float minScreenFont = 4f)
+    {
         var font = Assets.HeaderFont;
-        var scr = new Vector2[24];
-        var cum = new float[24];
-        var tan = new Vector2[24];
+        int w = Viewport.W, h = Viewport.H;
+        // the same camera, the same names: the list of letters of the last frame is still right
+        bool same = !_batchMorphing && _batchLabelsVersion == _labelsVersion && w == _batchW && h == _batchH && minScreenFont == _batchMinFont
+            && cam.Position == _batchCamera.Position && cam.Target == _batchCamera.Target && cam.Up == _batchCamera.Up && cam.FovY == _batchCamera.FovY;
+        if (!same)
+        {
+            _batch.Begin(font);
+            Layout(cam, minScreenFont);
+            _batch.Upload();
+            _batchCamera = cam; _batchW = w; _batchH = h; _batchLabelsVersion = _labelsVersion; _batchMinFont = minScreenFont;
+        }
+        _batch.Draw(w, h);
+    }
+
+    private readonly Vector2[] _scr = new Vector2[24], _tan = new Vector2[24];
+    private readonly float[] _cum = new float[24];
+
+    private void Layout(Camera3D cam, float minScreenFont)
+    {
+        float ppu = _map.PixelsPerUnit;
+        var scr = _scr; var cum = _cum; var tan = _tan;
         double clock = Raylib.GetTime();
-        // Glyph advances only depend on (font, char, size); measuring every letter of every label
-        // each frame (Raylib MeasureTextEx -> glyph-atlas lookup) dominated the frame time while
-        // panning. Cache them; sizes are rounded to whole pixels so the cache stays small and bounded.
-        Dictionary<char, float>? advCache = null;
-        int advCacheSize = 0;
-        var advBySize = _advBySize;
         var forward = Vector3.Normalize(cam.Target - cam.Position);
+        bool globe = _map.Globe;
+        float worldWidth = _map.WorldWidth;
+        int viewW = Viewport.W, viewH = Viewport.H;
+        _batchMorphing = false;
         foreach (var lb in _labels)
         {
             int n = lb.Points.Length;
@@ -1089,6 +1093,7 @@ public sealed class CountryLabels
                 if (mt >= 1) lb.FromPoints = null;
                 else
                 {
+                    _batchMorphing = true;
                     float e = mt <= 0 ? 0 : mt * mt * (3 - 2 * mt);
                     pts = new Vector2[n];
                     for (int i = 0; i < n; i++) pts[i] = Vector2.Lerp(lb.FromPoints[i], lb.Points[i], e);
@@ -1104,9 +1109,9 @@ public sealed class CountryLabels
                 var p = pts[i];
                 float wxp = p.X / ppu;
                 // flat map: keep the whole name in one copy of the wrapping world (a name near the seam must not split across both edges)
-                if (!_map.Globe && i > 0) wxp += _map.WorldWidth * MathF.Round((anchorX - wxp) / _map.WorldWidth);
-                var world = !_map.Globe && i > 0 ? new Vector3(wxp, lb.Heights[i], p.Y / ppu) : _map.PlaceAt(wxp, p.Y / ppu, lb.Heights[i]);
-                if (i == 0) anchorX = _map.Globe ? wxp : world.X;
+                if (!globe && i > 0) wxp += worldWidth * MathF.Round((anchorX - wxp) / worldWidth);
+                var world = !globe && i > 0 ? new Vector3(wxp, lb.Heights[i], p.Y / ppu) : _map.PlaceAt(wxp, p.Y / ppu, lb.Heights[i]);
+                if (i == 0) anchorX = globe ? wxp : world.X;
                 // A point behind the eye projects mirrored and magnified (see Viewport.TryProjectSnapped), which made
                 // names flash across the screen while panning. A name that touches that region is not drawn at all.
                 if (Viewport.DepthAlong(world, cam.Position, forward) < Viewport.MinProjectionDepth || Viewport.IsHidden(world, cam)) { behindCamera = true; break; }
@@ -1114,7 +1119,7 @@ public sealed class CountryLabels
                 minX = Math.Min(minX, scr[i].X); maxX = Math.Max(maxX, scr[i].X); minY = Math.Min(minY, scr[i].Y); maxY = Math.Max(maxY, scr[i].Y);
             }
             if (behindCamera) continue;
-            if (maxX < -100 || minX > Viewport.W + 100 || maxY < -100 || minY > Viewport.H + 100) continue;
+            if (maxX < -100 || minX > viewW + 100 || maxY < -100 || minY > viewH + 100) continue;
             // left to right on screen
             if (scr[0].X > scr[n - 1].X) Array.Reverse(scr, 0, n);
             cum[0] = 0;
@@ -1125,7 +1130,7 @@ public sealed class CountryLabels
             if (fs < minScreenFont) continue;
             // Too big to read as a name, or too little of it on screen: it fades out. It never shrinks or stops growing
             // with the land, and it is not pinned to the screen edge.
-            float fade = 1f - SmoothStep(Viewport.H * FadeBigStart, Viewport.H * FadeBigEnd, fs);
+            float fade = 1f - SmoothStep(viewH * FadeBigStart, viewH * FadeBigEnd, fs);
             if (fade > 0f)
             {
                 int inView = 0, samples = 0;
@@ -1137,58 +1142,50 @@ public sealed class CountryLabels
                 fade *= SmoothStep(FadeSeenStart, FadeSeenEnd, (float)inView / samples);
             }
             if (fade < 0.02f) continue;
-            // glyph advances
+            // glyph advances (sizes in whole pixels, as they were measured before)
             int keySize = (int)Math.Round(fs);
             float kscale = keySize / fs;
-            if (advCacheSize != keySize) { if (!advBySize.TryGetValue(keySize, out advCache)) advBySize[keySize] = advCache = new Dictionary<char, float>(); advCacheSize = keySize; }
             float total = 0;
-            if (_adv.Length < lb.Text.Length) _adv = new float[lb.Text.Length * 2];
+            string text = lb.Text;
+            if (_adv.Length < text.Length) _adv = new float[text.Length * 2];
             var adv = _adv;
-            for (int i = 0; i < lb.Text.Length; i++)
+            for (int i = 0; i < text.Length; i++)
             {
-                char ch = lb.Text[i];
-                if (!advCache!.TryGetValue(ch, out float a))
-                {
-                    a = Raylib.MeasureTextEx(font, ch.ToString(), keySize, 0).X;
-                    advCache[ch] = a;
-                }
-                adv[i] = a *= kscale;
+                adv[i] = _batch.Advance(text[i], keySize) * kscale;
                 total += adv[i];
             }
             float avail = L * 0.9f;   // a little room at both ends, so neighbouring names do not touch
-            if (total > avail) { float k = avail / total; fs *= k; for (int i = 0; i < lb.Text.Length; i++) adv[i] *= k; total = avail; if (fs < minScreenFont) continue; }
-            float spacing = lb.Text.Length > 1 ? Math.Clamp((avail - total) / (lb.Text.Length - 1), 0, fs * MaxSpacing) : 0;
-            float used = total + spacing * (lb.Text.Length - 1);
+            if (total > avail) { float k = avail / total; fs *= k; for (int i = 0; i < text.Length; i++) adv[i] *= k; total = avail; if (fs < minScreenFont) continue; }
+            float spacing = text.Length > 1 ? Math.Clamp((avail - total) / (text.Length - 1), 0, fs * MaxSpacing) : 0;
+            float used = total + spacing * (text.Length - 1);
             float pos = (L - used) / 2;
             // solid letters with a dark outline, so names read on any map color (fading in only while tiny)
             byte alpha = (byte)(Math.Clamp(150 + (fs - minScreenFont) * 30, 150, 245) * fade);
-            var col = new Color((byte)250, (byte)246, (byte)230, alpha);
-            var shadow = new Color((byte)0, (byte)0, (byte)0, (byte)(alpha * 0.8f));
+            uint col = 250u | (246u << 8) | (230u << 16) | ((uint)alpha << 24);
+            uint shadow = (uint)(byte)(alpha * 0.8f) << 24;
             float so = Math.Max(1f, fs / 22f);
+            bool fullShadow = fs >= 9f;   // small letters: one shadow reads as well as three
             // direction of the curve at each point, blended along the segments: letters turn smoothly instead of snapping at every corner
             for (int i = 0; i < n; i++)
             {
                 var dv = scr[Math.Min(n - 1, i + 1)] - scr[Math.Max(0, i - 1)];
                 tan[i] = dv.LengthSquared() < 1e-6f ? Vector2.UnitX : Vector2.Normalize(dv);
             }
-            for (int i = 0; i < lb.Text.Length; i++)
+            for (int i = 0; i < text.Length; i++)
             {
                 float center = pos + adv[i] / 2;
                 pos += adv[i] + spacing;
-                char ch = lb.Text[i];
+                char ch = text[i];
                 if (ch == ' ') continue;
                 int k = 1;
                 while (k < n - 1 && cum[k] < center) k++;
                 float t = (center - cum[k - 1]) / Math.Max(0.001f, cum[k] - cum[k - 1]);
-                var p = Vector2.Lerp(scr[k - 1], scr[k], Math.Clamp(t, 0, 1));
-                var d = Vector2.Lerp(tan[k - 1], tan[k], Math.Clamp(t, 0, 1));
-                float rot = MathF.Atan2(d.Y, d.X) * 180f / MathF.PI;
-                var origin = new Vector2(adv[i] / 2, fs / 2);
-                sbyte* z = GlyphZ(ch);   // (the letter as text the library reads as it is: a new string and a copy of it for each of the four draws were most of the garbage of a frame)
-                Raylib.DrawTextPro(font, z, p + new Vector2(so, so), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, z, p + new Vector2(-so * 0.6f, so * 0.6f), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, z, p + new Vector2(so * 0.6f, -so * 0.6f), origin, rot, fs, 0, shadow);
-                Raylib.DrawTextPro(font, z, p, origin, rot, fs, 0, col);
+                t = Math.Clamp(t, 0, 1);
+                var p = Vector2.Lerp(scr[k - 1], scr[k], t);
+                var d = Vector2.Lerp(tan[k - 1], tan[k], t);
+                float dl = d.Length();
+                var axis = dl < 1e-5f ? Vector2.UnitX : d / dl;
+                _batch.Letter(ch, p, axis, fs, adv[i] / 2, fs / 2, col, shadow, so, fullShadow);
             }
         }
     }

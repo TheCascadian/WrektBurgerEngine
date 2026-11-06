@@ -73,7 +73,7 @@ public sealed partial class Hud
         Gui.Panel(r, "Decisions");
         if (Gui.CloseButton(r)) { CloseLeft(); return; }
         float x = r.X + 10 * S, y = r.Y + 36 * S, w = r.Width - 20 * S;
-        var list = _app.Snapshot.Decisions
+        var list = _app.Live.DecisionRows()
             .OrderByDescending(d => d.CanTake).ThenBy(d => d.Category).ThenBy(d => d.Name).ToList();
         if (list.Count == 0) { Gui.Label("No decisions available right now.", x, y, 15, Gui.TextDim); return; }
         float pad = 10 * S, textW = w - 8 * S - 2 * pad, footH = 30 * S, gap = 6 * S;

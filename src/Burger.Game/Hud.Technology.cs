@@ -20,9 +20,10 @@ public sealed partial class Hud
         var T = G.Tech;
         var rules = G.Rules.Tech;
         var snapshot = _app.Snapshot;
+        var technologyRows = _app.Live.TechnologyRows();
         double points = snapshot.TechnologyPoints;
         int slots = snapshot.TechnologySlotCount;
-        Gui.Label($"{points:0.0} points/month · {slots} slot(s) · {snapshot.KnownTechnologyCount}/{snapshot.Technologies.Length} known", x, y, 14, Gui.TextDim);
+        Gui.Label($"{points:0.0} points/month · {slots} slot(s) · {snapshot.KnownTechnologyCount}/{technologyRows.Length} known", x, y, 14, Gui.TextDim);
         y += 26 * S;
 
         // the research slots
@@ -52,19 +53,19 @@ public sealed partial class Hud
         }
 
         // categories
-        var cats = snapshot.Technologies.Select(t => t.Category).Distinct().OrderBy(c => c).ToList();
+        var cats = technologyRows.Select(t => t.Category).Distinct().OrderBy(c => c).ToList();
         if (_techCategory.Length == 0 || !cats.Contains(_techCategory)) _techCategory = cats.FirstOrDefault() ?? "";
         float bx = x;
         foreach (var c in cats)
         {
             float bw = Math.Max(54 * S, Gui.Measure(c, 12).X + 14 * S);
             if (bx + bw > x + w && bx > x) { bx = x; y += 28 * S; }
-            if (Gui.Button(new Rectangle(bx, y, bw, 24 * S), c, true, $"{snapshot.Technologies.Count(t => t.Category == c && t.Known)} of {snapshot.Technologies.Count(t => t.Category == c)} known", c == _techCategory, 12)) _techCategory = c;
+            if (Gui.Button(new Rectangle(bx, y, bw, 24 * S), c, true, $"{technologyRows.Count(t => t.Category == c && t.Known)} of {technologyRows.Count(t => t.Category == c)} known", c == _techCategory, 12)) _techCategory = c;
             bx += bw + 3 * S;
         }
         y += 30 * S;
 
-        var list = snapshot.Technologies.Where(t => t.Category == _techCategory).OrderBy(t => t.Year).ThenBy(t => t.Order).ToList();
+        var list = technologyRows.Where(t => t.Category == _techCategory).OrderBy(t => t.Year).ThenBy(t => t.Order).ToList();
         float rowH = 40 * S;
         float need = list.Count * (rowH + 4 * S);
         FitEnd("tech", r, y + need);

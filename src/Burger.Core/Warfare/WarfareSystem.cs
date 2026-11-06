@@ -977,29 +977,43 @@ public sealed class WarfareSystem
         return pairs;
     }
 
+    private sbyte[] _sideMark = Array.Empty<sbyte>();
+
+    private static bool NoLandChanged(Country[] side, long since)
+    {
+        foreach (var c in side) if (c.ControlVersion > since) return false;
+        return true;
+    }
+
     private List<(Location Own, Location Enemy)> BorderPairs(War war, Country owner)
     {
         var ownSide = war.SideOf(owner).OrderBy(c => c.Index).ToArray();
         var enemySide = war.EnemiesOf(owner).OrderBy(c => c.Index).ToArray();
         var key = ownSide.FirstOrDefault() ?? owner; // one list per war side, shared by all its members
         if (_borderCache.TryGetValue((war, key), out var c)
-            && c.ControllerStamp == Location.ControllerVersion
             && c.OwnSide.SequenceEqual(ownSide)
-            && c.EnemySide.SequenceEqual(enemySide)) return c.Pairs;
+            && c.EnemySide.SequenceEqual(enemySide)
+            && NoLandChanged(ownSide, c.ControllerStamp) && NoLandChanged(enemySide, c.ControllerStamp)) return c.Pairs;
         if (_borderCache.Count > 256) _borderCache.Clear();
-        var own = ownSide.ToHashSet();
-        var enemy = enemySide.ToHashSet();
+        // (a mark for each country instead of a set: this looks at every location of the map)
+        int countries = _game.World.Countries.Count;
+        if (_sideMark.Length < countries) _sideMark = new sbyte[countries + 64];
+        foreach (var e in enemySide) _sideMark[e.Index] = 2;
+        foreach (var o in ownSide) _sideMark[o.Index] = 1;
+        var mark = _sideMark;
         var pairs = new List<(Location Own, Location Enemy)>();
         foreach (var l in _game.World.Locations)
         {
-            if (l.Controller == null || !own.Contains(l.Controller) || !l.IsPassable) continue;
+            if (l.Controller is not { } controller || mark[controller.Index] != 1 || !l.IsPassable) continue;
             foreach (var adj in l.Neighbors)
             {
                 if (adj.Kind == AdjacencyKind.Sea || !adj.To.IsPassable) continue;
                 var ec = adj.To.Controller;
-                if (ec != null && enemy.Contains(ec)) pairs.Add((l, adj.To));
+                if (ec != null && mark[ec.Index] != 0 && (mark[ec.Index] == 2 || enemySide.Contains(ec))) pairs.Add((l, adj.To));
             }
         }
+        foreach (var e in enemySide) _sideMark[e.Index] = 0;
+        foreach (var o in ownSide) _sideMark[o.Index] = 0;
         _borderCache[(war, key)] = new BorderCacheEntry
         {
             ControllerStamp = Location.ControllerVersion,

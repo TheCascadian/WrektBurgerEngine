@@ -119,25 +119,47 @@ public sealed class TradeNetworkSystem
     private sbyte[] _pairCanTrade = Array.Empty<sbyte>();
     private int[] _pairStamp = Array.Empty<int>();
     private int _pairStampNow;
+    private int[] _pairNumber = Array.Empty<int>();
+    private int _pairNumbered, _pairSide;
+    // scratch of the matching, by country number
+    private int[] _scrCountryStart = Array.Empty<int>(), _scrFill = Array.Empty<int>(), _scrHead = Array.Empty<int>(), _scrAlive = Array.Empty<int>(), _scrOrderStart = Array.Empty<int>();
+    private readonly List<int> _scrSelling = new();
+    private OrderRow[] _scrOrder = Array.Empty<OrderRow>();
+    private readonly record struct OrderRow(int Seller, int Agreed, double Priority);
+    private readonly struct OrderRowComparer : IComparer<OrderRow>
+    {
+        public int Compare(OrderRow x, OrderRow y)
+        {
+            int cmp = y.Agreed.CompareTo(x.Agreed);
+            if (cmp == 0) cmp = y.Priority.CompareTo(x.Priority);
+            return cmp != 0 ? cmp : x.Seller.CompareTo(y.Seller);
+        }
+    }
+    private static int[] RentZero(ref int[] array, int size)
+    {
+        if (array.Length < size) array = new int[size + size / 4];
+        else Array.Clear(array, 0, size);
+        return array;
+    }
     private readonly List<(int Seller, int Agreed, double Priority)> _top = new();
     // Recipes by output and by input, built on first use (the recipes only change when the data is loaded).
     private Dictionary<string, List<IndustryRecipe>>? _recipesByOutput, _recipesByInput;
     private List<string>? _recipeOutputs;
     private readonly HashSet<string> _totalsBulk = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<Country, List<StateMarket>> _totalsRows = new();
     private readonly Dictionary<State, (float X, float Y)> _landCentres = new();
-    private readonly Dictionary<State, List<(State To, double Distance)>> _landEdges = new();
-    /// <summary>A breadth-first search from one origin that is carried on only as far as a destination needs (the first-found parents do not depend on where it stops).</summary>
-    private sealed class LandSearch
-    {
-        public readonly Dictionary<State, (State Previous, double Distance)> Previous = new();
-        public readonly Queue<State> Queue = new();
-    }
-    private readonly Dictionary<State, LandSearch> _landPaths = new();
+    // the land graph between states, by state number: neighbours in the order of first contact, and the length of each edge
+    private int[][] _landEdgeTo = Array.Empty<int[]>();
+    private double[][] _landEdgeKm = Array.Empty<double[]>();
+    private int[] _landQueue = Array.Empty<int>();
+    private readonly Dictionary<State, ushort[]> _landPaths = new();
+    private readonly Dictionary<long, (TradeRouteKind Kind, List<State> Path, int[] Stops, double Distance)> _routeWays = new();
     private int _landEdgesVersion = -1;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
     private readonly Dictionary<TradeAgreement, double> _agreementUse = new();
     private readonly HashSet<string> _blockades = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, StateMarket> _current = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<StateMarket> _current = new();
+    private readonly Dictionary<State, int> _currentSlot = new();
     private readonly Dictionary<Country, Dictionary<string, (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied)>> _totalsCache = new();
     // MatchCommodity is deliberately serial because its commit phase mutates shared world state.
     // Reuse stable per-call storage so bounded commodity settlement does not create a second
@@ -210,8 +232,9 @@ public sealed class TradeNetworkSystem
     {
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
-        _landEdges.Clear();
+        _landEdgeTo = Array.Empty<int[]>();
         _landPaths.Clear();
+        _routeWays.Clear();
         _routes.Clear();
         _routeUse.Clear();
         _agreementUse.Clear();
@@ -223,8 +246,9 @@ public sealed class TradeNetworkSystem
     {
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
-        _landEdges.Clear();
+        _landEdgeTo = Array.Empty<int[]>();
         _landPaths.Clear();
+        _routeWays.Clear();
         Markets.Clear();
         Policies.Clear();
         Agreements.Clear();
@@ -244,14 +268,39 @@ public sealed class TradeNetworkSystem
         if (!Markets.TryGetValue(state, out var byCommodity))
         {
             InvalidateTotalsCache();
-            Markets[state] = byCommodity = new(StringComparer.OrdinalIgnoreCase);
+            Markets[state] = byCommodity = _freeMarketMaps.Count > 0 ? _freeMarketMaps.Pop() : new(StringComparer.OrdinalIgnoreCase);
         }
         if (!byCommodity.TryGetValue(commodity, out var market))
         {
             InvalidateTotalsCache();
-            byCommodity[commodity] = market = new StateMarket { State = state, Commodity = commodity };
+            byCommodity[commodity] = market = NewMarket(state, commodity);
         }
         return market;
+    }
+
+    // A settlement touches every state for every commodity: hundreds of thousands of markets a month. They are reused, not left to the garbage collector.
+    private readonly Stack<StateMarket> _freeMarkets = new();
+    private readonly Stack<Dictionary<string, StateMarket>> _freeMarketMaps = new();
+
+    private StateMarket NewMarket(State state, string commodity)
+    {
+        if (_freeMarkets.Count == 0) return new StateMarket { State = state, Commodity = commodity };
+        var m = _freeMarkets.Pop();
+        m.State = state; m.Commodity = commodity;
+        m.Output = m.Demand = m.OpeningStockpile = m.Stockpile = m.Import = m.Export = m.StorageMonths = 0;
+        m.Price = 1; m.Satisfied = 1; m.SellerSlot = -1;
+        return m;
+    }
+
+    private void RecycleMarkets()
+    {
+        foreach (var map in Markets.Values)
+        {
+            foreach (var m in map.Values) _freeMarkets.Push(m);
+            map.Clear();
+            _freeMarketMaps.Push(map);
+        }
+        Markets.Clear();
     }
 
     public void BeginMonth()
@@ -261,7 +310,8 @@ public sealed class TradeNetworkSystem
         // routes each month so a warm cache and a freshly loaded game agree.
         // The topology/path caches remain reusable until the map changes.
         _routes.Clear();
-        Markets.Clear();
+        _landPaths.Clear();
+        RecycleMarkets();
         Workforce.Clear();
         _routeUse.Clear();
         _agreementUse.Clear();
@@ -272,8 +322,12 @@ public sealed class TradeNetworkSystem
     public void BeginCommodity(string commodity)
     {
         _current.Clear();
+        _currentSlot.Clear();
         foreach (var state in _game.World.States)
-            _current[state.Key] = MarketOf(state, commodity);
+        {
+            _currentSlot[state] = _current.Count;
+            _current.Add(MarketOf(state, commodity));
+        }
     }
 
     public void AddMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
@@ -284,11 +338,113 @@ public sealed class TradeNetworkSystem
         market.OpeningStockpile = Math.Max(0, openingStockpile);
         market.StorageMonths = Math.Max(0, storageMonths);
         market.Import = market.Export = 0;
-        _current[state.Key] = market;
+        if (_currentSlot.TryGetValue(state, out int slot)) _current[slot] = market;
+        else { _currentSlot[state] = _current.Count; _current.Add(market); }
         InvalidateTotalsCache();
     }
 
+    // the tables hold a row and a column for each country that owns land now (the data knows ten times as many countries, most of them not on the map): numbers handed out as they appear
+    private int PairNumber(Country c)
+    {
+        int countryCount = _game.World.Countries.Count;
+        if (_pairNumber.Length < countryCount)
+        {
+            var grown = new int[countryCount];
+            Array.Fill(grown, -1);
+            Array.Copy(_pairNumber, grown, _pairNumber.Length);
+            _pairNumber = grown;
+        }
+        int n = _pairNumber[c.Index];
+        if (n < 0) { n = _pairNumber[c.Index] = _pairNumbered; _pairNumbered++; }
+        return n;
+    }
+
+    private void EnsurePairTables()
+    {
+        if (_pairSide >= _pairNumbered) return;
+        int side = Math.Max(_pairNumbered + 64, _pairSide * 3 / 2), size = side * side;
+        _pairAgreement = new TradeAgreement?[size]; _pairPriority = new double[size]; _pairCanTrade = new sbyte[size]; _pairStamp = new int[size];
+        _pairStampNow = 0; _pairSide = side;
+        _preStamp = Array.Empty<int>();
+        _prePriority = Array.Empty<double>();
+    }
+
+    // How much a buyer wants each seller, worked out over the hours before the settlement (see CommoditySystem.SpreadWork): the dearest part of a settlement, and it only reads the game.
+    private int[] _preStamp = Array.Empty<int>();
+    private double[] _prePriority = Array.Empty<double>();
+    private int _preStampNow = 1;
+
+    internal void BeginPreparedPriorities(List<Country> buyers, List<Country> sellers)
+    {
+        _preStampNow++;
+        foreach (var c in sellers) PairNumber(c);
+        foreach (var c in buyers) PairNumber(c);
+        EnsurePairTables();
+        int size = _pairSide * _pairSide;
+        if (_preStamp.Length < size) { _preStamp = new int[size]; _prePriority = new double[size]; }
+    }
+
+    internal void PreparePriorities(Country buyer, List<Country> sellers, Func<Country, Country, double> priority)
+    {
+        int row = _pairNumber[buyer.Index] * _pairSide;
+        foreach (var seller in sellers)
+        {
+            int at = row + _pairNumber[seller.Index];
+            _prePriority[at] = priority(seller, buyer);
+            _preStamp[at] = _preStampNow;
+        }
+    }
+
+    /// <summary>A market whose demand was worked out in advance (see CommoditySystem.SpreadWork).</summary>
+    internal void AddPlannedMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
+    {
+        var market = MarketOf(state, commodity);
+        market.Output = Math.Max(0, output);
+        market.Demand = demand;
+        market.OpeningStockpile = Math.Max(0, openingStockpile);
+        market.StorageMonths = Math.Max(0, storageMonths);
+        market.Import = market.Export = 0;
+        if (_currentSlot.TryGetValue(state, out int slot)) _current[slot] = market;
+        else { _currentSlot[state] = _current.Count; _current.Add(market); }
+    }
+
     public IReadOnlyList<TradeMatch> MatchCommodity(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority)
+    {
+        _capStamp++;
+        _capHold = true;
+        try
+        {
+            var matches = new List<TradeMatch>();
+            foreach (int _ in MatchSteps(definition, canTrade, priority, matches)) { }
+            return matches;
+        }
+        finally { _capHold = false; }
+    }
+
+    /// <summary>The matching of a commodity as steps that can be spread over several ticks (see CommoditySystem.SpreadWork).</summary>
+    internal IEnumerator<int> BeginMatch(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority)
+        => MatchSteps(definition, canTrade, priority, new List<TradeMatch>()).GetEnumerator();
+
+    /// <summary>Takes steps of a matching until the time is up (a stopwatch timestamp). True when it is done.</summary>
+    internal bool AdvanceMatch(IEnumerator<int> steps, long until)
+    {
+        _capStamp++;
+        _capHold = true;
+        try
+        {
+            while (System.Diagnostics.Stopwatch.GetTimestamp() < until)
+                if (!steps.MoveNext()) return true;
+            return false;
+        }
+        finally { _capHold = false; }
+    }
+
+    /// <summary>The markets were filled without <see cref="AddMarket"/>: what was added up from them is out of date.</summary>
+    internal void MarketsFilled() => InvalidateTotalsCache();
+
+    private bool PairNumbered(Country c) => c.Index < _pairNumber.Length && _pairNumber[c.Index] >= 0;
+
+    private IEnumerable<int> MatchSteps(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority, List<TradeMatch> matches)
     {
         // Matching mutates stockpiles, imports, exports, prices and satisfaction.
         // Clear before mutation so an exception cannot leave a stale aggregate usable.
@@ -296,11 +452,10 @@ public sealed class TradeNetworkSystem
         var sellerMarkets = _sellerMarketsScratch;
         var sellerLeft = _sellerLeftScratch;
         var buyers = _buyersScratch;
-        var matches = new List<TradeMatch>();
         sellerMarkets.Clear();
         sellerLeft.Clear();
         buyers.Clear();
-        foreach (var market in _current.Values)
+        foreach (var market in _current)
         {
             market.SellerSlot = -1;
             if (market.State.Owner?.Exists != true) continue;
@@ -317,12 +472,10 @@ public sealed class TradeNetworkSystem
         for (int i = 0; i < sellerOwner.Length; i++) sellerOwner[i] = sellerMarkets[i].State.Owner!.Index;
         // Agreement, priority and trade permission depend only on the country pair; many states share a pair.
         int countryCount = _game.World.Countries.Count;
-        if (_pairStamp.Length < countryCount * countryCount)
-        {
-            int size = countryCount * countryCount;
-            _pairAgreement = new TradeAgreement?[size]; _pairPriority = new double[size]; _pairCanTrade = new sbyte[size]; _pairStamp = new int[size];
-            _pairStampNow = 0;
-        }
+        foreach (var market in sellerMarkets) PairNumber(market.State.Owner!);
+        foreach (var (market, _) in buyers) PairNumber(market.State.Owner!);
+        EnsurePairTables();
+        int pairSide = _pairSide;
         int stamp = ++_pairStampNow;
         // The agreements of each seller-to-buyer pair, so a pair does not scan all of them.
         var agreementsOf = new Dictionary<int, List<TradeAgreement>>();
@@ -349,51 +502,53 @@ public sealed class TradeNetworkSystem
         double tradePriceScale = _game.Data.Defines.Get("commodity_trade_price", 0.5);
         // The sellers by country (their slots ascending), and for each buying country the seller countries best first. A buyer then walks the
         // best countries until it has its candidates instead of looking at every seller; the order is the one a stable sort of all sellers gives.
-        var countryStart = new int[countryCount + 1];
+        var countryStart = RentZero(ref _scrCountryStart, countryCount + 1);
         foreach (int o in sellerOwner) countryStart[o + 1]++;
         for (int i = 0; i < countryCount; i++) countryStart[i + 1] += countryStart[i];
         var flat = new int[sellerOwner.Length];
-        var fill = (int[])countryStart.Clone();
+        var fill = RentZero(ref _scrFill, countryCount + 1);
+        Array.Copy(countryStart, fill, countryCount + 1);
         for (int i = 0; i < sellerOwner.Length; i++) flat[fill[sellerOwner[i]]++] = i;
-        var head = (int[])countryStart.Clone();            // the first slot of the country that may still have something to sell
-        var alive = new int[countryCount];                 // sellers of the country with something left
+        var head = RentZero(ref _scrHead, countryCount + 1);            // the first slot of the country that may still have something to sell
+        Array.Copy(countryStart, head, countryCount + 1);
+        var alive = RentZero(ref _scrAlive, countryCount);                 // sellers of the country with something left
         for (int i = 0; i < left.Length; i++) if (left[i] > 0.001) alive[sellerOwner[i]]++;
+        // the countries that sell, in the order of their numbers (a buyer looks at these, not at every country of the data)
+        var sellingCountries = _scrSelling; sellingCountries.Clear();
+        for (int sc = 0; sc < countryCount; sc++) if (countryStart[sc + 1] > countryStart[sc]) sellingCountries.Add(sc);
         var orderOf = new int[countryCount][];
         var orderAgreed = new int[countryCount][];
         var orderPriority = new double[countryCount][];
-        var orderStart = new int[countryCount];
+        var orderStart = RentZero(ref _scrOrderStart, countryCount);
 
         void BuildOrder(Country buyerCountry, double importPriority)
         {
             long order0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-            int pairBase = buyerCountry.Index * countryCount;
-            var list = new List<int>();
-            for (int sc = 0; sc < countryCount; sc++)
+            int pairBase = _pairNumber[buyerCountry.Index] * pairSide;
+            var rows = _scrOrder;
+            int n = 0;
+            if (rows.Length < sellingCountries.Count) rows = _scrOrder = new OrderRow[sellingCountries.Count * 2];
+            foreach (int sc in sellingCountries)
             {
                 if (alive[sc] <= 0) continue;
-                int pairAt = pairBase + sc;
+                int pairAt = pairBase + _pairNumber[sc];
                 if (_pairStamp[pairAt] != stamp)
                 {
                     var seller = _game.World.Countries[sc];
                     _pairAgreement[pairAt] = AgreementOf(sc * countryCount + buyerCountry.Index, definition.Key);
-                    _pairPriority[pairAt] = priority(seller, buyerCountry);
+                    _pairPriority[pairAt] = pairAt < _preStamp.Length && _preStamp[pairAt] == _preStampNow ? _prePriority[pairAt] : priority(seller, buyerCountry);
                     _pairCanTrade[pairAt] = -1;
                     _pairStamp[pairAt] = stamp;
                 }
-                list.Add(sc);
+                rows[n++] = new OrderRow(sc, _pairAgreement[pairAt] != null ? 1 : 0, _pairPriority[pairAt] * importPriority);
             }
-            var agreed = new int[countryCount];
-            var prio = new double[countryCount];
-            foreach (int sc in list) { agreed[sc] = _pairAgreement[pairBase + sc] != null ? 1 : 0; prio[sc] = _pairPriority[pairBase + sc] * importPriority; }
-            list.Sort((x, y) =>
-            {
-                int cmp = agreed[y].CompareTo(agreed[x]);
-                if (cmp == 0) cmp = prio[y].CompareTo(prio[x]);
-                return cmp != 0 ? cmp : x.CompareTo(y);
-            });
-            orderOf[buyerCountry.Index] = list.ToArray();
-            orderAgreed[buyerCountry.Index] = list.Select(x => agreed[x]).ToArray();
-            orderPriority[buyerCountry.Index] = list.Select(x => prio[x]).ToArray();
+            // (agreement, priority, number): a total order, so any sort gives the one result
+            new Span<OrderRow>(rows, 0, n).Sort(default(OrderRowComparer));
+            var ids = new int[n]; var agreedOut = new int[n]; var prioOut = new double[n];
+            for (int i = 0; i < n; i++) { ids[i] = rows[i].Seller; agreedOut[i] = rows[i].Agreed; prioOut[i] = rows[i].Priority; }
+            orderOf[buyerCountry.Index] = ids;
+            orderAgreed[buyerCountry.Index] = agreedOut;
+            orderPriority[buyerCountry.Index] = prioOut;
             if (_game.Profiling) _game.ProfileElapsed("Match.Order", System.Diagnostics.Stopwatch.GetTimestamp() - order0);
         }
 
@@ -443,16 +598,23 @@ public sealed class TradeNetworkSystem
 
         // Preparation is complete before mutation: the stable state-index tie-break keeps the
         // commit order identical across save/load and multiplayer peers.
-        foreach (var (buyer, deficit) in buyers.OrderByDescending(x => x.Need).ThenBy(x => x.Market.State.Index))
+        buyers.Sort(static (x, y) =>
+        {
+            int cmp = y.Need.CompareTo(x.Need);
+            return cmp != 0 ? cmp : x.Market.State.Index.CompareTo(y.Market.State.Index);
+        });
+        yield return 0;
+        foreach (var (buyer, deficit) in buyers)
         {
             double need = deficit;
-            var buyerPolicy = PolicyOf(buyer.State.Owner!);
-            var buyerCountry = buyer.State.Owner!;
+            // (spread over hours, the land may have changed hands since the matching began)
+            if (buyer.State.Owner is not { } buyerCountry || buyerCountry.Index >= orderOf.Length || !PairNumbered(buyerCountry)) continue;
+            var buyerPolicy = PolicyOf(buyerCountry);
             double importPriority = Math.Clamp(buyerPolicy.ImportPriority, 0.1, 4);
             // Top candidates by (agreement, priority) with original order breaking ties,
             // the same order a stable descending sort gives, without sorting every seller.
             _top.Clear();
-            int pairBase = buyerCountry.Index * countryCount;
+            int pairBase = _pairNumber[buyerCountry.Index] * pairSide;
             if (orderOf[buyerCountry.Index] == null) BuildOrder(buyerCountry, importPriority);
             CollectCandidates(buyerCountry.Index);
             double tariffRateBase = Math.Clamp(buyerPolicy.TariffRate + buyerPolicy.Protectionism * 0.5, 0, 5);
@@ -461,9 +623,8 @@ public sealed class TradeNetworkSystem
             {
                 var (sellerSlot, _, _) = _top[candidateIndex];
                 var sellerMarket = sellerMarkets[sellerSlot];
-                var seller = sellerMarket.State.Owner!;
-                if (seller == buyerCountry) continue;
-                int pairAt = pairBase + seller.Index;
+                if (sellerMarket.State.Owner is not { } seller || seller == buyerCountry || !PairNumbered(seller)) continue;
+                int pairAt = pairBase + _pairNumber[seller.Index];
                 if (_pairCanTrade[pairAt] < 0) _pairCanTrade[pairAt] = canTrade(seller, buyerCountry) ? (sbyte)1 : (sbyte)0;
                 if (_pairCanTrade[pairAt] == 0) continue;
                 var route = RouteBetween(sellerMarket.State, buyer.State);
@@ -496,17 +657,19 @@ public sealed class TradeNetworkSystem
                 if (agreement is { Commodity.Length: > 0, MonthlyQuantity: > 0 }) _agreementUse[agreement] = _agreementUse.GetValueOrDefault(agreement) + take;
                 bool wasAlive = left[sellerSlot] > 0.001;
                 left[sellerSlot] -= take;
-                if (wasAlive && left[sellerSlot] <= 0.001) alive[seller.Index]--;
+                if (wasAlive && left[sellerSlot] <= 0.001) alive[sellerOwner[sellerSlot]]--;
                 sellerMarket.Export += take;
                 buyer.Import += take;
                 need -= take;
                 if (need <= 0.001) break;
             }
+            yield return 0;
         }
 
         long m1 = System.Diagnostics.Stopwatch.GetTimestamp();
-        foreach (var market in _current.Values.Where(m => m.State.Owner?.Exists == true))
+        foreach (var market in _current)
         {
+            if (market.State.Owner?.Exists != true) continue;
             if (market.SellerSlot >= 0)
                 market.Stockpile = Math.Min(market.Demand * market.StorageMonths, market.Stockpile + Math.Max(0, left[market.SellerSlot]));
             double supplied = market.Output + market.OpeningStockpile + market.Import;
@@ -538,7 +701,6 @@ public sealed class TradeNetworkSystem
             _game.ProfileElapsed("Match.Pairing", m1 - m0);
             _game.ProfileElapsed("Match.Settle", System.Diagnostics.Stopwatch.GetTimestamp() - m1);
         }
-        return matches;
     }
 
     public (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) Totals(Country country, string commodity)
@@ -549,11 +711,16 @@ public sealed class TradeNetworkSystem
         // One pass over the markets gives the totals of every country for this commodity (a pass for each country was countries times states).
         if (_totalsBulk.Add(commodity))
         {
-            var rowsByOwner = new Dictionary<Country, List<StateMarket>>();
+            var rowsByOwner = new Dictionary<Country, List<StateMarket>>(_totalsRows.Count);
             foreach (var (state, markets) in Markets)
                 if (state.Owner is { } owner && markets.TryGetValue(commodity, out var market))
                 {
-                    if (!rowsByOwner.TryGetValue(owner, out var list)) rowsByOwner[owner] = list = new List<StateMarket>();
+                    if (!rowsByOwner.TryGetValue(owner, out var list))
+                    {
+                        if (!_totalsRows.TryGetValue(owner, out list)) _totalsRows[owner] = list = new List<StateMarket>();
+                        list.Clear();
+                        rowsByOwner[owner] = list;
+                    }
                     list.Add(market);
                 }
             foreach (var (owner, rows) in rowsByOwner)
@@ -565,8 +732,12 @@ public sealed class TradeNetworkSystem
 
     private (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) CacheTotals(Country country, string commodity, List<StateMarket> rows)
     {
-        double demand = rows.Sum(x => x.Demand);
-        var total = (rows.Sum(x => x.Output), demand, rows.Sum(x => x.Import), rows.Sum(x => x.Export), rows.Sum(x => x.Stockpile), rows.Count == 0 ? 1 : rows.Average(x => x.Price), demand <= 0.0001 ? 1 : rows.Sum(x => x.Demand * x.Satisfied) / demand);
+        double demand = 0, output = 0, import = 0, export = 0, stockpile = 0, price = 0, satisfied = 0;
+        foreach (var x in rows)
+        {
+            demand += x.Demand; output += x.Output; import += x.Import; export += x.Export; stockpile += x.Stockpile; price += x.Price; satisfied += x.Demand * x.Satisfied;
+        }
+        var total = (output, demand, import, export, stockpile, rows.Count == 0 ? 1 : price / rows.Count, demand <= 0.0001 ? 1 : satisfied / demand);
         if (!_totalsCache.TryGetValue(country, out var byCommodity))
             _totalsCache[country] = byCommodity = new(StringComparer.OrdinalIgnoreCase);
         byCommodity[commodity] = total;
@@ -582,19 +753,22 @@ public sealed class TradeNetworkSystem
     public double ProductionOutput(Country country, State state, CommodityDef commodity, double baseOutput)
     {
         double result = baseOutput;
-        foreach (var recipe in ActiveRecipes(country, state, commodity.Key))
+        var recipe = ActiveRecipe(country, state, commodity.Key);
+        if (recipe == null) return result;
+        int buildings = state.Buildings.GetValueOrDefault(recipe.Building);
+        double population = _game.Population.Enabled && _game.Population.HasPops(state) ? _game.Population.Of(state).Total : Math.Max(1000, state.Manpower * 1000);
+        double workers = population / 1000.0 * recipe.WorkforcePerThousand * Math.Max(1, buildings);
+        double capacity = Math.Max(0.1, buildings * recipe.CapacityPerBuilding);
+        double inputFactor = 1;
+        if (recipe.Inputs.Count > 0)
         {
-            int buildings = state.Buildings.GetValueOrDefault(recipe.Building);
-            double population = _game.Population.Enabled && _game.Population.HasPops(state) ? _game.Population.Of(state).Total : Math.Max(1000, state.Manpower * 1000);
-            double workers = population / 1000.0 * recipe.WorkforcePerThousand * Math.Max(1, buildings);
-            double capacity = Math.Max(0.1, buildings * recipe.CapacityPerBuilding);
-            double inputFactor = recipe.Inputs.Count == 0 ? 1 : recipe.Inputs.Keys.Select(k => _game.Commodities.BalanceOf(country, k).Satisfied).DefaultIfEmpty(0).Min();
-            double efficiency = Math.Clamp(Math.Min(1, workers / capacity) * Math.Max(0.15, inputFactor), 0.05, 1);
-            Workforce[(state, recipe.Key)] = new WorkforceAllocation { State = state, Recipe = recipe.Key, Workers = workers, Capacity = capacity, Efficiency = efficiency };
-            if (buildings <= 0) continue;
-            result = baseOutput > 0 ? result * efficiency : result + workers * recipe.OutputPerWorkforce * recipe.Amount * efficiency;
+            inputFactor = double.PositiveInfinity;
+            foreach (var k in recipe.Inputs.Keys) inputFactor = Math.Min(inputFactor, _game.Commodities.BalanceOf(country, k).Satisfied);
         }
-        return result;
+        double efficiency = Math.Clamp(Math.Min(1, workers / capacity) * Math.Max(0.15, inputFactor), 0.05, 1);
+        Workforce[(state, recipe.Key)] = new WorkforceAllocation { State = state, Recipe = recipe.Key, Workers = workers, Capacity = capacity, Efficiency = efficiency };
+        if (buildings <= 0) return result;
+        return baseOutput > 0 ? result * efficiency : result + workers * recipe.OutputPerWorkforce * recipe.Amount * efficiency;
     }
 
     private void BuildRecipeIndex()
@@ -638,14 +812,16 @@ public sealed class TradeNetworkSystem
     /// <summary>Set while one commodity is settled (technology and date cannot change in between): the methods of each country and output are worked out once.</summary>
     internal Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? MethodMemo;
 
-    private IEnumerable<IndustryRecipe> ActiveRecipes(Country country, State state, string output)
+    private IndustryRecipe? ActiveRecipe(Country country, State state, string output)
     {
+        if (RecipesFor(output).Count == 0) return null;   // (most commodities are made by no recipe)
         IReadOnlyList<IndustryRecipe> methods;
         if (MethodMemo == null) methods = MethodsFor(country, state, output);
         else if (!MethodMemo.TryGetValue((country, output), out methods!)) MethodMemo[(country, output)] = methods = MethodsFor(country, state, output); // the methods do not depend on the state
-        if (methods.Count == 0) yield break;
+        if (methods.Count == 0) return null;
+        if (SelectedMethods.Count == 0) return methods[0];
         var selected = SelectedMethods.GetValueOrDefault((state, output));
-        yield return (selected == null ? methods[0] : methods.FirstOrDefault(r => r.Key.Equals(selected, StringComparison.OrdinalIgnoreCase)) ?? methods[0]);
+        return selected == null ? methods[0] : methods.FirstOrDefault(r => r.Key.Equals(selected, StringComparison.OrdinalIgnoreCase)) ?? methods[0];
     }
 
     /// <summary>Input demand generated by active recipes in this state. Inputs are real market demand, not only an efficiency penalty.</summary>
@@ -654,12 +830,16 @@ public sealed class TradeNetworkSystem
         // Most states have no relevant industry. Avoid selecting and sorting every
         // production method when none of its buildings can consume this input.
         double demand = 0;
-        if (state.Buildings.Count > 0 && ConsumersOf(commodity).Any(r => state.Buildings.GetValueOrDefault(r.Building) > 0))
+        bool consumes = false;
+        if (state.Buildings.Count > 0)
+            foreach (var consumer in ConsumersOf(commodity))
+                if (state.Buildings.GetValueOrDefault(consumer.Building) > 0) { consumes = true; break; }
+        if (consumes)
         {
             foreach (var output in RecipeOutputs())
             {
-                var recipe = ActiveRecipes(country, state, output).FirstOrDefault(r => r.Inputs.ContainsKey(commodity));
-                if (recipe == null) continue;
+                var recipe = ActiveRecipe(country, state, output);
+                if (recipe == null || !recipe.Inputs.ContainsKey(commodity)) continue;
                 int buildings = state.Buildings.GetValueOrDefault(recipe.Building);
                 if (buildings <= 0) continue;
                 double population = _game.Population.Enabled && _game.Population.HasPops(state) ? _game.Population.Of(state).Total : Math.Max(1000, state.Manpower * 1000);
@@ -675,6 +855,10 @@ public sealed class TradeNetworkSystem
     {
         if (!_game.Production.Enabled || !country.Exists || state.Owner != country || country.Construction.Count == 0)
             return 0;
+        // (a country builds in a few of its states: most states have no project)
+        bool any = false;
+        foreach (var p in country.Construction) if (p.State == state) { any = true; break; }
+        if (!any) return 0;
 
         double demand = 0;
         var rules = _game.Rules.Production;
@@ -732,50 +916,54 @@ public sealed class TradeNetworkSystem
     private TradeRoute? FindRoute(State from, State to)
     {
         if (from == to) return new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = 0, Capacity = double.MaxValue, Path = new() { from } };
-        if (_routesMapVersion != _game.MapVersion) { _routes.Clear(); _routesMapVersion = _game.MapVersion; }
+        if (_routesMapVersion != _game.MapVersion)
+        {
+            _routesMapVersion = _game.MapVersion;
+            // In a war the map changes all the time, and every route of the world would be worked out again each time. The live clock keeps them for the month, unless the states themselves changed.
+            if (_game.Commodities.SpreadWork) EnsureLandEdges();
+            else _routes.Clear();
+        }
         long key = ((long)from.Index << 32) | (uint)to.Index;
         if (_routes.TryGetValue(key, out var cached)) return cached;
         _routeMissed = true;
         EnsureLandEdges();
-        if (!_landPaths.TryGetValue(from, out var search))
+        // the way between two states only changes with the map's states; what changes each month is its capacity
+        if (_routeWays.TryGetValue(key, out var way))
+            return _routes[key] = new TradeRoute { From = from, To = to, Kind = way.Kind, DistanceKm = way.Distance, Capacity = RouteCapacity(way.Kind, way.Stops, way.Distance), Path = way.Path };
+        var tree = LandTree(from);
+        if (tree[to.Index] != NotReached)
         {
-            search = _landPaths[from] = new LandSearch();
-            search.Previous[from] = (from, 0);
-            search.Queue.Enqueue(from);
-        }
-        var previous = search.Previous;
-        if (!previous.ContainsKey(to) && search.Queue.Count > 0)
-        {
-            long bfs0 = System.Diagnostics.Stopwatch.GetTimestamp();
-            // One ordered search serves all destinations from this origin; it resumes where the last one stopped.
-            while (search.Queue.Count > 0 && !previous.ContainsKey(to))
-            {
-                var current = search.Queue.Dequeue();
-                foreach (var (next, distance) in _landEdges[current])
-                {
-                    if (previous.ContainsKey(next)) continue;
-                    previous[next] = (current, previous[current].Distance + distance);
-                    search.Queue.Enqueue(next);
-                }
-            }
-            if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
-        }
-        if (previous.ContainsKey(to))
-        {
+            // the way back through the parents; its length is added up from the origin outwards, as the search went
             var path = new List<State>();
-            for (var cursor = to;; cursor = previous[cursor].Previous) { path.Add(cursor); if (cursor == from) break; }
+            var states = _game.World.States;
+            for (int cursor = to.Index; ; cursor = tree[cursor]) { path.Add(states[cursor]); if (cursor == from.Index) break; }
             path.Reverse();
-            double distance = previous[to].Distance;
-            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Land, path, distance), Path = path };
+            double distance = 0;
+            for (int k = 0; k + 1 < path.Count; k++)
+            {
+                int next = path[k + 1].Index;
+                var edges = _landEdgeTo[path[k].Index];
+                for (int e = 0; e < edges.Length; e++)
+                    if (edges[e] == next) { distance += _landEdgeKm[path[k].Index][e]; break; }
+            }
+            var stops = StopsOf(path);
+            _routeWays[key] = (TradeRouteKind.Land, path, stops, distance);
+            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Land, stops, distance), Path = path };
         }
         bool coastal = from.Locations.Any(l => l.IsCoastal && l.IsLand) && to.Locations.Any(l => l.IsCoastal && l.IsLand);
         if (coastal)
         {
             double distance = CentreDistance(from, to);
-            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Sea, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Sea, new() { from, to }, distance), Path = new() { from, to } };
+            var seaPath = new List<State> { from, to };
+            var seaStops = StopsOf(seaPath);
+            _routeWays[key] = (TradeRouteKind.Sea, seaPath, seaStops, distance);
+            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Sea, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Sea, seaStops, distance), Path = seaPath };
         }
         double caravanDistance = Math.Max(100, CentreDistance(from, to));
-        return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Caravan, DistanceKm = caravanDistance, Capacity = RouteCapacity(TradeRouteKind.Caravan, new() { from, to }, caravanDistance), Path = new() { from, to } };
+        var caravanPath = new List<State> { from, to };
+        var caravanStops = StopsOf(caravanPath);
+        _routeWays[key] = (TradeRouteKind.Caravan, caravanPath, caravanStops, caravanDistance);
+        return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Caravan, DistanceKm = caravanDistance, Capacity = RouteCapacity(TradeRouteKind.Caravan, caravanStops, caravanDistance), Path = caravanPath };
     }
 
     private void EnsureLandEdges()
@@ -789,45 +977,134 @@ public sealed class TradeNetworkSystem
             topology = topology * 31 + st.Index;
             foreach (var l in st.Locations) topology = topology * 31 + l.Index * 7 + l.Neighbors.Count;
         }
-        if (topology == _landTopology && _landEdges.Count == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
+        if (topology == _landTopology && _landEdgeTo.Length == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
         _landTopology = topology;
         _routes.Clear();
+        _routeWays.Clear();
         _landCentres.Clear();
-        _landEdges.Clear();
         _landPaths.Clear();
+        int stateCount = _game.World.States.Count;
+        _landEdgeTo = new int[stateCount][];
+        _landEdgeKm = new double[stateCount][];
+        var seen = new HashSet<State>();
+        var to = new List<int>();
+        var km = new List<double>();
         foreach (var state in _game.World.States)
         {
-            var edges = new List<(State To, double Distance)>();
-            var seen = new HashSet<State>();
+            seen.Clear(); to.Clear(); km.Clear();
             // Preserve the first province edge and encounter order: route selection
             // and distance must remain identical to the original breadth-first search.
             foreach (var location in state.Locations)
                 foreach (var adjacency in location.Neighbors)
                     if (adjacency.Kind != AdjacencyKind.Sea && adjacency.To.State is { } next
                         && next != state && seen.Add(next))
-                        edges.Add((next, Math.Max(1, adjacency.DistanceKm)));
-            _landEdges[state] = edges;
+                    {
+                        to.Add(next.Index);
+                        km.Add(Math.Max(1, adjacency.DistanceKm));
+                    }
+            _landEdgeTo[state.Index] = to.ToArray();
+            _landEdgeKm[state.Index] = km.ToArray();
         }
         _landEdgesVersion = _game.MapVersion;
     }
 
-    private double RouteCapacity(TradeRouteKind kind, List<State> path, double distance)
+    private const ushort NotReached = ushort.MaxValue;
+
+    /// <summary>
+    /// The breadth-first tree of the land from one state: for each state the one it was reached from. A whole world in two bytes a state; the trees of a month's origins are dropped
+    /// when the next month starts (the ways they gave are kept in <see cref="_routeWays"/>, so a later month rarely needs one).
+    /// </summary>
+    private ushort[] LandTree(State from)
     {
-        double baseCapacity = _game.Data.Defines.Get(kind == TradeRouteKind.Sea ? "trade_sea_capacity" : kind == TradeRouteKind.Caravan ? "trade_caravan_capacity" : "trade_land_capacity", kind == TradeRouteKind.Sea ? 1500 : kind == TradeRouteKind.Caravan ? 400 : 900);
-        int infrastructure = 0, markets = 0;
-        _pathOwners.Clear();
-        double satisfiedSum = 0;
-        foreach (var s in path)
+        if (_landPaths.TryGetValue(from, out var tree)) return tree;
+        long bfs0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        int n = _landEdgeTo.Length;
+        tree = new ushort[n];
+        Array.Fill(tree, NotReached);
+        if (_landQueue.Length < n) _landQueue = new int[n];
+        var queue = _landQueue;
+        int head = 0, tail = 0;
+        tree[from.Index] = (ushort)from.Index;
+        queue[tail++] = from.Index;
+        var edgeTo = _landEdgeTo;
+        while (head < tail)
         {
-            infrastructure += s.Buildings.GetValueOrDefault("infrastructure");
-            markets += s.Buildings.GetValueOrDefault("market");
-            if (s.Owner is { Exists: true } owner && !_pathOwners.Contains(owner))
+            int current = queue[head++];
+            var edges = edgeTo[current];
+            for (int e = 0; e < edges.Length; e++)
             {
-                _pathOwners.Add(owner);
-                satisfiedSum += _game.Commodities.BalanceOf(owner, "transport_services").Satisfied;
+                int next = edges[e];
+                if (tree[next] != NotReached) continue;
+                tree[next] = (ushort)current;
+                queue[tail++] = next;
             }
         }
-        double transportServices = _pathOwners.Count == 0 ? 0.5 : satisfiedSum / _pathOwners.Count;
+        _landPaths[from] = tree;
+        if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
+        return tree;
+    }
+
+    private static int[] StopsOf(List<State> path)
+    {
+        var stops = new int[path.Count];
+        for (int i = 0; i < stops.Length; i++) stops[i] = path[i].Index;
+        return stops;
+    }
+
+    // A war changes the map all the time, and every change makes all routes be worked out again (thousands for a commodity, each along tens of states): what a route's capacity is made of
+    // is read once per settlement, per state and per owner, into arrays. Nothing it reads changes during a settlement.
+    private int[] _capInfrastructure = Array.Empty<int>(), _capMarkets = Array.Empty<int>(), _capOwner = Array.Empty<int>(), _capStateStamp = Array.Empty<int>();
+    private int[] _capOwnerStamp = Array.Empty<int>(), _capOwnerSeen = Array.Empty<int>();
+    private double[] _capOwnerSatisfied = Array.Empty<double>();
+    private int _capStamp, _capWalk;
+    private bool _capHold;
+
+    private double RouteCapacity(TradeRouteKind kind, int[] stops, double distance)
+    {
+        double baseCapacity = _game.Data.Defines.Get(kind == TradeRouteKind.Sea ? "trade_sea_capacity" : kind == TradeRouteKind.Caravan ? "trade_caravan_capacity" : "trade_land_capacity", kind == TradeRouteKind.Sea ? 1500 : kind == TradeRouteKind.Caravan ? 400 : 900);
+        var states = _game.World.States;
+        var countries = _game.World.Countries;
+        if (_capStateStamp.Length < states.Count)
+        {
+            int n = states.Count;
+            _capInfrastructure = new int[n]; _capMarkets = new int[n]; _capOwner = new int[n]; _capStateStamp = new int[n];
+        }
+        if (_capOwnerStamp.Length < countries.Count)
+        {
+            int n = countries.Count + 64;
+            _capOwnerStamp = new int[n]; _capOwnerSeen = new int[n]; _capOwnerSatisfied = new double[n];
+            _capWalk = 0;
+        }
+        int stamp = _capHold ? _capStamp : ++_capStamp;
+        int walk = ++_capWalk;
+        int infrastructure = 0, markets = 0, ownerCount = 0;
+        double satisfiedSum = 0;
+        foreach (int i in stops)
+        {
+            if (_capStateStamp[i] != stamp)
+            {
+                var s = states[i];
+                _capStateStamp[i] = stamp;
+                _capInfrastructure[i] = s.Buildings.GetValueOrDefault("infrastructure");
+                _capMarkets[i] = s.Buildings.GetValueOrDefault("market");
+                _capOwner[i] = s.Owner is { Exists: true } stateOwner ? stateOwner.Index : -1;
+            }
+            infrastructure += _capInfrastructure[i];
+            markets += _capMarkets[i];
+            int o = _capOwner[i];
+            if (o >= 0 && _capOwnerSeen[o] != walk)
+            {
+                _capOwnerSeen[o] = walk;
+                ownerCount++;
+                if (_capOwnerStamp[o] != stamp)
+                {
+                    _capOwnerStamp[o] = stamp;
+                    _capOwnerSatisfied[o] = _game.Commodities.BalanceOf(countries[o], "transport_services").Satisfied;
+                }
+                satisfiedSum += _capOwnerSatisfied[o];
+            }
+        }
+        double transportServices = ownerCount == 0 ? 0.5 : satisfiedSum / ownerCount;
         return baseCapacity * (1 + infrastructure * 0.08 + markets * 0.12) * (0.75 + transportServices * 0.5)
             / (1 + distance / (kind == TradeRouteKind.Sea ? 5000 : 1000));
     }
@@ -857,10 +1134,15 @@ public sealed class TradeNetworkSystem
 
     private bool IsBlocked(TradeRoute route, Country seller, Country buyer)
     {
-        if (_blockades.Contains(BlockadeKey(seller, buyer))) return true;
+        if (_blockades.Count > 0 && _blockades.Contains(BlockadeKey(seller, buyer))) return true;
         if (route.Kind != TradeRouteKind.Sea) return false;
-        if (seller.Vars.HasFlag("blockade_" + buyer.Tag) || buyer.Vars.HasFlag("blockade_" + seller.Tag)) return true;
+        if (seller.Vars.Flags.Count > 0 && seller.Vars.HasFlag("blockade_" + buyer.Tag) || buyer.Vars.Flags.Count > 0 && buyer.Vars.HasFlag("blockade_" + seller.Tag)) return true;
         if (!_game.Navy.Enabled) return false;
+        // (only a fleet at war with one of the two can block: usually there is none, and looking at each port and sea for it is dear)
+        bool anyHostile = false;
+        foreach (var fleet in _game.Navy.Fleets)
+            if (fleet.Owner != seller && fleet.Owner != buyer && (_game.World.AtWar(fleet.Owner, seller) || _game.World.AtWar(fleet.Owner, buyer))) { anyHostile = true; break; }
+        if (!anyHostile) return false;
 
         // A hostile fleet in the sea immediately outside either trading coast blocks
         // the route. The route layer stays independent of naval movement, but naval

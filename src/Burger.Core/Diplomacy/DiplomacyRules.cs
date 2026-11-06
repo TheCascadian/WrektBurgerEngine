@@ -25,7 +25,7 @@ public class DiplomacyRules
             && game.CultureOf(from) is { } people && people == game.CultureOf(to))
             v += game.Data.Defines.Get("same_culture_opinion", -60);
         v += game.Modifiers.Sum(to, "opinion");
-        if (game.ScriptValues.TryEval("base_opinion", from, out var scripted,
+        if (game.ScriptValues.Has("base_opinion") && game.ScriptValues.TryEval("base_opinion", from, out var scripted,
                 new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["target"] = to, ["recipient"] = to }))
             v += scripted;
         return v;

@@ -25,17 +25,17 @@ public sealed partial class Hud
         var F = G.Focus;
         var focuses = F.FocusesOf(player).ToList();
         if (focuses.Count == 0) { Gui.Label("No focus tree for this country.", x, y, 15, Gui.TextDim); return; }
-        var focusSnapshot = _app.Snapshot.Focuses.ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
+        var focusSnapshot = _app.Live.FocusRows().Rows.ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
         var cur = F.Current(player);
-        var curSnapshot = _app.Snapshot.CurrentFocusKey is { } currentKey && focusSnapshot.TryGetValue(currentKey, out var currentValue) ? currentValue : default;
+        var curSnapshot = _app.Live.FocusRows().CurrentKey is { } currentKey && focusSnapshot.TryGetValue(currentKey, out var currentValue) ? currentValue : default;
         double days = curSnapshot.Key.Length == 0 ? 0 : curSnapshot.Days;
         if (curSnapshot.Key.Length > 0)
         {
-            Gui.Label($"Working on {curSnapshot.Name}: {_app.Snapshot.CurrentFocusProgress:0} of {days:0} days", x, y, 15, Gui.Gold, FontKind.Bold);
-            Gui.Bar(new Rectangle(x, y + 22 * S, w - 90 * S, 10 * S), (float)Math.Clamp(_app.Snapshot.CurrentFocusProgress / Math.Max(1, days), 0, 1), new Color(110, 170, 230, 255));
+            Gui.Label($"Working on {curSnapshot.Name}: {_app.Live.FocusRows().CurrentProgress:0} of {days:0} days", x, y, 15, Gui.Gold, FontKind.Bold);
+            Gui.Bar(new Rectangle(x, y + 22 * S, w - 90 * S, 10 * S), (float)Math.Clamp(_app.Live.FocusRows().CurrentProgress / Math.Max(1, days), 0, 1), new Color(110, 170, 230, 255));
             if (Gui.Button(new Rectangle(x + w - 80 * S, y + 12 * S, 76 * S, 26 * S), "Drop", true, "Stop this focus (the progress is lost)", false, 13)) F.Cancel(player);
         }
-        else Gui.Label($"Pick a focus to work on. Completed: {_app.Snapshot.Focuses.Count(f => f.Done)} of {focuses.Count}", x, y, 15, Gui.TextDim);
+        else Gui.Label($"Pick a focus to work on. Completed: {_app.Live.FocusRows().Rows.Count(f => f.Done)} of {focuses.Count}", x, y, 15, Gui.TextDim);
         y += 46 * S;
 
         // the detail strip at the bottom
@@ -83,7 +83,7 @@ public sealed partial class Hud
             string? why = done ? "Completed" : state.BlockReason;
             Card(box, done ? new Color(40, 62, 46, 255) : busy ? new Color(40, 55, 80, 255) : why == null ? new Color(58, 58, 68, 255) : new Color(32, 33, 38, 255), busy || sel);
             Gui.Label(Gui.Fit(f.Name, cw - 12 * S, 14, FontKind.Bold), box.X + 6 * S, box.Y + 5 * S, 14, done ? Gui.Good : why == null ? Gui.Text : Gui.TextDim, FontKind.Bold);
-            string sub = done ? "done" : busy ? $"{_app.Snapshot.CurrentFocusProgress:0}/{state.Days:0} days" : why == null ? $"{state.Days:0} days" : "locked";
+            string sub = done ? "done" : busy ? $"{_app.Live.FocusRows().CurrentProgress:0}/{state.Days:0} days" : why == null ? $"{state.Days:0} days" : "locked";
             Gui.Label(sub, box.X + 6 * S, box.Y + box.Height - 20 * S, 12, busy ? Gui.Gold : Gui.TextDim);
             if (Gui.Hover(box) && Raylib.IsMouseButtonPressed(MouseButton.Left)) _focusSelected = f.Key;
         }

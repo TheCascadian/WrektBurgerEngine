@@ -97,6 +97,7 @@ public sealed class ModifierSystem
             Log.ErrorOnce("nomod:" + key, $"Unknown modifier '{key}' (define it in common/modifiers)");
             return false;
         }
+        Touch();
         if (!Active.TryGetValue(scope, out var list)) Active[scope] = list = new List<ActiveModifier>();
         GameDate? exp = days.HasValue ? _game.World.Date.AddDays(days.Value) : null;
         var existing = list.FirstOrDefault(m => m.Def == def);
@@ -112,6 +113,7 @@ public sealed class ModifierSystem
 
     public void Remove(IScope scope, string key)
     {
+        Touch();
         if (Active.TryGetValue(scope, out var list)) list.RemoveAll(m => string.Equals(m.Def.Key, key, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -121,14 +123,54 @@ public sealed class ModifierSystem
     /// <summary>Remembers every Sum on this thread until EndMemo; only for read-only passes during which no modifier or provider input changes.</summary>
     public static void BeginMemo() => _memo = new();
     public static void EndMemo() => _memo = null;
+    /// <summary>
+    /// While the simulation runs a tick, a total asked for again is not added up again: the eleven providers cost a lot and the same totals are asked for thousands of times an hour.
+    /// Each tick starts with an empty memo and anything that changes a modifier empties it, so what a tick sees does not depend on the memo; outside a tick (the interface, tests) there is none.
+    /// </summary>
+    private volatile bool _tickActive;
+    private int _tickGeneration;
+    private sealed class TickMemo
+    {
+        public int Generation;
+        public readonly Dictionary<MemoKey, double> Values = new();
+    }
+    private readonly record struct MemoKey(IScope Scope, string Key)
+    {
+        public bool Equals(MemoKey o) => ReferenceEquals(Scope, o.Scope) && (ReferenceEquals(Key, o.Key) || Key == o.Key);
+        public override int GetHashCode() => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Scope) * 31 + Key.GetHashCode();
+    }
+    [ThreadStatic] private static TickMemo? _threadTickMemo;   // one for each thread of the tick: no locks, and each sees the same totals
+    public void BeginTick() { Interlocked.Increment(ref _tickGeneration); _tickActive = true; }
+    public void EndTick() { _tickActive = false; }
+    /// <summary>Something a provider adds up has changed in the middle of a tick.</summary>
+    public void Touch() { Interlocked.Increment(ref _tickGeneration); }
+
     public double Sum(IScope? scope, string key)
     {
         if (scope == null) return 0;
+        if (!_tickActive) return SumNow(scope, key);
+        var memo = _threadTickMemo ??= new TickMemo();
+        int generation = Volatile.Read(ref _tickGeneration);
+        if (memo.Generation != generation)
+        {
+            if (memo.Values.Count > 0) memo.Values.Clear();
+            memo.Generation = generation;
+        }
+        var k = new MemoKey(scope, key);
+        if (memo.Values.TryGetValue(k, out var known)) return known;
+        double fresh = SumNow(scope, key);
+        // (a provider may have asked for other totals, or changed something, on the way)
+        if (memo.Generation == Volatile.Read(ref _tickGeneration)) memo.Values[k] = fresh;
+        return fresh;
+    }
+
+    private double SumNow(IScope scope, string key)
+    {
         if (_memo != null)
         {
             if (_memo.TryGetValue((scope, key), out var cached)) return cached;
             var memo = _memo; _memo = null;
-            try { return memo[(scope, key)] = Sum(scope, key); } finally { _memo = memo; }
+            try { return memo[(scope, key)] = SumNow(scope, key); } finally { _memo = memo; }
         }
         double v = 0;
         if (Active.TryGetValue(scope, out var list))
@@ -156,6 +198,7 @@ public sealed class ModifierSystem
     public void DailyTick()
     {
         var now = _game.World.Date;
+        Touch();
         foreach (var list in Active.Values)
             list.RemoveAll(m => m.Expires.HasValue && m.Expires.Value <= now);
     }

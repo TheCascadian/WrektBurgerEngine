@@ -528,8 +528,12 @@ public static partial class Program
         Console.WriteLine($"  within band {ok}, too rare {low}, too common {high}, not arisen {na}; weighted score {(allW > 0 ? okW / allW : 0):P0}");
     }
 
+    [System.Runtime.InteropServices.DllImport("winmm.dll")] private static extern uint timeBeginPeriod(uint ms);
+
     private static int Validate(List<string> args)
     {
+        if (Environment.GetEnvironmentVariable("BURGER_FINE_TIMER") == "1" && OperatingSystem.IsWindows()) timeBeginPeriod(1);   // the runtime's sample profiler ticks with the system timer: 1 ms instead of 15
+
         if (Opt(args, "--seeds") is { } seedList) return ValidateSeeds(args, seedList);
         bool selftest = Flag(args, "--selftest");
         int days = int.Parse(Opt(args, "--days") ?? (selftest ? "365" : "60"));
@@ -588,8 +592,10 @@ public static partial class Program
         var tickMs = tickStats ? new List<double>(days * 24) : null;
         var tickDates = tickStats ? new List<string>(days * 24) : null;
         var slowTicks = new List<string>();
+        Console.WriteLine($"MEMORY at start|managed heap {GC.GetTotalMemory(true) / 1048576} MB|working set {Environment.WorkingSet / 1048576} MB");
         long allocAtStart = GC.GetTotalAllocatedBytes(), gc0Start = GC.CollectionCount(0), gc2Start = GC.CollectionCount(2);
         bool streamed = args.Contains("--stream"); // tick the way the live clock does (monthly work streamed over days)
+        if (args.Contains("--spread")) { streamed = true; game.Commodities.SpreadWork = true; } // ... of a single player game (the settlement spread over the hours)
         bool traceDone = false;
         if (args.Contains("--reload-start")) // a joining client loads the host's save at tick 0
         {
@@ -616,7 +622,7 @@ public static partial class Program
                 continue;
             }
             if (tickMs != null)
-                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); if (streamed) game.TickLive(); else game.Tick(); double ms = (Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency; tickMs.Add(ms); tickDates?.Add(game.World.Date.ToDisplay()); if (ms > 40) slowTicks.Add($"{game.World.Date.ToDisplay()} {game.World.Date.Hour:00}h {ms:0}ms"); }
+                for (int h = 0; h < 24; h++) { long t0 = Stopwatch.GetTimestamp(); if (streamed) game.TickLive(); else game.Tick(); double ms = (Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency; tickMs.Add(ms); tickDates?.Add(game.World.Date.ToDisplay()); if (ms > 40) slowTicks.Add($"{game.World.Date.ToDisplay()} {game.World.Date.Hour:00}h {ms:0}ms [{string.Join(", ", game.TickScopes.OrderByDescending(x => x.Ms).Take(5).Select(x => $"{x.Name} {x.Ms:0}"))}]"); }
             else
                 for (int h = 0; h < 24; h++) { if (streamed) game.TickLive(); else game.Tick(); }
             recorder?.Daily();
@@ -626,6 +632,7 @@ public static partial class Program
                 SaveGame.Save(game, savePath);
                 reloaded = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
                 reloaded.StartNewGame(null);
+                reloaded.Commodities.SpreadWork = game.Commodities.SpreadWork;
                 SaveGame.Load(reloaded, savePath);
                 try { File.Delete(savePath); } catch { }
                 Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
@@ -681,8 +688,17 @@ public static partial class Program
             double fps = frames.Count / (frames.Sum() / 1000.0);
             var fs = frames.OrderBy(x => x).ToList();
             double low1 = 1000.0 / fs[Math.Min(fs.Count - 1, (int)(0.99 * fs.Count))];
+            if (Environment.GetEnvironmentVariable("BURGER_TICKDUMP") is { } tickDump) File.WriteAllLines(tickDump, tickMs.Select((ms, i) => $"{i / 24}	{i % 24}	{ms:0.###}	{tickDates![i]}"));
+            if (game.Commodities.Enabled)
+            {
+                double satisfied = 0, imported = 0, price = 0; int rows = 0;
+                foreach (var books in game.Commodities.Books.Values)
+                    foreach (var b in books.Values) { satisfied += b.Satisfied; imported += b.Import; price += b.Price; rows++; }
+                Console.WriteLine($"ECONOMY|average satisfied {satisfied / Math.Max(1, rows):0.000}|imports {imported:0}|average price {price / Math.Max(1, rows):0.000}|gold {game.World.Countries.Where(c => c.Exists).Sum(c => c.Gold):0}|trades {game.TradeNetwork.History.Count}|{game.Commodities.SpreadReport}");
+            }
+            Console.WriteLine($"MEMORY|managed heap {GC.GetTotalMemory(false) / 1048576} MB|working set {Environment.WorkingSet / 1048576} MB|longest pause {GC.GetGCMemoryInfo(GCKind.Any).PauseDurations[0].TotalMilliseconds:0} ms|total pause {GC.GetTotalPauseDuration().TotalMilliseconds:0} ms");
             Console.WriteLine($"ALLOC|{(GC.GetTotalAllocatedBytes() - allocAtStart) / 1048576.0 / days:0.0} MB per sim day|gen0 {GC.CollectionCount(0) - gc0Start}|gen2 {GC.CollectionCount(2) - gc2Start}");
-            Console.WriteLine("SLOWTICKS|" + string.Join("; ", slowTicks.Take(60)));
+            Console.WriteLine("SLOWTICKS|" + string.Join("; ", slowTicks.Skip(Math.Max(0, slowTicks.Count - 60))));
             Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
             Console.WriteLine("SLOWEST|" + string.Join(", ", tickMs.Select((ms, i) => (ms, i)).OrderByDescending(x => x.ms).Take(12).Select(x => $"{tickDates![x.i]} {x.ms:0}")));
             if (maxTickMs.HasValue) Check(sorted[^1] <= maxTickMs.Value, $"performance: worst tick <= {maxTickMs.Value} ms");
@@ -2440,7 +2456,6 @@ public static partial class Program
         }
         foreach (var a in gameArgs) psi.ArgumentList.Add(a);
         psi.UseShellExecute = false;
-        if (Environment.GetEnvironmentVariable("DOTNET_GCgen0size") == null) psi.Environment["DOTNET_GCgen0size"] = "8000000";   // a 128 MB youngest generation: the game collects garbage a tenth as often (hex)
         Console.WriteLine($"Starting {Path.GetFileName(project)}...");
         using var p = Process.Start(psi)!;
         p.WaitForExit();

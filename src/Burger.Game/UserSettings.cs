@@ -38,6 +38,10 @@ public static class UserSettings
     public static int EffectiveGameFrameRate => GameFrameRate switch { 30 => 30, 120 => 120, _ => 60 };
     /// <summary>Draw country labels in every game screen.</summary>
     public static bool CountryLabels = true;
+    /// <summary>Graphics quality: -1 chosen by measuring (the default), or 0 High .. 3 Lowest.</summary>
+    public static int GraphicsChoice = -1;
+    /// <summary>The level the measuring reached last time (-1: this computer has not been measured yet).</summary>
+    public static int GraphicsLearned = -1;
     /// <summary>Update exact province hover picking in every game screen.</summary>
     public static bool HoverPicking = true;
 
@@ -49,6 +53,14 @@ public static class UserSettings
     private static readonly float[] LodScales = { 0.5f, 1f, 2.5f, 8f };
     /// <summary>The shader's distance scale for a level; with LOD off, every feature keeps its full detail.</summary>
     public static float LodScale(int level) => LodEnabled ? LodScales[Math.Clamp(level, 0, 3)] : 1000f;
+
+    /// <summary>Reads the first lines of the settings before the window exists: does the window need multisampling at all?</summary>
+    public static bool WantsMultisampling()
+    {
+        Load();
+        int level = GraphicsChoice >= 0 ? GraphicsChoice : GraphicsLearned;
+        return level <= 0;
+    }
 
     /// <summary>The name other players see in multiplayer.</summary>
     public static string PlayerName = "";
@@ -86,6 +98,8 @@ public static class UserSettings
                 else if (parts[0] is "game_frame_rate" or "menu_frame_rate") GameFrameRate = v switch { 30 => 30, 120 => 120, _ => 60 };
                 else if (parts[0] is "country_labels" or "menu_labels") CountryLabels = v != 0;
                 else if (parts[0] is "hover_picking" or "menu_hover") HoverPicking = v != 0;
+                else if (parts[0] == "graphics_choice") GraphicsChoice = Math.Clamp((int)v, -1, 3);
+                else if (parts[0] == "graphics_learned") GraphicsLearned = Math.Clamp((int)v, -1, 3);
             }
         }
         catch { /* settings are a convenience: the defaults will do */ }
@@ -115,6 +129,8 @@ public static class UserSettings
                 $"game_frame_rate = {EffectiveGameFrameRate}",
                 $"country_labels = {(CountryLabels ? 1 : 0)}",
                 $"hover_picking = {(HoverPicking ? 1 : 0)}",
+                $"graphics_choice = {GraphicsChoice}",
+                $"graphics_learned = {GraphicsLearned}",
             });
         }
         catch { }

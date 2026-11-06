@@ -39,6 +39,8 @@ public sealed class CultureSystem
     private readonly Dictionary<string, int> _mixMonths = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
     private long _modsHour = long.MinValue;
+    private HashSet<string>? _tradKeys;
+    private int _tradKeysFrom = -1;
     /// <summary>Cultures that appeared during the game, newest last (for the culture card).</summary>
     public readonly List<string> Evolved = new();
 
@@ -99,15 +101,34 @@ public sealed class CultureSystem
 
     // ------------------------------------------------------------------------------------- modifiers
     /// <summary>People of a country by culture, as shares (home states; colonies count too when it has no home).</summary>
+    private readonly Dictionary<Country, (int Version, State[] States)> _sortedStates = new();
+
     public Dictionary<string, double> Shares(Country c)
     {
-        var res = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var res = new Dictionary<string, double>(8, StringComparer.OrdinalIgnoreCase);
         double total = 0;
-        foreach (var s in c.OwnedStates.OrderBy(x => x.Key, StringComparer.Ordinal))
+        // (asked for each country every hour: its states stay sorted until they change, and the groups of one culture, which follow each other, are added up without looking it up for each)
+        int owned = _game.World.OwnershipVersion;
+        if (!_sortedStates.TryGetValue(c, out var kept) || kept.Version != owned)
+            _sortedStates[c] = kept = (owned, c.OwnedStates.OrderBy(x => x.Key, StringComparer.Ordinal).ToArray());
+        string? current = null;
+        double sum = 0;
+        foreach (var s in kept.States)
         {
             if (!_game.Population.HasPops(s)) continue;
-            foreach (var p in _game.Population.Of(s).Pops) { res[p.Culture] = res.GetValueOrDefault(p.Culture) + p.Size; total += p.Size; }
+            foreach (var p in _game.Population.Of(s).Pops)
+            {
+                if (!ReferenceEquals(p.Culture, current))
+                {
+                    if (current != null) res[current] = sum;
+                    current = p.Culture;
+                    sum = res.GetValueOrDefault(current);
+                }
+                sum += p.Size;
+                total += p.Size;
+            }
         }
+        if (current != null) res[current] = sum;
         if (total <= 0)
         {
             var own = PrimaryCulture(c);
@@ -129,7 +150,7 @@ public sealed class CultureSystem
 
     private Dictionary<string, double> ComputeFor(Country c)
     {
-        var m = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        var m = new Dictionary<string, double>(24, StringComparer.OrdinalIgnoreCase);
         foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, ModifiersOf(culture), share);
         return m;
     }
@@ -138,6 +159,14 @@ public sealed class CultureSystem
     public double ModifierValue(IScope scope, string key)
     {
         if (!Enabled || scope is not Country c || !c.Exists) return 0;
+        // most keys come from no tradition: no need to add up the people of the country for them
+        if (_tradKeys == null || _tradKeysFrom != Traditions.Count)
+        {
+            var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in Traditions.Values) foreach (var k in t.Modifier.Keys) keys.Add(k);
+            _tradKeys = keys; _tradKeysFrom = Traditions.Count;
+        }
+        if (!_tradKeys.Contains(key)) return 0;
         long now = _game.World.Date.TotalHours;
         if (now != _modsHour) { _mods.Clear(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
         if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);

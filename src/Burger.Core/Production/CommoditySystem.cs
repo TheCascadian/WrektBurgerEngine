@@ -73,7 +73,7 @@ public class CommodityRules
     public virtual bool WillTrade(Game game, Country seller, Country buyer)
     {
         if (game.World.AtWar(seller, buyer)) return false;
-        if (seller.Vars.HasFlag("embargo_" + buyer.Tag)) return false;
+        if (seller.Vars.Flags.Count > 0 && seller.Vars.HasFlag("embargo_" + buyer.Tag)) return false;
         // allies of the seller's enemies do not get its goods
         foreach (var war in game.World.WarsOf(seller)) if (war.Involves(buyer) && war.EnemiesOf(seller).Contains(buyer)) return false;
         return game.Diplomacy.Opinion(seller, buyer) > game.Data.Defines.Get("trade_min_opinion", -60);
@@ -140,6 +140,7 @@ public sealed class CommoditySystem
                 _settlementStarted = false;
                 _settlementComplete = false;
                 _settlementRolloverPending = false;
+                DropPlan();
             }
         });
     }
@@ -329,7 +330,7 @@ public sealed class CommoditySystem
     /// <summary>Processes the next deterministic commodity batch after the month has started.</summary>
     public void DailyTick()
     {
-        if (!Enabled || !_settlementStarted) return;
+        if (!Enabled || !_settlementStarted || SpreadWork) return;
         if (_settlementComplete)
         {
             if (_settlementRolloverPending)
@@ -365,10 +366,237 @@ public sealed class CommoditySystem
         _settlementStarted = true;
         _settlementComplete = false;
         _settlementRolloverPending = false;
+        DropPlan();
+        _spreadEstimateMs = _spreadLastMs > 0 ? _spreadLastMs * 1.1 : _settlementCommodities.Count * SpreadFirstGuessMs;
+        _spreadSpentMs = 0;
+        _spreadCommitted = 0;
+        _spreadEndHour = _game.World.Date.TotalHours + SpreadHours;
+    }
+
+    // ------------------------------------------------------------------------------------- the settlement spread over the hours
+    /// <summary>
+    /// The live clock of a single player game: instead of one commodity at a time in one tick (up to 700 ms in a long game, the clock visibly stopping several times a week), a little is done every hour.
+    /// What only reads the game comes first, country by country: what each state makes and needs, how much each buyer wants each seller. Then the commodity is settled at once, and that is short.
+    /// The work of the month is spread evenly by the time it really takes on this machine, however large or small a commodity is. So the hour a commodity comes due can differ from run to run:
+    /// off for multiplayer and for tools, which settle as they always did. Nothing is saved of a plan under way, so a game loaded from a save starts that commodity's plan again.
+    /// </summary>
+    public bool SpreadWork;
+    private const int SpreadHours = 640;    // a month has 720: there is room left if it runs late
+    private enum SpreadStage { Plan, Priorities, Markets, Pairing, Finish }
+    private IEnumerator<int>? _planSteps;
+
+    private Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? _planMethods;
+
+    private void DropPlan()
+    {
+        _planKey = null;
+        _planMethods = null;
+        _planSteps?.Dispose();
+        _planSteps = null;
+    }
+    private readonly record struct PlannedCountry(Country Country, double Output, double MilitaryUse, double PopulationUse, double Demand);
+    private readonly record struct PlannedState(State State, double Output, double Demand, double Opening);
+    private readonly List<PlannedCountry> _plannedCountries = new();
+    private readonly List<PlannedState> _plannedStates = new();
+    private readonly List<Country> _planBuyers = new(), _planSellers = new();
+    private readonly HashSet<Country> _planBuyerSet = new(), _planSellerSet = new();
+    private string? _planKey;
+    private SpreadStage _planStage;
+    private int _planCursor;
+    private const double SpreadFirstGuessMs = 80, SpreadSlowestMs = 0.5, SpreadFastestMs = 25;   // per commodity; per tick
+    private double _spreadEstimateMs, _spreadSpentMs, _spreadLastMs;
+    /// <summary>How the last settlement went (for --perf).</summary>
+    public string SpreadReport { get; private set; } = "";
+    private long _spreadEndHour;
+    private int _spreadCommitted;
+
+    /// <summary>One hour's part of the settlement (see <see cref="SpreadWork"/>).</summary>
+    public void SpreadTick()
+    {
+        if (!Enabled || !_settlementStarted) return;
+        if (_settlementComplete)
+        {
+            if (!_settlementRolloverPending) return;
+            _settlementRolloverPending = false;
+            BeginSettlement();
+        }
+        int commoditiesLeft = _settlementCommodities.Count - _settlementIndex;
+        long now = _game.World.Date.TotalHours;
+        if (_spreadEstimateMs <= 0) _spreadEstimateMs = commoditiesLeft * SpreadFirstGuessMs;   // (a game just loaded)
+        long hoursLeft = Math.Max(8, _spreadEndHour - now);
+        if (_spreadEndHour <= now && _spreadCommitted == 0 && _spreadSpentMs == 0) hoursLeft = Math.Max(64, SpreadHours * commoditiesLeft / Math.Max(1, _settlementCommodities.Count));
+        // what is still to do, by last month's total or by how long a commodity has taken this month, over the hours left
+        double pace = _spreadCommitted > 0 ? _spreadSpentMs / _spreadCommitted * commoditiesLeft : 0;
+        double allowedMs = Math.Clamp(Math.Max(_spreadEstimateMs - _spreadSpentMs, pace) / hoursLeft, SpreadSlowestMs, SpreadFastestMs);
+        long start = System.Diagnostics.Stopwatch.GetTimestamp();
+        long limit = start + (long)(allowedMs * System.Diagnostics.Stopwatch.Frequency / 1000);
+        var network = _game.TradeNetwork;
+        Rules.CacheOpen = true;
+        network.MethodMemo = _planMethods ??= new();
+        Burger.Core.Mechanics.ModifierSystem.BeginMemo();
+        try
+        {
+            while (System.Diagnostics.Stopwatch.GetTimestamp() < limit && _settlementIndex < _settlementCommodities.Count)
+            {
+                string key = _settlementCommodities[_settlementIndex];
+                if (!Defs.TryGetValue(key, out var k)) { _settlementIndex++; continue; }
+                if (!ReferenceEquals(_planKey, key))
+                {
+                    DropPlan();
+                    _planKey = key;
+                    _planStage = SpreadStage.Plan;
+                    _planCursor = 0;
+                    _plannedCountries.Clear();
+                    _plannedStates.Clear();
+                    _planBuyers.Clear();
+                    _planSellers.Clear();
+                    _planBuyerSet.Clear();
+                    _planSellerSet.Clear();
+                }
+                switch (_planStage)
+                {
+                    case SpreadStage.Plan:
+                        if (_planCursor >= _settlementCountries.Count)
+                        {
+                            network.BeginPreparedPriorities(_planBuyers, _planSellers);
+                            _planStage = SpreadStage.Priorities;
+                            _planCursor = 0;
+                            continue;
+                        }
+                        PlanCountry(_settlementCountries[_planCursor++], k);
+                        break;
+                    case SpreadStage.Priorities:
+                        if (_planCursor >= _planBuyers.Count) { _planStage = SpreadStage.Markets; continue; }
+                        network.PreparePriorities(_planBuyers[_planCursor++], _planSellers, (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+                        break;
+                    case SpreadStage.Markets:
+                        Rules.CacheOpen = false;
+                        network.MethodMemo = null;
+                        FillPlannedMarkets(k);
+                        _planSteps = network.BeginMatch(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+                        _planStage = SpreadStage.Pairing;
+                        break;
+                    case SpreadStage.Pairing:
+                        Rules.CacheOpen = false;
+                        network.MethodMemo = null;
+                        long t0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+                        bool done = network.AdvanceMatch(_planSteps!, limit);
+                        if (_game.Profiling) _game.ProfileElapsed("Settle.Pairing", System.Diagnostics.Stopwatch.GetTimestamp() - t0);
+                        if (done) _planStage = SpreadStage.Finish;
+                        break;
+                    default:
+                        FinishPlan(k);
+                        _settlementIndex++;
+                        _spreadCommitted++;
+                        DropPlan();
+                        break;
+                }
+            }
+        }
+        finally
+        {
+            Rules.CacheOpen = false;
+            network.MethodMemo = null;
+            Burger.Core.Mechanics.ModifierSystem.EndMemo();
+        }
+        _spreadSpentMs += (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        if (_settlementIndex >= _settlementCommodities.Count)
+        {
+            _settlementIndex = _settlementCommodities.Count;
+            _settlementComplete = true;
+            _usedThisMonth.Clear();
+            _spreadLastMs = _spreadSpentMs;
+            SpreadReport = $"last settlement {_spreadSpentMs:0} ms over {now - (_spreadEndHour - SpreadHours)} hours";
+        }
+    }
+
+    /// <summary>What a country makes and needs of a commodity, as <see cref="ProcessCommodity"/> works it out, kept for when the commodity is settled. Only reads.</summary>
+    private void PlanCountry(Country c, CommodityDef k)
+    {
+        var network = _game.TradeNetwork;
+        var b = BalanceOf(c, k.Key);
+        double output = 0;
+        var stateOutputs = _stateOutputs; stateOutputs.Clear();
+        foreach (var s in c.OwnedStates)
+        {
+            double deposit = Deposits.TryGetValue(s, out var d) ? d.GetValueOrDefault(k.Key) : 0;
+            double stateOutput = network.ProductionOutput(c, s, k, Rules.Output(_game, c, s, k, deposit));
+            stateOutputs.Add((s, stateOutput));
+            output += stateOutput;
+        }
+        double military = _usedThisMonth.TryGetValue(c, out var u) ? u.GetValueOrDefault(k.Key) : 0;
+        double populationUse = PopulationDemand(c, k);
+        double demand = Rules.BaseDemand(_game, c, k) + populationUse + military;
+        _plannedCountries.Add(new PlannedCountry(c, output, military, populationUse, demand));
+        double opening = Math.Max(0, b.Stockpile);
+        double population = 0;
+        _statePops.Clear();
+        foreach (var s in c.OwnedStates)
+        {
+            double sp = _game.Population.Enabled && _game.Population.HasPops(s) ? _game.Population.Of(s).Total : Math.Max(1, s.Manpower * 1000);
+            _statePops.Add(sp);
+            population += sp;
+        }
+        double demandWithoutMilitary = Math.Max(0, demand);
+        bool buys = false, sells = false;
+        for (int si = 0; si < stateOutputs.Count; si++)
+        {
+            var (state, stateOutput) = stateOutputs[si];
+            double demandShare = population <= 0 ? 1.0 / Math.Max(1, stateOutputs.Count) : _statePops[si] / population;
+            double marketDemand = Math.Max(0, demandWithoutMilitary * demandShare + (state.Owner == null ? 0 : network.IndustryInputDemand(state.Owner, state, k.Key)));
+            double marketOutput = Math.Max(0, stateOutput), marketOpening = Math.Max(0, opening * demandShare);
+            _plannedStates.Add(new PlannedState(state, stateOutput, marketDemand, opening * demandShare));
+            double total = marketOutput + marketOpening;
+            if (total > marketDemand) sells = true;
+            else if (marketDemand > total) buys = true;
+        }
+        if (buys && _planBuyerSet.Add(c)) _planBuyers.Add(c);
+        if (sells && _planSellerSet.Add(c)) _planSellers.Add(c);
+    }
+
+    /// <summary>The plan of a commodity comes true: its markets are filled, ready to be matched.</summary>
+    private void FillPlannedMarkets(CommodityDef k)
+    {
+        long t0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        var network = _game.TradeNetwork;
+        network.BeginCommodity(k.Key);
+        double storage = Rules.StorageMonths(_game, k);
+        foreach (var row in _plannedStates) network.AddPlannedMarket(row.State, k.Key, row.Output, row.Demand, row.Opening, storage);
+        network.MarketsFilled();
+        if (_game.Profiling) _game.ProfileElapsed("Settle.Markets", System.Diagnostics.Stopwatch.GetTimestamp() - t0);
+    }
+
+    /// <summary>The matching is done: the books of the countries show the commodity's new month. (Until now they showed the last one, for anyone who asked in between.)</summary>
+    private void FinishPlan(CommodityDef k)
+    {
+        long t0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+        var network = _game.TradeNetwork;
+        foreach (var row in _plannedCountries)
+        {
+            var b = BalanceOf(row.Country, k.Key);
+            b.MilitaryUse = row.MilitaryUse;
+            b.PopulationUse = row.PopulationUse;
+        }
+        foreach (var c in _settlementCountries)
+        {
+            var b = BalanceOf(c, k.Key);
+            var totals = network.Totals(c, k.Key);
+            b.Output = totals.Output;
+            b.Demand = totals.Demand;
+            b.Import = totals.Import;
+            b.Export = totals.Export;
+            b.Stockpile = totals.Stockpile;
+            b.Satisfied = totals.Satisfied;
+            b.Price = totals.Price;
+        }
+        _balanceVersion++;
+        _shortagesCache.Clear();
+        if (_game.Profiling) _game.ProfileElapsed("Settle.Totals", System.Diagnostics.Stopwatch.GetTimestamp() - t0);
     }
 
     private void ProcessSettlementBatch()
     {
+        DropPlan();
         int processed = 0;
         while (processed < SettlementBatchSize && _settlementIndex < _settlementCommodities.Count)
         {
@@ -538,6 +766,11 @@ public sealed class CommoditySystem
         _usedThisMonth.Clear();
         _shortagesCache.Clear();
         _balanceVersion = 0;
+        DropPlan();
+        _spreadEstimateMs = 0;
+        _spreadSpentMs = 0;
+        _spreadCommitted = 0;
+        _spreadEndHour = 0;
         _settlementCommodities.Clear();
         _settlementCountries.Clear();
         _settlementStarted = root.GetInt("settlement_started") != 0;

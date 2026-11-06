@@ -93,14 +93,19 @@ public sealed class MapParticles : IDisposable
         }
     }
 
+    private RenderSnapshot? _lastSnapshot;
+
     public void Update(RenderSnapshot snapshot, float dt, Camera3D cam)
     {
+        // (a snapshot stays for several frames: its effects start once)
+        if (!ReferenceEquals(snapshot, _lastSnapshot))
         foreach (var request in snapshot.ParticleEvents)
         {
             var at = request.HasPosition ? _map.LocationPos(request.X, request.Y) : cam.Target;
             if (!Emit(request.Effect, at, Vector3.UnitY, MapFigures.HeightFor(cam) / 1.8f))
                 Burger.Core.Log.Warn($"particles: unknown effect '{request.Effect}'");
         }
+        _lastSnapshot = snapshot;
         for (int i = 0; i < _count; i++)
         {
             ref var p = ref _pool[i];

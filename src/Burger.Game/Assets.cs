@@ -33,6 +33,8 @@ public static unsafe class Assets
         foreach (var t in _textures.Values) if (t.Id != 0) Raylib.UnloadTexture(t);
         _textures.Clear();
         _flags.Clear();
+        _flagGeneration++;
+        _flagAsked.Clear();
         foreach (var f in _partyFlags.Values) if (f.Generated && f.Tex.Id != 0) Raylib.UnloadTexture(f.Tex);
         _partyFlags.Clear();
         _fontKey = "";
@@ -45,6 +47,7 @@ public static unsafe class Assets
         string key = $"{theme?.Font}|{theme?.BoldFont}|{theme?.HeaderFont}";
         if (key == _fontKey) return;
         _fontKey = key;
+        Gui.ForgetTextSizes();
         foreach (var f in _loadedFonts) Raylib.UnloadFont(f);
         _loadedFonts.Clear();
 
@@ -122,22 +125,136 @@ public static unsafe class Assets
         return tex.Id == 0 ? null : tex;
     }
 
-    /// <summary>The flag of a country; reloads automatically after <c>set_flag_image</c>. Missing files get a generated flag.</summary>
+    /// <summary>Screenshots want every flag in the first picture.</summary>
+    public static bool FlagsAtOnce;
+
+    // A generated flag takes about 20 milliseconds, a file has to be read and decoded: opening a list of countries would stop the game. They are made on a thread of their own, the latest
+    // asked for first (what is on the screen now), and shown when ready; until then a plain plate stands in.
+    private sealed record FlagJob(Country Country, int Version, string? Relative, string? File, string Tag, Rgb Color, int Generation)
+    {
+        public Image Made;
+    }
+    private static readonly Stack<FlagJob> _flagWanted = new();
+    private static readonly SemaphoreSlim _flagSignal = new(0);
+    private static readonly System.Collections.Concurrent.ConcurrentQueue<FlagJob> _flagMade = new();
+    private static readonly HashSet<(Country, int)> _flagAsked = new();
+    private static int _flagGeneration;
+    private static Thread? _flagThread;
+    private static Texture2D _flagPlate;
+
+    private static void FlagWorker()
+    {
+        while (true)
+        {
+            _flagSignal.Wait();
+            FlagJob job;
+            lock (_flagWanted)
+            {
+                if (_flagWanted.Count == 0) continue;
+                job = _flagWanted.Pop();
+            }
+            if (job.Generation != Volatile.Read(ref _flagGeneration)) continue;
+            try
+            {
+                if (job.File != null)
+                {
+                    job.Made = Raylib.LoadImage(job.File);
+                    if (job.Made.Width > 0) Raylib.ImageMipmaps(ref job.Made);
+                }
+                else job.Made = FlagImage(FlagGenerator.Render(job.Tag, job.Color, FlagKind.Nation));
+                _flagMade.Enqueue(job);
+            }
+            catch (Exception ex) { Log.Warn($"flag of {job.Tag}: {ex.Message}"); }
+        }
+    }
+
+    /// <summary>Puts the flags that are ready on the graphics card, a few a frame. Call once a frame.</summary>
+    public static void PumpFlags()
+    {
+        long start = System.Diagnostics.Stopwatch.GetTimestamp();
+        long limit = System.Diagnostics.Stopwatch.Frequency / 500;   // 2 ms
+        while (System.Diagnostics.Stopwatch.GetTimestamp() - start < limit && _flagMade.TryDequeue(out var job))
+        {
+            bool stale = job.Generation != _flagGeneration;
+            if (stale)
+            {
+                if (job.Made.Data != null) Raylib.UnloadImage(job.Made);
+                continue;
+            }
+            Texture2D tex;
+            if (job.Relative != null && _textures.TryGetValue(job.Relative, out var shared) && shared.Id != 0) tex = shared;
+            else if (job.Made.Data == null || job.Made.Width <= 0)
+            {
+                var img = GeneratedFlag(job.Country);
+                tex = Raylib.LoadTextureFromImage(img);
+                Raylib.UnloadImage(img);
+                Raylib.SetTextureFilter(tex, TextureFilter.Bilinear);
+                job.Made = default;
+            }
+            else
+            {
+                tex = Raylib.LoadTextureFromImage(job.Made);
+                Raylib.SetTextureFilter(tex, job.Relative != null ? TextureFilter.Trilinear : TextureFilter.Bilinear);
+                if (job.Relative != null) _textures[job.Relative] = tex;
+            }
+            if (job.Made.Data != null) Raylib.UnloadImage(job.Made);
+            _flags[job.Country] = (job.Version, tex);
+        }
+    }
+
+    /// <summary>The flag of a country; reloads automatically after <c>set_flag_image</c>. Missing files get a generated flag. A plain plate (or the old flag) until it is ready.</summary>
     public static Texture2D Flag(Country c)
     {
-        if (_flags.TryGetValue(c, out var f) && f.Version == c.FlagVersion) return f.Tex;
-        Texture2D tex;
-        var loaded = Texture(c.FlagPath);
-        if (loaded != null) tex = loaded.Value;
-        else
+        bool known = _flags.TryGetValue(c, out var f);
+        if (known && f.Version == c.FlagVersion) return f.Tex;
+        // the same file for another country is on the card already
+        if (!string.IsNullOrEmpty(c.FlagPath) && _textures.TryGetValue(c.FlagPath, out var shared) && shared.Id != 0)
         {
-            var img = GeneratedFlag(c);
-            tex = Raylib.LoadTextureFromImage(img);
-            Raylib.UnloadImage(img);
-            Raylib.SetTextureFilter(tex, TextureFilter.Bilinear);
+            _flags[c] = (c.FlagVersion, shared);
+            return shared;
         }
-        _flags[c] = (c.FlagVersion, tex);
-        return tex;
+        if (FlagsAtOnce)
+        {
+            Texture2D tex;
+            var loaded = Texture(c.FlagPath);
+            if (loaded != null) tex = loaded.Value;
+            else
+            {
+                var img = GeneratedFlag(c);
+                tex = Raylib.LoadTextureFromImage(img);
+                Raylib.UnloadImage(img);
+                Raylib.SetTextureFilter(tex, TextureFilter.Bilinear);
+            }
+            _flags[c] = (c.FlagVersion, tex);
+            return tex;
+        }
+        if (_flagAsked.Add((c, c.FlagVersion)))
+        {
+            string? file = null;
+            if (!string.IsNullOrEmpty(c.FlagPath))
+            {
+                string path = Path.Combine(_root, c.FlagPath.Replace('\\', '/'));
+                if (File.Exists(path)) file = path;
+            }
+            lock (_flagWanted) _flagWanted.Push(new FlagJob(c, c.FlagVersion, file != null ? c.FlagPath : null, file, c.Tag, c.Color, _flagGeneration));
+            _flagSignal.Release();
+            _flagThread ??= StartFlagThread();
+        }
+        if (known) return f.Tex;
+        if (_flagPlate.Id == 0)
+        {
+            var img = Raylib.GenImageColor(1, 1, new Color(58, 60, 66, 255));
+            _flagPlate = Raylib.LoadTextureFromImage(img);
+            Raylib.UnloadImage(img);
+        }
+        return _flagPlate;
+    }
+
+    private static Thread StartFlagThread()
+    {
+        var thread = new Thread(FlagWorker, 4 * 1024 * 1024) { IsBackground = true, Name = "flags", Priority = ThreadPriority.BelowNormal };
+        thread.Start();
+        return thread;
     }
 
     /// <summary>
