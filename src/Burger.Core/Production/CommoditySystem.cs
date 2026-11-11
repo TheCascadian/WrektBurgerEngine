@@ -381,6 +381,8 @@ public sealed class CommoditySystem
     /// off for multiplayer and for tools, which settle as they always did. Nothing is saved of a plan under way, so a game loaded from a save starts that commodity's plan again.
     /// </summary>
     public bool SpreadWork;
+    /// <summary>For tests: when above 0, each hour of the spread settlement does this many steps of work instead of working by the clock, so a run can be repeated exactly.</summary>
+    public int SpreadFixedSteps;
     private const int SpreadHours = 640;    // a month has 720: there is room left if it runs late
     private enum SpreadStage { Plan, Priorities, Markets, Pairing, Finish }
     private IEnumerator<int>? _planSteps;
@@ -436,7 +438,8 @@ public sealed class CommoditySystem
         Burger.Core.Mechanics.ModifierSystem.BeginMemo();
         try
         {
-            while (System.Diagnostics.Stopwatch.GetTimestamp() < limit && _settlementIndex < _settlementCommodities.Count)
+            int stepsLeft = SpreadFixedSteps;
+            while ((SpreadFixedSteps > 0 ? stepsLeft-- > 0 : System.Diagnostics.Stopwatch.GetTimestamp() < limit) && _settlementIndex < _settlementCommodities.Count)
             {
                 string key = _settlementCommodities[_settlementIndex];
                 if (!Defs.TryGetValue(key, out var k)) { _settlementIndex++; continue; }
@@ -480,7 +483,7 @@ public sealed class CommoditySystem
                         Rules.CacheOpen = false;
                         network.MethodMemo = null;
                         long t0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-                        bool done = network.AdvanceMatch(_planSteps!, limit);
+                        bool done = SpreadFixedSteps > 0 ? network.AdvanceMatch(_planSteps!, ref stepsLeft) : network.AdvanceMatch(_planSteps!, limit);
                         if (_game.Profiling) _game.ProfileElapsed("Settle.Pairing", System.Diagnostics.Stopwatch.GetTimestamp() - t0);
                         if (done) _planStage = SpreadStage.Finish;
                         break;

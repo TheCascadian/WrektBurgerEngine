@@ -439,6 +439,20 @@ public sealed class TradeNetworkSystem
         finally { _capHold = false; }
     }
 
+    /// <summary>As above, by a count of steps instead of the clock (see <see cref="CommoditySystem.SpreadFixedSteps"/>).</summary>
+    internal bool AdvanceMatch(IEnumerator<int> steps, ref int stepsLeft)
+    {
+        _capStamp++;
+        _capHold = true;
+        try
+        {
+            while (stepsLeft-- > 0)
+                if (!steps.MoveNext()) return true;
+            return false;
+        }
+        finally { _capHold = false; }
+    }
+
     /// <summary>The markets were filled without <see cref="AddMarket"/>: what was added up from them is out of date.</summary>
     internal void MarketsFilled() => InvalidateTotalsCache();
 

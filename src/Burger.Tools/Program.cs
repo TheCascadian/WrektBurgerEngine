@@ -596,6 +596,7 @@ public static partial class Program
         long allocAtStart = GC.GetTotalAllocatedBytes(), gc0Start = GC.CollectionCount(0), gc2Start = GC.CollectionCount(2);
         bool streamed = args.Contains("--stream"); // tick the way the live clock does (monthly work streamed over days)
         if (args.Contains("--spread")) { streamed = true; game.Commodities.SpreadWork = true; } // ... of a single player game (the settlement spread over the hours)
+        if (Opt(args, "--spread-steps") is { } spreadSteps) game.Commodities.SpreadFixedSteps = int.Parse(spreadSteps); // ... paced by work instead of the clock, so it repeats exactly
         bool traceDone = false;
         if (args.Contains("--reload-start")) // a joining client loads the host's save at tick 0
         {
@@ -633,6 +634,7 @@ public static partial class Program
                 reloaded = Game.Load(GameDir(project), compileScripts: true, seed: runSeed);
                 reloaded.StartNewGame(null);
                 reloaded.Commodities.SpreadWork = game.Commodities.SpreadWork;
+                reloaded.Commodities.SpreadFixedSteps = game.Commodities.SpreadFixedSteps;
                 SaveGame.Load(reloaded, savePath);
                 try { File.Delete(savePath); } catch { }
                 Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
