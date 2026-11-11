@@ -140,10 +140,12 @@ public sealed class MapOverlay
         Gui.Tooltip(string.Join("\n", rows));
     }
 
-    public void DrawLabels(Camera3D cam)
+    /// <param name="hold">Ticks are in flight: draw the laid-out names only (no tooltips, nothing read from the game).</param>
+    public void DrawLabels(Camera3D cam, bool hold = false)
     {
         float h = Viewport.HeightOf(cam);
-        if (h > 18) _countryLabels.Draw(cam);
+        if (h > 18) _countryLabels.Draw(cam, hold: hold);
+        if (hold) return;
         DrawSettlementTooltip();
         if (h < 30)
         {
@@ -167,6 +169,31 @@ public sealed class MapOverlay
     public readonly List<(Rectangle Rect, Country Owner, List<Division> Divisions)> Counters = new();
     public readonly List<(Rectangle Rect, string OwnerTag, ImmutableArray<int> DivisionIds)> SnapshotCounters = new();
 
+    private readonly record struct UnitGroup(string LocationKey, string OwnerTag, ImmutableArray<int> Ids, float Strength, float Organisation, string Count);
+    private RenderSnapshot? _unitGroupsSnapshot;
+    private UnitGroup[] _unitGroups = Array.Empty<UnitGroup>();
+    private readonly Dictionary<string, int> _unitSlots = new(StringComparer.Ordinal);
+
+    // The land stacks only change with the snapshot, so they are grouped once per snapshot instead of every frame.
+    private UnitGroup[] UnitGroupsFor(RenderSnapshot snapshot, Dictionary<string, RenderLocation> locations)
+    {
+        if (ReferenceEquals(snapshot, _unitGroupsSnapshot)) return _unitGroups;
+        _unitGroups = snapshot.Divisions.Where(d => locations.TryGetValue(d.LocationKey, out var l) && !l.IsWater).GroupBy(d => (d.LocationKey, d.OwnerTag))
+            .Select(g => new UnitGroup(g.Key.LocationKey, g.Key.OwnerTag, g.Select(d => d.Id).ToImmutableArray(),
+                (float)g.Average(d => d.Strength), (float)g.Average(d => d.Organisation), g.Count().ToString()))
+            .ToArray();
+        _unitGroupsSnapshot = snapshot;
+        return _unitGroups;
+    }
+
+    private static bool AnySelected(ImmutableArray<int> ids, UiState ui)
+    {
+        foreach (int id in ids)
+            foreach (var d in ui.SelectedDivisions)
+                if (d.Id == id) return true;
+        return false;
+    }
+
     /// <summary>Snapshot-backed unit counters. Selection resolves IDs only when the user issues a command.</summary>
     public bool DrawUnits(RenderSnapshot snapshot, Camera3D cam, UiState ui, bool mouseOverUi)
     {
@@ -176,15 +203,16 @@ public sealed class MapOverlay
         var countries = _countryLookup;
         var locations = _locationLookup;
         float scale = Gui.Scale * Math.Clamp(60f / Viewport.HeightOf(cam), 0.65f, 1.15f);
-        var perLocation = new Dictionary<string, int>(StringComparer.Ordinal);
+        var perLocation = _unitSlots;
+        perLocation.Clear();
         bool clicked = false;
         bool shift = Raylib.IsKeyDown(KeyboardKey.LeftShift) || Raylib.IsKeyDown(KeyboardKey.RightShift);
-        foreach (var g in snapshot.Divisions.Where(d => locations.TryGetValue(d.LocationKey, out var l) && !l.IsWater).GroupBy(d => (d.LocationKey, d.OwnerTag)))
+        foreach (var g in UnitGroupsFor(snapshot, locations))
         {
-            if (!locations.TryGetValue(g.Key.LocationKey, out var location) || !countries.TryGetValue(g.Key.OwnerTag, out var owner)) continue;
-            if (!location.IsCharted && g.Key.OwnerTag != snapshot.PlayerTag) continue;
-            int slot = perLocation.TryGetValue(g.Key.LocationKey, out var existing) ? existing : 0;
-            perLocation[g.Key.LocationKey] = slot + 1;
+            if (!locations.TryGetValue(g.LocationKey, out var location) || !countries.TryGetValue(g.OwnerTag, out var owner)) continue;
+            if (!location.IsCharted && g.OwnerTag != snapshot.PlayerTag) continue;
+            int slot = perLocation.TryGetValue(g.LocationKey, out var existing) ? existing : 0;
+            perLocation[g.LocationKey] = slot + 1;
             var screen = Viewport.SnapToScreen(_map.LocationPos(location.CenterX, location.CenterY), cam);
             if (!OnScreen(screen)) continue;
             float cw = 50 * scale, ch = 22 * scale, statH = 7 * scale, pillGap = 2 * scale;
@@ -193,14 +221,14 @@ public sealed class MapOverlay
             var statRect = new Rectangle(rect.X, rect.Y, rect.Width, statH);
             rect.Y += statH + pillGap;
             var counterRect = new Rectangle(rect.X, statRect.Y, rect.Width, rect.Bottom() - statRect.Y);
-            var ids = g.Select(d => d.Id).ToImmutableArray();
-            SnapshotCounters.Add((counterRect, g.Key.OwnerTag, ids));
-            bool selected = g.Any(d => ui.SelectedDivisions.Any(x => x.Id == d.Id));
+            var ids = g.Ids;
+            SnapshotCounters.Add((counterRect, g.OwnerTag, ids));
+            bool selected = AnySelected(ids, ui);
             Raylib.DrawRectangleRec(new Rectangle(counterRect.X - 2, counterRect.Y - 2, counterRect.Width + 4, counterRect.Height + 4), selected ? new Color(255, 230, 120, 255) : new Color(0, 0, 0, 200));
-            Gui.Bar(new Rectangle(statRect.X, statRect.Y, statRect.Width, 3 * scale), (float)g.Average(d => d.Strength), new Color(90, 200, 90, 255));
-            Gui.Bar(new Rectangle(statRect.X, statRect.Y + 3.5f * scale, statRect.Width, 3 * scale), (float)g.Average(d => d.Organisation), new Color(80, 160, 240, 255));
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y, statRect.Width, 3 * scale), g.Strength, new Color(90, 200, 90, 255));
+            Gui.Bar(new Rectangle(statRect.X, statRect.Y + 3.5f * scale, statRect.Width, 3 * scale), g.Organisation, new Color(80, 160, 240, 255));
             Raylib.DrawRectangleRec(rect, C(owner.Color));
-            string text = g.Count().ToString();
+            string text = g.Count;
             var m = Gui.Measure(text, 16 * scale / Gui.Scale);
             Raylib.DrawRectangleRec(new Rectangle(rect.X, rect.Y, rect.Width * 0.45f, rect.Height), new Color(0, 0, 0, 110));
             Gui.Label(text, rect.X + rect.Width * 0.225f - m.X / 2, rect.Y + (rect.Height - m.Y) / 2, 16 * scale / Gui.Scale, Color.White);
@@ -208,7 +236,7 @@ public sealed class MapOverlay
             Raylib.DrawRectangleLinesEx(sym, 1.5f, Color.White);
             Raylib.DrawLineEx(new Vector2(sym.X, sym.Y), new Vector2(sym.X + sym.Width, sym.Y + sym.Height), 1.5f, Color.White);
             Raylib.DrawLineEx(new Vector2(sym.X + sym.Width, sym.Y), new Vector2(sym.X, sym.Y + sym.Height), 1.5f, Color.White);
-            if (!mouseOverUi && Gui.Clicked(counterRect) && g.Key.OwnerTag == snapshot.PlayerTag)
+            if (!mouseOverUi && Gui.Clicked(counterRect) && g.OwnerTag == snapshot.PlayerTag)
             {
                 if (!shift) ui.SelectedDivisions.Clear();
                 var byId = _game.World.Divisions.ToDictionary(d => d.Id);

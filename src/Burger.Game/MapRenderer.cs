@@ -61,7 +61,7 @@ public sealed unsafe class MapRenderer : IDisposable
         _locWater, _locRiver, _locTime, _locBorderScale, _locStripe, _locStateBorders, _locShowBorders, _locGeoBase, _locTint, _locViewPos, _locFog, _locGlobe, _locGlobeRadius, _locSun, _locLodWater, _locLodRiver, _locLodTerrain;
     private int _visibilityVersion = -1;
     // terra incognita: locations being charted right now (index -> progress, negative = still waiting its turn), and the shader switch
-    private int _tiVersion = -1, _locTi;
+    private int _tiVersion = -1, _locTi, _locHasNormalMap;
     private readonly Dictionary<int, float> _revealing = new();
     private const float RevealSeconds = 2.4f;
 
@@ -88,6 +88,23 @@ public sealed unsafe class MapRenderer : IDisposable
     Burger.Core.Development.InstitutionDef? ShownInstitution() => _game.Development.Institutions.FirstOrDefault(i => i.Key == InstitutionKey) ?? _game.Development.Institutions.FirstOrDefault();
     public Location? Selected { get; set; }
     public Location? Hovered { get; set; }
+
+    // the inputs of the last snapshot-path lookup build (null snapshot: the last build read the live game instead)
+    private (RenderSnapshot? Snapshot, MapMode Mode, Burger.Core.Mechanics.MapModeDef? Custom, Country? Focus, int? GeoDay, bool GeoDebug, bool GeoBase) _lutInputs;
+    // the reveal animation wrote texels since that build, which a rebuild would reset
+    private bool _revealWrote;
+
+    /// <summary>True when the snapshot-path build would read exactly what the last one read (everything it reads is immutable).</summary>
+    private bool LutInputsUnchanged(RenderSnapshot snapshot)
+    {
+        var l = _lutInputs;
+        if (l.Snapshot is not { } last || _revealWrote) return false;
+        return l.Mode == Mode && l.Custom == CustomMode && l.Focus == DiplomacyFocus && l.GeoDay == GeoDay && l.GeoDebug == GeoDebug && l.GeoBase == GeoBase
+            && last.Locations == snapshot.Locations && last.Countries == snapshot.Countries && last.DiplomacyRelations == snapshot.DiplomacyRelations
+            && last.PlayerTag == snapshot.PlayerTag && last.VisibilityVersion == snapshot.VisibilityVersion
+            && last.ExplorationVersion == snapshot.ExplorationVersion && last.GeoVersion == snapshot.GeoVersion;
+    }
+
     public State? HighlightState { get; set; }
     /// <summary>Country whose relations the diplomacy map mode shows (defaults to the player).</summary>
     public Country? DiplomacyFocus { get; set; }
@@ -651,7 +668,8 @@ public sealed unsafe class MapRenderer : IDisposable
             Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "texture6"), 6, ShaderUniformDataType.Int);
         }
         Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "hasBlendTex"), _hasBlendTex ? 1f : 0f, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(_shader, Raylib.GetShaderLocation(_shader, "hasNormalMap"), _hasNormalMap ? 1f : 0f, ShaderUniformDataType.Float);
+        _locHasNormalMap = Raylib.GetShaderLocation(_shader, "hasNormalMap");
+        Raylib.SetShaderValue(_shader, _locHasNormalMap, _hasNormalMap ? 1f : 0f, ShaderUniformDataType.Float);
     }
 
     private void BuildTrees()
@@ -1024,6 +1042,7 @@ public sealed unsafe class MapRenderer : IDisposable
         var player = DiplomacyFocus ?? w.Player;
         int block = LutWidth * _blockRows;
         _visibilityVersion = _game.VisibilityVersion;
+        _lutInputs = default;
         var explore = _game.Exploration;
         bool ti = explore.Enabled && w.Player != null;
         Array.Clear(_lut);
@@ -1297,6 +1316,8 @@ public sealed unsafe class MapRenderer : IDisposable
         }
         Raylib.UpdateTexture(_lutTex, _lut);
         Dirty = false;
+        _lutInputs = (snapshot, Mode, CustomMode, DiplomacyFocus, GeoDay, GeoDebug, GeoBase);
+        _revealWrote = false;
     }
 
     private Color DiplomacyColor(Country me, Country other)
@@ -1386,9 +1407,13 @@ public sealed unsafe class MapRenderer : IDisposable
             Dirty = true;
         }
         if (Mode is MapMode.Provinces or MapMode.Time && snapshot.GeoEnabled && snapshot.GeoVersion != _geoVersion) { _geoVersion = snapshot.GeoVersion; Dirty = true; }
+        // A rebuild from the same inputs writes the same texels (hover and selection come from the flag patch below),
+        // so skip it. During live play MapChanged asks for one most frames while the snapshot's map data stays put.
+        if (Dirty && LutInputsUnchanged(snapshot)) Dirty = false;
         if (Dirty) UpdateLut(snapshot);
         AdvanceReveal();
         Raylib.SetShaderValue(_shader, _locTi, snapshot.ExplorationEnabled && snapshot.Player != null ? 1f : 0f, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(_shader, _locHasNormalMap, _hasNormalMap && UserSettings.Relief ? 1f : 0f, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(_shader, _locTime, time, ShaderUniformDataType.Float);
         if (Globe) DrawSpace(cam);
         Raylib.SetShaderValue(_shader, _locSun, SunDirection(snapshot), ShaderUniformDataType.Vec3);
@@ -1448,10 +1473,10 @@ public sealed unsafe class MapRenderer : IDisposable
         var right = Vector3.Normalize(Vector3.Cross(fwd, cam.Up));
         var upV = Vector3.Cross(right, fwd);
         float tanY = MathF.Tan(cam.FovY * MathF.PI / 360f) * 1.08f, tanX = tanY * Viewport.W / Math.Max(1f, Viewport.H);
-        bool trees = !Globe && _hasTrees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
+        bool trees = !Globe && _hasTrees && UserSettings.Trees && !Bench.Skip.Contains("trees") && (camH < 40 || (camH < 70 && Mode == MapMode.Terrain));
         // far out a map pixel is smaller than a screen pixel: the coarse mesh looks the same and costs a sixteenth of the triangles
         bool lod = UserSettings.LodEnabled && camH > LodHeight;
-        GlMultisample.Set(!lod); // adaptive MSAA: smooth edges up close, none where triangles are sub-pixel anyway
+        GlMultisample.Set(!lod && UserSettings.MsaaOn); // adaptive MSAA: smooth edges up close, none where triangles are sub-pixel anyway
         for (int c = 0; c < copies; c++)
         {
             float shift = (c == 0 ? 0 : c == 1 ? -1 : 1) * WorldWidth;
@@ -1472,7 +1497,8 @@ public sealed unsafe class MapRenderer : IDisposable
 
     private void UpdateLutFlags(RenderSnapshot snapshot, int index)
     {
-        var location = snapshot.Locations.FirstOrDefault(l => l.Index == index);
+        var locations = snapshot.Locations;
+        var location = (uint)index < (uint)locations.Length && locations[index].Index == index ? locations[index] : locations.FirstOrDefault(l => l.Index == index);
         if (location.Index != index) return;
         int flags = 0;
         if (location.IsWater) flags |= 1;
@@ -1559,6 +1585,7 @@ public sealed unsafe class MapRenderer : IDisposable
             if (c.B == b && c.A == 255) continue;
             _lut[block3 + i] = new Color((int)c.R, (int)c.G, (int)b, 255);
             changed.Add(i);
+            _revealWrote = true;
         }
         if (changed.Count > 250) { Raylib.UpdateTexture(_lutTex, _lut); return; }
         var src = stackalloc Color[1];

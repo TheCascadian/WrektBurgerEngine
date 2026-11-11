@@ -50,6 +50,19 @@ public static class UserSettings
     /// <summary>The shader's distance scale for a level; with LOD off, every feature keeps its full detail.</summary>
     public static float LodScale(int level) => LodEnabled ? LodScales[Math.Clamp(level, 0, 3)] : 1000f;
 
+    /// <summary>4x multisampling: smooth edges up close. Off saves fill rate on weak graphics; the window's sample buffer follows on the next start.</summary>
+    public static bool Msaa = true;
+    /// <summary>Relief shading from the terrain normal map.</summary>
+    public static bool Relief = true;
+    /// <summary>Trees on the terrain when zoomed in.</summary>
+    public static bool Trees = true;
+    /// <summary>On a software renderer (no graphics card driver), MSAA starts off until the player sets it (measured: about twice the frame rate on llvmpipe).</summary>
+    public static bool SoftwareRenderer;
+    private static readonly HashSet<string> Loaded = new();
+    public static bool MsaaOn => Msaa && !(SoftwareRenderer && !Loaded.Contains("msaa"));
+    /// <summary>The player chose this setting: it is saved, and the software renderer default no longer applies to it.</summary>
+    public static void MarkSet(string key) => Loaded.Add(key);
+
     /// <summary>The name other players see in multiplayer.</summary>
     public static string PlayerName = "";
     /// <summary>Hosting opens the router's port by itself (UPnP). Off: only players on the same network can join.</summary>
@@ -69,6 +82,7 @@ public static class UserSettings
                 var parts = raw.Split('=', 2, StringSplitOptions.TrimEntries);
                 if (parts.Length == 2 && parts[0] == "player_name") { PlayerName = parts[1].Length > 24 ? parts[1][..24] : parts[1]; continue; }
                 if (parts.Length != 2 || !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var v)) continue;
+                Loaded.Add(parts[0]);
                 if (parts[0] == "speed5_days_per_second") Speed5DaysPerSecond = Math.Max(0, v);
                 else if (parts[0] == "historical_bias") HistoricalBias = Math.Clamp(v, 0, 1);
                 else if (parts[0] == "ahistorical") Ahistorical = v != 0;
@@ -86,6 +100,9 @@ public static class UserSettings
                 else if (parts[0] is "game_frame_rate" or "menu_frame_rate") GameFrameRate = v switch { 30 => 30, 120 => 120, _ => 60 };
                 else if (parts[0] is "country_labels" or "menu_labels") CountryLabels = v != 0;
                 else if (parts[0] is "hover_picking" or "menu_hover") HoverPicking = v != 0;
+                else if (parts[0] == "msaa") Msaa = v != 0;
+                else if (parts[0] == "relief_detail") Relief = v != 0;
+                else if (parts[0] == "trees") Trees = v != 0;
             }
         }
         catch { /* settings are a convenience: the defaults will do */ }
@@ -115,7 +132,9 @@ public static class UserSettings
                 $"game_frame_rate = {EffectiveGameFrameRate}",
                 $"country_labels = {(CountryLabels ? 1 : 0)}",
                 $"hover_picking = {(HoverPicking ? 1 : 0)}",
-            });
+                $"relief_detail = {(Relief ? 1 : 0)}",
+                $"trees = {(Trees ? 1 : 0)}",
+            }.Concat(Loaded.Contains("msaa") ? new[] { $"msaa = {(Msaa ? 1 : 0)}" } : Array.Empty<string>()));
         }
         catch { }
     }

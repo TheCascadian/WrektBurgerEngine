@@ -6,7 +6,9 @@ namespace Burger.Runtime;
 internal static unsafe class GlMultisample
 {
     private const uint GlMultisampleCap = 0x809D;
+    private const uint GlRenderer = 0x1F01;
     private static delegate* unmanaged[Cdecl]<uint, void> _enable, _disable;
+    private static delegate* unmanaged[Cdecl]<uint, byte*> _getString;
     private static bool _tried, _on = true;
 
     private static void Load()
@@ -18,9 +20,21 @@ internal static unsafe class GlMultisample
         foreach (var n in names)
         {
             if (!NativeLibrary.TryLoad(n, out var h)) continue;
+            if (NativeLibrary.TryGetExport(h, "glGetString", out var g)) _getString = (delegate* unmanaged[Cdecl]<uint, byte*>)g;
             if (NativeLibrary.TryGetExport(h, "glEnable", out var e) && NativeLibrary.TryGetExport(h, "glDisable", out var d))
             { _enable = (delegate* unmanaged[Cdecl]<uint, void>)e; _disable = (delegate* unmanaged[Cdecl]<uint, void>)d; return; }
         }
+    }
+
+    /// <summary>The current context renders on the CPU (Mesa llvmpipe or softpipe, SwiftShader). Call after the window is created.</summary>
+    public static bool IsSoftwareRenderer()
+    {
+        if (!_tried) Load();
+        if (_getString == null) return false;
+        var p = _getString(GlRenderer);
+        string renderer = p == null ? "" : Marshal.PtrToStringAnsi((nint)p) ?? "";
+        return renderer.Contains("llvmpipe", StringComparison.OrdinalIgnoreCase) || renderer.Contains("softpipe", StringComparison.OrdinalIgnoreCase)
+            || renderer.Contains("SwiftShader", StringComparison.OrdinalIgnoreCase);
     }
 
     public static void Set(bool on)

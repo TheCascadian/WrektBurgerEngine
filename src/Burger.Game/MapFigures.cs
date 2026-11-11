@@ -210,6 +210,23 @@ public sealed class MapFigures : IDisposable
             foreach (var gone in _stands.Where(kv => _frame - kv.Value.Seen > 600).Select(kv => kv.Key).ToList()) _stands.Remove(gone);
     }
 
+    private RenderSnapshot? _stacksSnapshot;
+    private RenderDivision[][] _stacks = Array.Empty<RenderDivision[]>();
+
+    /// <summary>
+    /// The land divisions on charted ground (or the player's own), grouped by location and owner. A snapshot never changes,
+    /// so the grouping is built once per snapshot instead of once per frame.
+    /// </summary>
+    private RenderDivision[][] StacksFor(RenderSnapshot snapshot)
+    {
+        if (ReferenceEquals(snapshot, _stacksSnapshot)) return _stacks;
+        var charted = snapshot.Locations.Where(l => l.IsCharted).Select(l => l.Key).ToHashSet(StringComparer.Ordinal);
+        _stacks = snapshot.Divisions.Where(d => !d.IsWater && (charted.Contains(d.LocationKey) || d.OwnerTag == snapshot.PlayerTag))
+            .GroupBy(d => (d.LocationKey, d.OwnerTag)).Select(g => g.ToArray()).ToArray();
+        _stacksSnapshot = snapshot;
+        return _stacks;
+    }
+
     /// <summary>Snapshot-backed figure path. Simulation-owned division objects are not read here.</summary>
     public void Draw(RenderSnapshot snapshot, Camera3D cam, float dt)
     {
@@ -218,17 +235,16 @@ public sealed class MapFigures : IDisposable
         var figures = _game.Figures;
         var human = figures.Soldier;
         float height = HeightFor(cam);
-        var charted = snapshot.Locations.Where(l => l.IsCharted).Select(l => l.Key).ToHashSet(StringComparer.Ordinal);
         _renderer.Begin(cam);
         int drawn = 0;
-        foreach (var g in snapshot.Divisions.Where(d => !d.IsWater && (charted.Contains(d.LocationKey) || d.OwnerTag == snapshot.PlayerTag)).GroupBy(d => (d.LocationKey, d.OwnerTag)))
+        foreach (var g in StacksFor(snapshot))
         {
-            var first = g.First();
+            var first = g[0];
             var model = figures.Find(first.ModelKey) ?? human;
             var pos = _map.LocationPos(first.CenterX, first.CenterY);
             if (!Viewport.TryProjectSnapped(pos, cam, out var screen)) continue;
             if (screen.X < -80 || screen.Y < -80 || screen.X > Viewport.W + 80 || screen.Y > Viewport.H + 120) continue;
-            bool moving = first.HasNextLocation && g.All(d => d.HasNextLocation);
+            bool moving = first.HasNextLocation && Array.TrueForAll(g, d => d.HasNextLocation);
             Vector3 target = pos;
             if (moving)
             {

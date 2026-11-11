@@ -160,6 +160,27 @@ public sealed partial class Hud
         LodRow(x, ref y, w, "Water", ref UserSettings.LodWater, "Waves, glints and coast foam on the sea.");
         LodRow(x, ref y, w, "Rivers", ref UserSettings.LodRiver, "River shine, flow and white water.");
         LodRow(x, ref y, w, "Terrain", ref UserSettings.LodTerrain, "Blending between terrain types. Low is the cheapest.");
+        // three quality switches in one row; on a software renderer MSAA starts off until the player sets it
+        float third = (w - 8 * S) / 3;
+        if (Gui.Button(new Rectangle(x, y, third, 30 * S), UserSettings.MsaaOn ? "MSAA: on" : "MSAA: off", true,
+                "Smooth edges up close (4x multisampling). Off saves fill rate on weak graphics; fully off after a restart.", UserSettings.MsaaOn, 15))
+        {
+            UserSettings.Msaa = !UserSettings.MsaaOn; UserSettings.MarkSet("msaa");
+            UserSettings.Save();
+        }
+        if (Gui.Button(new Rectangle(x + third + 4 * S, y, third, 30 * S), UserSettings.Relief ? "Relief: on" : "Relief: off", true,
+                "Relief shading from the terrain normal map.", UserSettings.Relief, 15))
+        {
+            UserSettings.Relief = !UserSettings.Relief;
+            UserSettings.Save();
+        }
+        if (Gui.Button(new Rectangle(x + 2 * (third + 4 * S), y, third, 30 * S), UserSettings.Trees ? "Trees: on" : "Trees: off", true,
+                "Trees on the terrain when zoomed in.", UserSettings.Trees, 15))
+        {
+            UserSettings.Trees = !UserSettings.Trees;
+            UserSettings.Save();
+        }
+        y += 34 * S;
         y += 8 * S;
         Gui.Label("Game Performance", x, y, 16, Gui.Gold);
         y += 28 * S;
