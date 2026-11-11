@@ -109,6 +109,8 @@ public sealed class TradeNetworkSystem
 {
     private readonly Game _game;
     private readonly Dictionary<long, TradeRoute> _routes = new();
+    private readonly List<Country> _rowSellers = new();
+    private double[] _rowPriority = Array.Empty<double>();
     private int _routesMapVersion = -1;
     private bool _routeMissed;
     private long _landTopology;
@@ -120,24 +122,53 @@ public sealed class TradeNetworkSystem
     private int[] _pairStamp = Array.Empty<int>();
     private int _pairStampNow;
     private readonly List<(int Seller, int Agreed, double Priority)> _top = new();
+    // Each buyer country's seller order, kept between matches so it is not allocated again; valid for the match whose number _orderStamp holds.
+    private int[][] _orderOf = Array.Empty<int[]>(), _orderAgreed = Array.Empty<int[]>();
+    private double[][] _orderPriority = Array.Empty<double[]>();
+    private int[] _orderLength = Array.Empty<int>(), _orderStamp = Array.Empty<int>();
+    private OrderKey[] _orderKeys = Array.Empty<OrderKey>();
     // Recipes by output and by input, built on first use (the recipes only change when the data is loaded).
     private Dictionary<string, List<IndustryRecipe>>? _recipesByOutput, _recipesByInput;
     private List<string>? _recipeOutputs;
     private readonly HashSet<string> _totalsBulk = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<State, (float X, float Y)> _landCentres = new();
-    private readonly Dictionary<State, List<(State To, double Distance)>> _landEdges = new();
+    // The land graph of the states by dense id (the order of World.States when it was built): the neighbor states of each in first-edge order and their distances.
+    private State[] _landStates = Array.Empty<State>();
+    private readonly Dictionary<State, int> _landId = new();
+    private int[][] _landNext = Array.Empty<int[]>();
+    private double[][] _landDistance = Array.Empty<double[]>();
+    /// <summary>The connected part of each state, when every edge has its return edge (a destination in another part is then unreachable without searching); null otherwise.</summary>
+    private int[]? _landComponent;
     /// <summary>A breadth-first search from one origin that is carried on only as far as a destination needs (the first-found parents do not depend on where it stops).</summary>
     private sealed class LandSearch
     {
-        public readonly Dictionary<State, (State Previous, double Distance)> Previous = new();
-        public readonly Queue<State> Queue = new();
+        /// <summary>The dense id each state was first reached from, -1 while unreached; the origin points at itself.</summary>
+        public readonly int[] Previous;
+        /// <summary>The search frontier; null once the whole part is searched.</summary>
+        public int[]? Queue;
+        public int Head, Tail;
+        /// <summary>The paths already walked back from the search tree and their lengths, by destination id; the tree never changes once a state is reached.</summary>
+        public readonly Dictionary<int, (List<State> Path, double DistanceKm)> Walked = new();
+        public LandSearch(int count, int origin)
+        {
+            Previous = new int[count];
+            Array.Fill(Previous, -1);
+            Previous[origin] = origin;
+            Queue = new int[count];
+            Queue[Tail++] = origin;
+        }
     }
     private readonly Dictionary<State, LandSearch> _landPaths = new();
     private int _landEdgesVersion = -1;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
     private readonly Dictionary<TradeAgreement, double> _agreementUse = new();
     private readonly HashSet<string> _blockades = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, StateMarket> _current = new(StringComparer.OrdinalIgnoreCase);
+    // The markets of the commodity in settlement, in the order their states came; _currentSlot is a state's place (state keys are unique, so a state is its key).
+    private readonly List<StateMarket> _current = new();
+    private readonly Dictionary<State, int> _currentSlot = new();
+    // The rows of each owner for Totals, kept and emptied instead of made again for every commodity; _rowOwners are the owners with rows, in the order they came.
+    private readonly Dictionary<Country, List<StateMarket>> _rowsByOwner = new();
+    private readonly List<Country> _rowOwners = new();
     private readonly Dictionary<Country, Dictionary<string, (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied)>> _totalsCache = new();
     // MatchCommodity is deliberately serial because its commit phase mutates shared world state.
     // Reuse stable per-call storage so bounded commodity settlement does not create a second
@@ -210,12 +241,12 @@ public sealed class TradeNetworkSystem
     {
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
-        _landEdges.Clear();
+        ClearLandGraph();
         _landPaths.Clear();
         _routes.Clear();
         _routeUse.Clear();
         _agreementUse.Clear();
-        _current.Clear();
+        ClearCurrent();
         foreach (var c in _game.World.Countries) PolicyOf(c);
     }
 
@@ -223,9 +254,12 @@ public sealed class TradeNetworkSystem
     {
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
-        _landEdges.Clear();
+        ClearLandGraph();
         _landPaths.Clear();
         Markets.Clear();
+        _rowsByOwner.Clear();
+        _rowOwners.Clear();
+        _projectsByState.Clear(); _projectsChecked.Clear();
         Policies.Clear();
         Agreements.Clear();
         History.Clear();
@@ -234,7 +268,7 @@ public sealed class TradeNetworkSystem
         SelectedMethods.Clear();
         _routes.Clear();
         _routeUse.Clear();
-        _current.Clear();
+        ClearCurrent();
         _agreementUse.Clear();
         _blockades.Clear();
     }
@@ -265,15 +299,23 @@ public sealed class TradeNetworkSystem
         Workforce.Clear();
         _routeUse.Clear();
         _agreementUse.Clear();
-        _current.Clear();
+        ClearCurrent();
         Agreements.RemoveAll(a => !a.Active(_game.World.Date));
+    }
+
+    private void ClearCurrent() { _current.Clear(); _currentSlot.Clear(); }
+
+    private void SetCurrent(State state, StateMarket market)
+    {
+        if (_currentSlot.TryGetValue(state, out int slot)) _current[slot] = market;
+        else { _currentSlot[state] = _current.Count; _current.Add(market); }
     }
 
     public void BeginCommodity(string commodity)
     {
-        _current.Clear();
+        ClearCurrent();
         foreach (var state in _game.World.States)
-            _current[state.Key] = MarketOf(state, commodity);
+            SetCurrent(state, MarketOf(state, commodity));
     }
 
     public void AddMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
@@ -284,11 +326,23 @@ public sealed class TradeNetworkSystem
         market.OpeningStockpile = Math.Max(0, openingStockpile);
         market.StorageMonths = Math.Max(0, storageMonths);
         market.Import = market.Export = 0;
-        _current[state.Key] = market;
+        SetCurrent(state, market);
         InvalidateTotalsCache();
     }
 
-    public IReadOnlyList<TradeMatch> MatchCommodity(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority)
+    /// <summary>A seller country in a buyer's order: agreement first, then priority, both descending, then the country number.</summary>
+    private readonly record struct OrderKey(int Agreed, double Priority, int Country) : IComparable<OrderKey>
+    {
+        public int CompareTo(OrderKey other)
+        {
+            int cmp = other.Agreed.CompareTo(Agreed);
+            if (cmp == 0) cmp = other.Priority.CompareTo(Priority);
+            return cmp != 0 ? cmp : Country.CompareTo(other.Country);
+        }
+    }
+
+    public IReadOnlyList<TradeMatch> MatchCommodity(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority,
+        Func<Country, List<Country>, double[], bool>? priorities = null)
     {
         // Matching mutates stockpiles, imports, exports, prices and satisfaction.
         // Clear before mutation so an exception cannot leave a stale aggregate usable.
@@ -300,7 +354,7 @@ public sealed class TradeNetworkSystem
         sellerMarkets.Clear();
         sellerLeft.Clear();
         buyers.Clear();
-        foreach (var market in _current.Values)
+        foreach (var market in _current)
         {
             market.SellerSlot = -1;
             if (market.State.Owner?.Exists != true) continue;
@@ -322,6 +376,7 @@ public sealed class TradeNetworkSystem
             int size = countryCount * countryCount;
             _pairAgreement = new TradeAgreement?[size]; _pairPriority = new double[size]; _pairCanTrade = new sbyte[size]; _pairStamp = new int[size];
             _pairStampNow = 0;
+            Array.Clear(_orderStamp); // the stamps start again, so an old order must not look current
         }
         int stamp = ++_pairStampNow;
         // The agreements of each seller-to-buyer pair, so a pair does not scan all of them.
@@ -358,16 +413,35 @@ public sealed class TradeNetworkSystem
         var head = (int[])countryStart.Clone();            // the first slot of the country that may still have something to sell
         var alive = new int[countryCount];                 // sellers of the country with something left
         for (int i = 0; i < left.Length; i++) if (left[i] > 0.001) alive[sellerOwner[i]]++;
-        var orderOf = new int[countryCount][];
-        var orderAgreed = new int[countryCount][];
-        var orderPriority = new double[countryCount][];
+        if (_orderStamp.Length < countryCount)
+        {
+            _orderOf = new int[countryCount][]; _orderAgreed = new int[countryCount][]; _orderPriority = new double[countryCount][];
+            _orderLength = new int[countryCount]; _orderStamp = new int[countryCount]; _orderKeys = new OrderKey[countryCount];
+        }
+        var orderOf = _orderOf;
+        var orderAgreed = _orderAgreed;
+        var orderPriority = _orderPriority;
+        var orderLength = _orderLength;
+        var orderStamp = _orderStamp;
         var orderStart = new int[countryCount];
+        var keys = _orderKeys;    // BuildOrder scratch
 
         void BuildOrder(Country buyerCountry, double importPriority)
         {
             long order0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             int pairBase = buyerCountry.Index * countryCount;
-            var list = new List<int>();
+            int n = 0;
+            // the priorities of all new pairs at once when the rules allow (the same numbers), else one by one below
+            bool rowDone = false;
+            if (priorities != null)
+            {
+                _rowSellers.Clear();
+                for (int sc = 0; sc < countryCount; sc++)
+                    if (alive[sc] > 0 && _pairStamp[pairBase + sc] != stamp) _rowSellers.Add(_game.World.Countries[sc]);
+                if (_rowPriority.Length < _rowSellers.Count) _rowPriority = new double[countryCount];
+                rowDone = _rowSellers.Count > 0 && priorities(buyerCountry, _rowSellers, _rowPriority);
+            }
+            int rowAt = 0;
             for (int sc = 0; sc < countryCount; sc++)
             {
                 if (alive[sc] <= 0) continue;
@@ -376,38 +450,36 @@ public sealed class TradeNetworkSystem
                 {
                     var seller = _game.World.Countries[sc];
                     _pairAgreement[pairAt] = AgreementOf(sc * countryCount + buyerCountry.Index, definition.Key);
-                    _pairPriority[pairAt] = priority(seller, buyerCountry);
+                    _pairPriority[pairAt] = rowDone ? _rowPriority[rowAt++] : priority(seller, buyerCountry);
                     _pairCanTrade[pairAt] = -1;
                     _pairStamp[pairAt] = stamp;
                 }
-                list.Add(sc);
+                keys[n++] = new OrderKey(_pairAgreement[pairAt] != null ? 1 : 0, _pairPriority[pairAt] * importPriority, sc);
             }
-            var agreed = new int[countryCount];
-            var prio = new double[countryCount];
-            foreach (int sc in list) { agreed[sc] = _pairAgreement[pairBase + sc] != null ? 1 : 0; prio[sc] = _pairPriority[pairBase + sc] * importPriority; }
-            list.Sort((x, y) =>
-            {
-                int cmp = agreed[y].CompareTo(agreed[x]);
-                if (cmp == 0) cmp = prio[y].CompareTo(prio[x]);
-                return cmp != 0 ? cmp : x.CompareTo(y);
-            });
-            orderOf[buyerCountry.Index] = list.ToArray();
-            orderAgreed[buyerCountry.Index] = list.Select(x => agreed[x]).ToArray();
-            orderPriority[buyerCountry.Index] = list.Select(x => prio[x]).ToArray();
+            Array.Sort(keys, 0, n);
+            int b = buyerCountry.Index;
+            if (orderOf[b] == null || orderOf[b].Length < n) { orderOf[b] = new int[n]; orderAgreed[b] = new int[n]; orderPriority[b] = new double[n]; }
+            var order = orderOf[b];
+            var orderA = orderAgreed[b];
+            var orderP = orderPriority[b];
+            for (int i = 0; i < n; i++) { order[i] = keys[i].Country; orderA[i] = keys[i].Agreed; orderP[i] = keys[i].Priority; }
+            orderLength[b] = n;
+            orderStamp[b] = stamp;
             if (_game.Profiling) _game.ProfileElapsed("Match.Order", System.Diagnostics.Stopwatch.GetTimestamp() - order0);
         }
 
         void CollectCandidates(int buyerIndex)
         {
             _top.Clear();
-            var order = orderOf[buyerIndex]!; var orderA = orderAgreed[buyerIndex]; var orderP = orderPriority[buyerIndex];
+            var order = orderOf[buyerIndex]; var orderA = orderAgreed[buyerIndex]; var orderP = orderPriority[buyerIndex];
+            int orderEnd = orderLength[buyerIndex];
             int pos = orderStart[buyerIndex];
-            while (pos < order.Length && alive[order[pos]] <= 0) pos++;   // a country that has sold out stays sold out
+            while (pos < orderEnd && alive[order[pos]] <= 0) pos++;   // a country that has sold out stays sold out
             orderStart[buyerIndex] = pos;
-            for (int p = pos; p < order.Length && _top.Count < candidateLimit;)
+            for (int p = pos; p < orderEnd && _top.Count < candidateLimit;)
             {
                 int q = p + 1;   // the countries p..q-1 rank equal: their sellers are interleaved by slot, as in one list
-                while (q < order.Length && orderA[q] == orderA[p] && orderP[q].CompareTo(orderP[p]) == 0) q++;
+                while (q < orderEnd && orderA[q] == orderA[p] && orderP[q].CompareTo(orderP[p]) == 0) q++;
                 if (q - p == 1)
                 {
                     int c = order[p];
@@ -453,7 +525,7 @@ public sealed class TradeNetworkSystem
             // the same order a stable descending sort gives, without sorting every seller.
             _top.Clear();
             int pairBase = buyerCountry.Index * countryCount;
-            if (orderOf[buyerCountry.Index] == null) BuildOrder(buyerCountry, importPriority);
+            if (orderStamp[buyerCountry.Index] != stamp) BuildOrder(buyerCountry, importPriority);
             CollectCandidates(buyerCountry.Index);
             double tariffRateBase = Math.Clamp(buyerPolicy.TariffRate + buyerPolicy.Protectionism * 0.5, 0, 5);
             double importProtectionFactor = 1 - Math.Clamp(buyerPolicy.Protectionism, 0, 0.9);
@@ -505,7 +577,7 @@ public sealed class TradeNetworkSystem
         }
 
         long m1 = System.Diagnostics.Stopwatch.GetTimestamp();
-        foreach (var market in _current.Values.Where(m => m.State.Owner?.Exists == true))
+        foreach (var market in _current.Where(m => m.State.Owner?.Exists == true))
         {
             if (market.SellerSlot >= 0)
                 market.Stockpile = Math.Min(market.Demand * market.StorageMonths, market.Stockpile + Math.Max(0, left[market.SellerSlot]));
@@ -549,15 +621,17 @@ public sealed class TradeNetworkSystem
         // One pass over the markets gives the totals of every country for this commodity (a pass for each country was countries times states).
         if (_totalsBulk.Add(commodity))
         {
-            var rowsByOwner = new Dictionary<Country, List<StateMarket>>();
+            foreach (var owner in _rowOwners) _rowsByOwner[owner].Clear();
+            _rowOwners.Clear();
             foreach (var (state, markets) in Markets)
                 if (state.Owner is { } owner && markets.TryGetValue(commodity, out var market))
                 {
-                    if (!rowsByOwner.TryGetValue(owner, out var list)) rowsByOwner[owner] = list = new List<StateMarket>();
+                    if (!_rowsByOwner.TryGetValue(owner, out var list)) _rowsByOwner[owner] = list = new List<StateMarket>();
+                    if (list.Count == 0) _rowOwners.Add(owner);
                     list.Add(market);
                 }
-            foreach (var (owner, rows) in rowsByOwner)
-                CacheTotals(owner, commodity, rows);
+            foreach (var owner in _rowOwners)
+                CacheTotals(owner, commodity, _rowsByOwner[owner]);
         }
         if (_totalsCache.TryGetValue(country, out cachedByCommodity) && cachedByCommodity.TryGetValue(commodity, out cached)) return cached;
         return CacheTotals(country, commodity, new List<StateMarket>());
@@ -636,7 +710,93 @@ public sealed class TradeNetworkSystem
     }
 
     /// <summary>Set while one commodity is settled (technology and date cannot change in between): the methods of each country and output are worked out once.</summary>
-    internal Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? MethodMemo;
+    internal Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? MethodMemo
+    {
+        get => _methodMemo;
+        set { _methodMemo = value; _projectsChecked.Clear(); }
+    }
+    private Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? _methodMemo;
+
+    // While MethodMemo is set (construction queues cannot change either), each country's projects grouped by state and sorted,
+    // so the demand of a state does not scan the whole queue of its country; a state with one project is not sorted at all.
+    // The groups are kept from one commodity to the next and used again when the queue still holds the same projects with the
+    // same state, building, method, progress and cost (all the grouping and the order read); _projectsChecked are the countries
+    // compared since MethodMemo was last set.
+    private readonly Dictionary<Country, ProjectGroups> _projectsByState = new();
+    private readonly HashSet<Country> _projectsChecked = new();
+
+    private sealed class ProjectGroups
+    {
+        public readonly Dictionary<State, IReadOnlyList<ConstructionProject>> ByState = new();
+        public readonly List<(ConstructionProject Project, State? State, BuildingType? Building, string? Key, string Method, long Progress, long Cost)> Queue = new();
+
+        public bool Matches(List<ConstructionProject> construction)
+        {
+            if (construction.Count != Queue.Count) return false;
+            for (int i = 0; i < construction.Count; i++)
+            {
+                var p = construction[i]; var q = Queue[i];
+                if (!ReferenceEquals(p, q.Project) || !ReferenceEquals(p.State, q.State) || !ReferenceEquals(p.Building, q.Building)
+                    || !ReferenceEquals(p.Building?.Key, q.Key) || !ReferenceEquals(p.Method, q.Method)
+                    || BitConverter.DoubleToInt64Bits(p.Progress) != q.Progress || BitConverter.DoubleToInt64Bits(p.Building?.Cost ?? 0) != q.Cost)
+                    return false;
+            }
+            return true;
+        }
+    }
+
+    /// <summary>The projects of a country in a state, in the order construction demand adds them up: building, method, progress, cost, then queue order.</summary>
+    private IEnumerable<ConstructionProject> ProjectsIn(Country country, State state)
+    {
+        if (_methodMemo == null) return SortProjects(country.Construction.Where(p => p.State == state));
+        if (!_projectsByState.TryGetValue(country, out var cached)) _projectsByState[country] = cached = new ProjectGroups();
+        else if (_projectsChecked.Contains(country)) return Grouped(cached, state);
+        _projectsChecked.Add(country);
+        if (cached.Matches(country.Construction)) return Grouped(cached, state);
+        var groups = new Dictionary<State, List<ConstructionProject>>();
+        cached.Queue.Clear();
+        foreach (var p in country.Construction)
+        {
+            cached.Queue.Add((p, p.State, p.Building, p.Building?.Key, p.Method, BitConverter.DoubleToInt64Bits(p.Progress), BitConverter.DoubleToInt64Bits(p.Building?.Cost ?? 0)));
+            if (p.State == null) continue;
+            if (!groups.TryGetValue(p.State, out var list)) groups[p.State] = list = new();
+            list.Add(p);
+        }
+        var byState = cached.ByState;
+        byState.Clear();
+        foreach (var (s, list) in groups) byState[s] = list.Count == 1 ? list : SortProjects(list);
+        return Grouped(cached, state);
+
+        static IEnumerable<ConstructionProject> Grouped(ProjectGroups g, State state)
+            => g.ByState.TryGetValue(state, out var projects) ? projects : Array.Empty<ConstructionProject>();
+    }
+
+    // building, method, progress, cost, then queue order: the same order as a stable OrderBy/ThenBy chain, with the keys read once
+    private static ConstructionProject[] SortProjects(IEnumerable<ConstructionProject> projects)
+    {
+        var arr = projects.ToArray();
+        if (arr.Length < 2) return arr;
+        var keys = new (string Building, string Method, double Progress, double Cost, int Index)[arr.Length];
+        for (int i = 0; i < arr.Length; i++)
+        {
+            var p = arr[i];
+            keys[i] = (p.Building?.Key ?? "", p.Method ?? "", p.Progress, p.Building?.Cost ?? 0, i);
+        }
+        Array.Sort(keys, static (a, b) =>
+        {
+            int c = StringComparer.OrdinalIgnoreCase.Compare(a.Building, b.Building);
+            if (c != 0) return c;
+            c = StringComparer.OrdinalIgnoreCase.Compare(a.Method, b.Method);
+            if (c != 0) return c;
+            c = a.Progress.CompareTo(b.Progress);
+            if (c != 0) return c;
+            c = a.Cost.CompareTo(b.Cost);
+            return c != 0 ? c : a.Index.CompareTo(b.Index);
+        });
+        var sorted = new ConstructionProject[arr.Length];
+        for (int i = 0; i < keys.Length; i++) sorted[i] = arr[keys[i].Index];
+        return sorted;
+    }
 
     private IEnumerable<IndustryRecipe> ActiveRecipes(Country country, State state, string output)
     {
@@ -678,12 +838,9 @@ public sealed class TradeNetworkSystem
 
         double demand = 0;
         var rules = _game.Rules.Production;
-        foreach (var project in country.Construction
-                     .Where(p => p.State == state)
-                     .OrderBy(p => p.Building?.Key ?? "", StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(p => p.Method ?? "", StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(p => p.Progress)
-                     .ThenBy(p => p.Building?.Cost ?? 0))
+        var projects = ProjectsIn(country, state);
+        if (projects is ConstructionProject[] { Length: 0 }) return 0;
+        foreach (var project in projects)
         {
             if (!ConstructionProjectEligible(country, project, rules)) continue;
             var method = rules.ResolveConstructionMethod(_game, project.Building);
@@ -737,35 +894,45 @@ public sealed class TradeNetworkSystem
         if (_routes.TryGetValue(key, out var cached)) return cached;
         _routeMissed = true;
         EnsureLandEdges();
+        int fromId = _landId[from];
+        int toId = _landId.TryGetValue(to, out var id) ? id : -1;
         if (!_landPaths.TryGetValue(from, out var search))
-        {
-            search = _landPaths[from] = new LandSearch();
-            search.Previous[from] = (from, 0);
-            search.Queue.Enqueue(from);
-        }
+            search = _landPaths[from] = new LandSearch(_landStates.Length, fromId);
         var previous = search.Previous;
-        if (!previous.ContainsKey(to) && search.Queue.Count > 0)
+        bool reachable = toId >= 0 && (_landComponent == null || _landComponent[fromId] == _landComponent[toId]);
+        if (reachable && previous[toId] < 0 && search.Queue is { } queue)
         {
-            long bfs0 = System.Diagnostics.Stopwatch.GetTimestamp();
+            long bfs0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
             // One ordered search serves all destinations from this origin; it resumes where the last one stopped.
-            while (search.Queue.Count > 0 && !previous.ContainsKey(to))
+            while (search.Head < search.Tail && previous[toId] < 0)
             {
-                var current = search.Queue.Dequeue();
-                foreach (var (next, distance) in _landEdges[current])
+                int current = queue[search.Head++];
+                foreach (int next in _landNext[current])
                 {
-                    if (previous.ContainsKey(next)) continue;
-                    previous[next] = (current, previous[current].Distance + distance);
-                    search.Queue.Enqueue(next);
+                    if (previous[next] >= 0) continue;
+                    previous[next] = current;
+                    queue[search.Tail++] = next;
                 }
             }
+            if (search.Head == search.Tail) search.Queue = null;
             if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
         }
-        if (previous.ContainsKey(to))
+        if (toId >= 0 && previous[toId] >= 0)
         {
-            var path = new List<State>();
-            for (var cursor = to;; cursor = previous[cursor].Previous) { path.Add(cursor); if (cursor == from) break; }
-            path.Reverse();
-            double distance = previous[to].Distance;
+            // The path survives ownership changes (only the capacity depends on the owners); it is shared, never changed.
+            if (!search.Walked.TryGetValue(toId, out var walked))
+            {
+                int length = 1;
+                for (int cursor = toId; cursor != fromId; cursor = previous[cursor]) length++;
+                var walkedPath = new List<State>(length);
+                for (int cursor = toId;; cursor = previous[cursor]) { walkedPath.Add(_landStates[cursor]); if (cursor == fromId) break; }
+                walkedPath.Reverse();
+                // summed from the origin out, edge by edge, as the search reached each state
+                double walkedDistance = 0;
+                for (int i = 1; i < walkedPath.Count; i++) walkedDistance += LandEdgeDistance(_landId[walkedPath[i - 1]], _landId[walkedPath[i]]);
+                search.Walked[toId] = walked = (walkedPath, walkedDistance);
+            }
+            var (path, distance) = walked;
             return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Land, path, distance), Path = path };
         }
         bool coastal = from.Locations.Any(l => l.IsCoastal && l.IsLand) && to.Locations.Any(l => l.IsCoastal && l.IsLand);
@@ -789,26 +956,79 @@ public sealed class TradeNetworkSystem
             topology = topology * 31 + st.Index;
             foreach (var l in st.Locations) topology = topology * 31 + l.Index * 7 + l.Neighbors.Count;
         }
-        if (topology == _landTopology && _landEdges.Count == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
+        if (topology == _landTopology && _landStates.Length == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
         _landTopology = topology;
         _routes.Clear();
         _landCentres.Clear();
-        _landEdges.Clear();
+        ClearLandGraph();
         _landPaths.Clear();
-        foreach (var state in _game.World.States)
+        var states = _game.World.States;
+        _landStates = states.ToArray();
+        for (int i = 0; i < _landStates.Length; i++) _landId[_landStates[i]] = i;
+        _landNext = new int[_landStates.Length][];
+        _landDistance = new double[_landStates.Length][];
+        var next = new List<int>();
+        var distances = new List<double>();
+        var seen = new HashSet<State>();
+        for (int i = 0; i < _landStates.Length; i++)
         {
-            var edges = new List<(State To, double Distance)>();
-            var seen = new HashSet<State>();
+            var state = _landStates[i];
+            next.Clear(); distances.Clear(); seen.Clear();
             // Preserve the first province edge and encounter order: route selection
             // and distance must remain identical to the original breadth-first search.
             foreach (var location in state.Locations)
                 foreach (var adjacency in location.Neighbors)
-                    if (adjacency.Kind != AdjacencyKind.Sea && adjacency.To.State is { } next
-                        && next != state && seen.Add(next))
-                        edges.Add((next, Math.Max(1, adjacency.DistanceKm)));
-            _landEdges[state] = edges;
+                    if (adjacency.Kind != AdjacencyKind.Sea && adjacency.To.State is { } to
+                        && to != state && seen.Add(to) && _landId.TryGetValue(to, out int toId))
+                    {
+                        next.Add(toId);
+                        distances.Add(Math.Max(1, adjacency.DistanceKm));
+                    }
+            _landNext[i] = next.ToArray();
+            _landDistance[i] = distances.ToArray();
         }
+        _landComponent = LandComponents();
         _landEdgesVersion = _game.MapVersion;
+    }
+
+    private void ClearLandGraph()
+    {
+        _landStates = Array.Empty<State>();
+        _landId.Clear();
+        _landNext = Array.Empty<int[]>();
+        _landDistance = Array.Empty<double[]>();
+        _landComponent = null;
+    }
+
+    private double LandEdgeDistance(int from, int to)
+    {
+        var next = _landNext[from];
+        for (int i = 0; i < next.Length; i++) if (next[i] == to) return _landDistance[from][i];
+        throw new InvalidOperationException("A land route uses an edge the state graph does not have.");
+    }
+
+    /// <summary>The connected parts of the land graph, or null when some edge has no return edge (reachability is then one-way and only a search can tell).</summary>
+    private int[]? LandComponents()
+    {
+        int n = _landNext.Length;
+        for (int a = 0; a < n; a++)
+            foreach (int b in _landNext[a])
+                if (Array.IndexOf(_landNext[b], a) < 0) return null;
+        var part = new int[n];
+        Array.Fill(part, -1);
+        var stack = new Stack<int>();
+        int parts = 0;
+        for (int start = 0; start < n; start++)
+        {
+            if (part[start] >= 0) continue;
+            part[start] = parts;
+            stack.Push(start);
+            while (stack.Count > 0)
+                foreach (int b in _landNext[stack.Pop()])
+                    if (part[b] < 0) { part[b] = parts; stack.Push(b); }
+            parts++;
+        }
+        return part;
     }
 
     private double RouteCapacity(TradeRouteKind kind, List<State> path, double distance)

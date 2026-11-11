@@ -1,5 +1,7 @@
 using Burger.Core.Model;
 using Burger.Core.Scripting;
+using Burger.Core.Politics;
+using Burger.Core.Population;
 
 namespace Burger.Core.Diplomacy;
 
@@ -28,6 +30,82 @@ public sealed partial class DiplomacySystem
         if (from == to) return 200;
         return Math.Clamp(Rules.BaseOpinion(_game, from, to) + R.ModifierSum(from, to) + _game.Politics.IdeologyOpinion(from, to) + _game.Population.ReligionOpinion(from, to)
                           + _game.Population.ColonialOpinion(from, to), -200, 200);
+    }
+
+    private bool[] _enemyOf = Array.Empty<bool>();
+    private readonly List<int> _enemyMarked = new();
+    private Type? _baseOpinionCheckedType;
+    private bool _baseOpinionOverridden;
+
+    /// <summary>
+    /// The opinion each of <paramref name="froms"/> has of <paramref name="to"/>, the same numbers <see cref="Opinion"/> gives one by one, with what only depends on
+    /// <paramref name="to"/> worked out once. False, with nothing written, when the base opinion rule is overridden or a script adds to it.
+    /// A country without population or politics entries is asked through <see cref="Opinion"/>, so entries are made as they would be.
+    /// </summary>
+    /// With <paramref name="tradeBonus"/>, also writes 100 for each allied pair plus 150 for each overlord and subject pair (rule TradePriority's terms).
+    internal bool TryOpinionsOf(Country to, List<Country> froms, double[] into, double[]? tradeBonus = null)
+    {
+        var rulesType = Rules.GetType();
+        if (rulesType != _baseOpinionCheckedType) { _baseOpinionOverridden = rulesType.GetMethod(nameof(DiplomacyRules.BaseOpinion))!.DeclaringType != typeof(DiplomacyRules); _baseOpinionCheckedType = rulesType; }
+        if (_baseOpinionOverridden || _game.ScriptValues.Has("base_opinion")) return false;
+        var pop = _game.Population;
+        var pol = _game.Politics;
+        bool popEnabled = pop.Enabled, polEnabled = pol.Enabled, religion = pop.ReligionEnabled, colonial = pop.IndependenceEnabled;
+        CountryPopulation? popTo = null;
+        CountryPolitics? polTo = null;
+        if ((popEnabled && !pop.TryOf(to, out popTo)) || (polEnabled && !pol.TryOf(to, out polTo))) return false;
+        var r = R;
+        var world = _game.World;
+        if (_enemyOf.Length < world.Countries.Count) { _enemyOf = new bool[world.Countries.Count]; _enemyMarked.Clear(); }
+        var enemy = _enemyOf;
+        foreach (int e in _enemyMarked) enemy[e] = false;
+        _enemyMarked.Clear();
+        foreach (var w in world.Wars)
+        {
+            if (w.Armistice) continue;
+            if (w.IsAttacker(to)) foreach (var d in w.Defenders) { enemy[d.Index] = true; _enemyMarked.Add(d.Index); }
+            if (w.IsDefender(to)) foreach (var a in w.Attackers) { enemy[a.Index] = true; _enemyMarked.Add(a.Index); }
+        }
+        var overlordTo = r.OverlordOf(to);
+        string? cultureTo = popEnabled ? popTo!.Culture : null;
+        double sameCulture = _game.Data.Defines.Get("same_culture_opinion", -60);
+        double modifiers = _game.Modifiers.Sum(to, "opinion");
+        var date = world.Date;
+        string? rulingTo = polEnabled ? polTo!.Ruling : null;
+        var religionTo = religion ? pop.Religion(popTo!.Religion) : null;
+        var popRules = _game.Rules.Population;
+        int coloniesTo = colonial ? pop.ColonyCount(to) : 0;
+        for (int i = 0; i < froms.Count; i++)
+        {
+            var from = froms[i];
+            CountryPopulation? popFrom = null;
+            CountryPolitics? polFrom = null;
+            if (from == to || (popEnabled && !pop.TryOf(from, out popFrom)) || (polEnabled && !pol.TryOf(from, out polFrom)))
+            {
+                into[i] = Opinion(from, to);
+                if (tradeBonus != null) tradeBonus[i] = (r.AreAllied(from, to) ? 100 : 0) + (r.AreOverlordAndSubject(to, from) ? 150 : 0);
+                continue;
+            }
+            // Rules.BaseOpinion, step by step
+            double v = 0;
+            bool allied = r.AreAllied(from, to);
+            var overlordFrom = r.OverlordOf(from);
+            bool overlordPair = overlordTo == from || overlordFrom == to;
+            if (tradeBonus != null) tradeBonus[i] = (allied ? 100 : 0) + (overlordPair ? 150 : 0);
+            if (allied) v += 25;
+            if (overlordPair) v += 10;
+            if (r.IsGuaranteeing(to, from)) v += 15;
+            if (enemy[from.Index]) v -= 100;
+            if (r.HasTruce(from, to, date)) v -= 10;
+            if (popEnabled && overlordFrom != to && overlordTo != from && popFrom!.Culture is { } people && people == cultureTo) v += sameCulture;
+            v += modifiers;
+            double ideology = 0;
+            if (polEnabled && pol.Ideology(polFrom!.Ruling) is { } a) ideology = a.Opinion.GetValueOrDefault(rulingTo!);
+            double faith = religion ? popRules.ReligionOpinion(_game, pop.Religion(popFrom!.Religion), religionTo) : 0;
+            double colonies = colonial ? popRules.ColonialOpinion(_game, from, to, pop.ColonyCount(from), coloniesTo) : 0;
+            into[i] = Math.Clamp(v + r.ModifierSum(from, to) + ideology + faith + colonies, -200, 200);
+        }
+        return true;
     }
 
     public void AddOpinion(Country from, Country to, string name, double value, double decayPerMonth = -1, int? durationDays = null)

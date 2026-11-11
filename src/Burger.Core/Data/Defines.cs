@@ -212,10 +212,12 @@ public sealed class Defines
     public void Load(Node root)
     {
         Raw = root;
+        _numbers.Clear();
         // Allow both flat keys and grouped blocks:  combat = { combat_model = hoi4 }
         var flat = Node.Root(root.File);
         Flatten(root, flat);
         Raw = flat;
+        _numbers.Clear();
 
         StartDate = GameDate.Parse(Str("start_date", StartDate.ToScript()), StartDate);
         EndDate = GameDate.Parse(Str("end_date", EndDate.ToScript()), EndDate);
@@ -277,8 +279,20 @@ public sealed class Defines
         }
     }
 
+    // The parsed number of each key asked for (Found false: missing or not a number), so a lookup does not scan and parse every define.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (bool Found, double Value)> _numbers = new(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Reads any numeric define (including custom ones added by modders).</summary>
-    public double Get(string key, double def) => Raw.GetDouble(key, def);
+    public double Get(string key, double def)
+    {
+        if (!_numbers.TryGetValue(key, out var n))
+        {
+            var node = Raw.Get(key);
+            n = node?.Value != null && Node.TryParseDouble(node.Value, out var d) ? (true, d) : (false, 0);
+            _numbers[key] = n;
+        }
+        return n.Found ? n.Value : def;
+    }
     public bool GetBool(string key, bool def) => Raw.Get(key) is { Value: not null } n ? n.AsBool(def) : def;
     public int Int(string key, int def) => Raw.GetInt(key, def);
     public bool Bool(string key, bool def) => Raw.GetBool(key, def);

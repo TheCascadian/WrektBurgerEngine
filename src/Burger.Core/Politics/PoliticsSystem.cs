@@ -215,6 +215,9 @@ public sealed partial class PoliticsSystem
     // =============================================================================================
 
     /// <summary>The politics of a country (created with defaults on first use).</summary>
+    /// <summary>The country's entry if it has one, without making it.</summary>
+    internal bool TryOf(Country c, out CountryPolitics p) => _state.TryGetValue(c, out p!);
+
     public CountryPolitics Of(Country c)
     {
         if (_state.TryGetValue(c, out var p)) return p;

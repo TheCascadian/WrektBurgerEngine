@@ -395,6 +395,28 @@ public sealed class CommoditySystem
     private readonly List<(State State, double Output)> _stateOutputs = new();
     private readonly List<double> _statePops = new();
 
+    /// <summary>Rule TradePriority of every seller for one buyer, from one opinion row; false when the rule is overridden or the row cannot be had.</summary>
+    private Type? _tradePriorityCheckedType;
+    private bool _tradePriorityOverridden;
+    private double[] _tradePriorityBonus = Array.Empty<double>();
+
+    private bool TradePriorities(Country buyer, List<Country> sellers, double[] into)
+    {
+        var rulesType = Rules.GetType();
+        if (rulesType != _tradePriorityCheckedType) { _tradePriorityOverridden = rulesType.GetMethod(nameof(CommodityRules.TradePriority))!.DeclaringType != typeof(CommodityRules); _tradePriorityCheckedType = rulesType; }
+        if (_tradePriorityBonus.Length < into.Length) _tradePriorityBonus = new double[into.Length];
+        if (_tradePriorityOverridden || !_game.Diplomacy.TryOpinionsOf(buyer, sellers, into, _tradePriorityBonus)) return false;
+        for (int i = 0; i < sellers.Count; i++)
+        {
+            // +100 allied, then +150 overlord or subject, in the rule's order
+            double p = into[i], bonus = _tradePriorityBonus[i];
+            if (bonus == 100 || bonus == 250) p += 100;
+            if (bonus >= 150) p += 150;
+            into[i] = p;
+        }
+        return true;
+    }
+
     private void ProcessCommodity(CommodityDef k)
     {
         long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -444,7 +466,7 @@ public sealed class CommoditySystem
         Rules.CacheOpen = false;
         long t1 = System.Diagnostics.Stopwatch.GetTimestamp();
         _game.TradeNetwork.MethodMemo = null;
-        try { _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer)); }
+        try { _game.TradeNetwork.MatchCommodity(k, (seller, buyer) => Rules.WillTrade(_game, seller, buyer), (seller, buyer) => Rules.TradePriority(_game, seller, buyer), TradePriorities); }
         finally { Burger.Core.Mechanics.ModifierSystem.EndMemo(); }
         long t2 = System.Diagnostics.Stopwatch.GetTimestamp();
         foreach (var c in _settlementCountries)

@@ -144,6 +144,9 @@ public sealed partial class PopulationSystem
         return sp;
     }
 
+    /// <summary>The country's entry if it has one, without making it.</summary>
+    internal bool TryOf(Country c, out CountryPopulation cp) => _countries.TryGetValue(c, out cp!);
+
     public CountryPopulation Of(Country c)
     {
         if (!_countries.TryGetValue(c, out var cp))

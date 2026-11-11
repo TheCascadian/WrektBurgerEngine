@@ -88,7 +88,13 @@ public sealed class Relations
     }
 
     public double ModifierSum(Country from, Country to)
-        => Opinions.TryGetValue((from, to), out var list) ? list.Sum(m => m.Value) : 0;
+    {
+        if (!Opinions.TryGetValue((from, to), out var list)) return 0;
+        // added in list order from 0, as Enumerable.Sum does
+        double sum = 0;
+        for (int i = 0; i < list.Count; i++) sum += list[i].Value;
+        return sum;
+    }
 
     public void AddOpinion(Country from, Country to, string name, double value, double decayPerMonth, GameDate? expires = null)
     {

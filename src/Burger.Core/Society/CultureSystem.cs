@@ -39,6 +39,25 @@ public sealed class CultureSystem
     private readonly Dictionary<string, int> _mixMonths = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
     private long _modsHour = long.MinValue;
+    // What each culture gives alone, kept for as long as _mods: traditions change only when a culture is made, and many countries share a culture.
+    private readonly Dictionary<string, Dictionary<string, double>> _cultureMods = new(StringComparer.OrdinalIgnoreCase);
+    // What each culture gave the last time it was counted, with a number that goes up whenever that changes (kept across hours, unlike _cultureMods),
+    // and what it was counted from: its traditions and weights and the values of their modifiers, in the order they were read.
+    private sealed class CultureRecord
+    {
+        public Dictionary<string, double> Mods = null!;
+        public int Version;
+        public readonly List<(string Key, long Weight, TraditionDef? Def)> Read = new();
+        public readonly List<(string Key, long Value)> Values = new();
+    }
+    private readonly Dictionary<string, CultureRecord> _cultureRecords = new(StringComparer.OrdinalIgnoreCase);
+
+    // The values of _mods belong to _shareCache (ShareSnapshot.Result), so they are not emptied here.
+    private void ClearMods()
+    {
+        _mods.Clear();
+        _cultureMods.Clear();
+    }
     /// <summary>Cultures that appeared during the game, newest last (for the culture card).</summary>
     public readonly List<string> Evolved = new();
 
@@ -54,7 +73,7 @@ public sealed class CultureSystem
     // ------------------------------------------------------------------------------------- data
     public void LoadDefinitions(GameData data)
     {
-        Traditions.Clear(); _baseTraditions.Clear();
+        Traditions.Clear(); _baseTraditions.Clear(); _modsHour = long.MinValue; _shareCache.Clear(); _cultureRecords.Clear();
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/traditions"))
             foreach (var n in root.All)
             {
@@ -127,11 +146,183 @@ public sealed class CultureSystem
         return m;
     }
 
+    // ComputeFor runs for every country every game hour; these keep it from allocating. Per thread, as the AI may run on several.
+    [ThreadStatic] private static Dictionary<string, double>? _sharesScratch;
+    [ThreadStatic] private static List<(State State, int At)>? _statesScratch;
+    [ThreadStatic] private static List<string>? _culturesScratch;
+    private static readonly Comparison<(State State, int At)> ByKeyStable = (a, b) =>
+    {
+        int k = string.CompareOrdinal(a.State.Key, b.State.Key);
+        return k != 0 ? k : a.At.CompareTo(b.At);
+    };
+
+    /// <summary>
+    /// The sum of <see cref="ModifiersOf"/> over <see cref="Shares"/>, in the same order and with the same arithmetic as
+    /// those two, so the result is identical; only the temporary collections are reused.
+    /// </summary>
     private Dictionary<string, double> ComputeFor(Country c)
     {
-        var m = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, ModifiersOf(culture), share);
+        if (!_shareCache.TryGetValue(c, out var k)) _shareCache[c] = k = new ShareSnapshot();
+        bool same = k.Valid && SharesUnchanged(c, k);
+        if (!same)
+        {
+            var shares = _sharesScratch ??= new(StringComparer.OrdinalIgnoreCase);
+            var cultures = _culturesScratch ??= new();
+            SharesInto(c, shares, cultures, k);
+            cultures.Sort(StringComparer.Ordinal);
+            k.Cultures.Clear(); k.Shares.Clear();
+            foreach (var culture in cultures) { k.Cultures.Add(culture); k.Shares.Add(shares[culture]); }
+        }
+        // the same shares of cultures that each give the same as when the result was made: the result is the same
+        same &= k.ResultVersions.Count == k.Cultures.Count;
+        for (int i = 0; i < k.Cultures.Count; i++)
+        {
+            int version = CultureModsOf(k.Cultures[i]).Version;
+            if (same && k.ResultVersions[i] != version) same = false;
+        }
+        if (same) return k.Result;
+        var m = k.Result;
+        m.Clear(); k.ResultVersions.Clear();
+        for (int i = 0; i < k.Cultures.Count; i++)
+        {
+            var (cultureMods, version) = CultureModsOf(k.Cultures[i]);
+            SocietyData.Add(m, cultureMods, k.Shares[i]);
+            k.ResultVersions.Add(version);
+        }
         return m;
+    }
+
+    // What a culture gives alone this hour (counted once an hour), and its version: when it reads the same traditions, weights and values as last
+    // time, the sums are the same and last time's dictionary is kept.
+    private (Dictionary<string, double> Mods, int Version) CultureModsOf(string culture)
+    {
+        if (_cultureMods.TryGetValue(culture, out var counted)) return (counted, _cultureRecords[culture].Version);
+        var traditions = Of(culture).Traditions;
+        if (!_cultureRecords.TryGetValue(culture, out var r)) _cultureRecords[culture] = r = new CultureRecord();
+        if (r.Mods == null || !SameTraditions(traditions, r))
+        {
+            var cultureMods = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+            r.Read.Clear(); r.Values.Clear();
+            foreach (var kv in traditions)
+            {
+                Traditions.TryGetValue(kv.Key, out var t);
+                r.Read.Add((kv.Key, BitConverter.DoubleToInt64Bits(kv.Value), t));
+                if (t == null) continue;
+                foreach (var x in t.Modifier) r.Values.Add((x.Key, BitConverter.DoubleToInt64Bits(x.Value)));
+                SocietyData.Add(cultureMods, t.Modifier, kv.Value);
+            }
+            if (r.Mods == null || !SameValues(r.Mods, cultureMods)) { r.Mods = cultureMods; r.Version++; }
+        }
+        _cultureMods[culture] = r.Mods;
+        return (r.Mods, r.Version);
+    }
+
+    private bool SameTraditions(Dictionary<string, double> traditions, CultureRecord r)
+    {
+        if (traditions.Count != r.Read.Count) return false;
+        int i = 0, v = 0;
+        foreach (var kv in traditions)
+        {
+            var (key, weight, def) = r.Read[i++];
+            if (!ReferenceEquals(kv.Key, key) || BitConverter.DoubleToInt64Bits(kv.Value) != weight) return false;
+            Traditions.TryGetValue(kv.Key, out var t);
+            if (!ReferenceEquals(t, def)) return false;
+            if (t == null) continue;
+            foreach (var x in t.Modifier)
+            {
+                if (v >= r.Values.Count) return false;
+                var (mk, mv) = r.Values[v++];
+                if (!ReferenceEquals(x.Key, mk) || BitConverter.DoubleToInt64Bits(x.Value) != mv) return false;
+            }
+        }
+        return v == r.Values.Count;
+    }
+
+    private static bool SameValues(Dictionary<string, double> a, Dictionary<string, double> b)
+    {
+        if (a.Count != b.Count) return false;
+        foreach (var kv in a)
+            if (!b.TryGetValue(kv.Key, out var v) || BitConverter.DoubleToInt64Bits(v) != BitConverter.DoubleToInt64Bits(kv.Value)) return false;
+        return true;
+    }
+
+    // What SharesInto read for a country (its states in list and key order, and the culture and size of every pop it counted) and what it
+    // gave, sorted by culture. When everything it reads is the same again the shares are the same, so they are not added up again.
+    private sealed class ShareSnapshot
+    {
+        public bool Valid;
+        public readonly List<State> Owned = new();
+        public readonly List<string> OwnedKeys = new();
+        public readonly List<int> Order = new();
+        public readonly List<int> PopCount = new(); // per state in Order; -1 = no pops
+        public readonly List<string> PopCulture = new();
+        public readonly List<long> PopSize = new(); // the bits of each size, so only an identical value matches
+        public readonly List<string> Cultures = new();
+        public readonly List<double> Shares = new();
+        // the modifiers made from Shares, and the version of each culture's modifiers they were made with
+        public readonly Dictionary<string, double> Result = new(StringComparer.OrdinalIgnoreCase);
+        public readonly List<int> ResultVersions = new();
+    }
+    private readonly Dictionary<Country, ShareSnapshot> _shareCache = new();
+
+    private bool SharesUnchanged(Country c, ShareSnapshot k)
+    {
+        var owned = c.OwnedStates;
+        if (owned.Count != k.Owned.Count) return false;
+        for (int i = 0; i < owned.Count; i++)
+            if (!ReferenceEquals(owned[i], k.Owned[i]) || !ReferenceEquals(owned[i].Key, k.OwnedKeys[i])) return false;
+        int p = 0;
+        for (int j = 0; j < k.Order.Count; j++)
+        {
+            var s = owned[k.Order[j]];
+            bool has = _game.Population.HasPops(s);
+            if (has != (k.PopCount[j] >= 0)) return false;
+            if (!has) continue;
+            var pops = _game.Population.Of(s).Pops;
+            if (pops.Count != k.PopCount[j]) return false;
+            foreach (var pop in pops)
+            {
+                if (!ReferenceEquals(pop.Culture, k.PopCulture[p]) || BitConverter.DoubleToInt64Bits(pop.Size) != k.PopSize[p]) return false;
+                p++;
+            }
+        }
+        return true;
+    }
+
+    /// <summary><see cref="Shares"/> into <paramref name="res"/>, with its keys in <paramref name="keys"/>; what it reads goes into <paramref name="record"/>.</summary>
+    private void SharesInto(Country c, Dictionary<string, double> res, List<string> keys, ShareSnapshot record)
+    {
+        res.Clear();
+        keys.Clear();
+        record.Valid = false;
+        record.Owned.Clear(); record.OwnedKeys.Clear(); record.Order.Clear(); record.PopCount.Clear(); record.PopCulture.Clear(); record.PopSize.Clear();
+        double total = 0;
+        var states = _statesScratch ??= new();
+        states.Clear();
+        for (int i = 0; i < c.OwnedStates.Count; i++) { states.Add((c.OwnedStates[i], i)); record.Owned.Add(c.OwnedStates[i]); record.OwnedKeys.Add(c.OwnedStates[i].Key); }
+        states.Sort(ByKeyStable); // the order OrderBy(Key, Ordinal) gives
+        foreach (var (s, at) in states)
+        {
+            record.Order.Add(at);
+            if (!_game.Population.HasPops(s)) { record.PopCount.Add(-1); continue; }
+            var pops = _game.Population.Of(s).Pops;
+            record.PopCount.Add(pops.Count);
+            foreach (var p in pops)
+            {
+                res[p.Culture] = res.GetValueOrDefault(p.Culture) + p.Size; total += p.Size;
+                record.PopCulture.Add(p.Culture); record.PopSize.Add(BitConverter.DoubleToInt64Bits(p.Size));
+            }
+        }
+        if (total <= 0)
+        {
+            var own = PrimaryCulture(c); // depends on more than the pops: never reused
+            if (own != null) res[own] = 1;
+            keys.AddRange(res.Keys);
+            return;
+        }
+        keys.AddRange(res.Keys);
+        foreach (var k in keys) res[k] /= total;
+        record.Valid = true;
     }
 
     /// <summary>Country modifiers from the cultures of its people; the modifier system asks for it.</summary>
@@ -139,7 +330,10 @@ public sealed class CultureSystem
     {
         if (!Enabled || scope is not Country c || !c.Exists) return 0;
         long now = _game.World.Date.TotalHours;
-        if (now != _modsHour) { _mods.Clear(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
+        if (now != _modsHour) // per hour, so a reloaded game sees what the original did
+        {
+            ClearMods(); _modsHour = now;
+        }
         if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);
         return m.GetValueOrDefault(key);
     }
@@ -148,7 +342,7 @@ public sealed class CultureSystem
     public void MonthlyTick()
     {
         if (!Enabled) return;
-        _mods.Clear();
+        ClearMods();
         TrackMixing();
     }
 
@@ -213,7 +407,7 @@ public sealed class CultureSystem
             if (p.Culture.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || p.Culture.Equals(b.Key, StringComparison.OrdinalIgnoreCase)) p.Culture = hybrid.Key;
         pop.InvalidateMajorities();
         pop.Invalidate();
-        _mods.Clear();
+        ClearMods();
         foreach (var k in _mixMonths.Keys.Where(k => k.StartsWith(s.Key + "|", StringComparison.OrdinalIgnoreCase)).ToList()) _mixMonths.Remove(k);
         _game.NotifyPlayer(isNew ? $"A new culture is born in {s.DisplayName}: the {hybrid.Name}." : $"{hybrid.Name} spreads in {s.DisplayName}.", NotificationKind.Good, s.Owner);
         _game.Events.FireOnAction("on_culture_evolved", s.Owner, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
@@ -331,7 +525,7 @@ public sealed class CultureSystem
         foreach (var key in Evolved)
             if (pop.CultureByKey.Remove(key, out var def)) def.Group.Cultures.Remove(def);
         Evolved.Clear();
-        _state.Clear(); _mixMonths.Clear(); _mods.Clear();
+        _state.Clear(); _mixMonths.Clear(); ClearMods(); _shareCache.Clear(); _cultureRecords.Clear();
     }
 
     /// <summary>Hash of the culture state for multiplayer checks.</summary>

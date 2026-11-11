@@ -77,13 +77,24 @@ public sealed class FeatureSet
 
     public IReadOnlyCollection<string> Ids => _ids;
 
-    public bool Has(string id) => Legacy && BuiltIn.Contains(id, StringComparer.OrdinalIgnoreCase) || _ids.Contains(id);
+    public bool Has(string id)
+    {
+        // The systems ask with the same constant strings many times a tick: remember the answer per string instance (cleared by Set).
+        var known = _known;
+        if (known.TryGetValue(id, out bool has)) return has;
+        has = Legacy && BuiltIn.Contains(id, StringComparer.OrdinalIgnoreCase) || _ids.Contains(id);
+        if (known.Count < 256) known[id] = has;
+        return has;
+    }
+
+    private System.Collections.Concurrent.ConcurrentDictionary<string, bool> _known = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>Turns a feature on or off while the game runs (e.g. from a C# script or the console).</summary>
     public void Set(string id, bool on)
     {
         if (Legacy && !on) { Legacy = false; foreach (var b in BuiltIn) _ids.Add(b); }
         if (on) _ids.Add(id); else _ids.Remove(id);
+        _known = new(ReferenceEqualityComparer.Instance);
     }
 
     public static string FilePath(string gameRoot) => Path.Combine(gameRoot, "features.txt");

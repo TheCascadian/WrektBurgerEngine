@@ -102,9 +102,13 @@ public class AiSystem
                 {
                     if (_borderStamp != stamp || _borderMapVersion != version)
                     {
-                        _borders.Clear();
-                        _borderLists.Clear();
-                        ComputeAllBorders();
+                        // the answer only depends on who controls each end of each land border; a day where no end changed hands keeps it
+                        if (!SameBorderControllers())
+                        {
+                            _borders.Clear();
+                            _borderLists.Clear();
+                            ComputeAllBorders();
+                        }
                         _borderStamp = stamp;
                         _borderMapVersion = version;
                     }
@@ -130,6 +134,16 @@ public class AiSystem
         }
         var seen = new HashSet<long>();
         var pa = _landPairA!; var pb = _landPairB!;
+        if (_pairCtrlA == null || _pairCtrlA.Length != pa.Length)
+        {
+            _pairCtrlA = new Country?[pa.Length]; _pairCtrlB = new Country?[pa.Length];
+            _pairIdxA = new int[pa.Length]; _pairIdxB = new int[pa.Length];
+        }
+        for (int i = 0; i < pa.Length; i++)
+        {
+            var x = pa[i].Controller; var y = pb[i].Controller;
+            _pairCtrlA[i] = x; _pairCtrlB![i] = y; _pairIdxA![i] = x?.Index ?? -1; _pairIdxB![i] = y?.Index ?? -1;
+        }
         for (int i = 0; i < pa.Length; i++)
         {
             var ca = pa[i].Controller; var cb = pb[i].Controller;
@@ -142,6 +156,23 @@ public class AiSystem
         foreach (var list in _borderLists.Values) list.Sort();
     }
     private int _landPairLocations;
+
+    // the controllers (and their numbers) of the two ends of each land border at the last full computation
+    private Country?[]? _pairCtrlA, _pairCtrlB;
+    private int[]? _pairIdxA, _pairIdxB;
+
+    private bool SameBorderControllers()
+    {
+        var pa = _landPairA; var pb = _landPairB; var ka = _pairCtrlA; var kb = _pairCtrlB; var ia = _pairIdxA; var ib = _pairIdxB;
+        if (pa == null || pb == null || ka == null || kb == null || ia == null || ib == null) return false;
+        if (pa.Length != ka.Length || _landPairLocations != Game.World.Locations.Count) return false;
+        for (int i = 0; i < pa.Length; i++)
+        {
+            var x = pa[i].Controller; var y = pb[i].Controller;
+            if (!ReferenceEquals(x, ka[i]) || !ReferenceEquals(y, kb[i]) || (x?.Index ?? -1) != ia[i] || (y?.Index ?? -1) != ib[i]) return false;
+        }
+        return true;
+    }
 
     private readonly Dictionary<int, List<int>> _borderLists = new();
     private void AddBorderIndex(int a, int b)

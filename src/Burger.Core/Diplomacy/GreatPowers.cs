@@ -100,7 +100,13 @@ public sealed class GreatPowerSystem
         var army = live.ToDictionary(c => c, c => _game.Diplomacy.Strength(c));
         var fleet = live.ToDictionary(c => c, FleetOf);
         var ppl = live.ToDictionary(c => c, c => _game.Population.Enabled ? _game.Population.TotalOf(c) : 0.0);
-        double N(Dictionary<Country, double> d, Country c) { double m = d.Values.DefaultIfEmpty(0).Max(); return m > 0 ? 100 * d[c] / m : 0; }
+        // the largest value of each part, taken once (asking for it per country made this quadratic in the countries)
+        var maxOf = new Dictionary<Dictionary<Country, double>, double>(ReferenceEqualityComparer.Instance);
+        double N(Dictionary<Country, double> d, Country c)
+        {
+            if (!maxOf.TryGetValue(d, out double m)) maxOf[d] = m = d.Values.DefaultIfEmpty(0).Max();
+            return m > 0 ? 100 * d[c] / m : 0;
+        }
         var w = new (double W, Dictionary<Country, double> D)[] { (0.4, ind), (0.3, army), (0.2, fleet), (0.1, ppl) };
         var known = w.Where(x => x.D.Values.DefaultIfEmpty(0).Max() > 0).ToList(); // a part nobody has (no navy at all) leaves the others to share its weight
         double totalW = known.Sum(x => x.W);
