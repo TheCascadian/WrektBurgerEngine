@@ -66,6 +66,7 @@ public sealed partial class PopulationSystem
     {
         ColonialRegions.Clear();
         _regionOf = null;
+        _regionOfKey.Clear();
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/colonial_regions"))
             foreach (var n in root.All)
             {
@@ -89,16 +90,35 @@ public sealed partial class PopulationSystem
         if (_regionOf == null)
         {
             _regionOf = new Dictionary<State, ColonialRegion>();
-            foreach (var r in ColonialRegions)
-            {
-                r.States.Clear();
-                foreach (var s2 in _game.World.States)
-                    if (!_regionOf.ContainsKey(s2) && (r.StateKeys.Contains(s2.Key, StringComparer.OrdinalIgnoreCase)
-                        || r.Prefixes.Any(p => s2.Key.StartsWith(p, StringComparison.OrdinalIgnoreCase))))
-                    { _regionOf[s2] = r; r.States.Add(s2); }
-            }
+            foreach (var r in ColonialRegions) r.States.Clear();
+            // a state belongs to the first region (in definition order) that lists its key or a prefix of it; each region's states keep the world's order
+            foreach (var s2 in _game.World.States)
+                if (FirstRegionOfKey(s2.Key) is { } r && !_regionOf.ContainsKey(s2))
+                { _regionOf[s2] = r; r.States.Add(s2); }
         }
         return _regionOf.GetValueOrDefault(s);
+    }
+
+    /// <summary>The region of each state key, kept while the regions stay loaded: a split state drops <see cref="_regionOf"/>, not what the keys say.</summary>
+    private readonly Dictionary<string, ColonialRegion?> _regionOfKey = new(StringComparer.Ordinal);
+
+    private ColonialRegion? FirstRegionOfKey(string stateKey)
+    {
+        if (_regionOfKey.TryGetValue(stateKey, out var found)) return found;
+        found = null;
+        foreach (var r in ColonialRegions)
+            if (InRegion(r, stateKey)) { found = r; break; }
+        _regionOfKey[stateKey] = found;
+        return found;
+    }
+
+    private static bool InRegion(ColonialRegion r, string stateKey)
+    {
+        foreach (var k in r.StateKeys)
+            if (string.Equals(k, stateKey, StringComparison.OrdinalIgnoreCase)) return true;
+        foreach (var p in r.Prefixes)
+            if (stateKey.StartsWith(p, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
     }
 
     /// <summary>Colonists the country has settling in a region (null = states outside every region).</summary>

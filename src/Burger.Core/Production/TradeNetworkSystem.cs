@@ -172,6 +172,18 @@ public sealed class TradeNetworkSystem
     private double[][] _landEdgeKm = Array.Empty<double[]>();
     private int[] _landQueue = Array.Empty<int>();
     private readonly Dictionary<State, ushort[]> _landPaths = new();
+    /// <summary>The arrays of dropped land trees, filled again by the next month's origins instead of new ones (a tree is a whole world wide).</summary>
+    private readonly Stack<ushort[]> _landTreePool = new();
+
+    private void DropLandTrees()
+    {
+        if (_landPaths.Count == 0) return;
+        int n = _landEdgeTo.Length;
+        if (_landTreePool.Count > 0 && _landTreePool.Peek().Length != n) _landTreePool.Clear();
+        foreach (var tree in _landPaths.Values)
+            if (tree.Length == n) _landTreePool.Push(tree);
+        _landPaths.Clear();
+    }
     private readonly Dictionary<long, (TradeRouteKind Kind, List<State> Path, int[] Stops, double Distance)> _routeWays = new();
     private int _landEdgesVersion = -1;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
@@ -251,7 +263,7 @@ public sealed class TradeNetworkSystem
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
         _landEdgeTo = Array.Empty<int[]>();
-        _landPaths.Clear();
+        DropLandTrees();
         _routeWays.Clear();
         _routes.Clear();
         _routeUse.Clear();
@@ -265,7 +277,7 @@ public sealed class TradeNetworkSystem
         InvalidateTotalsCache();
         _landEdgesVersion = -1;
         _landEdgeTo = Array.Empty<int[]>();
-        _landPaths.Clear();
+        DropLandTrees();
         _routeWays.Clear();
         Markets.Clear();
         _marketsShape++;
@@ -332,7 +344,7 @@ public sealed class TradeNetworkSystem
         // routes each month so a warm cache and a freshly loaded game agree.
         // The topology/path caches remain reusable until the map changes.
         _routes.Clear();
-        _landPaths.Clear();
+        DropLandTrees();
         RecycleMarkets();
         Workforce.Clear();
         _routeUse.Clear();
@@ -1138,7 +1150,7 @@ public sealed class TradeNetworkSystem
         _routes.Clear();
         _routeWays.Clear();
         _landCentres.Clear();
-        _landPaths.Clear();
+        DropLandTrees();
         int stateCount = _game.World.States.Count;
         _landEdgeTo = new int[stateCount][];
         _landEdgeKm = new double[stateCount][];
@@ -1175,7 +1187,7 @@ public sealed class TradeNetworkSystem
         if (_landPaths.TryGetValue(from, out var tree)) return tree;
         long bfs0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
         int n = _landEdgeTo.Length;
-        tree = new ushort[n];
+        tree = _landTreePool.Count > 0 && _landTreePool.Peek().Length == n ? _landTreePool.Pop() : new ushort[n];
         Array.Fill(tree, NotReached);
         if (_landQueue.Length < n) _landQueue = new int[n];
         var queue = _landQueue;

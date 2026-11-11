@@ -1,3 +1,4 @@
+using Burger.Core.Script;
 namespace Burger.Core.Scripting;
 
 /// <summary>
@@ -12,8 +13,19 @@ public sealed class ScriptContext
     public IScope? This { get; init; }
     public IScope? Prev { get; init; }
     public Dictionary<string, IScope?> Scopes { get; init; }
-    /// <summary>Script file location used for error messages.</summary>
-    public string Where { get; set; } = "";
+    private string? _where = "";
+    private Node? _whereNode;
+
+    /// <summary>Script file location used for error messages. A statement being evaluated only notes its node (<see cref="WhereAt"/>);
+    /// the "file:line" text is made when something reads it.</summary>
+    public string Where
+    {
+        get => _where ?? _whereNode!.Location;
+        set { _where = value; _whereNode = null; }
+    }
+
+    /// <summary>The location is <paramref name="n"/>'s (the same text as <c>Where = n.Location</c>, made only when read).</summary>
+    public void WhereAt(Node n) { _whereNode = n; _where = null; }
 
     public ScriptContext(Game game, IScope? root, Dictionary<string, IScope?>? scopes = null)
     {
@@ -23,18 +35,19 @@ public sealed class ScriptContext
         Scopes = scopes ?? new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase);
     }
 
-    private ScriptContext(Game game, IScope? root, IScope? @this, IScope? prev, Dictionary<string, IScope?> scopes, string where)
+    private ScriptContext(Game game, IScope? root, IScope? @this, IScope? prev, Dictionary<string, IScope?> scopes, string? where, Node? whereNode)
     {
         Game = game;
         Root = root;
         This = @this;
         Prev = prev;
         Scopes = scopes;
-        Where = where;
+        _where = where;
+        _whereNode = whereNode;
     }
 
     /// <summary>Same execution, new current scope (PREV becomes the old THIS).</summary>
-    public ScriptContext Enter(IScope? scope) => new(Game, Root, scope, This, Scopes, Where);
+    public ScriptContext Enter(IScope? scope) => new(Game, Root, scope, This, Scopes, _where, _whereNode);
 
     public ScriptContext WithScope(string name, IScope? scope)
     {

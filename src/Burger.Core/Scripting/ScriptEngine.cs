@@ -162,11 +162,45 @@ public sealed class ScriptEngine
         return TryResolveSingle(expr, ctx, out scope);
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _loweredKeys = new(StringComparer.Ordinal);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Prefix, string Id)> _colonParts = new(StringComparer.Ordinal);
+    private const int KeyCacheLimit = 100_000;
+
+    /// <summary>The text of <c>key.ToLowerInvariant()</c> without making a new string each time: lower-case ASCII keys are their own
+    /// lower case, and the lower case of the others (OR, NOT, ROOT, tags...) is kept once made.</summary>
+    private static string LowerKey(string key)
+    {
+        foreach (char ch in key)
+            if (ch is >= 'A' and <= 'Z' || ch > '\u007F') return LowerKeySlow(key);
+        return key;
+    }
+
+    private static string LowerKeySlow(string key)
+    {
+        if (_loweredKeys.TryGetValue(key, out var lower)) return lower;
+        lower = key.ToLowerInvariant();
+        if (_loweredKeys.Count < KeyCacheLimit) _loweredKeys.TryAdd(key, lower);
+        return lower;
+    }
+
+    /// <summary>A "prefix:id" key split at <paramref name="colon"/>, the prefix in lower case (kept once made, as the keys come from script text).</summary>
+    private static (string Prefix, string Id) ColonParts(string key, int colon)
+    {
+        if (_colonParts.TryGetValue(key, out var parts)) return parts;
+        parts = (key[..colon].ToLowerInvariant(), key[(colon + 1)..]);
+        if (_colonParts.Count < KeyCacheLimit) _colonParts.TryAdd(key, parts);
+        return parts;
+    }
+
+    private static War? WarById(Burger.Core.Data.World w, string id)
+        => w.Wars.FirstOrDefault(x => string.Equals(x.Id.ToString(), id, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(x.ScopeKey, id, StringComparison.OrdinalIgnoreCase));
+
     private bool TryResolveSingle(string key, ScriptContext ctx, out IScope? scope)
     {
         scope = null;
         var w = _game.World;
-        switch (key.ToLowerInvariant())
+        switch (LowerKey(key))
         {
             case "root": scope = ctx.Root; return true;
             case "this": scope = ctx.This; return true;
@@ -177,7 +211,7 @@ public sealed class ScriptEngine
         int colon = key.IndexOf(':');
         if (colon > 0)
         {
-            string prefix = key[..colon].ToLowerInvariant(), id = key[(colon + 1)..];
+            var (prefix, id) = ColonParts(key, colon);
             switch (prefix)
             {
                 case "scope": scope = ctx.Named(id); return true;
@@ -187,8 +221,7 @@ public sealed class ScriptEngine
                 case "continent": scope = w.ContinentByKey.GetValueOrDefault(id); return true;
                 case "char": case "character": scope = w.GetCharacter(id); return true;
                 case "generic": case "generic_scope": case "scope_id": scope = w.GetGenericScope(id); return true;
-                case "war": scope = w.Wars.FirstOrDefault(x => string.Equals(x.Id.ToString(), id, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(x.ScopeKey, id, StringComparison.OrdinalIgnoreCase)); return true;
+                case "war": scope = WarById(w, id); return true;
                 case "var": case "global_var": case "modifier": return false;
             }
         }
@@ -281,8 +314,8 @@ public sealed class ScriptEngine
             Log.ErrorOnce("trig-item:" + n.Location, $"Unexpected '{key}' in trigger (missing '= value'?)", n.Location);
             return false;
         }
-        ctx.Where = n.Location;
-        switch (key.ToLowerInvariant())
+        ctx.WhereAt(n);
+        switch (LowerKey(key))
         {
             case "and": return EvalTrigger(n, ctx);
             case "or": return EvalAny(n, ctx);
@@ -493,9 +526,9 @@ public sealed class ScriptEngine
             Log.ErrorOnce("eff-item:" + n.Location, $"Unexpected '{n.Key}' in effect (missing '= value'?)", n.Location);
             return;
         }
-        ctx.Where = n.Location;
+        ctx.WhereAt(n);
         string key = n.Key;
-        switch (key.ToLowerInvariant())
+        switch (LowerKey(key))
         {
             case "hidden_effect":
             case "effect":

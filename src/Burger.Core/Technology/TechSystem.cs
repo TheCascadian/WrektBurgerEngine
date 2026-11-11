@@ -160,7 +160,18 @@ public sealed class TechSystem
     public bool CanUse(Country c, Node definition)
     {
         if (!Enabled) return true;
-        foreach (var t in definition.GetList("requires_tech")) if (!Has(c, t)) return false;
+        if (definition.Children == null) return true;
+        // the items of every requires_tech (as Node.GetList gives them), without building the list
+        foreach (var n in definition.Children)
+        {
+            if (n.Op == Op.None || !string.Equals(n.Key, "requires_tech", StringComparison.OrdinalIgnoreCase)) continue;
+            if (n.Children != null)
+            {
+                foreach (var t in n.Children)
+                    if (t.IsListItem && !Has(c, t.Key)) return false;
+            }
+            else if (n.Value != null && !Has(c, n.Value)) return false;
+        }
         return true;
     }
 

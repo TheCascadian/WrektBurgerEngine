@@ -58,7 +58,7 @@ public sealed partial class DiplomacySystem
             ctx.Scopes["recipient"] = recipient;
             ctx.Scopes["target"] = recipient;
         }
-        ctx.Where = $"{a.File}:{a.Line}";
+        ctx.Where = a.Where;
         return ctx;
     }
 
@@ -778,28 +778,34 @@ public sealed partial class DiplomacySystem
                 if (!c.IsPlayer && !busy.Contains(c)) continue;
             }
             busy = null; // eliminating c below changes wars and forces
-            // c just ceased to exist
-            foreach (var war in w.Wars.Where(x => x.Involves(c)).ToList()) LeaveWar(c, war);
-            R.RemoveCountry(c);
-            foreach (var d in w.Divisions.Where(d => d.Owner == c).ToList()) _game.Warfare.DestroyDivision(d);
-            foreach (var army in w.Armies.Where(a => a.Owner == c).ToList()) w.Armies.Remove(army);
-            foreach (var l in w.Locations.Where(l => l.Controller == c)) l.Controller = l.Owner;
-            c.Recruitment.Clear();
-            // nothing of it keeps acting: fleets, air wings, lend-lease, factories and building queues go too
-            foreach (var f in _game.Navy.FleetsOf(c).ToList()) _game.Navy.DisbandFleet(f);
-            foreach (var wing in _game.Air.WingsOf(c).ToList()) _game.Air.Disband(wing);
-            _game.Support.Deals.RemoveAll(d => d.From == c || d.To == c);
-            c.ProductionLines.Clear();
-            c.Construction.Clear();
-            _game.Notify($"{c.Name} has ceased to exist.", NotificationKind.War);
-            if (c.IsPlayer)
-            {
-                // the player's country is gone: keep watching as an observer
-                _game.SetPlayer(null);
-                _game.Notify($"{c.Name} has fallen. You are now an observer.", NotificationKind.War);
-            }
-            _game.Mods.Invoke(m => m.OnCountryEliminated(c));
-            _game.Events.FireOnAction("on_country_eliminated", c);
+            Eliminate(c);
         }
+    }
+
+    /// <summary>c just ceased to exist (its own method: the lambdas below would otherwise make a closure for every country checked).</summary>
+    private void Eliminate(Country c)
+    {
+        var w = _game.World;
+        foreach (var war in w.Wars.Where(x => x.Involves(c)).ToList()) LeaveWar(c, war);
+        R.RemoveCountry(c);
+        foreach (var d in w.Divisions.Where(d => d.Owner == c).ToList()) _game.Warfare.DestroyDivision(d);
+        foreach (var army in w.Armies.Where(a => a.Owner == c).ToList()) w.Armies.Remove(army);
+        foreach (var l in w.Locations.Where(l => l.Controller == c)) l.Controller = l.Owner;
+        c.Recruitment.Clear();
+        // nothing of it keeps acting: fleets, air wings, lend-lease, factories and building queues go too
+        foreach (var f in _game.Navy.FleetsOf(c).ToList()) _game.Navy.DisbandFleet(f);
+        foreach (var wing in _game.Air.WingsOf(c).ToList()) _game.Air.Disband(wing);
+        _game.Support.Deals.RemoveAll(d => d.From == c || d.To == c);
+        c.ProductionLines.Clear();
+        c.Construction.Clear();
+        _game.Notify($"{c.Name} has ceased to exist.", NotificationKind.War);
+        if (c.IsPlayer)
+        {
+            // the player's country is gone: keep watching as an observer
+            _game.SetPlayer(null);
+            _game.Notify($"{c.Name} has fallen. You are now an observer.", NotificationKind.War);
+        }
+        _game.Mods.Invoke(m => m.OnCountryEliminated(c));
+        _game.Events.FireOnAction("on_country_eliminated", c);
     }
 }

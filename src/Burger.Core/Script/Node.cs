@@ -112,8 +112,10 @@ public sealed class Node
     public List<string> GetList(string key)
     {
         var result = new List<string>();
-        foreach (var n in GetAll(key))
+        if (Children == null) return result;
+        foreach (var n in Children)
         {
+            if (n.Op == Op.None || !string.Equals(n.Key, key, StringComparison.OrdinalIgnoreCase)) continue;
             if (n.Children != null)
             {
                 foreach (var c in n.Children)
