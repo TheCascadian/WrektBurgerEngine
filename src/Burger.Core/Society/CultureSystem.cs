@@ -37,7 +37,7 @@ public sealed class CultureSystem
     private readonly Dictionary<string, CultureState> _state = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<string>> _baseTraditions = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, int> _mixMonths = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
+    private readonly Dictionary<Country, HourMods> _mods = new();
     private long _modsHour = long.MinValue;
     private HashSet<string>? _tradKeys;
     private int _tradKeysFrom = -1;
@@ -175,20 +175,49 @@ public sealed class CultureSystem
         }
     }
 
-    // (worked out for each country every hour: the dictionaries of the hour before are used again)
-    private readonly Stack<Dictionary<string, double>> _modsPool = new();
+    /// <summary>
+    /// A country's cultures for one hour: what each gives alone and its share, taken when the hour first asks (as the full sum was).
+    /// A key is added up when it is first asked for, culture by culture in the same order as adding every key up front, so it is the same number;
+    /// a country is asked for two keys or so an hour, while its cultures carry dozens.
+    /// </summary>
+    private sealed class HourMods
+    {
+        public Dictionary<string, double>[] Mods = new Dictionary<string, double>[8];
+        public double[] Shares = new double[8];
+        public int Count;
+        public readonly Dictionary<string, double> Values = new(8, StringComparer.OrdinalIgnoreCase);
+
+        public double Get(string key)
+        {
+            if (Values.TryGetValue(key, out var known)) return known;
+            double v = 0;
+            for (int i = 0; i < Count; i++)
+                if (Mods[i].TryGetValue(key, out var x)) v += x * Shares[i];
+            Values[key] = v;
+            return v;
+        }
+    }
+
+    // (worked out for each country every hour: the ones of the hour before are used again)
+    private readonly Stack<HourMods> _modsPool = new();
     private readonly Dictionary<string, double> _sharesScratch = new(8, StringComparer.OrdinalIgnoreCase);
     private string[] _cultureOrder = new string[8];
 
     private void ClearMods()
     {
-        foreach (var m in _mods.Values) { m.Clear(); _modsPool.Push(m); }
+        foreach (var m in _mods.Values)
+        {
+            Array.Clear(m.Mods, 0, m.Count);
+            m.Count = 0;
+            m.Values.Clear();
+            _modsPool.Push(m);
+        }
         _mods.Clear();
     }
 
-    private Dictionary<string, double> ComputeFor(Country c)
+    private HourMods ComputeFor(Country c)
     {
-        var m = _modsPool.Count > 0 ? _modsPool.Pop() : new Dictionary<string, double>(24, StringComparer.OrdinalIgnoreCase);
+        var m = _modsPool.Count > 0 ? _modsPool.Pop() : new HourMods();
         var shares = _sharesScratch;
         shares.Clear();
         FillShares(c, shares);
@@ -197,7 +226,13 @@ public sealed class CultureSystem
         if (_cultureOrder.Length < n) _cultureOrder = new string[Math.Max(n, _cultureOrder.Length * 2)];
         shares.Keys.CopyTo(_cultureOrder, 0);
         Array.Sort(_cultureOrder, 0, n, StringComparer.Ordinal);
-        for (int i = 0; i < n; i++) SocietyData.Add(m, CultureMods(_cultureOrder[i]), shares[_cultureOrder[i]]);
+        if (m.Mods.Length < n) { m.Mods = new Dictionary<string, double>[Math.Max(n, m.Mods.Length * 2)]; m.Shares = new double[m.Mods.Length]; }
+        for (int i = 0; i < n; i++)
+        {
+            m.Mods[i] = CultureMods(_cultureOrder[i]);
+            m.Shares[i] = shares[_cultureOrder[i]];
+        }
+        m.Count = n;
         Array.Clear(_cultureOrder, 0, n);
         shares.Clear();
         return m;
@@ -216,9 +251,12 @@ public sealed class CultureSystem
         }
         if (!_tradKeys.Contains(key)) return 0;
         long now = _game.World.Date.TotalHours;
-        if (now != _modsHour) { ClearMods(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
-        if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);
-        return m.GetValueOrDefault(key);
+        lock (_mods)   // (a key is now remembered on each request, not only on the first)
+        {
+            if (now != _modsHour) { ClearMods(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
+            if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);
+            return m.Get(key);
+        }
     }
 
     // ------------------------------------------------------------------------------------- monthly

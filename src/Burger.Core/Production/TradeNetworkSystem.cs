@@ -1087,10 +1087,13 @@ public sealed class TradeNetworkSystem
         if (tree[to.Index] != NotReached)
         {
             // the way back through the parents; its length is added up from the origin outwards, as the search went
-            var path = new List<State>();
+            // (counted first, so the list is made at its size and filled from the end instead of grown and reversed)
             var states = _game.World.States;
-            for (int cursor = to.Index; ; cursor = tree[cursor]) { path.Add(states[cursor]); if (cursor == from.Index) break; }
-            path.Reverse();
+            int length = 1;
+            for (int cursor = to.Index; cursor != from.Index; cursor = tree[cursor]) length++;
+            var wayStates = new State[length];
+            for (int cursor = to.Index, at = length - 1; ; cursor = tree[cursor], at--) { wayStates[at] = states[cursor]; if (cursor == from.Index) break; }
+            var path = new List<State>(wayStates);
             double distance = 0;
             for (int k = 0; k + 1 < path.Count; k++)
             {

@@ -328,7 +328,12 @@ public sealed partial class PopulationSystem
     public static string Format(double n) => n >= 1e9 ? $"{n / 1e9:0.##}B" : n >= 1e6 ? $"{n / 1e6:0.##}M" : n >= 1e4 ? $"{n / 1e3:0}k" : n >= 1e3 ? $"{n / 1e3:0.#}k" : $"{n:0}";
 
     public double TotalOf(State s) => _states.TryGetValue(s, out var sp) ? sp.Total : 0;
-    public double TotalOf(Country c) => c.OwnedStates.Sum(TotalOf);
+    public double TotalOf(Country c)
+    {
+        double t = 0;
+        foreach (var s in c.OwnedStates) t += TotalOf(s);
+        return t;
+    }
 
     public bool IsAccepted(Country c, string culture) => Rules.IsAccepted(_game, c, culture);
 
