@@ -862,6 +862,7 @@ public class AiSystem
 
     /// <summary>Set BURGER_AI_DEBUG=1 to log, for every AI diplomacy roll, how many targets passed per action, how many had weight &gt; 0, and what was chosen.</summary>
     private static readonly bool DebugDiplomacy = Environment.GetEnvironmentVariable("BURGER_AI_DEBUG") == "1";
+    private static readonly string? AiLogTag = Environment.GetEnvironmentVariable("BURGER_AI_LOG");
 
     /// <summary>With more countries than this the AI does not look at every one of them each month (hundreds of tribes would make the turn of the month take seconds): at its neighbours, enemies and a sample of the rest.</summary>
     private const int FullDiplomacyBelow = 200, DiplomacySample = 40;
@@ -929,7 +930,7 @@ public class AiSystem
         if (options.Count == 0) return;
         double total = options.Sum(o => o.Weight);
         double r = Game.Rngs.Diplomacy.NextDouble() * total;
-        if (Environment.GetEnvironmentVariable("BURGER_AI_LOG") is { } logTag && logTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && Game.World.Date.Day == 1)
+        if (AiLogTag is { } logTag && logTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase) && Game.World.Date.Day == 1)
             Console.WriteLine($"AI {Game.World.Date.ToDisplay()} {c.Tag}: total {total:0.0}, top " + string.Join(", ", options.OrderByDescending(o => o.Weight).Take(5).Select(o => $"{o.Action.Key}>{o.Target.Tag} {o.Weight:0.0}")) +
                               "; wars " + string.Join(", ", options.Where(o => o.Action.Key == "declare_war").OrderByDescending(o => o.Weight).Take(4).Select(o => $"{o.Target.Tag} {o.Weight:0.00}")));
         foreach (var o in options)

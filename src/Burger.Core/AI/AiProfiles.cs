@@ -55,8 +55,8 @@ public class AiProfileRules
     {
         var d = game.Data.Defines;
         double strength = game.Diplomacy.Strength(c);
-        var alive = game.World.Countries.Where(x => x.Exists).ToList();
-        int rank = alive.Count(x => game.Diplomacy.Strength(x) > strength);
+        int rank = 0;
+        foreach (var x in game.World.Countries) if (x.Exists && game.Diplomacy.Strength(x) > strength) rank++;
         bool great = rank < d.Get("ai_great_powers", 9);
         string ide = game.RulingOf(c) ?? "";
         bool subject = game.World.Relations.OverlordOf(c) != null;
@@ -446,11 +446,14 @@ public sealed class AiProfileSystem
             p.Profile = ProfileOf(c);
             if (p.Profile != null) Merge(p.Profile, own);
             double h = Rules.HistoryWeight(_game, c);
-            foreach (var key in generic.Keys.Concat(own.Keys).Distinct(StringComparer.OrdinalIgnoreCase))
+            // the generic traits, then the country's own that the generic profile lacks (both keyed ignoring case)
+            foreach (var key in generic.Keys)
             {
-                double g = generic.GetValueOrDefault(key, 1);
+                double g = generic[key];
                 p.Traits[key] = own.TryGetValue(key, out var o) ? g + (o - g) * h : g;
             }
+            foreach (var (key, o) in own)
+                if (!generic.ContainsKey(key)) p.Traits[key] = 1 + (o - 1) * h;
         }
         _cache[c] = (day, p);
         return p;

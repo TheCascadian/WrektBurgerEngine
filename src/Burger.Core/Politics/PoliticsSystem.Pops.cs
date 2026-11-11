@@ -45,6 +45,10 @@ public sealed partial class PoliticsSystem
         return keys;
     }
 
+    // (used again for each country and state; PopReactionMonthly runs one country at a time)
+    private readonly HashSet<string> _reactionSeen = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _reactionStale = new();
+
     /// <summary>One month of reactions in a country: every pop group reconsiders the government.</summary>
     public void PopReactionMonthly(Country c)
     {
@@ -56,7 +60,7 @@ public sealed partial class PoliticsSystem
         var radicalToward = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         double total = 0;
         int announced = 0;
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seen = _reactionSeen;
         foreach (var s in c.OwnedStates)
         {
             if (!_game.Population.HasPops(s)) continue;
@@ -97,8 +101,15 @@ public sealed partial class PoliticsSystem
                 }
             }
             if (_moods.TryGetValue(s, out var moods))
-                foreach (var stale in moods.Keys.Where(k => !seen.Contains(k)).ToList()) moods.Remove(stale);
+            {
+                var stale = _reactionStale;
+                stale.Clear();
+                foreach (var k in moods.Keys) if (!seen.Contains(k)) stale.Add(k);
+                foreach (var k in stale) moods.Remove(k);
+                stale.Clear();
+            }
         }
+        seen.Clear();
         _popSummary[c] = Summarize(c, p);
         // radicalised people push their party's ideology up; a banned party gains strength the harder it is repressed
         if (total > 0)
@@ -138,8 +149,8 @@ public sealed partial class PoliticsSystem
                 {
                     summary.Backing[bk] = summary.Backing.GetValueOrDefault(bk) + pop.Size;
                     grievanceSum[bk] = grievanceSum.GetValueOrDefault(bk) + pop.Size * m.Grievance;
-                    byState.TryAdd(bk, new Dictionary<string, double>());
-                    byState[bk][s.Key] = byState[bk].GetValueOrDefault(s.Key) + pop.Size;
+                    if (!byState.TryGetValue(bk, out var perState)) byState[bk] = perState = new Dictionary<string, double>();
+                    perState[s.Key] = perState.GetValueOrDefault(s.Key) + pop.Size;
                 }
                 if (m.PreferredParty.Length > 0 && IsPartyBanned(c, p, m.PreferredParty) && IdeologyKeyOfParty(m.PreferredParty) is { } ik)
                     summary.Underground[ik] = summary.Underground.GetValueOrDefault(ik) + pop.Size * m.Radicalism / 100.0;

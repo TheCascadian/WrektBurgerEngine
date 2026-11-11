@@ -171,8 +171,11 @@ public sealed partial class PoliticsSystem
         var p = Of(c);
         var now = _game.World.Date;
         var busy = p.Ministers.Values.ToHashSet();
+        // (a character who leads an army is not free: the generals looked up once, not every army for every character)
+        var generals = new HashSet<Character>();
+        foreach (var a in _game.World.Armies) if (a.General != null) generals.Add(a.General);
         bool Usable(Character ch) => ch.Alive && ch.Country == c && !ch.IsRuler && ch.Age(now) >= _game.Data.Defines.AdultAge && !busy.Contains(ch)
-                                     && _game.World.Armies.All(a => a.General != ch);
+                                     && !generals.Contains(ch);
         if (pos.Council)
         {
             // a ruler's council: any adult of the country will do, and a few are always at court
