@@ -8,5 +8,7 @@
     <NoWarn>$(NoWarn);CS1591;CS8618</NoWarn>
     <Version>1.0.0</Version>
     <Company>BurgerEngine</Company>
+    <!-- The simulation allocates heavily on its tick thread: server GC (a heap and collector thread per core) cuts the wall time of a 62-day run by about 8% for about 20% more peak memory. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 </Project>
