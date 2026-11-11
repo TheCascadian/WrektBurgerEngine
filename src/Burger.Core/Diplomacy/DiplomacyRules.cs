@@ -80,17 +80,35 @@ public class DiplomacyRules
     public virtual List<State> WarGoalStates(Game game, Country holder, Country target, CasusBelli cb)
     {
         var pop = game.Population;
-        var states = target.OwnedStates.Concat(game.World.Relations.SubjectsOf(target).SelectMany(s => s.OwnedStates));
-        return cb.WarGoal switch
+        Func<State, bool>? keep;
+        switch (cb.WarGoal)
         {
-            WarGoalType.Claims => states.Where(s => s.Claims.Contains(holder)).ToList(),
-            WarGoalType.Cores => states.Where(s => s.Cores.Contains(holder)).ToList(),
-            WarGoalType.Culture => pop.Enabled && pop.Of(holder).Culture is { } cu ? states.Where(s => pop.MajorityCulture(s) == cu).ToList() : new List<State>(),
-            WarGoalType.Religion => pop.ReligionEnabled && pop.Of(holder).Religion is { } re ? states.Where(s => pop.MajorityReligion(s) == re).ToList() : new List<State>(),
-            WarGoalType.Liberation => pop.Enabled ? states.Where(s => s.Owner is { } o && s != o.Capital?.State && pop.MajorityCulture(s) is { } mc && !pop.IsAccepted(o, mc) && pop.Of(holder).Culture != mc).ToList() : new List<State>(),
-            WarGoalType.Independence or WarGoalType.Subjugation or WarGoalType.Humiliation => new List<State>(),
-            _ => states.ToList(),
-        };
+            case WarGoalType.Claims: keep = s => s.Claims.Contains(holder); break;
+            case WarGoalType.Cores: keep = s => s.Cores.Contains(holder); break;
+            case WarGoalType.Culture:
+                if (!(pop.Enabled && pop.Of(holder).Culture is { } cu)) return new List<State>();
+                keep = s => pop.MajorityCulture(s) == cu; break;
+            case WarGoalType.Religion:
+                if (!(pop.ReligionEnabled && pop.Of(holder).Religion is { } re)) return new List<State>();
+                keep = s => pop.MajorityReligion(s) == re; break;
+            case WarGoalType.Liberation:
+                if (!pop.Enabled) return new List<State>();
+                keep = s => s.Owner is { } o && s != o.Capital?.State && pop.MajorityCulture(s) is { } mc && !pop.IsAccepted(o, mc) && pop.Of(holder).Culture != mc; break;
+            case WarGoalType.Independence or WarGoalType.Subjugation or WarGoalType.Humiliation: return new List<State>();
+            default: keep = null; break;
+        }
+        // the target's states, then those of each of its subjects (in the order of the subject table)
+        var list = new List<State>();
+        Add(target);
+        foreach (var kv in game.World.Relations.Subjects)
+            if (kv.Value.Overlord == target) Add(kv.Key);
+        return list;
+
+        void Add(Country owner)
+        {
+            foreach (var s in owner.OwnedStates)
+                if (keep == null || keep(s)) list.Add(s);
+        }
     }
 
     /// <summary>

@@ -56,7 +56,7 @@ public sealed class CultureSystem
     // ------------------------------------------------------------------------------------- data
     public void LoadDefinitions(GameData data)
     {
-        Traditions.Clear(); _baseTraditions.Clear();
+        Traditions.Clear(); _baseTraditions.Clear(); _cultureMods.Clear();
         foreach (var root in DataLoader.ParseFileOrFolder(data, "common/traditions"))
             foreach (var n in root.All)
             {
@@ -148,10 +148,26 @@ public sealed class CultureSystem
         return m;
     }
 
+    // What each culture gives alone (as ModifiersOf), kept for the culture state it was worked out from: the traditions of a culture state
+    // are only written while it is made (Of, RegisterHybrid, Load), so it holds until the definitions are loaded again or the cultures change.
+    private readonly Dictionary<CultureState, (Dictionary<string, double> Traditions, Dictionary<string, double> Mods)> _cultureMods = new(ReferenceEqualityComparer.Instance);
+
+    private Dictionary<string, double> CultureMods(string cultureKey)
+    {
+        lock (_cultureMods)
+        {
+            var s = Of(cultureKey);
+            if (_cultureMods.TryGetValue(s, out var kept) && ReferenceEquals(kept.Traditions, s.Traditions)) return kept.Mods;
+            var m = ModifiersOf(cultureKey);
+            _cultureMods[s] = (s.Traditions, m);
+            return m;
+        }
+    }
+
     private Dictionary<string, double> ComputeFor(Country c)
     {
         var m = new Dictionary<string, double>(24, StringComparer.OrdinalIgnoreCase);
-        foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, ModifiersOf(culture), share);
+        foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, CultureMods(culture), share);
         return m;
     }
 
@@ -242,7 +258,7 @@ public sealed class CultureSystem
             if (p.Culture.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || p.Culture.Equals(b.Key, StringComparison.OrdinalIgnoreCase)) p.Culture = hybrid.Key;
         pop.InvalidateMajorities();
         pop.Invalidate();
-        _mods.Clear();
+        _mods.Clear(); _cultureMods.Clear();
         foreach (var k in _mixMonths.Keys.Where(k => k.StartsWith(s.Key + "|", StringComparison.OrdinalIgnoreCase)).ToList()) _mixMonths.Remove(k);
         _game.NotifyPlayer(isNew ? $"A new culture is born in {s.DisplayName}: the {hybrid.Name}." : $"{hybrid.Name} spreads in {s.DisplayName}.", NotificationKind.Good, s.Owner);
         _game.Events.FireOnAction("on_culture_evolved", s.Owner, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
@@ -360,7 +376,7 @@ public sealed class CultureSystem
         foreach (var key in Evolved)
             if (pop.CultureByKey.Remove(key, out var def)) def.Group.Cultures.Remove(def);
         Evolved.Clear();
-        _state.Clear(); _mixMonths.Clear(); _mods.Clear();
+        _state.Clear(); _mixMonths.Clear(); _mods.Clear(); _cultureMods.Clear();
     }
 
     /// <summary>Hash of the culture state for multiplayer checks.</summary>

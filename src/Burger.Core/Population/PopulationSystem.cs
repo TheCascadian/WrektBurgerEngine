@@ -337,7 +337,7 @@ public sealed partial class PopulationSystem
     {
         CheckMajorityCache();
         if (_majorCulture.TryGetValue(s, out var m)) return m;
-        m = _states.TryGetValue(s, out var sp) && sp.Pops.Count > 0 ? sp.Pops.GroupBy(p => p.Culture).MaxBy(g => g.Sum(p => p.Size))!.Key : null;
+        m = _states.TryGetValue(s, out var sp) && sp.Pops.Count > 0 ? Biggest(sp.Pops, religion: false) : null;
         _majorCulture[s] = m;
         return m;
     }
@@ -346,9 +346,35 @@ public sealed partial class PopulationSystem
     {
         CheckMajorityCache();
         if (_majorReligion.TryGetValue(s, out var m)) return m;
-        m = _states.TryGetValue(s, out var sp) && sp.Pops.Count > 0 ? sp.Pops.Where(p => p.Religion != null).GroupBy(p => p.Religion!).MaxBy(g => g.Sum(p => p.Size))?.Key : null;
+        m = _states.TryGetValue(s, out var sp) && sp.Pops.Count > 0 ? Biggest(sp.Pops, religion: true) : null;
         _majorReligion[s] = m;
         return m;
+    }
+
+    /// <summary>
+    /// The culture (or religion: pops without one left out) with the most people, as GroupBy then MaxBy of the sums gave it:
+    /// groups in the order they first appear, each summed in pop order, the first of equal sums kept. Null when no pop has one.
+    /// </summary>
+    private static string? Biggest(List<Pop> pops, bool religion)
+    {
+        string? best = null;
+        double bestSum = 0;
+        bool any = false;
+        for (int i = 0; i < pops.Count; i++)
+        {
+            string? key = religion ? pops[i].Religion : pops[i].Culture;
+            if (religion && key == null) continue;
+            bool seen = false;
+            for (int j = 0; j < i && !seen; j++)
+                if (!(religion && pops[j].Religion == null) && string.Equals(religion ? pops[j].Religion : pops[j].Culture, key)) seen = true;
+            if (seen) continue;
+            double sum = 0;
+            for (int j = i; j < pops.Count; j++)
+                if (string.Equals(religion ? pops[j].Religion : pops[j].Culture, key)) sum += pops[j].Size;
+            if (!any) { best = key; bestSum = sum; any = true; }
+            else if (sum.CompareTo(bestSum) > 0) { best = key; bestSum = sum; }
+        }
+        return best;
     }
 
     // majorities are asked for a lot (war goals, AI); they are cached for the day
