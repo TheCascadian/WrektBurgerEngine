@@ -145,8 +145,27 @@ public sealed class TradeNetworkSystem
     // Recipes by output and by input, built on first use (the recipes only change when the data is loaded).
     private Dictionary<string, List<IndustryRecipe>>? _recipesByOutput, _recipesByInput;
     private List<string>? _recipeOutputs;
-    private readonly HashSet<string> _totalsBulk = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<Country, List<StateMarket>> _totalsRows = new();
+    // What a country holds of a commodity, added up (see Totals): the markets of the commodity in the order of Markets, kept while no market is added or
+    // dropped (_marketsShape), and the sums of every owner, kept until the markets may have changed (_totalsEpoch).
+    private sealed class CommodityTotals
+    {
+        public long Shape = -1;
+        public State[] States = Array.Empty<State>();
+        public StateMarket[] Rows = Array.Empty<StateMarket>();
+        public int Count;
+        public long Epoch = -1;
+        public int Stamp;
+        public int[] OwnerStamp = Array.Empty<int>();
+        public (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied)[] OwnerTotals = Array.Empty<(double, double, double, double, double, double, double)>();
+    }
+    private readonly Dictionary<string, CommodityTotals> _totalsByCommodity = new(StringComparer.OrdinalIgnoreCase);
+    private int _totalsStamp;
+    private long _marketsShape;
+    private long _totalsEpoch;
+    private double[] _sumOutput = Array.Empty<double>(), _sumDemand = Array.Empty<double>(), _sumImport = Array.Empty<double>(), _sumExport = Array.Empty<double>(),
+        _sumStockpile = Array.Empty<double>(), _sumPrice = Array.Empty<double>(), _sumSatisfied = Array.Empty<double>();
+    private int[] _sumRows = Array.Empty<int>();
+    private readonly List<Country> _sumOwners = new();
     private readonly Dictionary<State, (float X, float Y)> _landCentres = new();
     // the land graph between states, by state number: neighbours in the order of first contact, and the length of each edge
     private int[][] _landEdgeTo = Array.Empty<int[]>();
@@ -160,7 +179,6 @@ public sealed class TradeNetworkSystem
     private readonly HashSet<string> _blockades = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<StateMarket> _current = new();
     private readonly Dictionary<State, int> _currentSlot = new();
-    private readonly Dictionary<Country, Dictionary<string, (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied)>> _totalsCache = new();
     // MatchCommodity is deliberately serial because its commit phase mutates shared world state.
     // Reuse stable per-call storage so bounded commodity settlement does not create a second
     // allocation-heavy pause while preserving the existing candidate and commit order.
@@ -195,7 +213,7 @@ public sealed class TradeNetworkSystem
 
     private static string F(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
-    private void InvalidateTotalsCache() { if (_totalsCache.Count > 0) _totalsCache.Clear(); if (_totalsBulk.Count > 0) _totalsBulk.Clear(); }
+    private void InvalidateTotalsCache() => _totalsEpoch++;
 
     public TradePolicy PolicyOf(Country country)
         => Policies.TryGetValue(country, out var p) ? p : Policies[country] = new TradePolicy();
@@ -250,6 +268,7 @@ public sealed class TradeNetworkSystem
         _landPaths.Clear();
         _routeWays.Clear();
         Markets.Clear();
+        _marketsShape++;
         Policies.Clear();
         Agreements.Clear();
         History.Clear();
@@ -268,11 +287,13 @@ public sealed class TradeNetworkSystem
         if (!Markets.TryGetValue(state, out var byCommodity))
         {
             InvalidateTotalsCache();
+            _marketsShape++;
             Markets[state] = byCommodity = _freeMarketMaps.Count > 0 ? _freeMarketMaps.Pop() : new(StringComparer.OrdinalIgnoreCase);
         }
         if (!byCommodity.TryGetValue(commodity, out var market))
         {
             InvalidateTotalsCache();
+            _marketsShape++;
             byCommodity[commodity] = market = NewMarket(state, commodity);
         }
         return market;
@@ -301,6 +322,7 @@ public sealed class TradeNetworkSystem
             _freeMarketMaps.Push(map);
         }
         Markets.Clear();
+        _marketsShape++;
     }
 
     public void BeginMonth()
@@ -731,43 +753,80 @@ public sealed class TradeNetworkSystem
 
     public (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) Totals(Country country, string commodity)
     {
-        if (_totalsCache.TryGetValue(country, out var cachedByCommodity)
-            && cachedByCommodity.TryGetValue(commodity, out var cached)) return cached;
-
-        // One pass over the markets gives the totals of every country for this commodity (a pass for each country was countries times states).
-        if (_totalsBulk.Add(commodity))
-        {
-            var rowsByOwner = new Dictionary<Country, List<StateMarket>>(_totalsRows.Count);
-            foreach (var (state, markets) in Markets)
-                if (state.Owner is { } owner && markets.TryGetValue(commodity, out var market))
-                {
-                    if (!rowsByOwner.TryGetValue(owner, out var list))
-                    {
-                        if (!_totalsRows.TryGetValue(owner, out list)) _totalsRows[owner] = list = new List<StateMarket>();
-                        list.Clear();
-                        rowsByOwner[owner] = list;
-                    }
-                    list.Add(market);
-                }
-            foreach (var (owner, rows) in rowsByOwner)
-                CacheTotals(owner, commodity, rows);
-        }
-        if (_totalsCache.TryGetValue(country, out cachedByCommodity) && cachedByCommodity.TryGetValue(commodity, out cached)) return cached;
-        return CacheTotals(country, commodity, new List<StateMarket>());
+        if (!_totalsByCommodity.TryGetValue(commodity, out var t)) _totalsByCommodity[commodity] = t = new CommodityTotals();
+        if (t.Epoch != _totalsEpoch) SumTotals(t, commodity);
+        int i = country.Index;
+        if ((uint)i < (uint)t.OwnerStamp.Length && t.OwnerStamp[i] == t.Stamp) return t.OwnerTotals[i];
+        return (0, 0, 0, 0, 0, 1, 1);   // no market of it in the country
     }
 
-    private (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) CacheTotals(Country country, string commodity, List<StateMarket> rows)
+    // One pass over the markets of the commodity gives the totals of every country that owns one, each added up in the order of Markets.
+    private void SumTotals(CommodityTotals t, string commodity)
     {
-        double demand = 0, output = 0, import = 0, export = 0, stockpile = 0, price = 0, satisfied = 0;
-        foreach (var x in rows)
+        if (t.Shape != _marketsShape)
         {
-            demand += x.Demand; output += x.Output; import += x.Import; export += x.Export; stockpile += x.Stockpile; price += x.Price; satisfied += x.Demand * x.Satisfied;
+            int n = 0;
+            foreach (var (state, markets) in Markets)
+                if (markets.TryGetValue(commodity, out var market))
+                {
+                    if (n == t.Rows.Length)
+                    {
+                        int size = Math.Max(64, n * 2);
+                        Array.Resize(ref t.Rows, size); Array.Resize(ref t.States, size);
+                    }
+                    t.States[n] = state; t.Rows[n] = market; n++;
+                }
+            Array.Clear(t.States, n, t.Count > n ? t.Count - n : 0);
+            Array.Clear(t.Rows, n, t.Count > n ? t.Count - n : 0);
+            t.Count = n;
+            t.Shape = _marketsShape;
         }
-        var total = (output, demand, import, export, stockpile, rows.Count == 0 ? 1 : price / rows.Count, demand <= 0.0001 ? 1 : satisfied / demand);
-        if (!_totalsCache.TryGetValue(country, out var byCommodity))
-            _totalsCache[country] = byCommodity = new(StringComparer.OrdinalIgnoreCase);
-        byCommodity[commodity] = total;
-        return total;
+        int countries = _game.World.Countries.Count;
+        if (_sumRows.Length < countries)
+        {
+            int size = Math.Max(countries, _sumRows.Length * 2);
+            _sumOutput = new double[size]; _sumDemand = new double[size]; _sumImport = new double[size]; _sumExport = new double[size];
+            _sumStockpile = new double[size]; _sumPrice = new double[size]; _sumSatisfied = new double[size]; _sumRows = new int[size];
+        }
+        _sumOwners.Clear();
+        for (int r = 0; r < t.Count; r++)
+        {
+            if (t.States[r].Owner is not { } owner) continue;
+            int o = owner.Index;
+            if (o >= _sumRows.Length)
+            {
+                int size = Math.Max(o + 1, _sumRows.Length * 2);
+                Array.Resize(ref _sumOutput, size); Array.Resize(ref _sumDemand, size); Array.Resize(ref _sumImport, size); Array.Resize(ref _sumExport, size);
+                Array.Resize(ref _sumStockpile, size); Array.Resize(ref _sumPrice, size); Array.Resize(ref _sumSatisfied, size); Array.Resize(ref _sumRows, size);
+            }
+            if (_sumRows[o] == 0)
+            {
+                _sumOwners.Add(owner);
+                _sumOutput[o] = _sumDemand[o] = _sumImport[o] = _sumExport[o] = _sumStockpile[o] = _sumPrice[o] = _sumSatisfied[o] = 0;
+            }
+            var x = t.Rows[r];
+            _sumRows[o]++;
+            _sumDemand[o] += x.Demand; _sumOutput[o] += x.Output; _sumImport[o] += x.Import; _sumExport[o] += x.Export; _sumStockpile[o] += x.Stockpile; _sumPrice[o] += x.Price; _sumSatisfied[o] += x.Demand * x.Satisfied;
+        }
+        int stamp = ++_totalsStamp;
+        if (stamp == int.MaxValue) { _totalsStamp = stamp = 1; foreach (var other in _totalsByCommodity.Values) { Array.Clear(other.OwnerStamp); other.Epoch = -1; } }
+        t.Stamp = stamp;
+        foreach (var owner in _sumOwners)
+        {
+            int o = owner.Index;
+            if (o >= t.OwnerStamp.Length)
+            {
+                int size = Math.Max(o + 1, Math.Max(countries, t.OwnerStamp.Length * 2));
+                Array.Resize(ref t.OwnerStamp, size); Array.Resize(ref t.OwnerTotals, size);
+            }
+            double demand = _sumDemand[o];
+            int rows = _sumRows[o];
+            t.OwnerTotals[o] = (_sumOutput[o], demand, _sumImport[o], _sumExport[o], _sumStockpile[o], _sumPrice[o] / rows, demand <= 0.0001 ? 1 : _sumSatisfied[o] / demand);
+            t.OwnerStamp[o] = stamp;
+            _sumRows[o] = 0;
+        }
+        _sumOwners.Clear();
+        t.Epoch = _totalsEpoch;
     }
 
     public double CountrySatisfaction(Country country, string commodity)
