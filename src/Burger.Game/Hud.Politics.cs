@@ -326,8 +326,7 @@ public sealed partial class Hud
 
     private void DrawGovernmentTab(Country c, Rectangle r, float x, float y, float w)
     {
-        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(x =>
-            x.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var overview = _app.Live.PoliticsRow(c);
         var partyOrder = overview.Parties.IsDefault
             ? new List<string>()
             : overview.Parties.Select(party => party.Key).ToList();
@@ -700,7 +699,7 @@ public sealed partial class Hud
             }
             if (hitSeat.State != null)
             {
-                var stateSnapshot = _app.Snapshot.States.FirstOrDefault(q => q.Key == hitSeat.State.Key);
+                var stateSnapshot = _app.Live.StateRow(hitSeat.State);
                 var snapshotMood = stateSnapshot.Key == hitSeat.State.Key
                     ? stateSnapshot.Moods.FirstOrDefault(m => m.Name.Equals(hitSeat.PopGroup, StringComparison.OrdinalIgnoreCase))
                     : default;
@@ -1303,7 +1302,7 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         double power = P.PowerOf(c);
-        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == c.Tag).ToDictionary(q => q.Id);
+        var characterSnapshots = _app.Live.CharactersOf(c);
         double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
             ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
             : ch.GetStat(stat);
@@ -1444,7 +1443,7 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         if (!P.Enabled) return y;
-        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(q => q.CountryTag != null && q.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var overview = _app.Live.PoliticsRow(c);
         bool hasSnapshot = overview.CountryTag != null;
         var p = hasSnapshot ? null : P.Of(c);
         var rulingParty = hasSnapshot ? overview.Parties.FirstOrDefault(q => q.Ruling) : default;

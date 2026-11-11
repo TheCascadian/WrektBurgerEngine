@@ -109,7 +109,6 @@ public static class MapLoader
         }
 
         // ---------------------------------------------------------------- pixel → location
-        map.PixelLocation = new int[w * h];
         var unknownColors = new Dictionary<int, int>();
         Location NewUnnamed(int col)
         {
@@ -126,11 +125,11 @@ public static class MapLoader
         if (cachedProv != null)
         {
             for (int i = 2; i < provMeta.Length; i++) NewUnnamed(provMeta[i]);
-            var pl = map.PixelLocation;
-            for (int i = 0; i < pl.Length; i++) pl[i] = cachedProv[i] == ushort.MaxValue ? -1 : cachedProv[i];
+            map.PixelLocation = new PixelLocations(cachedProv);
         }
         else
         {
+            map.PixelLocation = new PixelLocations(new ushort[w * h]);
             int lastColor = -1, lastIdx = -1;
             for (int i = 0, p = 0; i < w * h; i++, p += 4)
             {
@@ -146,9 +145,7 @@ public static class MapLoader
             }
             if (world.Locations.Count <= 65000)
             {
-                var packed = new ushort[w * h];
-                for (int i = 0; i < packed.Length; i++) packed[i] = map.PixelLocation[i] < 0 ? ushort.MaxValue : (ushort)map.PixelLocation[i];
-                MapCache.Save(cacheDir, "provinces", provKey, new[] { w, h }.Concat(unknownColors.Keys).ToArray(), packed);
+                MapCache.Save(cacheDir, "provinces", provKey, new[] { w, h }.Concat(unknownColors.Keys).ToArray(), map.PixelLocation.Data);
             }
         }
         if (unknownColors.Count > 0)
@@ -227,23 +224,24 @@ public static class MapLoader
             MapCache.Save(cacheDir, name, key, Array.Empty<int>(), grey);
             return grey;
         }
-        var heightGrey = CachedGrey("heightmap", settings.Heightmap);
-        if (heightGrey != null) map.HeightMap = heightGrey;
-        else
+        // (height and trees are only for drawing: read when the renderer asks, and let go again when it has them)
+        map.LoadHeightMap = () =>
         {
+            var heightGrey = CachedGrey("heightmap", settings.Heightmap);
+            if (heightGrey != null) return heightGrey;
             Log.Warn($"map/{settings.Heightmap} not found - the map will be flat");
-            map.HeightMap = new byte[w * h];
-            Array.Fill(map.HeightMap, (byte)Math.Min(255, settings.SeaLevel + 20));
-        }
+            var flat = new byte[w * h];
+            Array.Fill(flat, (byte)Math.Min(255, settings.SeaLevel + 20));
+            return flat;
+        };
+        map.LoadTreeMap = () => CachedGrey("trees", settings.Trees) ?? new byte[w * h];
 
-        map.TreeMap = CachedGrey("trees", settings.Trees) ?? new byte[w * h];
-
-        map.RiverMap = new byte[w * h];
+        map.RiverMap = new PixelBits(w * h);
         string riverPath = Path.Combine(mapDir, settings.Rivers);
         string riverKey = File.Exists(riverPath) ? MapCache.Key("file:" + riverPath, $"{w}x{h}", settings.RiverBackground.Packed.ToString()) : "";
-        var cachedRivers = riverKey.Length > 0 ? MapCache.Load<byte>(cacheDir, "rivers", riverKey, out _) : null;
+        var cachedRivers = riverKey.Length > 0 ? MapCache.Load<ulong>(cacheDir, "riverbits", riverKey, out _) : null;
         RawImage? riverImg = null;
-        if (cachedRivers != null && cachedRivers.Length == w * h) map.RiverMap = cachedRivers;
+        if (cachedRivers != null && cachedRivers.Length == (w * h + 63) / 64) map.RiverMap = new PixelBits(cachedRivers);
         else if (riverKey.Length > 0) riverImg = ImageIO.Load(riverPath, false, "map/" + settings.Rivers);
         if (riverImg != null)
         {
@@ -261,7 +259,7 @@ public static class MapLoader
                     if (col != bg && col != paradoxPink) map.RiverMap[y * w + x] = 255;
                 }
             }
-            MapCache.Save(cacheDir, "rivers", riverKey, Array.Empty<int>(), map.RiverMap);
+            MapCache.Save(cacheDir, "riverbits", riverKey, Array.Empty<int>(), map.RiverMap.Raw);
         }
 
         if (map.ContentKey.Length > 0) map.ContentKey = MapCache.Key(map.ContentKey, riverKey);
@@ -459,11 +457,14 @@ public static class MapLoader
         }
     }
 
-    /// <summary>The border scan of the whole map flattened to ints: per border A, B, pixel count, river flag, the two sums (double bits), and the packed points.</summary>
-    private static int[] WriteBorders(Dictionary<long, BorderAccum> acc)
+    /// <summary>
+    /// The borders of the whole map flattened to ints: per border A, B, pixel count, river flag, the two sums (double bits) and its at most 12 points in order. That is all the game keeps of the scan,
+    /// so this is what the cache holds: the scan and the sorting of the border pixels are made once for a map.
+    /// </summary>
+    private static int[] WriteBorders(BorderAccum[] borders)
     {
-        var o = new List<int>(acc.Count * 16) { acc.Count };
-        foreach (var ba in acc.Values)
+        var o = new List<int>(borders.Length * 16) { borders.Length };
+        foreach (var ba in borders)
         {
             long sx = BitConverter.DoubleToInt64Bits(ba.SumX), sy = BitConverter.DoubleToInt64Bits(ba.SumY);
             o.Add(ba.A); o.Add(ba.B); o.Add(ba.Count); o.Add(ba.River ? 1 : 0);
@@ -473,34 +474,65 @@ public static class MapLoader
         return o.ToArray();
     }
 
-    private static bool TryReadBorders(int[] d, Dictionary<long, BorderAccum> acc)
+    /// <summary>Is this a whole list of borders of this world?</summary>
+    private static bool BordersValid(int[] d, int locations)
     {
-        try
+        if (d.Length == 0) return false;
+        int n = d[0], p = 1;
+        for (int k = 0; k < n; k++)
         {
-            int n = d[0], p = 1;
-            for (int k = 0; k < n; k++)
-            {
-                var ba = new BorderAccum { A = d[p], B = d[p + 1], Count = d[p + 2], River = d[p + 3] != 0 };
-                ba.SumX = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 5] << 32) | (uint)d[p + 4]);
-                ba.SumY = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 7] << 32) | (uint)d[p + 6]);
-                int np = d[p + 8];
-                p += 9;
-                ba.Points = new List<int>(new ArraySegment<int>(d, p, np));
-                p += np;
-                acc[((long)ba.A << 32) | (uint)ba.B] = ba;
-            }
-            return p == d.Length;
+            if (p + 9 > d.Length || (uint)d[p] >= (uint)locations || (uint)d[p + 1] >= (uint)locations || d[p + 2] <= 0) return false;
+            int np = d[p + 8];
+            if (np < 0) return false;
+            p += 9 + np;
         }
-        catch (IndexOutOfRangeException) { return false; }
-        catch (ArgumentException) { return false; }
+        return p == d.Length;
+    }
+
+    private static void LinkBorders(int[] d, World world, double kmPerPixel)
+    {
+        int n = d[0], p = 1;
+        var locations = world.Locations;
+        for (int k = 0; k < n; k++)
+        {
+            var la = locations[d[p]];
+            var lb = locations[d[p + 1]];
+            int count = d[p + 2];
+            bool river = d[p + 3] != 0;
+            double sumX = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 5] << 32) | (uint)d[p + 4]);
+            double sumY = BitConverter.Int64BitsToDouble(((long)(uint)d[p + 7] << 32) | (uint)d[p + 6]);
+            int np = d[p + 8];
+            p += 9;
+            var points = new List<(float X, float Y)>(np);
+            for (int j = 0; j < np; j++)
+            {
+                int v = d[p++];
+                points.Add(((int)((uint)v >> 16) / 2f, (v & 0xFFFF) / 2f));
+            }
+            var kind = la.IsWater || lb.IsWater ? AdjacencyKind.Sea : AdjacencyKind.Land;
+            float midX = (float)(sumX / count), midY = (float)(sumY / count);
+            double dist = Math.Sqrt((la.CenterX - lb.CenterX) * (la.CenterX - lb.CenterX) + (la.CenterY - lb.CenterY) * (la.CenterY - lb.CenterY)) * kmPerPixel;
+            dist = Math.Max(dist, 1);
+            la.Neighbors.Add(new Adjacency { From = la, To = lb, Kind = kind, River = river, BorderPixels = count, MidX = midX, MidY = midY, BorderPoints = points, DistanceKm = dist });
+            lb.Neighbors.Add(new Adjacency { From = lb, To = la, Kind = kind, River = river, BorderPixels = count, MidX = midX, MidY = midY, BorderPoints = points, DistanceKm = dist });
+        }
     }
 
     private static void ComputeAdjacency(GameData data, World world)
     {
         var map = world.Map;
         int w = map.Width, h = map.Height;
-        var acc = new Dictionary<long, BorderAccum>();
+        double kmPerPixel = data.Defines.KmPerPixel;
+        string cacheDir = MapCache.Dir(data);
+        string adjKey = map.ContentKey.Length > 0 ? MapCache.Key(map.ContentKey, "borders2") : "";
+        var cached = adjKey.Length > 0 ? MapCache.Load<int>(cacheDir, "borders", adjKey, out _) : null;
+        if (cached != null && BordersValid(cached, world.Locations.Count))
+        {
+            LinkBorders(cached, world, kmPerPixel);
+            return;
+        }
 
+        var acc = new Dictionary<long, BorderAccum>();
         void Add(int a, int b, int x2, int y2, bool river)
         {
             if (a < 0 || b < 0 || a == b) return;
@@ -517,52 +549,37 @@ public static class MapLoader
             if (river) ba.River = true;
             ba.Points.Add((int)(((uint)x2 << 16) | ((uint)y2 & 0xFFFF)));
         }
-
-        string cacheDir = MapCache.Dir(data);
-        string adjKey = map.ContentKey.Length > 0 ? MapCache.Key(map.ContentKey, "borders") : "";
-        var cached = adjKey.Length > 0 ? MapCache.Load<int>(cacheDir, "borders", adjKey, out _) : null;
-        if (cached != null && TryReadBorders(cached, acc)) { }
-        else
+        for (int y = 0; y < h; y++)
         {
-            acc.Clear();
-            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
             {
-                for (int x = 0; x < w; x++)
+                int i = y * w + x;
+                int a = map.PixelLocation[i];
+                if (x + 1 < w)
                 {
-                    int i = y * w + x;
-                    int a = map.PixelLocation[i];
-                    if (x + 1 < w)
-                    {
-                        int b = map.PixelLocation[i + 1];
-                        if (a != b) Add(a, b, (x + 1) * 2, y * 2 + 1, map.RiverMap[i] != 0 || map.RiverMap[i + 1] != 0);
-                    }
-                    if (y + 1 < h)
-                    {
-                        int b = map.PixelLocation[i + w];
-                        if (a != b) Add(a, b, x * 2 + 1, (y + 1) * 2, map.RiverMap[i] != 0 || map.RiverMap[i + w] != 0);
-                    }
+                    int b = map.PixelLocation[i + 1];
+                    if (a != b) Add(a, b, (x + 1) * 2, y * 2 + 1, map.RiverMap[i] != 0 || map.RiverMap[i + 1] != 0);
+                }
+                if (y + 1 < h)
+                {
+                    int b = map.PixelLocation[i + w];
+                    if (a != b) Add(a, b, x * 2 + 1, (y + 1) * 2, map.RiverMap[i] != 0 || map.RiverMap[i + w] != 0);
                 }
             }
-            if (adjKey.Length > 0) MapCache.Save(cacheDir, "borders", adjKey, Array.Empty<int>(), WriteBorders(acc));
         }
-
-        double kmPerPixel = data.Defines.KmPerPixel;
-        foreach (var ba in acc.Values)
+        var borders = acc.Values.ToArray();
+        Parallel.For(0, borders.Length, i =>
         {
-            var la = world.Locations[ba.A];
-            var lb = world.Locations[ba.B];
-            var kind = la.IsWater || lb.IsWater ? AdjacencyKind.Sea : AdjacencyKind.Land;
-            float midX = (float)(ba.SumX / ba.Count), midY = (float)(ba.SumY / ba.Count);
-            var points = OrderBorderPoints(ba.Points, la, lb);
-            double dist = Math.Sqrt((la.CenterX - lb.CenterX) * (la.CenterX - lb.CenterX) + (la.CenterY - lb.CenterY) * (la.CenterY - lb.CenterY)) * kmPerPixel;
-            dist = Math.Max(dist, 1);
-            la.Neighbors.Add(new Adjacency { From = la, To = lb, Kind = kind, River = ba.River, BorderPixels = ba.Count, MidX = midX, MidY = midY, BorderPoints = points, DistanceKm = dist });
-            lb.Neighbors.Add(new Adjacency { From = lb, To = la, Kind = kind, River = ba.River, BorderPixels = ba.Count, MidX = midX, MidY = midY, BorderPoints = points, DistanceKm = dist });
-        }
+            var ba = borders[i];
+            ba.Points = OrderBorderPoints(ba.Points, world.Locations[ba.A], world.Locations[ba.B]);
+        });
+        var flat = WriteBorders(borders);
+        if (adjKey.Length > 0) MapCache.Save(cacheDir, "borders", adjKey, Array.Empty<int>(), flat);
+        LinkBorders(flat, world, kmPerPixel);
     }
 
     /// <summary>Orders border points along the border and keeps at most 12 evenly spaced ones.</summary>
-    private static List<(float X, float Y)> OrderBorderPoints(List<int> packed, Location a, Location b)
+    private static List<int> OrderBorderPoints(List<int> packed, Location a, Location b)
     {
         var pts = new List<(float X, float Y)>(packed.Count);
         foreach (int p in packed) pts.Add(((int)((uint)p >> 16) / 2f, (p & 0xFFFF) / 2f));
@@ -573,9 +590,13 @@ public static class MapLoader
         if (len < 1e-3f) { px = 1; py = 0; } else { px /= len; py /= len; }
         pts.Sort((p1, p2) => (p1.X * px + p1.Y * py).CompareTo(p2.X * px + p2.Y * py));
         const int max = 12;
-        if (pts.Count <= max) return pts;
-        var result = new List<(float X, float Y)>(max);
-        for (int i = 0; i < max; i++) result.Add(pts[(int)((i + 0.5) * pts.Count / max)]);
+        int keep = Math.Min(max, pts.Count);
+        var result = new List<int>(keep);
+        for (int i = 0; i < keep; i++)
+        {
+            var q = pts.Count <= max ? pts[i] : pts[(int)((i + 0.5) * pts.Count / max)];
+            result.Add((int)(((uint)(int)(q.X * 2) << 16) | ((uint)(int)(q.Y * 2) & 0xFFFF)));
+        }
         return result;
     }
 

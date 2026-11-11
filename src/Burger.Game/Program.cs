@@ -27,6 +27,8 @@ public sealed class AppOptions
     public int Speed;
     /// <summary>Start on this date instead of the first one (--start-date; needs history/timeline).</summary>
     public Burger.Core.GameDate? StartDate;
+    /// <summary>Graphics quality for this run: 0 High .. 3 Lowest (not saved).</summary>
+    public int? Quality;
     /// <summary>Write frame and simulation timings to the log every few seconds.</summary>
     public bool Perf;
     /// <summary>Scripted render benchmark: vsync and frame cap off, camera flies fixed phases, results go to the log, then quits.</summary>
@@ -135,6 +137,7 @@ public static class Program
                     case "--speed": opt.Speed = int.Parse(Next()); break;
                     case "--start-date": opt.StartDate = Burger.Core.GameDate.Parse(Next(), default); break;
                     case "--perf": opt.Perf = true; break;
+                    case "--quality": opt.Quality = int.Parse(Next()); break;
                     case "--bench": opt.Bench = true; break;
                     case "--size":
                         var parts = Next().ToLowerInvariant().Split('x');

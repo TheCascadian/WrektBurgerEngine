@@ -208,13 +208,16 @@ public sealed class TimelineSystem
     private bool ApplySnapshot(Snapshot snap, bool clearRelations = true)
     {
         var w = _game.World;
-        var ordered = w.States.OrderBy(s => s.Key, StringComparer.Ordinal).ToList();
-        string hash = Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join("\n", ordered.Select(s => s.Key))))).ToLowerInvariant();
+        // (the start screen shows date after date of the same states: they are put in order and checked once)
+        bool sameStates = _quiet && _previewOrdered != null && _previewOrdered.Count == w.States.Count;
+        var ordered = sameStates ? _previewOrdered! : w.States.OrderBy(s => s.Key, StringComparer.Ordinal).ToList();
+        string hash = sameStates ? _stateHash : Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join("\n", ordered.Select(s => s.Key))))).ToLowerInvariant();
         if (hash != _stateHash || snap.Owners.Length != ordered.Count)
         {
             Log.Error($"history/timeline/snapshots.txt was made for other states ({_stateCount} states, {snap.Owners.Length} in the snapshot, {ordered.Count} in the map): run tools/import-history.py again");
             return false;
         }
+        if (_quiet) _previewOrdered = ordered;
         var byTag = new Dictionary<string, Country?>(StringComparer.Ordinal) { ["_"] = null };
         for (int i = 0; i < ordered.Count; i++)
         {
@@ -225,7 +228,7 @@ public sealed class TimelineSystem
             s.Cores.Clear();
             s.Claims.Clear();
             if (c != null) s.Cores.Add(c);
-            foreach (var l in s.Locations) _game.Warfare.SetController(l, c, silent: true);
+            foreach (var l in s.Locations) SetControl(l, c);
         }
         w.RefreshOwnership();
         var R = w.Relations;
@@ -350,16 +353,29 @@ public sealed class TimelineSystem
     public Location? BaseCapitalOf(Country c) => _baseCountries != null && _baseCountries.TryGetValue(c, out var b) ? b.Capital : c.Capital;
 
     /// <summary>The world as the project data made it: owners, cores, names and capitals (what a snapshot and the events change).</summary>
-    private void RestoreBase()
+    private void RestoreBase(bool states = true)
     {
         if (_baseCountries == null || _baseStates == null) return;
         foreach (var (c, b) in _baseCountries) { c.Name = b.Name; c.DefaultName = b.Default; c.Capital = b.Capital; }
+        if (!states) return;
         foreach (var (s, b) in _baseStates)
         {
             s.Owner = b.Owner; s.Cores.Clear(); foreach (var core in b.Cores) s.Cores.Add(core); s.Claims.Clear();
-            foreach (var l in s.Locations) _game.Warfare.SetController(l, b.Owner, silent: true);
+            foreach (var l in s.Locations) SetControl(l, b.Owner);
         }
         _game.World.RefreshOwnership();
+    }
+
+    // While the start screen shows a date nothing has happened: no conquest for the memories of the people, the mods and the map to hear of, once for each of 59,000 locations.
+    private bool _quiet;
+    private List<State>? _previewOrdered;
+
+    private void SetControl(Location l, Country? c)
+    {
+        if (!_quiet) { _game.Warfare.SetController(l, c, silent: true); return; }
+        l.Controller = c;
+        l.SiegeProgress = 0;
+        l.Sieger = null;
     }
 
     /// <summary>Makes the world that of a date, as loading it for that date would (the start screen has only shown it): the project data, then the history up to the date.</summary>
@@ -378,9 +394,16 @@ public sealed class TimelineSystem
         if (date < Earliest) date = Earliest;
         if (date > Latest) date = Latest;
         w.Date = date;
-        RestoreBase();
-        var snap = SnapshotFor(date);
-        if (snap == null || !ApplySnapshot(snap, clearRelations: false)) FixCapitals();
+        _quiet = true;
+        try
+        {
+            // a snapshot says who holds every state: the states only go back to the project data when there is none
+            var snap = SnapshotFor(date);
+            RestoreBase(states: snap == null);
+            if (snap == null) FixCapitals();
+            else if (!ApplySnapshot(snap, clearRelations: false)) { RestoreBase(); FixCapitals(); }
+        }
+        finally { _quiet = false; }
         _game.RefreshNames();
         _game.RaiseMapChanged();
     }

@@ -489,7 +489,7 @@ public sealed partial class Hud
             if (_scMarshalFor == grp)
             {
                 var marshalStat = G.Data.Defines.GeneralStat;
-                var marshalSnapshots = _app.Snapshot.Characters.Where(c => c.CountryTag == p.Tag).ToDictionary(c => c.Id);
+                var marshalSnapshots = _app.Live.CharactersOf(p);
                 double MarshalStat(Character c) => marshalSnapshots.TryGetValue(c.Id, out var snapshot)
                     ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(marshalStat, StringComparison.OrdinalIgnoreCase)).Value
                     : c.GetStat(marshalStat);
@@ -774,7 +774,7 @@ public sealed partial class Hud
         var pr = new Rectangle(box.X + 3 * S, box.Y + 3 * S, 30 * S, 30 * S);
         DrawPortrait(ch, pr, false, false);
         var nameR = new Rectangle(box.X + 38 * S, box.Y, w - 130 * S, box.Height);
-        var snapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        var snapshot = _app.Live.CharacterRow(ch);
         bool hasSnapshot = snapshot.Id == ch.Id && snapshot.Name != null;
         string displayName = hasSnapshot ? snapshot.Name ?? ch.DisplayName : ch.DisplayName;
         Gui.Label(Gui.Fit(displayName, nameR.Width, 13, FontKind.Bold), nameR.X, box.Y + 2 * S, 13, Gui.Text, FontKind.Bold);
@@ -794,7 +794,7 @@ public sealed partial class Hud
     private float ScCouncil(Country p, float x, float y, float w)
     {
         var P = G.Politics;
-        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == p.Tag).ToDictionary(q => q.Id);
+        var characterSnapshots = _app.Live.CharactersOf(p);
         double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
             ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
             : ch.GetStat(stat);
@@ -830,7 +830,7 @@ public sealed partial class Hud
     private float ScGovernors(Country p, float x, float y, float w)
     {
         var T = G.Titles;
-        var characterSnapshots = _app.Snapshot.Characters.Where(q => q.CountryTag == p.Tag).ToDictionary(q => q.Id);
+        var characterSnapshots = _app.Live.CharactersOf(p);
         double StatOf(Character ch, string stat) => characterSnapshots.TryGetValue(ch.Id, out var snapshot)
             ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
             : ch.GetStat(stat);
@@ -877,7 +877,7 @@ public sealed partial class Hud
         if (vassal != null) { Gui.Label("VASSAL (HOLDS THE COUNTY)", x, y + used, 11, Gui.TextDim, FontKind.Bold); used += 14 * S; used += CharRow(vassal, x, y + used, w, $"tax {T.TaxShare(vassal):P0}, levy {T.LevyShare(vassal):P0}"); }
         if (gov != null)
         {
-            var governorSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == gov.Governor.Id);
+            var governorSnapshot = _app.Live.CharacterRow(gov.Governor);
             double finesse = governorSnapshot.Id == gov.Governor.Id
                 ? governorSnapshot.Stats.FirstOrDefault(q => q.Key.Equals("finesse", StringComparison.OrdinalIgnoreCase)).Value
                 : gov.Governor.GetStat("finesse");

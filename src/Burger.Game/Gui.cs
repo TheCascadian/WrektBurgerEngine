@@ -51,7 +51,6 @@ public static class Gui
     private static readonly List<Rectangle> _blockers = new();
     private static readonly List<Rectangle> _prevBlockers = new();
     private static string? _tooltip;
-    private static string? _lastTooltip;
     private static readonly Dictionary<string, float> _scroll = new();
     private static bool _wheelUsed;
 
@@ -190,27 +189,20 @@ public static class Gui
         _wheelUsed = false;
     }
 
-    /// <summary>Ends the HUD; <paramref name="drawTooltip"/> false leaves the tooltip to <see cref="DrawLastTooltip"/>.</summary>
-    public static void EndFrame(bool drawTooltip = true)
+    /// <summary>Instead of <see cref="EndFrame"/> when this frame shows the interface of an earlier one: what it covers stays covered.</summary>
+    public static void RepeatFrame()
+    {
+        _blockers.Clear();
+        _blockers.AddRange(_prevBlockers);
+    }
+
+    public static void EndFrame()
     {
         // a field that was not drawn this frame (its panel closed) loses focus
         if (!_fieldSeenThisFrame) _focusedField = null;
         _fieldSeenThisFrame = false;
-        _lastTooltip = _tooltip;
-        if (drawTooltip && _tooltip != null) DrawTooltip(_tooltip);
+        if (_tooltip != null) DrawTooltip(_tooltip);
     }
-
-    /// <summary>
-    /// Draws the tooltip of the last HUD drawn, at the mouse. A HUD shown as a picture keeps its tooltip out of the
-    /// picture, so the tooltip follows the mouse and stays up on frames that show the picture again.
-    /// </summary>
-    public static void DrawLastTooltip()
-    {
-        if (_lastTooltip != null) DrawTooltip(_lastTooltip);
-    }
-
-    /// <summary>Keeps last frame's UI rectangles for a frame that shows the HUD's picture instead of drawing it.</summary>
-    public static void HoldBlockers() => _blockers.AddRange(_prevBlockers);
 
     /// <summary>Registers a rectangle as UI so map clicks below it are ignored.</summary>
     public static void Block(Rectangle r) => _blockers.Add(r);
@@ -243,8 +235,35 @@ public static class Gui
     private static Font FontOf(FontKind k) => k switch { FontKind.Bold => Assets.BoldFont, FontKind.Header => Assets.HeaderFont, _ => Assets.Font };
     private static float Spacing(FontKind k, float size) => Assets.CustomFont ? (k == FontKind.Header ? size * 0.04f : 0.3f) : 1f;
 
+    // Measuring goes through the native library, with the text copied for it each time, and the interface asks for the same few texts every frame: the answers are kept. (One cache per thread: the ledger measures in the background.)
+    [ThreadStatic] private static Dictionary<(string Text, float Px, FontKind Font), Vector2>? _measured;
+    [ThreadStatic] private static Dictionary<(string Text, float Width, float Px, FontKind Font), string>? _fitted;
+    private static int _textGeneration;
+    [ThreadStatic] private static int _textCacheGeneration;
+
+    /// <summary>The fonts changed: what was measured with them no longer holds.</summary>
+    public static void ForgetTextSizes() => Interlocked.Increment(ref _textGeneration);
+
+    private static void CheckTextCaches()
+    {
+        int generation = Volatile.Read(ref _textGeneration);
+        if (_textCacheGeneration == generation && _measured != null) return;
+        _textCacheGeneration = generation;
+        _measured = new();
+        _fitted = new();
+    }
+
+    private static Vector2 MeasureNow(string text, float px, FontKind font) => Raylib.MeasureTextEx(FontOf(font), text, px, Spacing(font, px));
+
     public static Vector2 Measure(string text, float size, FontKind font = FontKind.Body)
-        => Raylib.MeasureTextEx(FontOf(font), text, FontSize(size), Spacing(font, FontSize(size)));
+    {
+        CheckTextCaches();
+        float px = FontSize(size);
+        var key = (text, px, font);
+        if (_measured!.TryGetValue(key, out var known)) return known;
+        if (_measured.Count > 8192) _measured.Clear();
+        return _measured[key] = MeasureNow(text, px, font);
+    }
 
     public static void Label(string text, float x, float y, float size = 18, Color? color = null, FontKind font = FontKind.Body)
         => Raylib.DrawTextEx(FontOf(font), text, new Vector2(MathF.Round(x), MathF.Round(y)), FontSize(size), Spacing(font, FontSize(size)), color ?? Text);
@@ -267,9 +286,19 @@ public static class Gui
     public static string Fit(string text, float width, float size, FontKind font = FontKind.Body)
     {
         if (Measure(text, size, font).X <= width) return text;
-        int n = text.Length;
-        while (n > 1 && Measure(text[..n] + "...", size, font).X > width) n--;
-        return text[..n] + "...";
+        float px = FontSize(size);
+        var key = (text, width, px, font);
+        if (_fitted!.TryGetValue(key, out var known)) return known;
+        // the longest start that fits: by halves, not a character at a time (a long text took hundreds of measurements every frame)
+        int lo = 1, hi = text.Length;
+        while (lo < hi)
+        {
+            int mid = (lo + hi + 1) / 2;
+            if (MeasureNow(text[..mid] + "...", px, font).X > width) hi = mid - 1;
+            else lo = mid;
+        }
+        if (_fitted.Count > 4096) _fitted.Clear();
+        return _fitted[key] = text[..lo] + "...";
     }
 
     /// <summary>Word-wraps text into a width. Returns the height used.</summary>

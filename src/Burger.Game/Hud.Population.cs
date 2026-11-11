@@ -22,8 +22,6 @@ public sealed partial class Hud
     private IndustryLedgerCache? _industryLedgerCache;
     private Task<GlobalTradeLedgerCache?>? _globalLedgerBuild;
     private Task<IndustryLedgerCache?>? _industryLedgerBuild;
-    private ImmutableArray<RenderCommodityBalance> _ledgerBalanceSource;
-    private Dictionary<string, Dictionary<string, RenderCommodityBalance>> _ledgerBalanceIndex = new(StringComparer.OrdinalIgnoreCase);
     private Game? _ledgerFallbackGame;
     private Country? _ledgerFallbackSubject;
     private int _ledgerFallbackMapVersion = -1;
@@ -186,23 +184,6 @@ public sealed partial class Hud
         hash.Add(policy.CustomsRevenue);
         hash.Add(policy.AgreementsSigned);
         return hash.ToHashCode();
-    }
-
-    private Dictionary<string, Dictionary<string, RenderCommodityBalance>> LedgerBalanceIndex(RenderSnapshot snapshot)
-    {
-        // Build once per immutable balance array. BuildFast snapshots reuse this array between
-        // economic refreshes, so movement ticks do not rebuild the index while a ledger is open.
-        if (_ledgerBalanceSource.Equals(snapshot.CommodityBalances)) return _ledgerBalanceIndex;
-        var index = new Dictionary<string, Dictionary<string, RenderCommodityBalance>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var balance in snapshot.CommodityBalances)
-        {
-            if (!index.TryGetValue(balance.CountryTag, out var byCommodity))
-                index[balance.CountryTag] = byCommodity = new Dictionary<string, RenderCommodityBalance>(StringComparer.OrdinalIgnoreCase);
-            byCommodity[balance.CommodityKey] = balance;
-        }
-        _ledgerBalanceSource = snapshot.CommodityBalances;
-        _ledgerBalanceIndex = index;
-        return index;
     }
 
     /// <summary>Detects same-day building and method changes without re-reading market balances.</summary>
@@ -509,7 +490,7 @@ public sealed partial class Hud
         // most populous states
         Gui.Section("States by population", x, y, w, "ui_states_pop");
         y += 26 * S;
-        var stateSnapshots = _app.Snapshot.States.Where(s => s.OwnerTag != null && s.OwnerTag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase) && s.PopulationTotal > 0)
+        var stateSnapshots = _app.Live.StatesOf(player).Where(s => s.PopulationTotal > 0)
             .OrderByDescending(s => s.PopulationTotal).ToList();
         const int topN = 6;
         if (stateSnapshots.Count > topN)
@@ -557,7 +538,7 @@ public sealed partial class Hud
     private float DrawStateMoods(State st, float x, float y, float w)
     {
         if (st.Owner == null || !G.Politics.PopsEnabled) return y;
-        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        var stateSnapshot = _app.Live.StateRow(st);
         var moods = stateSnapshot.Key == st.Key ? stateSnapshot.Moods : ImmutableArray<RenderPopMood>.Empty;
         if (moods.Length == 0) return y;
         foreach (var m in moods)
@@ -580,7 +561,7 @@ public sealed partial class Hud
         if (!P.Enabled) return y;
         var player = G.World.Player;
         var sp = P.Of(st);
-        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(s => s.Key == st.Key);
+        var stateSnapshot = _app.Live.StateRow(st);
         bool hasSnapshot = stateSnapshot.Key == st.Key;
         if (header) { Gui.Section("People", x, y, w, "ui_people"); y += 26 * S; }
         double total = hasSnapshot ? stateSnapshot.PopulationTotal : sp.Total;
@@ -732,18 +713,18 @@ public sealed partial class Hud
         }
         // First-open and active-play refreshes never block the render thread; the last complete cache remains visible until replacement completes.
         if (stale && _globalLedgerBuild == null)
+        {
+            _app.HoldClock();   // (it reads the markets on another thread: the clock waits for that)
             _globalLedgerBuild = Task.Run(() => BuildGlobalTradeLedgerCache(w));
+        }
         return cache;
     }
 
     private GlobalTradeLedgerCache? BuildGlobalTradeLedgerCache(float w)
     {
         var market = G.Commodities;
-        var balanceIndex = LedgerBalanceIndex(_app.Snapshot);
         (double Output, double Import, double Export, double Demand, double PopulationUse, double MilitaryUse, double Stockpile, double Price, double Satisfied) BalanceOf(Country country, string key)
         {
-            if (balanceIndex.TryGetValue(country.Tag, out var byCommodity) && byCommodity.TryGetValue(key, out var snapshot))
-                return (snapshot.Output, snapshot.Import, snapshot.Export, snapshot.Demand, snapshot.PopulationUse, snapshot.MilitaryUse, snapshot.Stockpile, snapshot.Price, snapshot.Satisfied);
             var live = market.BalanceOf(country, key);
             return (live.Output, live.Import, live.Export, live.Demand, live.PopulationUse, live.MilitaryUse, live.Stockpile, live.Price, live.Satisfied);
         }
@@ -863,7 +844,10 @@ public sealed partial class Hud
             catch (Exception ex) { Log.Error($"Industry ledger cache build failed: {ex.GetType().Name}: {ex.Message}"); }
         }
         if (stale && _industryLedgerBuild == null)
+        {
+            _app.HoldClock();
             _industryLedgerBuild = Task.Run(() => BuildIndustryLedgerCache(w));
+        }
         return cache;
     }
 
@@ -872,11 +856,8 @@ public sealed partial class Hud
         var country = LedgerSubject;
         if (country == null) return null;
         var market = G.Commodities;
-        var balanceIndex = LedgerBalanceIndex(_app.Snapshot);
         (double Output, double Import, double Export, double Demand, double PopulationUse, double MilitaryUse, double Stockpile, double Price, double Satisfied) BalanceOf(Country owner, string key)
         {
-            if (balanceIndex.TryGetValue(owner.Tag, out var byCommodity) && byCommodity.TryGetValue(key, out var snapshot))
-                return (snapshot.Output, snapshot.Import, snapshot.Export, snapshot.Demand, snapshot.PopulationUse, snapshot.MilitaryUse, snapshot.Stockpile, snapshot.Price, snapshot.Satisfied);
             var live = market.BalanceOf(owner, key);
             return (live.Output, live.Import, live.Export, live.Demand, live.PopulationUse, live.MilitaryUse, live.Stockpile, live.Price, live.Satisfied);
         }

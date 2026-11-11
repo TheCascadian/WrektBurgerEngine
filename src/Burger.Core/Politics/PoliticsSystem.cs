@@ -36,6 +36,7 @@ public sealed partial class PoliticsSystem
     public PoliticsSystem(Game game)
     {
         _game = game;
+        _modsDirty = new DirtySet(game);
         game.SaveSections.Add(new SaveSection { Name = "politics", Write = Save, Read = LoadSave, Reset = ResetRuntime });
         game.SaveSections.Add(new SaveSection { Name = "pop_politics", Write = SavePopMoods, Read = LoadPopMoods, Reset = () => { _moods.Clear(); _popSummary.Clear(); } });
         game.SaveSections.Add(new SaveSection { Name = "parliament", Write = SaveParliaments, Read = LoadParliaments, Reset = () => { _parliaments.Clear(); _former.Clear(); _retired.Clear(); _pinned = null; } });
@@ -215,9 +216,6 @@ public sealed partial class PoliticsSystem
     // =============================================================================================
 
     /// <summary>The politics of a country (created with defaults on first use).</summary>
-    /// <summary>The country's entry if it has one, without making it.</summary>
-    internal bool TryOf(Country c, out CountryPolitics p) => _state.TryGetValue(c, out p!);
-
     public CountryPolitics Of(Country c)
     {
         if (_state.TryGetValue(c, out var p)) return p;
@@ -674,7 +672,17 @@ public sealed partial class PoliticsSystem
     // modifier values from the ruling ideology, laws and ministers, cached per country
     private readonly HashSet<string> _modifierKeys = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<Country, Dictionary<string, double>> _mods = new();
-    private readonly HashSet<Country> _modsDirty = new();
+    private readonly DirtySet _modsDirty;
+    /// <summary>The countries whose political modifiers have changed; marking one also empties the modifier system's memo of this tick.</summary>
+    private sealed class DirtySet
+    {
+        private readonly HashSet<Country> _set = new();
+        private readonly Game _game;
+        public DirtySet(Game game) { _game = game; }
+        public bool Add(Country c) { _game.Modifiers.Touch(); return _set.Add(c); }
+        public bool Remove(Country c) => _set.Remove(c);
+        public void Clear() => _set.Clear();
+    }
     private long _modsStamp = long.MinValue;
 
     /// <summary>Modifier total this system adds to a scope (used by <see cref="Mechanics.ModifierSystem.Sum"/>).</summary>
@@ -686,8 +694,21 @@ public sealed partial class PoliticsSystem
         lock (_mods)
         {
             long stamp = _game.World.Date.TotalHours;
-            if (stamp != _modsStamp) { _mods.Clear(); _modsDirty.Clear(); _modsStamp = stamp; }
-            if (_modsDirty.Remove(c) || !_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeModifiers(c);
+            if (stamp != _modsStamp) { _mods.Clear(); _modsDirty.Clear(); _stabilityDone.Clear(); _modsStamp = stamp; }
+            if (_modsDirty.Remove(c) || !_mods.TryGetValue(c, out var m))
+            {
+                _mods[c] = m = ComputeModifiers(c);
+                _stabilityDone.Remove(c);
+                _ = WealthIndex(c);   // counted at the first request of a day, whatever was asked for: a loaded game counts it at the same moment
+            }
+            if (key.Length == StabilityKey.Length && key.Equals(StabilityKey, StringComparison.OrdinalIgnoreCase) && _stabilityDone.Add(c))
+            {
+                // poverty, a government without support, lost land (rule StabilitySources): by far the dearest part, and few ask for it
+                double v = m.GetValueOrDefault(StabilityKey);
+                foreach (var (_, value) in Rules.StabilitySources(_game, c))
+                    if (Math.Abs(value) > 0.01) v += value;
+                m[StabilityKey] = v;
+            }
             return m.GetValueOrDefault(key);
         }
     }
@@ -732,19 +753,39 @@ public sealed partial class PoliticsSystem
         {
             _wealth.Clear();
             _wealthDay = today;
-            var all = _game.World.Countries.Where(x => x.Exists).Select(x => (Country: x, Wealth: Rules.WealthPerPerson(_game, x))).ToList();
-            var sorted = all.Select(x => x.Wealth).OrderBy(v => v).ToList();
-            double median = sorted.Count > 0 ? sorted[sorted.Count / 2] : 0;
+            var all = new List<(Country Country, double Wealth)>(_game.World.Countries.Count / 4);
+            foreach (var x in _game.World.Countries) if (x.Exists) all.Add((x, Rules.WealthPerPerson(_game, x)));
+            var sorted = new double[all.Count];
+            for (int i = 0; i < sorted.Length; i++) sorted[i] = all[i].Wealth;
+            Array.Sort(sorted);
+            double median = sorted.Length > 0 ? sorted[sorted.Length / 2] : 0;
             foreach (var (country, wealth) in all) _wealth[country] = median > 0 ? Math.Clamp(wealth / median, 0, 3) : 1;
         }
         return _wealth.GetValueOrDefault(c, 1);
         }
     }
 
+    private const string StabilityKey = "stability_target";
+    private readonly HashSet<Country> _stabilityDone = new();
+
     private Dictionary<string, double> ComputeModifiers(Country c)
     {
-        var m = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (_, key, value) in ModifierSources(c)) m[key] = m.GetValueOrDefault(key) + value;
+        var m = new Dictionary<string, double>(32, StringComparer.OrdinalIgnoreCase);
+        var p = Of(c);
+        void Add(string key, double value) => m[key] = m.GetValueOrDefault(key) + value;
+        if (Ideology(p.Ruling) is { } i) foreach (var kv in i.Modifier) Add(kv.Key, kv.Value);
+        if (LawsEnabled)
+            foreach (var kv in p.Laws)
+                if (Laws.TryGetValue(kv.Value, out var l)) foreach (var lm in l.Modifier) Add(lm.Key, lm.Value);
+        foreach (var (_, key, value) in FactionModifierSources(c)) Add(key, value);
+        if (CabinetEnabled)
+            foreach (var pos in Positions)
+            {
+                if (!p.Ministers.TryGetValue(pos.Key, out var ch) || !ch.Alive) continue;
+                foreach (var pm in pos.Modifier) Add(pm.Key, pm.Value);
+                double stat = pos.Stat.Length > 0 ? ch.GetStat(pos.Stat) : 0;
+                foreach (var pm in pos.PerPoint) Add(pm.Key, pm.Value * stat);
+            }
         return m;
     }
 

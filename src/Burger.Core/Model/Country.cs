@@ -28,6 +28,9 @@ public sealed class RecruitOrder
 /// </summary>
 public sealed class Country : IScope
 {
+    /// <summary>The value of <see cref="Location.ControllerVersion"/> when this country last gained or lost control of a location.</summary>
+    public int ControlVersion;
+
     public string Tag = "";
     public int Index;
 

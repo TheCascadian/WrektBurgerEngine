@@ -43,6 +43,7 @@ public sealed class MapFigures : IDisposable
         public Vector3 Up = Vector3.UnitY;
         public bool Placed;
         public Vector3 Pos;      // where the figure is drawn: eases towards where the stack is, so it never jumps
+        public Vector3 Ground;   // the same, on the ground
         public float Speed;      // smoothed ground speed in world units per second
         public bool Walking;
         public int Seen;
@@ -210,21 +211,32 @@ public sealed class MapFigures : IDisposable
             foreach (var gone in _stands.Where(kv => _frame - kv.Value.Seen > 600).Select(kv => kv.Key).ToList()) _stands.Remove(gone);
     }
 
-    private RenderSnapshot? _stacksSnapshot;
-    private RenderDivision[][] _stacks = Array.Empty<RenderDivision[]>();
+    private readonly HashSet<string> _chartedSet = new(StringComparer.Ordinal);
+    private bool[]? _chartedNow;
+    private int _chartedVersion = int.MinValue;
 
-    /// <summary>
-    /// The land divisions on charted ground (or the player's own), grouped by location and owner. A snapshot never changes,
-    /// so the grouping is built once per snapshot instead of once per frame.
-    /// </summary>
-    private RenderDivision[][] StacksFor(RenderSnapshot snapshot)
+    /// <summary>Which locations show their soldiers: call with the world held (the figures are drawn without it).</summary>
+    public void SyncCharted()
     {
-        if (ReferenceEquals(snapshot, _stacksSnapshot)) return _stacks;
-        var charted = snapshot.Locations.Where(l => l.IsCharted).Select(l => l.Key).ToHashSet(StringComparer.Ordinal);
-        _stacks = snapshot.Divisions.Where(d => !d.IsWater && (charted.Contains(d.LocationKey) || d.OwnerTag == snapshot.PlayerTag))
-            .GroupBy(d => (d.LocationKey, d.OwnerTag)).Select(g => g.ToArray()).ToArray();
-        _stacksSnapshot = snapshot;
-        return _stacks;
+        if (_game.VisibilityVersion == _chartedVersion && _chartedNow != null) return;
+        _chartedVersion = _game.VisibilityVersion;
+        var locations = _game.World.Locations;
+        _chartedNow ??= new bool[locations.Count];
+        for (int i = 0; i < locations.Count; i++)
+        {
+            bool visible = _game.IsVisible(locations[i]);
+            if (visible == _chartedNow[i]) continue;
+            _chartedNow[i] = visible;
+            if (visible) _chartedSet.Add(locations[i].Key); else _chartedSet.Remove(locations[i].Key);
+        }
+    }
+
+    /// <summary>Where the figure of a stack (its first division) stands this frame: its counter hangs from there.</summary>
+    public bool TryStand(int firstDivisionId, out Vector3 ground)
+    {
+        if (_snapshotStands.TryGetValue(firstDivisionId, out var stand) && stand.Seen == _frame && stand.Placed) { ground = stand.Ground; return true; }
+        ground = default;
+        return false;
     }
 
     /// <summary>Snapshot-backed figure path. Simulation-owned division objects are not read here.</summary>
@@ -235,16 +247,17 @@ public sealed class MapFigures : IDisposable
         var figures = _game.Figures;
         var human = figures.Soldier;
         float height = HeightFor(cam);
+        var charted = _chartedSet;
         _renderer.Begin(cam);
         int drawn = 0;
-        foreach (var g in StacksFor(snapshot))
+        foreach (var g in snapshot.Divisions.Where(d => !d.IsWater && (charted.Contains(d.LocationKey) || d.OwnerTag == snapshot.PlayerTag)).GroupBy(d => (d.LocationKey, d.OwnerTag)))
         {
-            var first = g[0];
+            var first = g.First();
             var model = figures.Find(first.ModelKey) ?? human;
             var pos = _map.LocationPos(first.CenterX, first.CenterY);
             if (!Viewport.TryProjectSnapped(pos, cam, out var screen)) continue;
             if (screen.X < -80 || screen.Y < -80 || screen.X > Viewport.W + 80 || screen.Y > Viewport.H + 120) continue;
-            bool moving = first.HasNextLocation && Array.TrueForAll(g, d => d.HasNextLocation);
+            bool moving = first.HasNextLocation && g.All(d => d.HasNextLocation);
             Vector3 target = pos;
             if (moving)
             {
@@ -252,7 +265,7 @@ public sealed class MapFigures : IDisposable
                 var to = target - pos;
                 if (to.X * to.X + to.Z * to.Z > 1e-6f && !_snapshotStands.TryGetValue(first.Id, out _))
                     _snapshotStands[first.Id] = new Stand { TargetYaw = MathF.Atan2(to.X, to.Z) };
-                pos = Vector3.Lerp(pos, target, 0.5f);
+                pos = Vector3.Lerp(pos, target, Math.Clamp(first.MoveProgress, 0f, 1f) * 0.8f);
             }
             float drawHeight = height;
             float radius = StandRadius(drawHeight);
@@ -278,6 +291,7 @@ public sealed class MapFigures : IDisposable
                 stand.Speed += (v - stand.Speed) * (1 - MathF.Exp(-dt * 4f));
             }
             pos = stand.Pos; pos.Y = _map.StandHeight(pos.X, pos.Z, radius);
+            stand.Ground = pos;
             if (!stand.Placed) { stand.Yaw = stand.TargetYaw; stand.Placed = true; }
             stand.Yaw += Math.Clamp(MathF.IEEERemainder(stand.TargetYaw - stand.Yaw, MathF.Tau), -dt * 7f, dt * 7f);
             stand.Up = Vector3.Normalize(Vector3.Lerp(stand.Up, _map.GroundNormal(pos.X, pos.Z, drawHeight * 0.6f), Math.Min(1f, dt * 8f)));

@@ -345,6 +345,7 @@ public sealed class Game
             throw new GameLoadException($"'{game.Data.Root}' is not a game folder (no game.txt or common/ folder found).");
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
+        Burger.Core.Script.ScriptParser.ReadAhead(game.Data.Root);
         game.Features = Burger.Core.Modding.FeatureSet.Load(game.Data.Root);
         DataLoader.LoadDefinitions(game);
         game.Tech.LoadDefinitions(game.Data);
@@ -376,6 +377,7 @@ public sealed class Game
         game.Mods.Invoke(m => m.OnLoad());
         ScriptValidator.ValidateAll(game);
         for (int i = 0; i < 5; i++) game.Clock.DaysPerSecond[i + 1] = game.Data.Defines.GameSpeeds[i];
+        Burger.Core.Script.ScriptParser.EndReadAhead();
         Log.Info($"Game '{game.Data.Info.Name}' loaded in {sw.ElapsedMilliseconds} ms");
         return game;
     }
@@ -473,12 +475,21 @@ public sealed class Game
             if (path == null && ide != null) c.FlagVariants.TryGetValue(ide, out path);
             if (path == null && ide != null)
             {
-                string conv = $"gfx/flags/{c.Tag}_{ide}.png";
-                if (File.Exists(Data.PathOf(conv))) path = conv;
+                // (asked for every country many times a minute: the disk is only asked once)
+                var key = (c.Tag, ide);
+                if (!_ideologyFlags.TryGetValue(key, out var known))
+                {
+                    string conv = $"gfx/flags/{c.Tag}_{ide}.png";
+                    known = File.Exists(Data.PathOf(conv)) ? conv : null;
+                    lock (_ideologyFlags) _ideologyFlags[key] = known;
+                }
+                path = known;
             }
             c.FlagPath = path ?? c.DefaultFlagPath;
         }
     }
+
+    private readonly Dictionary<(string Tag, string Ideology), string?> _ideologyFlags = new();
 
     public void RefreshNames()
     {
@@ -554,6 +565,7 @@ public sealed class Game
             double ms = elapsed * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
             lock (ProfileMs)   // (the per-country AI may profile from several threads)
             {
+                if (ms >= 2) TickScopes.Add((name, ms));
                 ProfileMs[name] = ProfileMs.GetValueOrDefault(name) + ms;
                 if (ms > ProfileMaxMs.GetValueOrDefault(name)) ProfileMaxMs[name] = ms;
             }
@@ -575,7 +587,15 @@ public sealed class Game
         }
     }
     private void RecordProfile(string name, int day, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(day, elapsedTicks);
-    public void ProfileElapsed(string name, long elapsedTicks) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsedTicks);
+    public void ProfileElapsed(string name, long elapsedTicks)
+    {
+        _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, elapsedTicks);
+        double ms = elapsedTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        if (ms >= 2) lock (ProfileMs) TickScopes.Add((name, ms));
+    }
+
+    /// <summary>With profiling on: what the last tick spent its time on (scopes of 2 ms and more, those inside others too).</summary>
+    public readonly List<(string Name, double Ms)> TickScopes = new();
 
     /// <summary>Advances the simulation by one hour and completes economic settlement at month boundaries.</summary>
     public void Tick() => Tick(streamEconomicWork: false);
@@ -587,11 +607,17 @@ public sealed class Game
     internal void Tick(bool streamEconomicWork)
     {
         World.Date = World.Date.AddHours(1);
-        if (Features.Has(F.Military)) P("Warfare.HourlyTick", () => Warfare.HourlyTick());
-        if (Features.Has(F.Navy)) P("Navy.HourlyTick", () => Navy.HourlyTick());
-        Exploration.HourlyTick();
-        Mods.Invoke(m => m.OnHourlyTick());
-        DailyStages(streamEconomicWork);
+        if (Profiling) lock (ProfileMs) TickScopes.Clear();
+        Modifiers.BeginTick();
+        try
+        {
+            if (Features.Has(F.Military)) P("Warfare.HourlyTick", () => Warfare.HourlyTick());
+            if (Features.Has(F.Navy)) P("Navy.HourlyTick", () => Navy.HourlyTick());
+            Exploration.HourlyTick();
+            Mods.Invoke(m => m.OnHourlyTick());
+            DailyStages(streamEconomicWork);
+        }
+        finally { Modifiers.EndTick(); }
     }
 
     // ---------------------------------------------------------------------------------------- fog of war
@@ -654,7 +680,7 @@ public sealed class Game
                 if (Features.HasSupply && Features.Has(F.Military)) P("Supply.DailyTick", () => Supply.DailyTick());
                 break;
             case 2:
-                if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTick());
+                if (Features.Has(F.Production) && !Commodities.SpreadWork) P("Production.DailyTick", () => Production.DailyTick());
                 if (Features.Has(F.Navy)) P("Navy.DailyTick", () => Navy.DailyTick());
                 if (Features.Has(F.Air)) P("Air.DailyTick", () => Air.DailyTick());
                 if ((Features.Has(F.LendLease) || Features.Has(F.RaisingTroops)) && Features.Has(F.Military)) P("Support.DailyTick", () => Support.DailyTick());
@@ -671,6 +697,11 @@ public sealed class Game
         }
         // two more commodity batches a day, so the 40 commodities of a settlement finish well inside the month instead of piling up at the next one
         if ((hour == 10 || hour == 20) && Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick());
+        if (Commodities.SpreadWork)
+        {
+            if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTickPart(hour));
+            if (Features.Has(F.Commodities)) P("Commodities.Spread", () => Commodities.SpreadTick());
+        }
         if (World.Date.Day <= 9) MonthlyStage(World.Date.Day, hour, streamEconomicWork);
     }
 
@@ -798,13 +829,13 @@ public sealed class GameClock
     /// Set from <c>game_speeds = { 0.5 1.5 4 10 0 }</c> in defines.txt.
     /// </summary>
     public double[] DaysPerSecond = { 0, 0.5, 1.5, 4, 10, 0 };
-    // volatile: a frame drawn while a worker runs the ticks may pause or change speed, and the worker reads them between ticks
+    // volatile: the clock's thread reads the speed between ticks while the interface changes it
     private volatile int _speed = 2;
-    private volatile bool _paused = true;
     public int Speed { get => _speed; set => _speed = value; }
     /// <summary>How far the clock is through the current hour (0 to 1), for smooth visuals such as the sun at slow speeds. Held while paused.</summary>
     public float HourFraction => (float)Math.Clamp(_accumulator, 0.0, 1.0);
     public bool Paused { get => _paused; set => _paused = value; }
+    private volatile bool _paused = true;
     /// <summary>Real milliseconds per frame the simulation may use (keeps the game responsive at high speed).</summary>
     public double FrameBudgetMs = 14;
 
@@ -816,11 +847,37 @@ public sealed class GameClock
 
     public GameClock(Game game) { _game = game; }
 
-    /// <summary>
-    /// Call once per frame with the frame time; runs as many hourly ticks as needed. A caller whose frames do not wait
-    /// on the ticks may pass its own <paramref name="budgetMs"/>: the same ticks run, only how many fit in this call changes.
-    /// </summary>
-    public int Update(double deltaSeconds, double budgetMs = 0)
+    /// <summary>Real time has passed (the clock's own thread: see <see cref="Simulation.SimulationThread"/>).</summary>
+    public void AddTime(double deltaSeconds)
+    {
+        double daysPerSec = DaysPerSecond[Math.Clamp(Speed, 1, 5)];
+        if (daysPerSec > 0) _accumulator += deltaSeconds * daysPerSec * 24;
+        // never build up a backlog that makes the game run on after the player pauses
+        if (_accumulator > 48) _accumulator = 48;
+        _measureTime += deltaSeconds;
+        if (_measureTime >= 1)
+        {
+            ActualDaysPerSecond = _measureHours / 24 / _measureTime;
+            _measureTime = 0;
+            _measureHours = 0;
+        }
+    }
+
+    /// <summary>Is an hour due? Always at the speed without a limit.</summary>
+    public bool TickDue => DaysPerSecond[Math.Clamp(Speed, 1, 5)] <= 0 || _accumulator >= 1;
+
+    /// <summary>Runs one hour that is due.</summary>
+    public void RunTick()
+    {
+        long t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (DaysPerSecond[Math.Clamp(Speed, 1, 5)] > 0) _accumulator -= 1;
+        _game.Tick(streamEconomicWork: true);
+        _measureHours++;
+        LastUpdateMs = (System.Diagnostics.Stopwatch.GetTimestamp() - t0) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+    }
+
+    /// <summary>Call once per frame with the frame time; runs as many hourly ticks as needed.</summary>
+    public int Update(double deltaSeconds)
     {
         if (Paused || !_game.Started) { if (!_game.Started) _accumulator = 0; LastUpdateMs = 0; return 0; }
         double daysPerSec = DaysPerSecond[Math.Clamp(Speed, 1, 5)];
@@ -829,7 +886,6 @@ public sealed class GameClock
         int ticks = 0;
         _budget.Restart();
         double budget = Speed >= 5 ? Math.Max(FrameBudgetMs, 30) : FrameBudgetMs; // top speed trades some smoothness for speed
-        if (budgetMs > 0) budget = budgetMs;
         while ((unlimited || _accumulator >= 1) && _budget.Elapsed.TotalMilliseconds < budget)
         {
             if (!unlimited) _accumulator -= 1;

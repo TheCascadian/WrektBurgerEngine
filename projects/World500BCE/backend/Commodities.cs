@@ -15,19 +15,23 @@ public class GameCommodityRules : CommodityRules
 
     public override double BaseDemand(Game game, Country country, CommodityDef commodity)
     {
-        double farms = country.OwnedStates.Sum(s => Levels(s, "farm"));
-        double workshops = country.OwnedStates.Sum(s => Levels(s, "workshop"));
-        double infrastructure = country.OwnedStates.Sum(s => Levels(s, "infrastructure"));
+        // (asked for every country and commodity each month: the buildings are only added up for the goods that need them)
+        double Total(string key)
+        {
+            double sum = 0;
+            foreach (var s in country.OwnedStates) sum += Levels(s, key);
+            return sum;
+        }
         return commodity.Key switch
         {
-            "timber" => workshops * 0.25 + infrastructure * 0.10,
-            "charcoal" => workshops * 0.20,
-            "iron_ore" => workshops * 0.18,
-            "copper" => workshops * 0.08,
-            "tin" => workshops * 0.04,
-            "clay" => workshops * 0.10,
-            "wool" => workshops * 0.12,
-            "tools" => farms * 0.05 + workshops * 0.05,
+            "timber" => Total("workshop") * 0.25 + Total("infrastructure") * 0.10,
+            "charcoal" => Total("workshop") * 0.20,
+            "iron_ore" => Total("workshop") * 0.18,
+            "copper" => Total("workshop") * 0.08,
+            "tin" => Total("workshop") * 0.04,
+            "clay" => Total("workshop") * 0.10,
+            "wool" => Total("workshop") * 0.12,
+            "tools" => Total("farm") * 0.05 + Total("workshop") * 0.05,
             _ => 0,
         };
     }
@@ -57,15 +61,19 @@ public class GameCommodityRules : CommodityRules
         double controlled = state.ControlledShare(country);
         double deposits = deposit / 12.0 * controlled * OutputFactor(game, country, commodity) * infrastructureFactor; // as base.Output
         double people = game.Population.TotalOf(state) / 1000.0 * controlled;
-        bool coastal = state.Locations.Any(location => location.IsCoastal);
+        bool Coastal()
+        {
+            foreach (var location in state.Locations) if (location.IsCoastal) return true;
+            return false;
+        }
         double local = commodity.Key switch
         {
             "grain" => people * 1.20 * infrastructureFactor * farmFactor,
-            "fish" => coastal ? people * 0.30 * infrastructureFactor : 0,
+            "fish" => Coastal() ? people * 0.30 * infrastructureFactor : 0,
             "animal_products" => people * 0.30 * farmFactor,
             "wool" => people * 0.20 * farmFactor,
             "hides" => people * 0.10 * farmFactor,
-            "salt" => people * (coastal ? 0.10 : 0.02) * infrastructureFactor,
+            "salt" => people * (Coastal() ? 0.10 : 0.02) * infrastructureFactor,
             "olive_oil" => people * 0.08 * farmFactor,
             "wine" => people * 0.06 * farmFactor,
             "timber" => people * 0.10 * infrastructureFactor,
@@ -77,13 +85,13 @@ public class GameCommodityRules : CommodityRules
             "iron_ore" => people * 0.05 * infrastructureFactor,
             "lead" => people * 0.015 * infrastructureFactor,
             "alum" => people * 0.01 * infrastructureFactor,
-            "textiles" => people * (coastal ? 0.12 : 0.08) * workshopFactor * InputFactor(game, country, "wool"),
+            "textiles" => people * (Coastal() ? 0.12 : 0.08) * workshopFactor * InputFactor(game, country, "wool"),
             "pottery" => people * 0.05 * workshopFactor * InputFactor(game, country, "clay", "charcoal"),
             "glass" => people * 0.01 * workshopFactor * InputFactor(game, country, "charcoal"),
             "tools" => people * 0.01 * workshopFactor * InputFactor(game, country, "iron_ore", "charcoal"),
             "bronze" => people * 0.005 * workshopFactor * InputFactor(game, country, "copper", "tin", "charcoal"),
             "iron_tools" => people * 0.004 * workshopFactor * InputFactor(game, country, "iron_ore", "charcoal"),
-            "luxury_goods" => people * (coastal ? 0.015 : 0.003) * workshopFactor,
+            "luxury_goods" => people * (Coastal() ? 0.015 : 0.003) * workshopFactor,
             "horses" => people * 0.01 * farmFactor,
             _ => 0,
         };

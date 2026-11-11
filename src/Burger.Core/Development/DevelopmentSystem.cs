@@ -158,6 +158,8 @@ public sealed class DevelopmentSystem
     public double Urbanization(State s) => s.Index < _urban.Length ? _urban[s.Index] : 0;
     /// <summary>The months the institutions spread before the start date are completed during loading.</summary>
     private Task? _catchUp;
+    /// <summary>The months before the start date are still being counted in the background (a tick now would wait for them with the world held).</summary>
+    public bool CatchingUp => _catchUp is { IsCompleted: false };
     private void WaitForCatchUp()
     {
         var t = _catchUp;
@@ -368,11 +370,8 @@ public sealed class DevelopmentSystem
         foreach (var i in spreading) Appear(i);
         Links();   // built once, before the institutions (which are independent of each other) spread on every core
         var runs = spreading.Select(i => CatchUp(i, Math.Min(2400, (start.TotalDays - i.Appears.TotalDays) / 30))).ToList();
-        // Run this one-time historical preparation in the load phase.  It is
-        // deliberately bounded below so nested parallel loops cannot flood the
-        // shared runtime worker pool once the window is interactive.
-        foreach (var run in runs) run();
-        _catchUp = null;
+        // One institution after the other on one thread (no flood of the shared worker pool), while the game starts; whatever reads the presence waits for it first (see Presence).
+        _catchUp = Task.Factory.StartNew(() => { foreach (var run in runs) run(); }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
     }
 
     /// <summary>
@@ -399,6 +398,7 @@ public sealed class DevelopmentSystem
         var near = new int[n][];
         for (int k = 0; k < n; k++) near[k] = links[at[k]].Select(o => o.Index).ToArray();
         var delta = new float[n];
+        var hint = new int[n];
         // a month looks at every state next to the others (hundreds of links each): with thousands of states the months are split over the cores
         const int Chunk = 1024;
         int chunks = (n + Chunk - 1) / Chunk;
@@ -414,7 +414,12 @@ public sealed class DevelopmentSystem
                 if (p[at[k]] >= 1) continue;
                 float best = 0;
                 var nb = near[k];
-                for (int j = 0; j < nb.Length; j++) { float v = p[nb[j]]; if (v > best) best = v; }
+                // the neighbour that was the best the last time: once it has the institution in full, nothing can beat it and the others (a hundred and more on a coast) need no look
+                int h = hint[k];
+                if (nb.Length > 0 && p[nb[h]] >= 1f) best = p[nb[h]];
+                else
+                    for (int j = 0; j < nb.Length; j++) { float v = p[nb[j]]; if (v > best) { best = v; h = j; } }
+                hint[k] = h;
                 if (best <= 0) continue;
                 delta[k] = rt[k] * best;
                 any = true;

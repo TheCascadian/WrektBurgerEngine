@@ -77,7 +77,7 @@ public sealed partial class Hud
     {
         var P = G.Politics;
         if (!P.PopsEnabled) { Gui.Label("The population feature is not active.", x + 2 * S, y, 14, Gui.TextDim); return; }
-        var overview = _app.Snapshot.PoliticsOverviews.FirstOrDefault(q => q.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase));
+        var overview = _app.Live.PoliticsRow(c);
         bool hasSnapshot = overview.CountryTag != null && overview.CountryTag.Equals(c.Tag, StringComparison.OrdinalIgnoreCase);
         double averageOpinion = hasSnapshot ? overview.PopulationOpinion : P.PopSummaryOf(c).AverageOpinion;
         double unrest = hasSnapshot ? overview.PopulationUnrest : P.PopSummaryOf(c).UnrestShare;
@@ -169,7 +169,7 @@ public sealed partial class Hud
         var owner = st.Owner;
         var P = G.Politics;
         if (owner == null || !P.PopsEnabled || !G.Population.HasPops(st)) return y;
-        var stateSnapshot = _app.Snapshot.States.FirstOrDefault(q => q.Key == st.Key);
+        var stateSnapshot = _app.Live.StateRow(st);
         bool hasSnapshot = stateSnapshot.Key == st.Key;
         var snapshotMoods = hasSnapshot ? stateSnapshot.Moods : System.Collections.Immutable.ImmutableArray<RenderPopMood>.Empty;
         var moods = hasSnapshot ? null : P.MoodsOf(st);

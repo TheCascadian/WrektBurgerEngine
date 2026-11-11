@@ -286,7 +286,7 @@ public sealed partial class Hud
         var player = G.World.Player!;
         string stat = G.Data.Defines.GeneralStat;
         var now = G.World.Date;
-        var characterSnapshots = _app.Snapshot.Characters.Where(c => c.CountryTag == player.Tag).ToDictionary(c => c.Id);
+        var characterSnapshots = _app.Live.CharactersOf(player);
         double StatOf(Character c) => characterSnapshots.TryGetValue(c.Id, out var snapshot)
             ? snapshot.Stats.FirstOrDefault(s => s.Key.Equals(stat, StringComparison.OrdinalIgnoreCase)).Value
             : c.GetStat(stat);

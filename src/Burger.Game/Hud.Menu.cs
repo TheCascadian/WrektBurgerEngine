@@ -356,10 +356,7 @@ public sealed partial class Hud
         float x = r.X + 12 * S, y = r.Y + Gui.HeaderHeight + 10 * S, w = r.Width - 24 * S;
         var player = G.World.Player;
         var snapshot = _app.Snapshot;
-        var countries = snapshot.Countries.Where(c => c.Exists)
-            .OrderByDescending(c => c.LocationCount).ToList();
-        var liveCountries = G.World.Countries.ToDictionary(c => c.Tag, StringComparer.OrdinalIgnoreCase);
-        var relations = snapshot.DiplomacyRelations.ToDictionary(r => r.ToTag, StringComparer.OrdinalIgnoreCase);
+        var countries = _app.Live.CountryList();
         Gui.Label($"{countries.Count} countries, {snapshot.Wars.Length} war(s)", x, y, 14, Gui.TextDim);
         y += 24 * S;
         if (G.GreatPowers.Enabled)
@@ -383,15 +380,18 @@ public sealed partial class Hud
         float top = Gui.BeginScroll("world", new Rectangle(x, y, w, r.Y + r.Height - y - 10 * S), countries.Count * (rowH + 4 * S));
         float cy = top;
         int rank = 1;
+        float listBottom = r.Y + r.Height;
         foreach (var c in countries)
         {
+            // (hundreds of rows: only the ones in view are drawn)
+            if (cy + rowH < y || cy > listBottom) { rank++; cy += rowH + 4 * S; continue; }
             var box = new Rectangle(x, cy, w - 8 * S, rowH);
             bool hover = Gui.Hover(box);
-            bool atWar = relations.TryGetValue(c.Tag, out var relation) && relation.Kind == 1;
+            var liveCountry = G.World.GetCountry(c.Tag);
+            bool atWar = player != null && liveCountry != null && liveCountry != player && G.World.AtWar(player, liveCountry);
             bool isPlayer = c.IsPlayer || (player != null && c.Tag.Equals(player.Tag, StringComparison.OrdinalIgnoreCase));
             Card(box, isPlayer ? new Color(60, 52, 34, 255) : hover ? new Color(50, 50, 56, 255) : new Color(36, 38, 44, 255), isPlayer);
             Gui.Label($"{rank++}", box.X + 6 * S, box.Y + 13 * S, 14, Gui.TextDim, FontKind.Bold);
-            liveCountries.TryGetValue(c.Tag, out var liveCountry);
             if (liveCountry != null) Gui.Flag(liveCountry, new Rectangle(box.X + 28 * S, box.Y + 7 * S, 45 * S, 30 * S));
             Gui.Label(Gui.Fit(c.Name, box.Width - 200 * S, 16, FontKind.Bold), box.X + 82 * S, box.Y + 4 * S, 16, atWar ? Gui.Bad : Gui.Text, FontKind.Bold);
             Gui.Label($"{c.OwnedStateCount} states, {c.LocationCount} locations", box.X + 82 * S, box.Y + 24 * S, 13, Gui.TextDim);

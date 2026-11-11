@@ -76,7 +76,14 @@ public sealed class Location : IScope
     public Country? Controller
     {
         get => _controller;
-        set { if (_controller != value) { _controller = value; Interlocked.Increment(ref _controllerVersion); } }
+        set
+        {
+            if (_controller == value) return;
+            int version = Interlocked.Increment(ref _controllerVersion);
+            if (_controller != null) _controller.ControlVersion = version;
+            if (value != null) value.ControlVersion = version;
+            _controller = value;
+        }
     }
     private Country? _controller;
     private static int _controllerVersion;

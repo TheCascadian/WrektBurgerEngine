@@ -60,6 +60,34 @@ public sealed class MapSettings
     }
 }
 
+/// <summary>The location of every map pixel, in two bytes a pixel (the map has at most 65,000 locations; an int a pixel was half a gigabyte).</summary>
+public sealed class PixelLocations
+{
+    private const ushort None = ushort.MaxValue;
+    public readonly ushort[] Data;
+    public PixelLocations(ushort[] data) { Data = data; }
+    public int Length => Data.Length;
+    public int this[int i]
+    {
+        get { int v = Data[i]; return v == None ? -1 : v; }
+        set => Data[i] = value < 0 ? None : (ushort)value;
+    }
+}
+
+/// <summary>One bit a map pixel, read as 255 or 0.</summary>
+public sealed class PixelBits
+{
+    private readonly ulong[] _bits;
+    public PixelBits(int pixels) { _bits = new ulong[(pixels + 63) / 64]; }
+    public byte this[int i]
+    {
+        get => (_bits[i >> 6] >> (i & 63) & 1) != 0 ? (byte)255 : (byte)0;
+        set { if (value != 0) _bits[i >> 6] |= 1UL << (i & 63); else _bits[i >> 6] &= ~(1UL << (i & 63)); }
+    }
+    public ulong[] Raw => _bits;
+    public PixelBits(ulong[] raw) { _bits = raw; }
+}
+
 /// <summary>Per-pixel map data at province-map resolution. All arrays are row-major, <c>index = y * Width + x</c>.</summary>
 public sealed class MapData
 {
@@ -69,15 +97,30 @@ public sealed class MapData
     /// <summary>Hash of everything the pixel arrays were built from (empty when the map cache is off). Renderer caches key on it.</summary>
     public string ContentKey = "";
     /// <summary>Location index for every pixel (-1 = no location).</summary>
-    public int[] PixelLocation = Array.Empty<int>();
-    /// <summary>Terrain index for every pixel (from terrain.png).</summary>
+    public PixelLocations PixelLocation = new(Array.Empty<ushort>());
+    /// <summary>Terrain index for every pixel (from terrain.png). Only the map's construction reads it: see <see cref="ReleaseDrawingData"/>.</summary>
     public byte[] PixelTerrain = Array.Empty<byte>();
-    /// <summary>Height (0-255) resampled to map resolution.</summary>
-    public byte[] HeightMap = Array.Empty<byte>();
-    /// <summary>Tree density (0-255) resampled to map resolution.</summary>
-    public byte[] TreeMap = Array.Empty<byte>();
-    /// <summary>255 where a river is drawn, else 0.</summary>
-    public byte[] RiverMap = Array.Empty<byte>();
+    /// <summary>Height (0-255) resampled to map resolution; read from disk when first asked for, by the renderer.</summary>
+    public byte[] HeightMap { get => _height ??= LoadHeightMap?.Invoke() ?? Array.Empty<byte>(); set => _height = value; }
+    private byte[]? _height;
+    internal Func<byte[]>? LoadHeightMap;
+    /// <summary>Tree density (0-255) resampled to map resolution; read from disk when first asked for, by the renderer.</summary>
+    public byte[] TreeMap { get => _trees ??= LoadTreeMap?.Invoke() ?? Array.Empty<byte>(); set => _trees = value; }
+    private byte[]? _trees;
+    internal Func<byte[]>? LoadTreeMap;
+    /// <summary>255 where a river is drawn, else 0 (one bit a pixel).</summary>
+    public PixelBits RiverMap = new(0);
+
+    /// <summary>
+    /// The renderer has what it needs from these (on the graphics card): the whole game never reads them again, and at a size like 16384 x 6848 each is more than a hundred megabytes.
+    /// They are read again from disk if something asks.
+    /// </summary>
+    public void ReleaseDrawingData()
+    {
+        _height = null;
+        _trees = null;
+        PixelTerrain = Array.Empty<byte>();
+    }
 
     public float WorldWidth => Width / Settings.PixelsPerUnit;
     public float WorldHeight => Height / Settings.PixelsPerUnit;

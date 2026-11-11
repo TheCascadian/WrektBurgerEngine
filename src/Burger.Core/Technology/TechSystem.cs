@@ -105,6 +105,8 @@ public sealed class TechSystem
     private readonly Game _game;
     public readonly Dictionary<string, TechDef> Defs = new(StringComparer.OrdinalIgnoreCase);
     public readonly Dictionary<Country, HashSet<string>> Known = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Country, (HashSet<string> Set, int Count, int Version, Dictionary<string, double> Sums)> _modSums = new();
+    private int _knownVersion;
     public readonly Dictionary<Country, List<ResearchSlot>> Research = new();
     private readonly Dictionary<string, List<(string Key, double Value)>> _byCategory = new();
 
@@ -202,9 +204,14 @@ public sealed class TechSystem
     public double ModifierValue(IScope scope, string key)
     {
         if (!Enabled || scope is not Country c || !Known.TryGetValue(c, out var set)) return 0;
-        double v = 0;
-        foreach (var k in set) if (Defs.TryGetValue(k, out var t) && t.Modifier.TryGetValue(key, out var x)) v += x;
-        return v;
+        // (added up once per set of known technologies, in the order of the set: called many thousand times a day, and worlds know hundreds of technologies)
+        if (_modSums.TryGetValue(c, out var cached) && cached.Set == set && cached.Count == set.Count && cached.Version == _knownVersion) return cached.Sums.GetValueOrDefault(key);
+        var sums = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var k in set)
+            if (Defs.TryGetValue(k, out var t))
+                foreach (var kv in t.Modifier) sums[kv.Key] = sums.GetValueOrDefault(kv.Key) + kv.Value;
+        _modSums[c] = (set, set.Count, _knownVersion, sums);
+        return sums.GetValueOrDefault(key);
     }
 
     /// <summary>Recomputes the division stat factors of a country from what it knows.</summary>
@@ -233,6 +240,7 @@ public sealed class TechSystem
         if (!Defs.TryGetValue(key, out var t)) { Log.ErrorOnce("tech:" + key, $"Unknown technology '{key}'"); return; }
         if (!Known.TryGetValue(c, out var set)) Known[c] = set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         if (!set.Add(key)) return;
+        _game.Modifiers.Touch();
         UpdateFactors(c);
         if (!silent) _game.NotifyPlayer($"{c.Name} has developed {t.Name}.", NotificationKind.Good, c);
     }
@@ -261,7 +269,7 @@ public sealed class TechSystem
             if (s != null)
             {
                 foreach (var k in s.GetList("know")) Grant(c, k);
-                foreach (var k in s.GetList("forget")) { if (Known.TryGetValue(c, out var set)) set.Remove(k); }
+                foreach (var k in s.GetList("forget")) { if (Known.TryGetValue(c, out var set)) { set.Remove(k); _knownVersion++; } }
                 UpdateFactors(c);
             }
         }

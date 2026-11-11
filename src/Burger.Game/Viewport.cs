@@ -30,7 +30,30 @@ public static class Viewport
     public static bool IsHidden(Vector3 world, Camera3D cam) =>
         GlobeRadius > 0 && Vector3.Dot(world, cam.Position) < GlobeRadius * GlobeRadius * 0.995f;
 
-    public static Vector2 ToScreen(Vector3 world, Camera3D cam) => Raylib.GetWorldToScreenEx(world, cam, W, H);
+    // the camera's axes, kept while the camera stays: projecting a point is then a few multiplications (raylib builds both matrices again for every point)
+    private static Vector3 _pPos, _pTarget, _pUp, _pX, _pY, _pZ;
+    private static float _pFov, _pFx, _pFy;
+    private static int _pW, _pH;
+
+    public static Vector2 ToScreen(Vector3 world, Camera3D cam)
+    {
+        if (cam.Projection != CameraProjection.Perspective) return Raylib.GetWorldToScreenEx(world, cam, W, H);
+        int w = W, h = H;
+        if (cam.Position != _pPos || cam.Target != _pTarget || cam.Up != _pUp || cam.FovY != _pFov || w != _pW || h != _pH)
+        {
+            _pPos = cam.Position; _pTarget = cam.Target; _pUp = cam.Up; _pFov = cam.FovY; _pW = w; _pH = h;
+            _pZ = Vector3.Normalize(cam.Position - cam.Target);
+            _pX = Vector3.Normalize(Vector3.Cross(cam.Up, _pZ));
+            _pY = Vector3.Cross(_pZ, _pX);
+            float tan = MathF.Tan(cam.FovY * MathF.PI / 360f);
+            _pFy = 1f / tan;
+            _pFx = _pFy / (w / (float)Math.Max(1, h));
+        }
+        var d = world - cam.Position;
+        float cw = -Vector3.Dot(_pZ, d);
+        float nx = _pFx * Vector3.Dot(_pX, d) / cw, ny = -_pFy * Vector3.Dot(_pY, d) / cw;
+        return new Vector2((nx + 1f) * 0.5f * w, (ny + 1f) * 0.5f * h);
+    }
 
     /// <summary>
     /// Unprojects a screen point onto the plane y = planeY. Returns null if the ray doesn't hit it ahead of the eye.

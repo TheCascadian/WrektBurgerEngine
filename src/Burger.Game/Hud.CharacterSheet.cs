@@ -60,7 +60,7 @@ public sealed partial class Hud
         var country = ch.Country;
         var home = country ?? G.World.Player;
         var roles = home != null ? RolesOf(ch, home) : new List<CharRole>();
-        var characterSnapshot = _app.Snapshot.Characters.FirstOrDefault(q => q.Id == ch.Id);
+        var characterSnapshot = _app.Live.CharacterRow(ch);
         bool hasSnapshot = characterSnapshot.Id == ch.Id && characterSnapshot.Name != null;
         string displayName = hasSnapshot ? characterSnapshot.Name ?? ch.DisplayName : ch.DisplayName;
         int age = hasSnapshot ? characterSnapshot.Age : ch.Age(now);

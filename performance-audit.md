@@ -2,6 +2,16 @@
 
 Branch `500BCE-Multiplayer`, base commit `89c01a8`. The changes are in `performance-improvements.patch` (a plain `git diff` against HEAD plus the new file `src/Burger.Game/GpuTimer.cs`). Nothing is committed.
 
+## Status after merging origin/500BCE-Multiplayer (95b7476)
+
+BurgerKingHotline's "Fix uneven time between days" reworked the same areas independently. Where both changed the same thing, the merge keeps that version, so parts of this report describe code that is no longer in the tree:
+
+* Superseded and removed: worker-thread ticks and the held-frame HUD picture (replaced by `SimulationThread`), the MSAA, relief and tree switches (replaced by `GraphicsQuality`), the figure, unit-marker and lookup-texture caches in `MapFigures`, `MapOverlay` and `MapRenderer` (those files were rewritten), and the exact simulation changes in `TradeNetworkSystem`, `CultureSystem`, `Modifiers`, `CommoditySystem` and `AiSystem` (rewritten there too).
+* Kept: `GpuTimer` stage timing and `RenderPerf`, now stamped inside the new frame loop; `BENCH_MOUSE` and hitch logging in `Bench`; the `Defines`, `GreatPowers`, `Relations` and `FeatureSet` speed-ups; the `--deep-digest`, `DAYMS` and `EARLYMONTH` tool output.
+* Checked after the merge: Release build with 0 warnings and 0 errors; `validate World500BCE --days 60 --digest 20` gives the same digests as a build of 95b7476 alone; `--bench` at 1280x720 runs and reports GPU stages.
+
+The numbers below were measured before the merge and have not been re-measured.
+
 ## Summary
 
 Before this work, frame-time spikes on capable hardware came from managed allocation in the presentation layer, not from the GPU. Roughly 1.2 to 1.7 MB per frame was allocated, which forced gen 2 collections and frames of 140 to 170 ms. In live play, the lookup texture behind the map colors was also rebuilt on about half of all frames, even though nothing it reads had changed. Under the same conditions, the changes below reduce allocation by about 97%, remove every frame over 50 ms in the scripted benchmark, and cut the median CPU render time in live play roughly in half.
