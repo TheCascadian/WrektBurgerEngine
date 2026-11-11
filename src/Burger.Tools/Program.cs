@@ -636,6 +636,7 @@ public static partial class Program
                 if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"RELOAD|{d + 1}|{StateDigest(reloaded)}");
             }
             if (digestEvery > 0 && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"DIGEST|{d + 1}|{StateDigest(game)}");
+            if (digestEvery > 0 && args.Contains("--deep-digest") && ((d + 1) % digestEvery == 0 || d + 1 == days)) Console.WriteLine($"DEEPDIGEST|{d + 1}|{DeepDigest(game)}");
             if (reloaded != null && (d + 1 == days || (digestEvery > 0 && (d + 1) % digestEvery == 0)))
             {
                 Check(StateDigest(game) == StateDigest(reloaded), $"save/load: matching simulation at day {d + 1}");
@@ -685,6 +686,8 @@ public static partial class Program
             Console.WriteLine("SLOWTICKS|" + string.Join("; ", slowTicks.Take(60)));
             Console.WriteLine($"TICKSTATS|ticks {sorted.Count}|mean {tickMs.Average():F3}|p50 {At(0.5):F3}|p99 {At(0.99):F3}|p999 {At(0.999):F3}|max {sorted[^1]:F3}|ms_per_day {tickMs.Sum() / days:F2}|fps_avg {fps:F1}|fps_1pct_low {low1:F1}|countries {game.World.Countries.Count(c => c.Exists)}|divisions {game.World.Divisions.Count}|wars {game.World.Wars.Count}");
             Console.WriteLine("SLOWEST|" + string.Join(", ", tickMs.Select((ms, i) => (ms, i)).OrderByDescending(x => x.ms).Take(12).Select(x => $"{tickDates![x.i]} {x.ms:0}")));
+            // wall time of each simulated day, to show which days of the month run slow
+            Console.WriteLine("DAYMS|" + string.Join(", ", tickMs.Select((ms, i) => (ms, date: tickDates![i])).GroupBy(x => x.date).Select(g => $"{g.Key} {g.Sum(x => x.ms):0}")));
             if (maxTickMs.HasValue) Check(sorted[^1] <= maxTickMs.Value, $"performance: worst tick <= {maxTickMs.Value} ms");
             if (maxMsPerDay.HasValue) Check(tickMs.Sum() / days <= maxMsPerDay.Value, $"performance: simulation <= {maxMsPerDay.Value} ms/day");
         }
@@ -716,6 +719,15 @@ public static partial class Program
             Console.WriteLine("  longest single call (ms): " + string.Join(", ", game.ProfileMaxMs.OrderByDescending(kv => kv.Value).Take(12).Select(kv => $"{kv.Key} {kv.Value:0.0}")));
             foreach (var (name, stat) in game.ProfileSnapshot().Where(x => !x.Key.Contains('[')).OrderByDescending(x => x.Value.TotalMilliseconds).Take(60))
                 Console.WriteLine($"PROFILE|{name}|total_ms={stat.TotalMilliseconds:0.00}|max_daily_ms={stat.MaxMilliseconds:0.00}|calls={stat.Calls}");
+            // which scopes make days 1 to 16 of the month slower than the rest
+            foreach (var (name, early, late) in game.ProfileSnapshot().Keys.Where(k => !k.Contains('[')).Select(k =>
+            {
+                var daily = game.ProfileDaily(k);
+                double early = 0, late = 0;
+                foreach (var (day, ms) in daily) if (new GameDate(day).Day <= 16) early += ms; else late += ms;
+                return (k, early, late);
+            }).OrderByDescending(x => x.early - x.late).Take(25))
+                Console.WriteLine($"EARLYMONTH|{name}|days_1_16_ms={early:0}|days_17_end_ms={late:0}");
             Console.WriteLine("  MB allocated per sim day by scope (nested scopes count in their parents): " + string.Join(", ", game.ProfileBytes.OrderByDescending(kv => kv.Value).Take(20).Select(kv => $"{kv.Key} {kv.Value / 1048576.0 / days:0.00}")));
             Console.WriteLine("  slowest per-country calls (ms): " + string.Join(", ", game.ProfileSnapshot().Where(kv => kv.Key.Contains('[')).OrderByDescending(kv => kv.Value.MaxMilliseconds).Take(150).Select(kv => $"{kv.Key} {kv.Value.MaxMilliseconds:0}")));
             if (Burger.Core.Mechanics.ModifierSystem.ProviderTicks is { } pt) Console.WriteLine("  modifier providers (ms, calls): " + string.Join(", ", pt.Select((t, i) => $"#{i} {t * 1000.0 / Stopwatch.Frequency:0} ({Burger.Core.Mechanics.ModifierSystem.ProviderCalls![i]})")));

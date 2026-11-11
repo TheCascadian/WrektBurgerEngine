@@ -49,6 +49,38 @@ public static partial class Program
         return h.ToString("x16");
     }
 
+    /// <summary>A wider digest for checking that an optimization left the simulation unchanged (--deep-digest): adds pops, commodity books, buildings, construction and technology to <see cref="StateDigest"/>.</summary>
+    internal static string DeepDigest(Game game)
+    {
+        ulong h = 14695981039346656037UL;
+        void B(string s) { foreach (char c in s) { h ^= c; h *= 1099511628211UL; } h ^= 124; h *= 1099511628211UL; }
+        void D(double d) => B(d.ToString("R", CultureInfo.InvariantCulture));
+        var w = game.World;
+        B(StateDigest(game));
+        foreach (var s in w.States.OrderBy(s => s.Key, StringComparer.Ordinal))
+        {
+            B(s.Key);
+            foreach (var kv in s.Buildings.OrderBy(k => k.Key, StringComparer.Ordinal)) { B(kv.Key); B(kv.Value.ToString(CultureInfo.InvariantCulture)); }
+            if (game.Population.Enabled && game.Population.HasPops(s))
+                foreach (var pop in game.Population.Of(s).Pops) { B(pop.Culture); B(pop.Religion ?? "-"); B(pop.Type ?? "-"); D(pop.Size); }
+        }
+        foreach (var c in w.Countries.Where(c => c.Exists).OrderBy(c => c.Tag, StringComparer.Ordinal))
+        {
+            B(c.Tag);
+            foreach (var p in c.Construction) { B(p.Building?.Key ?? "-"); B(p.State?.Key ?? "-"); D(p.Progress); }
+            if (game.Commodities.Books.TryGetValue(c, out var books))
+                foreach (var kv in books.OrderBy(k => k.Key, StringComparer.Ordinal))
+                {
+                    var b = kv.Value;
+                    B(kv.Key); D(b.Output); D(b.Import); D(b.Export); D(b.Demand); D(b.PopulationUse); D(b.MilitaryUse); D(b.Stockpile); D(b.Price); D(b.Satisfied);
+                }
+            if (game.Tech.Known.TryGetValue(c, out var known)) foreach (var t in known.OrderBy(x => x, StringComparer.Ordinal)) B(t);
+        }
+        B(game.TradeNetwork.History.Count.ToString(CultureInfo.InvariantCulture));
+        foreach (var t in game.TradeNetwork.History.TakeLast(200)) { B(t.Commodity); B(t.Seller.Tag); B(t.Buyer.Tag); B(t.From.Key); B(t.To.Key); D(t.Quantity); D(t.Price); D(t.TransportCost); D(t.DistanceKm); }
+        return h.ToString("x16");
+    }
+
     private static int ValidatePar(List<string> args)
     {
         string project = ResolveProject(RequireProjectArg(args, "burger validate-par <project> --seeds 1,2,3 [--days N] [--every N]"));
