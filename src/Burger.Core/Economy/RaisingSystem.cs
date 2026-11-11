@@ -286,8 +286,15 @@ public sealed class RaisingSystem
     {
         if (!Enabled || scope is not Country c) return 0;
         if (key.Equals("income", StringComparison.OrdinalIgnoreCase) && _levies.Contains(c)) return -Define("levy_tax", 0.10);
-        if (key.Equals("liberty_desire", StringComparison.OrdinalIgnoreCase) && _game.World.Divisions.Any(d => d.VolunteerFrom == c && d.Raised == Attached)) return Define("call_to_arms_liberty", 5);
+        if (key.Equals("liberty_desire", StringComparison.OrdinalIgnoreCase) && HasAttachedVolunteers(c)) return Define("call_to_arms_liberty", 5);
         return 0;
+    }
+
+    private bool HasAttachedVolunteers(Country c)
+    {
+        foreach (var d in _game.World.Divisions)
+            if (d.VolunteerFrom == c && d.Raised == Attached) return true;
+        return false;
     }
 
     // ------------------------------------------------------------------------------------- ticks

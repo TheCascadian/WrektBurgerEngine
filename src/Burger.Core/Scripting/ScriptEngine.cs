@@ -82,6 +82,7 @@ public sealed class ScriptEngine
         return false;
     }
 
+    private static readonly List<Node> NoNodes = new();
     private static readonly HashSet<string> WeightKeys = new(StringComparer.OrdinalIgnoreCase) { "factor", "add", "base", "days", "months", "years" };
     private static readonly HashSet<string> IteratorReservedKeys = new(StringComparer.OrdinalIgnoreCase) { "limit", "count", "percent", "max", "order_by", "weight" };
 
@@ -636,8 +637,9 @@ public sealed class ScriptEngine
         double v = block.Has("base") ? ResolveNumber(block.GetString("base"), ctx, def)
                  : block.Has("factor") ? ResolveNumber(block.GetString("factor"), ctx, def)
                  : def;
-        foreach (var m in block.GetAll("modifier"))
+        foreach (var m in block.Children ?? NoNodes)
         {
+            if (m.Op == Op.None || !string.Equals(m.Key, "modifier", StringComparison.OrdinalIgnoreCase)) continue; // block.GetAll("modifier")
             if (!EvalTrigger(m, ctx, WeightKeys)) continue;
             if (m.Has("factor")) v *= ResolveNumber(m.GetString("factor"), ctx, 1);
             if (m.Has("add")) v += ResolveNumber(m.GetString("add"), ctx, 0);
@@ -650,8 +652,8 @@ public sealed class ScriptEngine
     {
         double days = block.GetDouble("days", 0) + block.GetDouble("months", 0) * 30 + block.GetDouble("years", 0) * 365;
         if (days <= 0) days = 365;
-        foreach (var m in block.GetAll("modifier"))
-            if (EvalTrigger(m, ctx, WeightKeys))
+        foreach (var m in block.Children ?? NoNodes)
+            if (m.Op != Op.None && string.Equals(m.Key, "modifier", StringComparison.OrdinalIgnoreCase) && EvalTrigger(m, ctx, WeightKeys)) // block.GetAll("modifier")
                 days *= ResolveNumber(m.GetString("factor"), ctx, 1);
         return Math.Max(1, days);
     }

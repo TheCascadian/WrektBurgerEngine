@@ -326,9 +326,17 @@ public sealed class TitleSystem
         bool tax = key.Equals("tax", StringComparison.OrdinalIgnoreCase), men = key.Equals("manpower", StringComparison.OrdinalIgnoreCase);
         if (!tax && !men) return 0;
         if (VassalOf(s) is { } vas) v -= 1 - (tax ? TaxShare(vas) : LevyShare(vas));
-        if (tax && s.Owner != null && DuchyOf(s) is { } duchy && Governors.FirstOrDefault(g => g.Country == s.Owner && g.Duchy == duchy) is { } gov && gov.Governor.Alive)
+        if (tax && s.Owner != null && DuchyOf(s) is { } duchy && FirstGovernorship(s.Owner, duchy) is { } gov && gov.Governor.Alive)
             v += gov.Governor.GetStat("finesse") * _game.Data.Defines.Get("governor_tax", 0.01);
         return v;
+    }
+
+    /// <summary>The first governorship of the country over the duchy, alive or not (a loop: a lambda here made a closure on every modifier read).</summary>
+    private Governorship? FirstGovernorship(Country c, Title duchy)
+    {
+        foreach (var g in Governors)
+            if (g.Country == c && g.Duchy == duchy) return g;
+        return null;
     }
 
     // ------------------------------------------------------------------------------------- governors

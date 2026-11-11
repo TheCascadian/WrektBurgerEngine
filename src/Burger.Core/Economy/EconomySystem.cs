@@ -121,7 +121,7 @@ public sealed class EconomySystem
                 var o = c.Recruitment[i];
                 o.HoursLeft -= 24;
                 if (o.HoursLeft > 0) continue;
-                var loc = o.Location.Controller == c ? o.Location : c.Capital?.Controller == c ? c.Capital : c.OwnedStates.SelectMany(s => s.Locations).FirstOrDefault(l => l.Controller == c);
+                var loc = o.Location.Controller == c ? o.Location : c.Capital?.Controller == c ? c.Capital : FirstControlledLocation(c);
                 if (loc == null) { c.Recruitment.RemoveAt(i--); continue; }
                 // production: a trained division deploys once enough equipment is in the stockpile
                 double equipped = 1;
@@ -139,6 +139,15 @@ public sealed class EconomySystem
             }
         }
         Reinforce();
+    }
+
+    /// <summary>The first location of the country's states (in their order) it controls (a loop: a lambda here made a closure for every country every day).</summary>
+    private static Location? FirstControlledLocation(Country c)
+    {
+        foreach (var s in c.OwnedStates)
+            foreach (var l in s.Locations)
+                if (l.Controller == c) return l;
+        return null;
     }
 
     private void Reinforce()

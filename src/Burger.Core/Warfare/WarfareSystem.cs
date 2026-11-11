@@ -569,6 +569,16 @@ public sealed class WarfareSystem
     }
 
     /// <summary>Instant occupation (occupation_hours = 0) or siege progress.</summary>
+    /// <summary>The owner's divisions at the location that are not retreating (a loop: a lambda here made a closure for every division every hour).</summary>
+    private int Besiegers(Location l, Country owner)
+    {
+        int n = 0;
+        var at = DivisionsAt(l);
+        for (int i = 0; i < at.Count; i++)
+            if (at[i].Owner == owner && !at[i].Retreating) n++;
+        return n;
+    }
+
     private void Occupation()
     {
         int hoursNeeded = _game.Data.Defines.OccupationHours;
@@ -588,7 +598,7 @@ public sealed class WarfareSystem
                 continue;
             }
             if (l.Sieger != d.Owner) { l.Sieger = d.Owner; l.SiegeProgress = 0; }
-            int besiegers = DivisionsAt(l).Count(x => x.Owner == d.Owner && !x.Retreating);
+            int besiegers = Besiegers(l, d.Owner);
             l.SiegeProgress += Math.Min(3, besiegers);
             if (l.SiegeProgress >= hoursNeeded * (1 + l.Fort)) SetController(l, OccupierFor(d.Owner, l));
         }
@@ -824,17 +834,36 @@ public sealed class WarfareSystem
         }
     }
 
+    // NearestOwnLocation's breadth-first walk: seen marks by location index (a stamp per walk) and a queue, kept per thread (AI countries may run in parallel)
+    [ThreadStatic] private static int[]? t_nearSeen;
+    [ThreadStatic] private static Location[]? t_nearQueue;
+    [ThreadStatic] private static int t_nearStamp;
+
     public Location? NearestOwnLocation(Country c, Location from)
     {
-        var seen = new HashSet<Location> { from };
-        var q = new Queue<Location>();
-        q.Enqueue(from);
-        while (q.Count > 0)
+        var locations = _game.World.Locations;
+        int count = locations.Count;
+        var seen = t_nearSeen;
+        if (seen == null || seen.Length < count) { seen = t_nearSeen = new int[count]; t_nearStamp = 0; }
+        var queue = t_nearQueue;
+        if (queue == null || queue.Length < count) queue = t_nearQueue = new Location[count];
+        if (++t_nearStamp == int.MaxValue) { Array.Clear(seen); t_nearStamp = 1; }
+        int stamp = t_nearStamp;
+        int head = 0, tail = 0;
+        seen[from.Index] = stamp;
+        queue[tail++] = from;
+        while (head < tail)
         {
-            var l = q.Dequeue();
-            if (l.Controller == c && l.IsPassable) return l;
+            var l = queue[head];
+            queue[head++] = null!;
+            if (l.Controller == c && l.IsPassable) { Array.Clear(queue, head, tail - head); return l; }
             foreach (var a in l.Neighbors)
-                if (seen.Add(a.To)) q.Enqueue(a.To);
+            {
+                var to = a.To;
+                if (seen[to.Index] == stamp) continue;
+                seen[to.Index] = stamp;
+                queue[tail++] = to;
+            }
         }
         return c.Capital != null && c.Capital.Controller == c ? c.Capital : null;
     }

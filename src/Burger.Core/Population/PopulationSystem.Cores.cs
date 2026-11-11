@@ -95,11 +95,26 @@ public sealed partial class PopulationSystem
         if (!ReligionEnabled) return result;
         string? rel = Of(c).Religion;
         if (rel == null || Of(target).Religion == rel) return result;
-        var mine = c.OwnedStates.ToHashSet();
+        HashSet<State>? mine = null; // c's states, gathered when a state first needs them
         foreach (var s in target.OwnedStates)
-            if (!s.Claims.Contains(c) && !s.Cores.Contains(c) && NeighbourStates(s).Any(mine.Contains) && MajorityReligion(s) == rel) result.Add(s);
+        {
+            if (s.Claims.Contains(c) || s.Cores.Contains(c)) continue;
+            if (mine == null)
+            {
+                mine = t_fellowMine ??= new HashSet<State>();
+                mine.Clear();
+                mine.UnionWith(c.OwnedStates);
+            }
+            bool borders = false;
+            foreach (var n in NeighbourStates(s))
+                if (mine.Contains(n)) { borders = true; break; }
+            if (borders && MajorityReligion(s) == rel) result.Add(s);
+        }
+        mine?.Clear();
         return result;
     }
+
+    [ThreadStatic] private static HashSet<State>? t_fellowMine;
 
     // =============================================================================================
     // Accepted cultures

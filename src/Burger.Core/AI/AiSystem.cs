@@ -134,7 +134,8 @@ public class AiSystem
                     if (adj.Kind != AdjacencyKind.Sea && l.Index < adj.To.Index) { a.Add(l); b.Add(adj.To); }
             _landPairA = a.ToArray(); _landPairB = b.ToArray(); _landPairLocations = w.Locations.Count;
         }
-        var seen = new HashSet<long>();
+        var seen = _borderSeen;
+        seen.Clear();
         var pa = _landPairA!; var pb = _landPairB!;
         for (int i = 0; i < pa.Length; i++)
         {
@@ -148,6 +149,7 @@ public class AiSystem
         foreach (var list in _borderLists.Values) list.Sort();
     }
     private int _landPairLocations;
+    private readonly HashSet<long> _borderSeen = new();
 
     private readonly Dictionary<int, List<int>> _borderLists = new();
     private void AddBorderIndex(int a, int b)

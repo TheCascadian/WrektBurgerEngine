@@ -210,9 +210,23 @@ public sealed class GreatPowerSystem
         if (!Enabled || scope is not Country c || !key.Equals("income", StringComparison.OrdinalIgnoreCase)) return 0;
         double v = 0;
         if (SphereOf(c) != null) v += _game.Data.Defines.Get("sphere_trade", 0.10);
-        v += Math.Min(0.08, 0.01 * _sphere.Count(kv => kv.Value == c));
-        v -= Math.Min(0.15, 0.05 * Sanctions.Count(s => s.Target == c));
+        v += Math.Min(0.08, 0.01 * SphereMemberCount(c));
+        v -= Math.Min(0.15, 0.05 * SanctionsOn(c));
         return v;
+    }
+
+    private int SphereMemberCount(Country leader)
+    {
+        int n = 0;
+        foreach (var kv in _sphere) if (kv.Value == leader) n++;
+        return n;
+    }
+
+    private int SanctionsOn(Country c)
+    {
+        int n = 0;
+        foreach (var s in Sanctions) if (s.Target == c) n++;
+        return n;
     }
 
     // ------------------------------------------------------------------------------------- bodies
