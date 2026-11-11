@@ -33,6 +33,73 @@ public sealed partial class Hud
     // ===============================================================================================
     // Keyboard shortcuts
     // ===============================================================================================
+    /// <summary>
+    /// The pace keys of a frame drawn while ticks are in flight, applied at once: pause and speed are plain clock fields the
+    /// worker reads between ticks, so pausing stops it after the tick it is in.
+    /// </summary>
+    public void HeldPaceKeys()
+    {
+        if (Ui.ConsoleOpen || Gui.TextFocused) return;
+        foreach (var key in PaceKeys) if (Raylib.IsKeyPressed(key)) PaceKey(key, G.Clock);
+    }
+
+    /// <summary>
+    /// The date box and the speed pips, ending at <paramref name="rx"/>; returns the x left of them. Pause and speed come from
+    /// the clock, not the snapshot, so they show a change at once. A held frame (<paramref name="live"/> false) draws them over
+    /// the HUD picture, without input.
+    /// </summary>
+    public float DrawPace(float rx, bool live)
+    {
+        var snapshot = _app.Snapshot;
+        var clock = G.Clock;
+        bool paused = clock.Paused;
+        int speed = clock.Speed;
+        string date = snapshot.Date.ToDisplay(speed <= 1);
+        float dateTextW = Gui.Measure(date, 15, FontKind.Bold).X;
+        float dw = Math.Max(210 * S, dateTextW + 66 * S);
+        rx -= dw;
+        var dateR = new Rectangle(rx, 6 * S, dw, 34 * S);
+        Gui.ButtonFrame(dateR, true, Gui.Hover(dateR), false);
+        if (paused) Gui.Gradient(new Rectangle(dateR.X + 1, dateR.Y + 1, dateR.Width - 2, dateR.Height - 2), new Color(150, 52, 40, 255), new Color(90, 26, 20, 255));
+        Gui.Label(Gui.Fit(date, dateR.Width - 58 * S, 15, FontKind.Bold), dateR.X + 8 * S, dateR.Y + 9 * S, 15, Color.White, FontKind.Bold);
+        var stateR = new Rectangle(dateR.X + dateR.Width - 48 * S, dateR.Y + 8 * S, 42 * S, 18 * S);
+        var stateColor = paused ? Gui.Bad : Gui.Good;
+        Gui.Gradient(stateR, Gui.Lighter(stateColor, 0.12f), Gui.Darker(stateColor, 0.28f));
+        Raylib.DrawRectangleLinesEx(stateR, 1, new Color(0, 0, 0, 180));
+        Gui.LabelCentered(paused ? "PAUSE" : "LIVE", stateR, 10, Color.White, FontKind.Bold);
+        if (live && Gui.Hover(dateR)) Gui.Tooltip($"{date}\n{(paused ? "Paused" : $"Running at {clock.ActualDaysPerSecond:0.#} days per second")}\nSpace: pause/unpause; 1-5: speed; + / -: adjust speed\nWheel: zoom; middle-drag / WASD: pan");
+        if (live) { Gui.Block(dateR); if (Gui.Clicked(dateR)) SetPace(!paused, null); }
+        rx -= 5 * 18 * S + 10 * S;
+        for (int i = 1; i <= 5; i++)
+        {
+            // speed pips: filled up to the current speed
+            var r = new Rectangle(rx + (i - 1) * 18 * S, 13 * S, 15 * S, 20 * S);
+            bool on = i <= speed;
+            bool hover = live && Gui.Hover(r);
+            Gui.Gradient(r, on ? Gui.Lighter(Gui.Gold, 0.2f) : new Color(60, 58, 54, 255), on ? Gui.Darker(Gui.Gold, 0.35f) : new Color(30, 29, 27, 255));
+            Raylib.DrawRectangleLinesEx(r, 1, hover ? Color.White : new Color(0, 0, 0, 200));
+            if (!live) continue;
+            Gui.Block(r);
+            if (hover) Gui.Tooltip($"Speed {i}");
+            if (Gui.Clicked(r)) SetPace(false, i);
+        }
+        return rx;
+    }
+
+    internal static readonly KeyboardKey[] PaceKeys =
+    {
+        KeyboardKey.Space, KeyboardKey.One, KeyboardKey.Two, KeyboardKey.Three, KeyboardKey.Four, KeyboardKey.Five,
+        KeyboardKey.KpAdd, KeyboardKey.Equal, KeyboardKey.KpSubtract, KeyboardKey.Minus,
+    };
+
+    private void PaceKey(KeyboardKey key, GameClock clock)
+    {
+        if (key == KeyboardKey.Space) SetPace(!clock.Paused, null);
+        else if (key is >= KeyboardKey.One and <= KeyboardKey.Five) SetPace(false, key - KeyboardKey.Zero);
+        else if (key is KeyboardKey.KpAdd or KeyboardKey.Equal) SetPace(null, Math.Min(5, clock.Speed + 1));
+        else SetPace(null, Math.Max(1, clock.Speed - 1));
+    }
+
     public void HandleKeys()
     {
         if (Raylib.IsKeyPressed(KeyboardKey.Grave) || Raylib.IsKeyPressed(KeyboardKey.F12))
@@ -394,37 +461,8 @@ public sealed partial class Hud
         }
 
         // right side: date, speed and the world-wide buttons
-        float rx = sw - 8 * S;
         var snapshot = _app.Snapshot;
-        string date = snapshot.Date.ToDisplay(snapshot.Speed <= 1);
-        float dateTextW = Gui.Measure(date, 15, FontKind.Bold).X;
-        float dw = Math.Max(210 * S, dateTextW + 66 * S);
-        rx -= dw;
-        var dateR = new Rectangle(rx, 6 * S, dw, 34 * S);
-        Gui.ButtonFrame(dateR, true, Gui.Hover(dateR), false);
-        if (snapshot.Paused) Gui.Gradient(new Rectangle(dateR.X + 1, dateR.Y + 1, dateR.Width - 2, dateR.Height - 2), new Color(150, 52, 40, 255), new Color(90, 26, 20, 255));
-        Gui.Label(Gui.Fit(date, dateR.Width - 58 * S, 15, FontKind.Bold), dateR.X + 8 * S, dateR.Y + 9 * S, 15, Color.White, FontKind.Bold);
-        var stateR = new Rectangle(dateR.X + dateR.Width - 48 * S, dateR.Y + 8 * S, 42 * S, 18 * S);
-        var stateColor = snapshot.Paused ? Gui.Bad : Gui.Good;
-        Gui.Gradient(stateR, Gui.Lighter(stateColor, 0.12f), Gui.Darker(stateColor, 0.28f));
-        Raylib.DrawRectangleLinesEx(stateR, 1, new Color(0, 0, 0, 180));
-        Gui.LabelCentered(snapshot.Paused ? "PAUSE" : "LIVE", stateR, 10, Color.White, FontKind.Bold);
-        if (Gui.Hover(dateR)) Gui.Tooltip($"{date}\n{(snapshot.Paused ? "Paused" : $"Running at {snapshot.ActualDaysPerSecond:0.#} days per second")}\nSpace: pause/unpause; 1-5: speed; + / -: adjust speed\nWheel: zoom; middle-drag / WASD: pan");
-        Gui.Block(dateR);
-        if (Gui.Clicked(dateR)) SetPace(!snapshot.Paused, null);
-        rx -= 5 * 18 * S + 10 * S;
-        for (int i = 1; i <= 5; i++)
-        {
-            // speed pips: filled up to the current speed
-            var r = new Rectangle(rx + (i - 1) * 18 * S, 13 * S, 15 * S, 20 * S);
-            bool on = i <= snapshot.Speed;
-            bool hover = Gui.Hover(r);
-            Gui.Gradient(r, on ? Gui.Lighter(Gui.Gold, 0.2f) : new Color(60, 58, 54, 255), on ? Gui.Darker(Gui.Gold, 0.35f) : new Color(30, 29, 27, 255));
-            Raylib.DrawRectangleLinesEx(r, 1, hover ? Color.White : new Color(0, 0, 0, 200));
-            Gui.Block(r);
-            if (hover) Gui.Tooltip($"Speed {i}");
-            if (Gui.Clicked(r)) SetPace(false, i);
-        }
+        float rx = DrawPace(sw - 8 * S, live: true);
         rx -= 8 * S;
         if (Has(FeatureSet.Diplomacy))
         {

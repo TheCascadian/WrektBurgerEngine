@@ -1060,10 +1060,14 @@ public sealed class CountryLabels
         return (sbyte*)ptr;
     }
 
-    public unsafe void Draw(Camera3D cam, float minScreenFont = 3f)
+    /// <param name="hold">Ticks are in flight: draw the current layout without looking at the game or starting a new one.</param>
+    public unsafe void Draw(Camera3D cam, float minScreenFont = 3f, bool hold = false)
     {
-        PollChanges();
-        RefreshLabels();
+        if (!hold)
+        {
+            PollChanges();
+            RefreshLabels();
+        }
         float ppu = _game.World.Map.Settings.PixelsPerUnit;
         var font = Assets.HeaderFont;
         var scr = new Vector2[24];

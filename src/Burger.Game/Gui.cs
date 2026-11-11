@@ -51,6 +51,7 @@ public static class Gui
     private static readonly List<Rectangle> _blockers = new();
     private static readonly List<Rectangle> _prevBlockers = new();
     private static string? _tooltip;
+    private static string? _lastTooltip;
     private static readonly Dictionary<string, float> _scroll = new();
     private static bool _wheelUsed;
 
@@ -189,13 +190,27 @@ public static class Gui
         _wheelUsed = false;
     }
 
-    public static void EndFrame()
+    /// <summary>Ends the HUD; <paramref name="drawTooltip"/> false leaves the tooltip to <see cref="DrawLastTooltip"/>.</summary>
+    public static void EndFrame(bool drawTooltip = true)
     {
         // a field that was not drawn this frame (its panel closed) loses focus
         if (!_fieldSeenThisFrame) _focusedField = null;
         _fieldSeenThisFrame = false;
-        if (_tooltip != null) DrawTooltip(_tooltip);
+        _lastTooltip = _tooltip;
+        if (drawTooltip && _tooltip != null) DrawTooltip(_tooltip);
     }
+
+    /// <summary>
+    /// Draws the tooltip of the last HUD drawn, at the mouse. A HUD shown as a picture keeps its tooltip out of the
+    /// picture, so the tooltip follows the mouse and stays up on frames that show the picture again.
+    /// </summary>
+    public static void DrawLastTooltip()
+    {
+        if (_lastTooltip != null) DrawTooltip(_lastTooltip);
+    }
+
+    /// <summary>Keeps last frame's UI rectangles for a frame that shows the HUD's picture instead of drawing it.</summary>
+    public static void HoldBlockers() => _blockers.AddRange(_prevBlockers);
 
     /// <summary>Registers a rectangle as UI so map clicks below it are ignored.</summary>
     public static void Block(Rectangle r) => _blockers.Add(r);

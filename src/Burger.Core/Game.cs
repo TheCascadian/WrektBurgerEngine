@@ -520,6 +520,7 @@ public sealed class Game
             Interlocked.Increment(ref _calls);
             _dailyTicks.AddOrUpdate(day, _ => ticks, (_, old) => old + ticks);
         }
+        public IReadOnlyDictionary<int, double> Daily() => _dailyTicks.ToDictionary(x => x.Key, x => x.Value * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
         public ProfileStat Snapshot()
         {
             var daily = _dailyTicks.Select(x => (Day: x.Key, Ms: x.Value * 1000.0 / System.Diagnostics.Stopwatch.Frequency)).OrderBy(x => x.Ms).ToArray();
@@ -532,6 +533,8 @@ public sealed class Game
     private readonly ConcurrentDictionary<string, ProfileCounter> _profile = new(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, ProfileStat> ProfileSnapshot() => _profile.ToDictionary(x => x.Key, x => x.Value.Snapshot(), StringComparer.Ordinal);
     public void ClearProfile() => _profile.Clear();
+    /// <summary>Milliseconds of one profile scope per simulated day (keyed by <see cref="GameDate.TotalDays"/>).</summary>
+    public IReadOnlyDictionary<int, double> ProfileDaily(string name) => _profile.TryGetValue(name, out var c) ? c.Daily() : new Dictionary<int, double>();
     public void ProfileCall(string name) => _profile.GetOrAdd(name, static _ => new ProfileCounter()).Add(World.Date.TotalDays, 0);
     public readonly Dictionary<string, double> ProfileMs = new();
     /// <summary>Bytes allocated by the thread of each profiled scope (--profile): where the garbage comes from.</summary>
@@ -795,10 +798,13 @@ public sealed class GameClock
     /// Set from <c>game_speeds = { 0.5 1.5 4 10 0 }</c> in defines.txt.
     /// </summary>
     public double[] DaysPerSecond = { 0, 0.5, 1.5, 4, 10, 0 };
-    public int Speed { get; set; } = 2;
+    // volatile: a frame drawn while a worker runs the ticks may pause or change speed, and the worker reads them between ticks
+    private volatile int _speed = 2;
+    private volatile bool _paused = true;
+    public int Speed { get => _speed; set => _speed = value; }
     /// <summary>How far the clock is through the current hour (0 to 1), for smooth visuals such as the sun at slow speeds. Held while paused.</summary>
     public float HourFraction => (float)Math.Clamp(_accumulator, 0.0, 1.0);
-    public bool Paused { get; set; } = true;
+    public bool Paused { get => _paused; set => _paused = value; }
     /// <summary>Real milliseconds per frame the simulation may use (keeps the game responsive at high speed).</summary>
     public double FrameBudgetMs = 14;
 
@@ -810,8 +816,11 @@ public sealed class GameClock
 
     public GameClock(Game game) { _game = game; }
 
-    /// <summary>Call once per frame with the frame time; runs as many hourly ticks as needed.</summary>
-    public int Update(double deltaSeconds)
+    /// <summary>
+    /// Call once per frame with the frame time; runs as many hourly ticks as needed. A caller whose frames do not wait
+    /// on the ticks may pass its own <paramref name="budgetMs"/>: the same ticks run, only how many fit in this call changes.
+    /// </summary>
+    public int Update(double deltaSeconds, double budgetMs = 0)
     {
         if (Paused || !_game.Started) { if (!_game.Started) _accumulator = 0; LastUpdateMs = 0; return 0; }
         double daysPerSec = DaysPerSecond[Math.Clamp(Speed, 1, 5)];
@@ -820,6 +829,7 @@ public sealed class GameClock
         int ticks = 0;
         _budget.Restart();
         double budget = Speed >= 5 ? Math.Max(FrameBudgetMs, 30) : FrameBudgetMs; // top speed trades some smoothness for speed
+        if (budgetMs > 0) budget = budgetMs;
         while ((unlimited || _accumulator >= 1) && _budget.Elapsed.TotalMilliseconds < budget)
         {
             if (!unlimited) _accumulator -= 1;

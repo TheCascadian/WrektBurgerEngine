@@ -51,6 +51,21 @@ public sealed partial class App
     private long _snapshotBuilds;
     private double _snapshotBuildMs;
     private long _snapshotBuildBytes;
+    // Single-player ticks run on a worker between frames. While they are in flight the main thread leaves Game alone:
+    // the map draws from the snapshot and the HUD is the picture of the last frame (see FrameHeld).
+    private Task<RenderSnapshot?>? _tickTask;
+    private float _tickDt;
+    private RenderTexture2D _hudTexture;
+    private bool _hudCached;
+    private static readonly bool SyncTicks = Environment.GetEnvironmentVariable("BURGER_SYNC_TICKS") == "1"; // A/B: every tick on the main thread
+    // fixed worker budget for A/B; by default worker ticks stop in time for the next frame, so that frame can draw the live HUD
+    private static readonly double WorkerBudgetMs = double.TryParse(Environment.GetEnvironmentVariable("BURGER_WORKER_BUDGET_MS"), System.Globalization.CultureInfo.InvariantCulture, out var ms) ? ms : 0;
+    // A frame waits this long for ticks about to finish before it is held. The frame's own work takes about 5 ms of a
+    // 16.7 ms frame, so a short wait still presents on time; the ticks may run up to the moment the frame starts.
+    private static readonly double TickGraceMs = double.TryParse(Environment.GetEnvironmentVariable("BURGER_TICK_GRACE_MS"), System.Globalization.CultureInfo.InvariantCulture, out var g) ? g : 8;
+    private long _frameStartTs;
+    private double _frameIntervalMs = 1000.0 / 60;
+    private static readonly KeyboardKey[] AllKeys = Enum.GetValues<KeyboardKey>().Where(k => k != KeyboardKey.Null).ToArray();
 
     private readonly record struct SnapshotBuildResult(RenderSnapshot Snapshot, double Milliseconds, long AllocatedBytes, long Revision);
 
@@ -63,7 +78,8 @@ public sealed partial class App
     public void Run()
     {
         _gameRoot = _opt.GameRoot;
-        var flags = ConfigFlags.ResizableWindow | ConfigFlags.Msaa4xHint;
+        UserSettings.Load(); // before the window: the MSAA setting decides its sample buffer
+        var flags = ConfigFlags.ResizableWindow | (UserSettings.Msaa ? ConfigFlags.Msaa4xHint : 0);
         if (_opt.VSync != false) flags |= ConfigFlags.VSyncHint;
         if (Environment.GetEnvironmentVariable("BURGER_NO_MSAA") == "1") flags &= ~ConfigFlags.Msaa4xHint; // fullscreen test: 4x MSAA framebuffer resize
         if (_opt.Bench || _opt.VSync == false) flags &= ~ConfigFlags.VSyncHint;
@@ -79,7 +95,8 @@ public sealed partial class App
             Raylib.SetWindowMonitor(monitor);
         }
         Raylib.SetExitKey(KeyboardKey.Null);
-        UserSettings.Load();
+        UserSettings.SoftwareRenderer = GlMultisample.IsSoftwareRenderer();
+        if (UserSettings.SoftwareRenderer) Log.Info("Software renderer: MSAA starts off unless set in the settings");
         if (_opt.CountryLabels is { } labels) UserSettings.CountryLabels = labels;
         if (_opt.HoverPicking is { } hover) UserSettings.HoverPicking = hover;
         if (_opt.GameFrameRate is { } fps) UserSettings.GameFrameRate = fps;
@@ -88,7 +105,7 @@ public sealed partial class App
         // raylib defaults to near 0.01 / far 1000, which clips the far rows of the 1638-unit map; widen the range (set before any BeginMode3D)
         Rlgl.SetClipPlanes(0.5, 6000.0);
         Assets.Font = Raylib.GetFontDefault();
-        if (_opt.Perf || _opt.Bench) _renderPerf = new RenderPerf();
+        if (_opt.Perf || _opt.Bench) _renderPerf = new RenderPerf(_opt.Bench ? 1 << 17 : 600); // a bench run keeps every frame
         if (_opt.Bench) { _bench = new Bench(); _opt.Observe = true; }
 
         if (_opt.StartDate is { } sd && sd.TotalDays != 0) _menuDate = sd;
@@ -103,6 +120,7 @@ public sealed partial class App
         {
             if (_pending != null)
             {
+                WaitTick(); // a pending action (load, new game, leave) replaces or reads the game
                 var action = _pending;
                 _pending = null;
                 action();
@@ -121,7 +139,7 @@ public sealed partial class App
             }
             _frame++;
             Media.EndFrame();
-            if (_opt.Perf) { PerfSample(); if (Game != null && Game.Started && _opt.Speed > 0) Game.Clock.Paused = false; }
+            if (_opt.Perf) { PerfSample(); if (_tickTask == null && Game != null && Game.Started && _opt.Speed > 0) Game.Clock.Paused = false; }
             if (_opt.Screenshot != null && _frame == _opt.ScreenshotFrame)
             {
                 var img = Raylib.LoadImageFromScreen();
@@ -130,6 +148,8 @@ public sealed partial class App
                 _quit = true;
             }
         }
+        WaitTick();
+        if (_hudTexture.Id != 0) Raylib.UnloadRenderTexture(_hudTexture);
         Renderer?.Dispose();
         Sites?.Dispose();
         Figures?.Dispose();
@@ -143,16 +163,25 @@ public sealed partial class App
     // frame timing (--perf): average frame time, simulation time per frame and in-game days per second
     private double _perfTime, _perfFrames, _perfSim;
     private int _perfDay;
+    private int _perfGc0, _perfGc1, _perfGc2, _perfHeld;
+    private TimeSpan _perfPause;
     private void PerfSample()
     {
         _perfTime += Raylib.GetFrameTime();
         _perfFrames++;
         _perfSim += Game?.Clock.LastUpdateMs ?? 0;
-        if (_perfTime < 10) return;
+        PerfReport();
+    }
+
+    private void PerfReport()
+    {
+        if (_perfTime < 10 || _tickTask != null) return; // the report reads the game: FramePlaying calls again between ticks
         int day = Game?.World.Date.TotalDays ?? 0;
             Log.Info($"PERF config screen={_screen} size={Raylib.GetScreenWidth()}x{Raylib.GetScreenHeight()} vsync={_opt.VSync != false} target_fps={(_opt.Bench ? 0 : UserSettings.EffectiveGameFrameRate)} country_labels={UserSettings.CountryLabels} hover_picking={UserSettings.HoverPicking}");
             Log.Info($"PERF snapshots builds={_snapshotBuilds} avg_ms={(_snapshotBuilds == 0 ? 0 : _snapshotBuildMs / _snapshotBuilds):0.0} avg_alloc_kb={(_snapshotBuilds == 0 ? 0 : _snapshotBuildBytes / (double)_snapshotBuilds / 1024):0.0} pending={_snapshotBuild != null}");
-            Log.Info($"PERF fps {_perfFrames / _perfTime:0.0}, frame {_perfTime * 1000 / _perfFrames:0.0} ms, simulation {_perfSim / _perfFrames:0.0} ms/frame, {(day - _perfDay) / _perfTime:0.0} days/s");
+            Log.Info($"PERF fps {_perfFrames / _perfTime:0.0}, frame {_perfTime * 1000 / _perfFrames:0.0} ms, simulation {_perfSim / _perfFrames:0.0} ms/frame, {(day - _perfDay) / _perfTime:0.0} days/s, {_perfHeld} frames held");
+            // the whole process, simulation included: RenderPerf counts only collections inside its frames
+            Log.Info($"PERF process GC {GC.CollectionCount(0) - _perfGc0}/{GC.CollectionCount(1) - _perfGc1}/{GC.CollectionCount(2) - _perfGc2}, pause {(GC.GetTotalPauseDuration() - _perfPause).TotalMilliseconds:0.0} ms");
             if (_renderPerf != null)
                 Log.Info("PERF render " + _renderPerf.Report(_perfTime, _perfSim, _perfFrames));
             if (Game != null)
@@ -167,6 +196,9 @@ public sealed partial class App
         }
         _perfDay = day;
         _perfTime = _perfFrames = _perfSim = 0;
+        _perfHeld = 0;
+        _perfGc0 = GC.CollectionCount(0); _perfGc1 = GC.CollectionCount(1); _perfGc2 = GC.CollectionCount(2);
+        _perfPause = GC.GetTotalPauseDuration();
         _renderPerf?.Clear();
     }
 
@@ -553,6 +585,7 @@ public sealed partial class App
         Raylib.ClearBackground(Renderer != null && Renderer.Globe ? new Color(2, 3, 9, 255) : new Color(12, 22, 38, 255)); // space behind the globe
         Raylib.BeginMode3D(cam);
         if (!Bench.Skip.Contains("map")) Renderer!.Draw(Snapshot, cam, (float)Raylib.GetTime());
+        _renderPerf?.Gpu?.Mark(1);
         if (_screen == AppScreen.Playing && Sites != null) Sites.Draw(Snapshot, cam);
         if (_screen == AppScreen.Playing && Figures != null)
         {
@@ -567,6 +600,12 @@ public sealed partial class App
     private void FramePlaying(float dt)
     {
         var game = Game!;
+        long frameStart = System.Diagnostics.Stopwatch.GetTimestamp();
+        if (_frameStartTs != 0) _frameIntervalMs += (Math.Min(MsSince(_frameStartTs, frameStart), 100) - _frameIntervalMs) * 0.1;
+        _frameStartTs = frameStart;
+        // input is never dropped: a click, key or scroll waits for the ticks and gets a live frame
+        if (!CompleteTick(game, InputPending() ? Timeout.Infinite : (int)TickGraceMs)) { FrameHeld(dt); return; }
+        if (_opt.Perf) PerfReport();
         var map = Renderer!;
         var cam = Camera!;
         TryPublishSnapshotBuild();
@@ -578,14 +617,18 @@ public sealed partial class App
         cam.Update(dt, Gui.MouseOverUi, false, !_hud.KeyboardCaptured);
         // Always raycast against the heightfield. The sea-level shortcut used while moving
         // can land hundreds of provinces away on large, high-relief maps such as Earth1930.
-        var hovered = UserSettings.HoverPicking && !Gui.MouseOverUi ? PickCached(map, cam) : null;
+        var hovered = _bench != null ? (UserSettings.HoverPicking && _bench.HoverMouse is { } benchMouse ? PickCached(map, cam, benchMouse) : null)
+            : UserSettings.HoverPicking && !Gui.MouseOverUi ? PickCached(map, cam) : null;
         if (hovered != map.Hovered) { map.Hovered = hovered; map.Dirty = true; }
         _renderPerf?.Mark(1);
 
         Raylib.BeginDrawing();
+        _renderPerf?.Gpu?.Begin();
         DrawWorld(cam.Camera);
+        _renderPerf?.Gpu?.Mark(2);
         _renderPerf?.Mark(2);
         if (UserSettings.CountryLabels) Overlay!.DrawLabels(cam.Camera);
+        _renderPerf?.Gpu?.Mark(3);
         _renderPerf?.Mark(3);
         Overlay!.DrawTradeRoutes(Snapshot, cam.Camera, Ui.Right == RightPanel.Ledger);
         Overlay.DrawOrders(Snapshot, cam.Camera, Ui);
@@ -601,39 +644,73 @@ public sealed partial class App
         if (!Gui.MouseOverUi && Raylib.IsMouseButtonPressed(MouseButton.Right)) _hud.OnMapRightClick(hovered);
         if (hovered != null && !Gui.MouseOverUi) DrawHoverInfo(hovered);
         _renderPerf?.Mark(8);
-        if (!Bench.Skip.Contains("ui"))
-        {
-            var leftBefore = Ui.Left;
-            var rightBefore = Ui.Right;
-            long uiStart = System.Diagnostics.Stopwatch.GetTimestamp();
-            _hud.Draw();
-            if (leftBefore != Ui.Left || rightBefore != Ui.Right)
-            {
-                double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - uiStart) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
-                Log.Info($"PERF ui-open left={leftBefore}->{Ui.Left} right={rightBefore}->{Ui.Right} draw_ms={ms:0.0}");
-            }
-        }
-        Gui.EndFrame();
+        // while the clock runs, the HUD is drawn through a texture so a frame with ticks in flight can show it again
+        DrawHud(!SyncTicks && Mp == null && _bench == null && !game.Clock.Paused);
+        _renderPerf?.Gpu?.Mark(4);
         _renderPerf?.Mark(9);
+        // nothing below reads the live game, so worker ticks start before the frame waits to be presented
+        bool started = Mp == null && _hudCached && CanStartTick(game);
+        if (started) StartTick(game, dt);
         Raylib.EndDrawing();
-        _renderPerf?.End(Raylib.GetFrameTime() * 1000.0);
+        _renderPerf?.End();
 
         if (Mp != null)
         {
             ScheduleSnapshotBuild(game, _snapshots.Current.Tick + 1);
             return; // the session runs the ticks
         }
-        if (_snapshotBuild != null) return; // keep the mutable simulation stable while its detached snapshot is built
+        if (!started && CanStartTick(game)) StartTick(game, dt);
+    }
+
+    private bool CanStartTick(Game game) =>
+        _snapshotBuild == null // keep the mutable simulation stable while its detached snapshot is built
+        && ReferenceEquals(game, Game) && _screen == AppScreen.Playing; // the HUD may have loaded or left the game this frame
+
+    /// <summary>
+    /// Runs the clock for this frame. With the HUD cached the ticks run on a worker while the frame is presented and
+    /// later frames are drawn; nothing else touches the game until <see cref="CompleteTick"/> sees them finish. The ticks
+    /// are the same ones in the same order either way: only the thread differs.
+    /// </summary>
+    private void StartTick(Game game, float dt)
+    {
+        float elapsed = Math.Min(_tickDt + dt, 0.1f); // the same cap a single long frame has
+        _tickDt = 0;
+        var previous = _snapshots.Current;
+        bool worker = _hudCached;
+        // the worker stops before the next frame is due, so most frames find it idle and draw the live HUD;
+        // top speed keeps its longer budget and trades HUD refreshes for speed, as it traded smoothness before
+        double budget = !worker ? 0 : WorkerBudgetMs > 0 ? WorkerBudgetMs : game.Clock.Speed >= 5 ? 30
+            : Math.Clamp(_frameIntervalMs - MsSince(_frameStartTs, System.Diagnostics.Stopwatch.GetTimestamp()), 2, 30);
+        RenderSnapshot? Run()
+        {
+            int ticks = game.Clock.Update(elapsed, budget);
+            return ticks > 0 ? RenderSnapshotBuilder.BuildFast(game, previous, previous.Tick + 1, game.Clock.HourFraction) : null;
+        }
+        if (worker) { _tickTask = Task.Run(Run); return; }
+        // no HUD picture to show meanwhile (paused, multiplayer, a benchmark, or the clock started this frame): run them here
+        try { _tickTask = Task.FromResult(Run()); }
+        catch (Exception ex) { _tickTask = Task.FromException<RenderSnapshot?>(ex); }
+        CompleteTick(game);
+    }
+
+    /// <summary>True when no ticks are in flight (publishing the snapshot of any that just finished), waiting up to <paramref name="waitMs"/> for them.</summary>
+    private bool CompleteTick(Game game, int waitMs = 0)
+    {
+        if (_tickTask is not { } task) return true;
+        if (!task.IsCompleted && waitMs != 0)
+            try { task.Wait(waitMs); } catch (AggregateException) { } // reported below
+        if (!task.IsCompleted) return false;
+        _tickTask = null;
         try
         {
-            int ticks = game.Clock.Update(dt);
-            if (ticks > 0)
+            if (task.GetAwaiter().GetResult() is { } snapshot)
             {
-                long tick = _snapshots.Current.Tick + 1;
-                _snapshots.Publish(RenderSnapshotBuilder.BuildFast(game, _snapshots.Current, tick, game.Clock.HourFraction));
+                _snapshots.Publish(snapshot);
                 _snapshotDirty = true;
                 _snapshotRevision++;
-                ScheduleSnapshotBuild(game, tick);
+                // MapChanged asked for a rebuild from the worker, and a held frame may have dropped it against the old snapshot
+                if (Renderer != null) Renderer.Dirty = true;
+                ScheduleSnapshotBuild(game, snapshot.Tick);
             }
         }
         catch (Exception ex)
@@ -642,6 +719,132 @@ public sealed partial class App
             Log.Error($"Simulation error: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
             Ui.SetStatus("Simulation error - game paused (see F2)");
         }
+        return true;
+    }
+
+    private static double MsSince(long start, long now) => (now - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+
+    /// <summary>
+    /// Input a held frame would drop: a left or right press or release, a scroll over the HUD, or a key press. Camera
+    /// input (middle drag, map wheel, pan and zoom keys) works in held frames and pace keys apply at once,
+    /// so neither waits for the ticks.
+    /// </summary>
+    private bool InputPending()
+    {
+        foreach (var b in (ReadOnlySpan<MouseButton>)[MouseButton.Left, MouseButton.Right])
+            if (Raylib.IsMouseButtonPressed(b) || Raylib.IsMouseButtonReleased(b)) return true;
+        if (Gui.MouseOverUi && Raylib.GetMouseWheelMove() != 0) return true;
+        bool typing = _hud!.KeyboardCaptured;
+        foreach (var k in AllKeys)
+            if (typing ? Raylib.IsKeyPressed(k) || Raylib.IsKeyPressedRepeat(k) : Raylib.IsKeyPressed(k) && !CameraKeys.Contains(k) && Array.IndexOf(Hud.PaceKeys, k) < 0) return true;
+        return false;
+    }
+
+    private static readonly HashSet<KeyboardKey> CameraKeys =
+    [
+        KeyboardKey.W, KeyboardKey.A, KeyboardKey.S, KeyboardKey.D, KeyboardKey.Q, KeyboardKey.E,
+        KeyboardKey.Up, KeyboardKey.Down, KeyboardKey.Left, KeyboardKey.Right, KeyboardKey.PageUp, KeyboardKey.PageDown,
+        KeyboardKey.LeftShift, KeyboardKey.RightShift,
+    ];
+
+    private void WaitTick()
+    {
+        if (_tickTask is not { } task) return;
+        try { task.Wait(); } catch (AggregateException) { } // CompleteTick reports it
+        if (Game != null) CompleteTick(Game);
+    }
+
+    /// <summary>
+    /// A frame drawn while ticks are in flight. The camera moves and the map, labels and counters draw from the snapshot;
+    /// the HUD is last frame's picture with the live date and speed over it, its clicks wait, and the pace keys apply at once.
+    /// </summary>
+    private void FrameHeld(float dt)
+    {
+        var map = Renderer!;
+        var cam = Camera!;
+        _tickDt += dt;
+        _perfHeld++;
+        _hud!.HeldPaceKeys();
+        Gui.HoldBlockers();
+        _renderPerf?.Begin();
+        cam.Update(dt, Gui.MouseOverUi, false, !_hud.KeyboardCaptured);
+        var hovered = UserSettings.HoverPicking && !Gui.MouseOverUi ? PickCached(map, cam) : null;
+        if (hovered != map.Hovered) { map.Hovered = hovered; map.Dirty = true; }
+        _renderPerf?.Mark(1);
+
+        Raylib.BeginDrawing();
+        _renderPerf?.Gpu?.Begin();
+        DrawWorld(cam.Camera);
+        _renderPerf?.Gpu?.Mark(2);
+        _renderPerf?.Mark(2);
+        if (UserSettings.CountryLabels) Overlay!.DrawLabels(cam.Camera, hold: true);
+        _renderPerf?.Gpu?.Mark(3);
+        _renderPerf?.Mark(3);
+        Overlay!.DrawTradeRoutes(Snapshot, cam.Camera, Ui.Right == RightPanel.Ledger);
+        Overlay.DrawOrders(Snapshot, cam.Camera, Ui);
+        Overlay.DrawDivisionOrders(Snapshot, cam.Camera, Ui);
+        _renderPerf?.Mark(4);
+        Overlay.DrawUnits(Snapshot, cam.Camera, Ui, mouseOverUi: true); // counter clicks resolve against the live game
+        _renderPerf?.Mark(5);
+        Overlay.DrawFleets(Snapshot, cam.Camera, Ui, mouseOverUi: true);
+        _renderPerf?.Mark(6);
+        Overlay.DrawAirBases(Snapshot, cam.Camera, mouseOverUi: true);
+        if (hovered != null && !Gui.MouseOverUi && hovered == _hoverInfo.Location) DrawHoverBox(_hoverInfo);
+        _renderPerf?.Mark(8);
+        DrawHudTexture();
+        _hud.DrawPace(Raylib.GetScreenWidth() - 8 * Gui.Scale, live: false); // pause and speed changed in this frame show at once
+        Gui.DrawLastTooltip();
+        _renderPerf?.Gpu?.Mark(4);
+        _renderPerf?.Mark(9);
+        Raylib.EndDrawing();
+        _renderPerf?.End();
+    }
+
+    private void DrawHud(bool cache)
+    {
+        _hudCached = false;
+        if (cache)
+        {
+            int w = Raylib.GetScreenWidth(), h = Raylib.GetScreenHeight();
+            if (_hudTexture.Id == 0 || _hudTexture.Texture.Width != w || _hudTexture.Texture.Height != h)
+            {
+                if (_hudTexture.Id != 0) Raylib.UnloadRenderTexture(_hudTexture);
+                _hudTexture = Raylib.LoadRenderTexture(w, h);
+            }
+            Raylib.BeginTextureMode(_hudTexture);
+            Raylib.ClearBackground(Color.Blank);
+            // the texture keeps premultiplied color, so laying it over the map blends exactly as drawing the HUD there does
+            Rlgl.SetBlendFactorsSeparate(Rlgl.SRC_ALPHA, Rlgl.ONE_MINUS_SRC_ALPHA, Rlgl.ONE, Rlgl.ONE_MINUS_SRC_ALPHA, Rlgl.FUNC_ADD, Rlgl.FUNC_ADD);
+            Raylib.BeginBlendMode(BlendMode.CustomSeparate);
+        }
+        if (!Bench.Skip.Contains("ui"))
+        {
+            var leftBefore = Ui.Left;
+            var rightBefore = Ui.Right;
+            long uiStart = System.Diagnostics.Stopwatch.GetTimestamp();
+            _hud!.Draw();
+            if (leftBefore != Ui.Left || rightBefore != Ui.Right)
+            {
+                double ms = (System.Diagnostics.Stopwatch.GetTimestamp() - uiStart) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+                Log.Info($"PERF ui-open left={leftBefore}->{Ui.Left} right={rightBefore}->{Ui.Right} draw_ms={ms:0.0}");
+            }
+        }
+        Gui.EndFrame(drawTooltip: !cache);
+        if (!cache) return;
+        Raylib.EndBlendMode();
+        Raylib.EndTextureMode();
+        _hudCached = true;
+        DrawHudTexture();
+        Gui.DrawLastTooltip();
+    }
+
+    private void DrawHudTexture()
+    {
+        if (!_hudCached) return;
+        var t = _hudTexture.Texture;
+        Raylib.BeginBlendMode(BlendMode.AlphaPremultiply);
+        Raylib.DrawTextureRec(t, new Rectangle(0, 0, t.Width, -t.Height), Vector2.Zero, Color.White);
+        Raylib.EndBlendMode();
     }
 
     private void ScheduleSnapshotBuild(Game game, long tick)
@@ -690,11 +893,11 @@ public sealed partial class App
     private Location? _pickResult;
     private bool _pickValid;
 
-    private Location? PickCached(MapRenderer map, CameraController cam)
+    private Location? PickCached(MapRenderer map, CameraController cam, Vector2? at = null)
     {
         // Pick() and Viewport.Ray() operate in map-local coordinates. Gui.Mouse is window-global;
         // using it here offsets every pick when the map is hosted below/inside a UI panel.
-        var mouse = Viewport.Mouse;
+        var mouse = at ?? Viewport.Mouse;
         var screen = new Vector2(Viewport.W, Viewport.H);
         var origin = Viewport.Origin;
         var c = cam.Camera;
@@ -776,6 +979,11 @@ public sealed partial class App
         Ui.SetStatus(Ui.SelectedDivisions.Count == 0 ? "No divisions of yours in the box" : $"{Ui.SelectedDivisions.Count} division(s) selected - right-click to move");
     }
 
+    private readonly record struct HoverInfo(Location? Location, string Text, string Extra, Color ExtraColor);
+
+    // the last province box drawn by a normal frame; a held frame shows it again while the mouse stays on that province
+    private HoverInfo _hoverInfo;
+
     private void DrawHoverInfo(Location l)
     {
         bool unknown = Game != null && !Game.Exploration.IsCharted(l);
@@ -836,6 +1044,13 @@ public sealed partial class App
             if (reason != null) extraColor = Gui.Bad;
         }
         if (unknown) { extra = l.IsWater ? "Uncharted waters" : "Unexplored by your people"; extraColor = Gui.TextDim; }
+        _hoverInfo = new HoverInfo(l, text, extra, extraColor);
+        DrawHoverBox(_hoverInfo);
+    }
+
+    private static void DrawHoverBox(HoverInfo info)
+    {
+        var (_, text, extra, extraColor) = info;
         var m = Gui.Measure(text, 15);
         var m2 = extra.Length > 0 ? Gui.Measure(extra, 14) : Vector2.Zero;
         float x = Gui.Mouse.X + 16, y = Gui.Mouse.Y + 18;
