@@ -75,6 +75,22 @@ public sealed class ConstructionMethod
     public List<string> RequiresTech = new();
     public Dictionary<string, double> Inputs = new(StringComparer.OrdinalIgnoreCase);
 
+    private string[]? _inputOrder;
+
+    /// <summary>The keys of <see cref="Inputs"/> in OrdinalIgnoreCase order, sorted once (the inputs are filled when the method is built; the keys differ under that comparer, so the order is the one any sort gives).</summary>
+    public string[] InputOrder()
+    {
+        var order = _inputOrder;
+        if (order == null || order.Length != Inputs.Count)
+        {
+            order = new string[Inputs.Count];
+            Inputs.Keys.CopyTo(order, 0);
+            Array.Sort(order, StringComparer.OrdinalIgnoreCase);
+            _inputOrder = order;
+        }
+        return order;
+    }
+
     public bool Active(GameDate date) => date.Year >= StartYear && date.Year <= EndYear;
 }
 

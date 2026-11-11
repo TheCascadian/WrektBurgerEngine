@@ -151,8 +151,9 @@ public class ProductionRules
         double factor = 1;
         string? unavailable = null;
         bool hasInput = false;
-        foreach (var (key, amount) in method.Inputs.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        foreach (var key in method.InputOrder())
         {
+            double amount = method.Inputs[key];
             if (!double.IsFinite(amount) || amount <= 0) continue;
             hasInput = true;
             if (!game.Commodities.Defs.TryGetValue(key, out var definition) || !definition.IsActive(game.World.Date))
@@ -476,13 +477,21 @@ public sealed class ProductionSystem
         }
     }
 
+    private readonly List<ProductionLine> _produceLines = new();
+    private readonly List<ConstructionProject> _constructProjects = new(), _constructOthers = new();
+    private readonly List<string> _constructSources = new();
+
     private void Produce(Country c)
     {
-        foreach (var naval in new[] { false, true })
+        var lines = _produceLines;   // (the daily tick is serial and nothing it calls produces)
+        for (int pass = 0; pass < 2; pass++)
         {
-            var lines = c.ProductionLines.Where(l => Rules.UsesDockyards(l.Equipment) == naval).ToList();
+            bool naval = pass == 1;
+            lines.Clear();
+            foreach (var l in c.ProductionLines) if (Rules.UsesDockyards(l.Equipment) == naval) lines.Add(l);
             int available = naval ? Dockyards(c) : MilitaryFactories(c);
-            int assigned = lines.Sum(l => l.Factories);
+            int assigned = 0;
+            foreach (var l in lines) assigned = checked(assigned + l.Factories);
             double scale = assigned <= available || assigned == 0 ? 1 : available / (double)assigned; // lost factories slow every line
             foreach (var line in lines)
             {
@@ -502,14 +511,13 @@ public sealed class ProductionSystem
 
     private void Construct(Country c)
     {
-        var projects = c.Construction.ToList();
+        // (the daily tick is serial and nothing it calls constructs: the scratch lists are this method's own)
+        var projects = _constructProjects;
+        projects.Clear();
+        foreach (var p in c.Construction) if (p.State.Owner == c) projects.Add(p);
         int perProject = (int)_game.Data.Defines.Get("max_factories_per_project", 15);
-        foreach (var p in projects)
-        {
-            if (p.State.Owner != c) c.Construction.Remove(p);
-        }
+        if (projects.Count != c.Construction.Count) c.Construction.RemoveAll(p => p.State.Owner != c);
 
-        projects = projects.Where(p => p.State.Owner == c).ToList();
         int civ = -1;
         foreach (var p in projects)
         {
@@ -527,19 +535,33 @@ public sealed class ProductionSystem
 
         // Manual, public-works and workshop projects share the local capacity of their state and method.
         // Keeping this allocation local prevents every queued project from receiving the full workforce pool.
-        List<ConstructionProject>? others = null;
+        // (groups of the same state and source, in the order their first project comes, each in its projects' order)
+        var others = _constructOthers;
+        var sources = _constructSources;
+        others.Clear(); sources.Clear();
         foreach (var p in projects)
-            if (!Rules.ResolveConstructionMethod(_game, p.Building).Source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase)) (others ??= new()).Add(p);
-        if (others != null)
-            foreach (var group in others.GroupBy(p => (p.State, Source: Rules.ResolveConstructionMethod(_game, p.Building).Source)))
+        {
+            var source = Rules.ResolveConstructionMethod(_game, p.Building).Source;
+            if (!source.Equals("civilian_factory", StringComparison.OrdinalIgnoreCase)) { others.Add(p); sources.Add(source); }
+        }
+        for (int i = 0; i < others.Count; i++)
+        {
+            if (others[i] == null) continue;
+            var state = others[i].State;
+            var source = sources[i];
+            int count = 0;
+            for (int j = i; j < others.Count; j++)
+                if (others[j] != null && others[j].State == state && sources[j] == source) count++;
+            for (int j = i; j < others.Count; j++)
             {
-                int count = group.Count();
-                foreach (var p in group)
-                {
-                    double capacity = Rules.ConstructionCapacity(_game, c, p) / count;
-                    ApplyConstruction(p, 0, capacity, capacity > 0 ? null : p.BlockedReason ?? "No construction capacity available");
-                }
+                var p = others[j];
+                if (p == null || p.State != state || sources[j] != source) continue;
+                others[j] = null!;
+                double capacity = Rules.ConstructionCapacity(_game, c, p) / count;
+                ApplyConstruction(p, 0, capacity, capacity > 0 ? null : p.BlockedReason ?? "No construction capacity available");
             }
+        }
+        projects.Clear(); others.Clear(); sources.Clear();
 
         void ApplyConstruction(ConstructionProject p, int factories, double capacity, string? blockedReason)
         {
@@ -552,8 +574,9 @@ public sealed class ProductionSystem
             {
                 var method = Rules.ResolveConstructionMethod(_game, p.Building);
                 double cost = Math.Max(0.0001, p.Building.Cost);
-                foreach (var (key, amount) in method.Inputs.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                foreach (var key in method.InputOrder())
                 {
+                    double amount = method.Inputs[key];
                     if (!double.IsFinite(amount) || amount <= 0) continue;
                     double total = Math.Max(0, amount);
                     double alreadyConsumed = Math.Max(0, p.InputsConsumed.GetValueOrDefault(key));
