@@ -121,8 +121,9 @@ public sealed class ModifierSystem
     public static long[]? ProviderTicks, ProviderCalls;   // set by burger validate --profile: time and calls of each provider
     [ThreadStatic] private static Dictionary<(IScope, string), double>? _memo;
     /// <summary>Remembers every Sum on this thread until EndMemo; only for read-only passes during which no modifier or provider input changes.</summary>
-    public static void BeginMemo() => _memo = new();
-    public static void EndMemo() => _memo = null;
+    public static void BeginMemo() { var m = _memoSpare ?? new(); _memoSpare = null; m.Clear(); _memo = m; }
+    public static void EndMemo() { if (_memo != null) { _memo.Clear(); _memoSpare = _memo; } _memo = null; }
+    [ThreadStatic] private static Dictionary<(IScope, string), double>? _memoSpare;   // the last memo's table, emptied, for the next one (it grows to thousands of totals each settlement step)
     /// <summary>
     /// While the simulation runs a tick, a total asked for again is not added up again: the eleven providers cost a lot and the same totals are asked for thousands of times an hour.
     /// Each tick starts with an empty memo and anything that changes a modifier empties it, so what a tick sees does not depend on the memo; outside a tick (the interface, tests) there is none.

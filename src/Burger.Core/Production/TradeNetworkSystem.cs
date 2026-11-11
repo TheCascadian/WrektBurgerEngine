@@ -1066,7 +1066,7 @@ public sealed class TradeNetworkSystem
 
         var method = rules.ResolveConstructionMethod(_game, project.Building);
         if (!method.Active(_game.World.Date)) return false;
-        if (_game.Tech.Enabled && method.RequiresTech.Any(tech => !_game.Tech.Has(country, tech))) return false;
+        if (_game.Tech.Enabled && !_game.Tech.HasAll(country, method.RequiresTech)) return false;
         if (project.Building.Potential != null && !_game.Script.EvalTrigger(project.Building.Potential, _game.Context(project.State))) return false;
         return true;
     }

@@ -46,7 +46,7 @@ public class ProductionRules
     public virtual bool BuildingResearchAvailable(Game game, Country c, BuildingType building)
         => building.Active(game.World.Date)
             && game.Tech.CanUse(c, building.Definition)
-            && (!game.Tech.Enabled || building.RequiresTech.All(t => game.Tech.Has(c, t)));
+            && (!game.Tech.Enabled || game.Tech.HasAll(c, building.RequiresTech));
 
     /// <summary>Civilian factories left for construction after consumer goods.</summary>
     public virtual int CivilianForConstruction(Game game, Country c)
@@ -89,7 +89,7 @@ public class ProductionRules
     /// do not name one. Factory buildings retain the existing civilian-factory path.
     /// </summary>
     public virtual ConstructionMethod ResolveConstructionMethod(Game game, BuildingType b)
-        => _methods.GetOrAdd(b, x => BuildConstructionMethod(x));
+        => _methods.TryGetValue(b, out var method) ? method : _methods.GetOrAdd(b, x => BuildConstructionMethod(x)); // (the lambda is a new delegate on every call: only made on a miss)
 
     // Built from the building's data only, so one (read-only) method per building is shared by all callers.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<BuildingType, ConstructionMethod> _methods = new();
@@ -195,7 +195,7 @@ public class ProductionRules
             p.BlockedReason = "Construction method belongs to another era";
             return 0;
         }
-        if (game.Tech.Enabled && method.RequiresTech.Any(t => !game.Tech.Has(c, t)))
+        if (game.Tech.Enabled && !game.Tech.HasAll(c, method.RequiresTech))
         {
             p.BlockedReason = "Required construction technology is not known";
             return 0;
@@ -241,9 +241,9 @@ public class ProductionRules
         if (s.Owner != c) return "You must own the state";
         if (s.ControlledShare(c) < 0.5) return "Most of the state is occupied";
         if (!game.Tech.CanUse(c, b.Definition)) return "Required technology is not known";
-        if (game.Tech.Enabled && b.RequiresTech.Any(t => !game.Tech.Has(c, t))) return "Required technology is not known";
+        if (game.Tech.Enabled && !game.Tech.HasAll(c, b.RequiresTech)) return "Required technology is not known";
         var method = ResolveConstructionMethod(game, b);
-        if (game.Tech.Enabled && method.RequiresTech.Any(t => !game.Tech.Has(c, t))) return "Required construction technology is not known";
+        if (game.Tech.Enabled && !game.Tech.HasAll(c, method.RequiresTech)) return "Required construction technology is not known";
         int queued = c.Construction.Count(p => p.State == s && p.Building == b);
         int level = s.Buildings.GetValueOrDefault(b.Key) + queued;
         if (b.SharesSlots)
@@ -449,11 +449,23 @@ public sealed class ProductionSystem
     }
 
     /// <summary>Convert predecessor capacity into its researched modern counterpart one-for-one.</summary>
+    // The building types that upgrade into another, in the order of the data (kept while the data's building types are the same ones).
+    private readonly List<BuildingType> _upgrading = new();
+    private int _upgradingFrom = -1;
+
     private void UpgradeEraBuildings(Country c)
     {
+        var types = _game.Data.BuildingTypes;
+        if (_upgradingFrom != types.Count)
+        {
+            _upgrading.Clear();
+            foreach (var b in types.Values) if (!string.IsNullOrWhiteSpace(b.UpgradeTo)) _upgrading.Add(b);
+            _upgradingFrom = types.Count;
+        }
+        if (_upgrading.Count == 0) return;
         foreach (var state in c.OwnedStates)
         {
-            foreach (var predecessor in _game.Data.BuildingTypes.Values)
+            foreach (var predecessor in _upgrading)
             {
                 if (string.IsNullOrWhiteSpace(predecessor.UpgradeTo)) continue;
                 int oldLevel = state.Buildings.GetValueOrDefault(predecessor.Key);

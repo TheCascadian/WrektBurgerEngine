@@ -153,6 +153,14 @@ public sealed class TechSystem
 
     // ------------------------------------------------------------------------------------- questions
     public bool Has(Country c, string tech) => Known.TryGetValue(c, out var set) && set.Contains(tech);
+    /// <summary>Every one of these technologies is known (true for none); a loop, so the daily construction checks make no closure.</summary>
+    public bool HasAll(Country c, List<string> techs)
+    {
+        if (techs.Count == 0) return true;
+        if (!Known.TryGetValue(c, out var set)) return false;
+        foreach (var t in techs) if (!set.Contains(t)) return false;
+        return true;
+    }
     public int Count(Country c) => Known.TryGetValue(c, out var set) ? set.Count : 0;
     public IEnumerable<ResearchSlot> SlotsOf(Country c) => Research.TryGetValue(c, out var l) ? l : Enumerable.Empty<ResearchSlot>();
 
