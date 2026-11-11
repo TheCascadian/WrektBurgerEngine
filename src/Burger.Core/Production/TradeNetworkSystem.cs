@@ -395,6 +395,18 @@ public sealed class TradeNetworkSystem
         }
     }
 
+    /// <summary>As above, with the buyer's priority for each seller already worked out (in the sellers' order).</summary>
+    internal void PreparePriorities(Country buyer, List<Country> sellers, double[] priorities)
+    {
+        int row = _pairNumber[buyer.Index] * _pairSide;
+        for (int i = 0; i < sellers.Count; i++)
+        {
+            int at = row + _pairNumber[sellers[i].Index];
+            _prePriority[at] = priorities[i];
+            _preStamp[at] = _preStampNow;
+        }
+    }
+
     /// <summary>A market whose demand was worked out in advance (see CommoditySystem.SpreadWork).</summary>
     internal void AddPlannedMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
     {
@@ -864,20 +876,54 @@ public sealed class TradeNetworkSystem
         return demand + ConstructionInputDemand(country, state, commodity);
     }
 
+    private Country? _constructionGroupsOf;
+    private readonly Dictionary<State, List<ConstructionProject>> _constructionGroups = new();
+    private readonly List<List<ConstructionProject>> _constructionGroupPool = new();
+
+    /// <summary>While a country is set here, its construction demand reads its projects grouped by state, in queue order, instead of searching the whole queue for every state.
+    /// Only for a caller that changes no project before it sets null again.</summary>
+    internal void GroupConstruction(Country? country)
+    {
+        foreach (var list in _constructionGroups.Values) { list.Clear(); _constructionGroupPool.Add(list); }
+        _constructionGroups.Clear();
+        _constructionGroupsOf = country;
+        if (country == null) return;
+        foreach (var p in country.Construction)
+        {
+            if (p.State == null) continue;
+            if (!_constructionGroups.TryGetValue(p.State, out var list))
+            {
+                if (_constructionGroupPool.Count > 0) { list = _constructionGroupPool[^1]; _constructionGroupPool.RemoveAt(_constructionGroupPool.Count - 1); }
+                else list = new();
+                _constructionGroups[p.State] = list;
+            }
+            list.Add(p);
+        }
+    }
+
     /// <summary>Input demand from queued construction projects that can actually progress in the current state and era.</summary>
     private double ConstructionInputDemand(Country country, State state, string commodity)
     {
         if (!_game.Production.Enabled || !country.Exists || state.Owner != country || country.Construction.Count == 0)
             return 0;
-        // (a country builds in a few of its states: most states have no project)
-        bool any = false;
-        foreach (var p in country.Construction) if (p.State == state) { any = true; break; }
-        if (!any) return 0;
+        IEnumerable<ConstructionProject> projects;
+        if (ReferenceEquals(_constructionGroupsOf, country))
+        {
+            if (!_constructionGroups.TryGetValue(state, out var group)) return 0;
+            projects = group;
+        }
+        else
+        {
+            // (a country builds in a few of its states: most states have no project)
+            bool any = false;
+            foreach (var p in country.Construction) if (p.State == state) { any = true; break; }
+            if (!any) return 0;
+            projects = country.Construction.Where(p => p.State == state);
+        }
 
         double demand = 0;
         var rules = _game.Rules.Production;
-        foreach (var project in country.Construction
-                     .Where(p => p.State == state)
+        foreach (var project in projects
                      .OrderBy(p => p.Building?.Key ?? "", StringComparer.OrdinalIgnoreCase)
                      .ThenBy(p => p.Method ?? "", StringComparer.OrdinalIgnoreCase)
                      .ThenBy(p => p.Progress)

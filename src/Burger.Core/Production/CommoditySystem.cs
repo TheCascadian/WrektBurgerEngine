@@ -386,6 +386,22 @@ public sealed class CommoditySystem
     private const int SpreadHours = 640;    // a month has 720: there is room left if it runs late
     private enum SpreadStage { Plan, Priorities, Markets, Pairing, Finish }
     private IEnumerator<int>? _planSteps;
+    private Burger.Core.Diplomacy.DiplomacySystem.OpinionBatch? _opinionBatch;
+    private bool _opinionBatchReady;
+    private double[] _priorityRow = Array.Empty<double>();
+    private CommodityRules? _priorityRulesChecked;
+    private bool _priorityRulesPlain;
+
+    /// <summary>True when trade priorities are worked out as <see cref="CommodityRules.TradePriority"/> does from <see cref="Burger.Core.Diplomacy.DiplomacySystem.Opinion"/>, so a whole buyer's row can be worked out at once.</summary>
+    private bool BatchPriorities()
+    {
+        if (!ReferenceEquals(Rules, _priorityRulesChecked))
+        {
+            _priorityRulesChecked = Rules;
+            _priorityRulesPlain = Rules.GetType().GetMethod(nameof(CommodityRules.TradePriority), new[] { typeof(Game), typeof(Country), typeof(Country) })!.DeclaringType == typeof(CommodityRules);
+        }
+        return _priorityRulesPlain && _game.Diplomacy.CanBatchOpinions;
+    }
 
     private Dictionary<(Country, string), IReadOnlyList<IndustryRecipe>>? _planMethods;
 
@@ -433,6 +449,7 @@ public sealed class CommoditySystem
         long start = System.Diagnostics.Stopwatch.GetTimestamp();
         long limit = start + (long)(allowedMs * System.Diagnostics.Stopwatch.Frequency / 1000);
         var network = _game.TradeNetwork;
+        _opinionBatchReady = false;
         Rules.CacheOpen = true;
         network.MethodMemo = _planMethods ??= new();
         Burger.Core.Mechanics.ModifierSystem.BeginMemo();
@@ -462,15 +479,37 @@ public sealed class CommoditySystem
                         if (_planCursor >= _settlementCountries.Count)
                         {
                             network.BeginPreparedPriorities(_planBuyers, _planSellers);
+                            _opinionBatchReady = false;
                             _planStage = SpreadStage.Priorities;
                             _planCursor = 0;
                             continue;
                         }
+                        long tp = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
                         PlanCountry(_settlementCountries[_planCursor++], k);
+                        if (_game.Profiling) _game.ProfileElapsed("Settle.Plan", System.Diagnostics.Stopwatch.GetTimestamp() - tp);
                         break;
                     case SpreadStage.Priorities:
                         if (_planCursor >= _planBuyers.Count) { _planStage = SpreadStage.Markets; continue; }
-                        network.PreparePriorities(_planBuyers[_planCursor++], _planSellers, (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+                        long tq = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
+                        if (BatchPriorities())
+                        {
+                            // (the game does not change within this tick until the markets are filled: the sellers' side holds for every buyer)
+                            if (!_opinionBatchReady) { (_opinionBatch ??= new(_game)).Begin(_planSellers); _opinionBatchReady = true; }
+                            var buyer = _planBuyers[_planCursor++];
+                            if (_priorityRow.Length < _planSellers.Count) _priorityRow = new double[Math.Max(_planSellers.Count, _priorityRow.Length * 2)];
+                            _opinionBatch!.Row(buyer, _priorityRow);
+                            for (int i = 0; i < _planSellers.Count; i++)
+                            {
+                                // CommodityRules.TradePriority
+                                double p = _priorityRow[i];
+                                if (_opinionBatch.Allied[i]) p += 100;
+                                if (_opinionBatch.OverlordOrSubject[i]) p += 150;
+                                _priorityRow[i] = p;
+                            }
+                            network.PreparePriorities(buyer, _planSellers, _priorityRow);
+                        }
+                        else network.PreparePriorities(_planBuyers[_planCursor++], _planSellers, (seller, buyer) => Rules.TradePriority(_game, seller, buyer));
+                        if (_game.Profiling) _game.ProfileElapsed("Settle.Priorities", System.Diagnostics.Stopwatch.GetTimestamp() - tq);
                         break;
                     case SpreadStage.Markets:
                         Rules.CacheOpen = false;
@@ -542,17 +581,22 @@ public sealed class CommoditySystem
         }
         double demandWithoutMilitary = Math.Max(0, demand);
         bool buys = false, sells = false;
-        for (int si = 0; si < stateOutputs.Count; si++)
+        network.GroupConstruction(c);
+        try
         {
-            var (state, stateOutput) = stateOutputs[si];
-            double demandShare = population <= 0 ? 1.0 / Math.Max(1, stateOutputs.Count) : _statePops[si] / population;
-            double marketDemand = Math.Max(0, demandWithoutMilitary * demandShare + (state.Owner == null ? 0 : network.IndustryInputDemand(state.Owner, state, k.Key)));
-            double marketOutput = Math.Max(0, stateOutput), marketOpening = Math.Max(0, opening * demandShare);
-            _plannedStates.Add(new PlannedState(state, stateOutput, marketDemand, opening * demandShare));
-            double total = marketOutput + marketOpening;
-            if (total > marketDemand) sells = true;
-            else if (marketDemand > total) buys = true;
+            for (int si = 0; si < stateOutputs.Count; si++)
+            {
+                var (state, stateOutput) = stateOutputs[si];
+                double demandShare = population <= 0 ? 1.0 / Math.Max(1, stateOutputs.Count) : _statePops[si] / population;
+                double marketDemand = Math.Max(0, demandWithoutMilitary * demandShare + (state.Owner == null ? 0 : network.IndustryInputDemand(state.Owner, state, k.Key)));
+                double marketOutput = Math.Max(0, stateOutput), marketOpening = Math.Max(0, opening * demandShare);
+                _plannedStates.Add(new PlannedState(state, stateOutput, marketDemand, opening * demandShare));
+                double total = marketOutput + marketOpening;
+                if (total > marketDemand) sells = true;
+                else if (marketDemand > total) buys = true;
+            }
         }
+        finally { network.GroupConstruction(null); }
         if (buys && _planBuyerSet.Add(c)) _planBuyers.Add(c);
         if (sells && _planSellerSet.Add(c)) _planSellers.Add(c);
     }
