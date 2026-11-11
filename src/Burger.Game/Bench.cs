@@ -8,7 +8,8 @@ namespace Burger.Runtime;
 /// <summary>
 /// Scripted, repeatable render benchmark (--bench). Flies the camera along one continuous path of legs (no jumps or resets between them) with vsync and the frame cap off,
 /// so frame time is the real cost, and logs per-leg and overall frame percentiles plus one per-stage CPU breakdown for the whole pass.
-/// Variants (environment): BENCH_SKIP=map|sea|terrain|trees|ui (comma list), BURGER_NO_MSAA=1.
+/// Variants (environment): BENCH_SKIP=map|sea|terrain|trees|ui (comma list), BURGER_NO_MSAA=1,
+/// BENCH_MOUSE=center|sweep|none (where the hover pick looks; default center, so a run never depends on where the real cursor is).
 /// </summary>
 internal sealed class Bench
 {
@@ -33,15 +34,22 @@ internal sealed class Bench
         new("zoom-sweep",  15, 35,1500, 8),
     };
 
+    private static readonly string MouseMode = Environment.GetEnvironmentVariable("BENCH_MOUSE") is "sweep" or "none" ? Environment.GetEnvironmentVariable("BENCH_MOUSE")! : "center";
+
+    /// <summary>The map-local mouse position the hover pick uses this frame, or null for no hover.</summary>
+    public Vector2? HoverMouse { get; private set; }
+
     private const double Warmup = 1.0;
+    private const double HitchMs = 50.0; // frames this long are logged with their stage breakdown
     private int _leg;
     private double _t, _total;
     private double _lon0 = StartLon, _lat0 = StartLat, _d0 = StartDist;
     private bool _started;
+    private long _gpuLegStart;
     private readonly List<double> _frames = new();
     private readonly List<double> _all = new();
     private long _last = Stopwatch.GetTimestamp();
-    private readonly string _variant = $"skip=[{string.Join(',', Skip)}] msaa={(Environment.GetEnvironmentVariable("BURGER_NO_MSAA") == "1" ? "off" : "4x")}";
+    private readonly string _variant = $"skip=[{string.Join(',', Skip)}] msaa={(Environment.GetEnvironmentVariable("BURGER_NO_MSAA") == "1" ? "off" : "4x")} mouse={MouseMode}";
 
     /// <summary>Call once per playing frame before camera update. Returns true when the run is finished.</summary>
     public bool Step(CameraController cam, MapRenderer map, RenderPerf perf)
@@ -50,14 +58,21 @@ internal sealed class Bench
         double dt = (now - _last) / (double)Stopwatch.Frequency;
         _last = now;
 
-        if (!_started) { _started = true; perf.Clear(); dt = 0; }
+        if (!_started) { _started = true; dt = 0; }
+        bool warm = _total >= Warmup;
         _t += dt; _total += dt;
-        if (_total >= Warmup) { _frames.Add(dt * 1000.0); _all.Add(dt * 1000.0); }
+        if (!warm && _total >= Warmup) { perf.Clear(); _gpuLegStart = perf.Gpu?.Collected ?? 0; } // stage figures cover the same frames as the leg figures
+        if (warm)
+        {
+            _frames.Add(dt * 1000.0); _all.Add(dt * 1000.0);
+            if (dt * 1000.0 >= HitchMs) Log.Info($"BENCH hitch leg={Legs[_leg].Name} t={_total:0.00}s dt={dt * 1000.0:0.0}ms last {perf.LastFrame()}");
+        }
 
         var g = Legs[_leg];
         if (_t >= g.Seconds)
         {
             Report(g.Name, _frames);
+            if (perf.Gpu != null) { Log.Info($"BENCH {_variant} {g.Name} {perf.Gpu.Report(_gpuLegStart)}"); _gpuLegStart = perf.Gpu.Collected; }
             _frames.Clear();
             _lon0 = g.Lon; _lat0 = g.Lat; _d0 = g.Dist; _t -= g.Seconds;
             if (++_leg >= Legs.Length)
@@ -74,6 +89,15 @@ internal sealed class Bench
         double d = _d0 * Math.Pow(g.Dist / _d0, f); // geometric so zoom feels even
         float x = (float)((lon + 180) / 360 * map.WorldWidth), z = (float)((90 - lat) / 180 * map.WorldHeight);
         cam.LookAtFlat(x, z, (float)d);
+        // sweep: an ellipse around the center every 2 s, crossing provinces about every frame like a fast mouse
+        var mid = new Vector2(Viewport.W / 2f, Viewport.H / 2f);
+        double a = _total * Math.PI;
+        HoverMouse = MouseMode switch
+        {
+            "none" => null,
+            "sweep" => mid + new Vector2((float)Math.Cos(a) * mid.X * 0.6f, (float)Math.Sin(a) * mid.Y * 0.6f),
+            _ => mid,
+        };
         return false;
     }
 
