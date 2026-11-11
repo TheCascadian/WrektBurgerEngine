@@ -899,18 +899,46 @@ public sealed class TradeNetworkSystem
             }
             list.Add(p);
         }
+        foreach (var list in _constructionGroups.Values) SortConstruction(list);
     }
+
+    /// <summary>Sorts projects as OrderBy building key, then method (both ordinal ignoring case), then progress, then building cost, keeping queue order on ties, without allocating.</summary>
+    private static void SortConstruction(List<ConstructionProject> list)
+    {
+        for (int i = 1; i < list.Count; i++)
+        {
+            var x = list[i];
+            int j = i - 1;
+            while (j >= 0 && CompareConstruction(list[j], x) > 0) { list[j + 1] = list[j]; j--; }
+            list[j + 1] = x;
+        }
+    }
+
+    private static int CompareConstruction(ConstructionProject a, ConstructionProject b)
+    {
+        int c = StringComparer.OrdinalIgnoreCase.Compare(a.Building?.Key ?? "", b.Building?.Key ?? "");
+        if (c != 0) return c;
+        c = StringComparer.OrdinalIgnoreCase.Compare(a.Method ?? "", b.Method ?? "");
+        if (c != 0) return c;
+        c = a.Progress.CompareTo(b.Progress);
+        if (c != 0) return c;
+        return (a.Building?.Cost ?? 0).CompareTo(b.Building?.Cost ?? 0);
+    }
+
+    private readonly List<ConstructionProject> _constructionScratch = new();
+    private bool _constructionScratchBusy;
 
     /// <summary>Input demand from queued construction projects that can actually progress in the current state and era.</summary>
     private double ConstructionInputDemand(Country country, State state, string commodity)
     {
         if (!_game.Production.Enabled || !country.Exists || state.Owner != country || country.Construction.Count == 0)
             return 0;
-        IEnumerable<ConstructionProject> projects;
+        List<ConstructionProject> projects;
+        bool scratch = false;
         if (ReferenceEquals(_constructionGroupsOf, country))
         {
             if (!_constructionGroups.TryGetValue(state, out var group)) return 0;
-            projects = group;
+            projects = group;   // (sorted when grouped)
         }
         else
         {
@@ -918,23 +946,29 @@ public sealed class TradeNetworkSystem
             bool any = false;
             foreach (var p in country.Construction) if (p.State == state) { any = true; break; }
             if (!any) return 0;
-            projects = country.Construction.Where(p => p.State == state);
+            scratch = !_constructionScratchBusy;
+            projects = scratch ? _constructionScratch : new List<ConstructionProject>();
+            projects.Clear();
+            foreach (var p in country.Construction) if (p.State == state) projects.Add(p);
+            SortConstruction(projects);
         }
 
         double demand = 0;
         var rules = _game.Rules.Production;
-        foreach (var project in projects
-                     .OrderBy(p => p.Building?.Key ?? "", StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(p => p.Method ?? "", StringComparer.OrdinalIgnoreCase)
-                     .ThenBy(p => p.Progress)
-                     .ThenBy(p => p.Building?.Cost ?? 0))
+        if (scratch) _constructionScratchBusy = true;
+        try
         {
-            if (!ConstructionProjectEligible(country, project, rules)) continue;
-            var method = rules.ResolveConstructionMethod(_game, project.Building);
-            if (!method.Inputs.TryGetValue(commodity, out var amount) || !double.IsFinite(amount) || amount <= 0)
-                continue;
-            demand += amount;
+            for (int i = 0; i < projects.Count; i++)
+            {
+                var project = projects[i];
+                if (!ConstructionProjectEligible(country, project, rules)) continue;
+                var method = rules.ResolveConstructionMethod(_game, project.Building);
+                if (!method.Inputs.TryGetValue(commodity, out var amount) || !double.IsFinite(amount) || amount <= 0)
+                    continue;
+                demand += amount;
+            }
         }
+        finally { if (scratch) { _constructionScratchBusy = false; projects.Clear(); } }
         return demand;
     }
 
