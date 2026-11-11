@@ -694,7 +694,12 @@ public sealed partial class PoliticsSystem
         lock (_mods)
         {
             long stamp = _game.World.Date.TotalHours;
-            if (stamp != _modsStamp) { _mods.Clear(); _modsDirty.Clear(); _stabilityDone.Clear(); _modsStamp = stamp; }
+            if (stamp != _modsStamp)
+            {
+                // (the hour's dictionaries are used again for the next hour's: none is held outside this lock)
+                foreach (var old in _mods.Values) { old.Clear(); _modsPool.Push(old); }
+                _mods.Clear(); _modsDirty.Clear(); _stabilityDone.Clear(); _modsStamp = stamp;
+            }
             if (_modsDirty.Remove(c) || !_mods.TryGetValue(c, out var m))
             {
                 _mods[c] = m = ComputeModifiers(c);
@@ -768,9 +773,11 @@ public sealed partial class PoliticsSystem
     private const string StabilityKey = "stability_target";
     private readonly HashSet<Country> _stabilityDone = new();
 
+    private readonly Stack<Dictionary<string, double>> _modsPool = new();
+
     private Dictionary<string, double> ComputeModifiers(Country c)
     {
-        var m = new Dictionary<string, double>(32, StringComparer.OrdinalIgnoreCase);
+        var m = _modsPool.Count > 0 ? _modsPool.Pop() : new Dictionary<string, double>(32, StringComparer.OrdinalIgnoreCase);
         var p = Of(c);
         void Add(string key, double value) => m[key] = m.GetValueOrDefault(key) + value;
         if (Ideology(p.Ruling) is { } i) foreach (var kv in i.Modifier) Add(kv.Key, kv.Value);

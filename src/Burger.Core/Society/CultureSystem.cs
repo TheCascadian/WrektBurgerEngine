@@ -106,6 +106,15 @@ public sealed class CultureSystem
     public Dictionary<string, double> Shares(Country c)
     {
         var res = new Dictionary<string, double>(8, StringComparer.OrdinalIgnoreCase);
+        FillShares(c, res);
+        return res;
+    }
+
+    private readonly List<string> _shareKeyScratch = new();
+
+    /// <summary>Fills an empty dictionary with <see cref="Shares"/>.</summary>
+    private void FillShares(Country c, Dictionary<string, double> res)
+    {
         double total = 0;
         // (asked for each country every hour: its states stay sorted until they change, and the groups of one culture, which follow each other, are added up without looking it up for each)
         int owned = _game.World.OwnershipVersion;
@@ -133,10 +142,12 @@ public sealed class CultureSystem
         {
             var own = PrimaryCulture(c);
             if (own != null) res[own] = 1;
-            return res;
+            return;
         }
-        foreach (var k in res.Keys.ToList()) res[k] /= total;
-        return res;
+        _shareKeyScratch.Clear();
+        _shareKeyScratch.AddRange(res.Keys);
+        foreach (var k in _shareKeyScratch) res[k] /= total;
+        _shareKeyScratch.Clear();
     }
 
     /// <summary>What the culture gives alone: the modifiers of its traditions and innovations at their weights.</summary>
@@ -164,10 +175,31 @@ public sealed class CultureSystem
         }
     }
 
+    // (worked out for each country every hour: the dictionaries of the hour before are used again)
+    private readonly Stack<Dictionary<string, double>> _modsPool = new();
+    private readonly Dictionary<string, double> _sharesScratch = new(8, StringComparer.OrdinalIgnoreCase);
+    private string[] _cultureOrder = new string[8];
+
+    private void ClearMods()
+    {
+        foreach (var m in _mods.Values) { m.Clear(); _modsPool.Push(m); }
+        _mods.Clear();
+    }
+
     private Dictionary<string, double> ComputeFor(Country c)
     {
-        var m = new Dictionary<string, double>(24, StringComparer.OrdinalIgnoreCase);
-        foreach (var (culture, share) in Shares(c).OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => (kv.Key, kv.Value))) SocietyData.Add(m, CultureMods(culture), share);
+        var m = _modsPool.Count > 0 ? _modsPool.Pop() : new Dictionary<string, double>(24, StringComparer.OrdinalIgnoreCase);
+        var shares = _sharesScratch;
+        shares.Clear();
+        FillShares(c, shares);
+        // by culture key, ordinal (the keys differ even ignoring case, so this is the one order)
+        int n = shares.Count;
+        if (_cultureOrder.Length < n) _cultureOrder = new string[Math.Max(n, _cultureOrder.Length * 2)];
+        shares.Keys.CopyTo(_cultureOrder, 0);
+        Array.Sort(_cultureOrder, 0, n, StringComparer.Ordinal);
+        for (int i = 0; i < n; i++) SocietyData.Add(m, CultureMods(_cultureOrder[i]), shares[_cultureOrder[i]]);
+        Array.Clear(_cultureOrder, 0, n);
+        shares.Clear();
         return m;
     }
 
@@ -184,7 +216,7 @@ public sealed class CultureSystem
         }
         if (!_tradKeys.Contains(key)) return 0;
         long now = _game.World.Date.TotalHours;
-        if (now != _modsHour) { _mods.Clear(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
+        if (now != _modsHour) { ClearMods(); _modsHour = now; } // per hour, so a reloaded game sees what the original did
         if (!_mods.TryGetValue(c, out var m)) _mods[c] = m = ComputeFor(c);
         return m.GetValueOrDefault(key);
     }
@@ -193,7 +225,7 @@ public sealed class CultureSystem
     public void MonthlyTick()
     {
         if (!Enabled) return;
-        _mods.Clear();
+        ClearMods();
         TrackMixing();
     }
 
@@ -258,7 +290,7 @@ public sealed class CultureSystem
             if (p.Culture.Equals(a.Key, StringComparison.OrdinalIgnoreCase) || p.Culture.Equals(b.Key, StringComparison.OrdinalIgnoreCase)) p.Culture = hybrid.Key;
         pop.InvalidateMajorities();
         pop.Invalidate();
-        _mods.Clear(); _cultureMods.Clear();
+        ClearMods(); _cultureMods.Clear();
         foreach (var k in _mixMonths.Keys.Where(k => k.StartsWith(s.Key + "|", StringComparison.OrdinalIgnoreCase)).ToList()) _mixMonths.Remove(k);
         _game.NotifyPlayer(isNew ? $"A new culture is born in {s.DisplayName}: the {hybrid.Name}." : $"{hybrid.Name} spreads in {s.DisplayName}.", NotificationKind.Good, s.Owner);
         _game.Events.FireOnAction("on_culture_evolved", s.Owner, new Dictionary<string, IScope?>(StringComparer.OrdinalIgnoreCase) { ["state"] = s });
@@ -376,7 +408,7 @@ public sealed class CultureSystem
         foreach (var key in Evolved)
             if (pop.CultureByKey.Remove(key, out var def)) def.Group.Cultures.Remove(def);
         Evolved.Clear();
-        _state.Clear(); _mixMonths.Clear(); _mods.Clear(); _cultureMods.Clear();
+        _state.Clear(); _mixMonths.Clear(); ClearMods(); _cultureMods.Clear();
     }
 
     /// <summary>Hash of the culture state for multiplayer checks.</summary>
