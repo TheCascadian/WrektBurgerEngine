@@ -228,11 +228,15 @@ public sealed class SuccessionSystem
         return Rules.RegencyStability(_game);
     }
 
-    public void MonthlyTick()
+    public void MonthlyTick() => MonthlyTickPart(0, 1);
+
+    /// <summary>The monthly work for one part of the countries (by their number): a single player game does a 24th of them in each hour of the day instead of all in one tick.</summary>
+    public void MonthlyTickPart(int part, int parts)
     {
         if (!Enabled) return;
-        foreach (var c in _game.World.Countries.Where(c => c.Exists))
+        foreach (var c in _game.World.Countries)
         {
+            if (!c.Exists || (parts > 1 && c.Index % parts != part)) continue;
             if (c.Ruler is { Alive: true } r)
             {
                 if (c.Regent != null && (!c.Regent.Alive || Age(r) >= Rules.RegencyAge(_game)))

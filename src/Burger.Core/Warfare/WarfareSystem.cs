@@ -301,6 +301,52 @@ public sealed class WarfareSystem
         return r.Region[to.Index] == a;               // (a region is flooded whole, so a place not in it cannot be walked to)
     }
 
+    // per country with transports: the places a search that did not arrive went through, which is every place that can be reached from where it began. A later search
+    // from one of them to a place not among them cannot arrive either, and is not made. (Such a search goes through ten thousand locations, and a country at war made
+    // one for each division with a post behind a closed border, every three days: up to two seconds in one tick twenty years into a game.) Kept only within the hour
+    // and while no location changes controller and no war begins or ends, so the answer is the one the search would give.
+    private sealed class SeaReachInfo { public long Hour = long.MinValue; public int Controllers, Wars, Ownership; public readonly List<ulong[]> Reached = new(); public readonly Stack<ulong[]> Free = new(); }
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<Country, SeaReachInfo> _seaReach = new();
+
+    private bool SeaReachCurrent(SeaReachInfo r, int n)
+    {
+        long hour = _game.World.Date.TotalHours;
+        int controllers = Location.ControllerVersion, wars = _game.World.Wars.Count, ownership = _game.World.OwnershipVersion, words = (n + 63) >> 6;
+        if (r.Hour == hour && r.Controllers == controllers && r.Wars == wars && r.Ownership == ownership && (r.Reached.Count == 0 || r.Reached[0].Length == words)) return true;
+        foreach (var set in r.Reached) if (set.Length == words) r.Free.Push(set);
+        r.Reached.Clear();
+        r.Hour = hour; r.Controllers = controllers; r.Wars = wars; r.Ownership = ownership;
+        return false;
+    }
+
+    /// <summary>True if a search of this hour that did not arrive went through <paramref name="from"/> and not through <paramref name="to"/>.</summary>
+    private bool SeaUnreachable(Country c, Location from, Location to)
+    {
+        if (!_seaReach.TryGetValue(c, out var r)) return false;
+        lock (r)
+        {
+            if (!SeaReachCurrent(r, _game.World.Locations.Count)) return false;
+            foreach (var set in r.Reached)
+                if ((set[from.Index >> 6] & (1UL << (from.Index & 63))) != 0 && (set[to.Index >> 6] & (1UL << (to.Index & 63))) == 0) return true;
+            return false;
+        }
+    }
+
+    private void NoteSeaReach(Country c, int[] touched, int generation)
+    {
+        var r = _seaReach.GetOrAdd(c, _ => new SeaReachInfo());
+        lock (r)
+        {
+            int n = touched.Length, words = (n + 63) >> 6;
+            SeaReachCurrent(r, n);
+            if (r.Reached.Count >= 8) return;
+            var set = r.Free.Count > 0 && r.Free.Peek().Length == words ? r.Free.Pop() : new ulong[words];
+            Array.Clear(set);
+            for (int i = 0; i < n; i++) if (touched[i] == generation) set[i >> 6] |= 1UL << (i & 63);
+            r.Reached.Add(set);
+        }
+    }
+
     /// <summary>A* path through locations the country may enter. Null if unreachable.</summary>
     public List<Location>? FindPath(Country c, Location from, Location to, double speed = 4)
     {
@@ -325,6 +371,7 @@ public sealed class WarfareSystem
             _game.P("Path.Reach", () => reach = Reachable(c, from, to));
             if (!reach) { if (_game.Profiling) _game.ProfileCall("Path.Rejected#"); return null; } // walled off by land we may not enter
         }
+        if (sea && SeaUnreachable(c, from, to)) { if (_game.Profiling) _game.ProfileCall("Path.Rejected#"); return null; }
         int n0 = _game.World.Locations.Count;
         var pf = Pf;
         if (pf.Cost.Length != n0)
@@ -384,7 +431,12 @@ public sealed class WarfareSystem
                 open.Enqueue((n, nc), nc + Math.Sqrt(hx * hx + hy * hy) / speed * heuristic);
             }
         }
-        if (!found && _pfGen[to.Index] != gen) return null;
+        if (!found && _pfGen[to.Index] != gen)
+        {
+            // (it went through everything it could reach, the queue is empty: see SeaReachInfo)
+            if (sea && open.Count == 0) NoteSeaReach(c, _pfGen, gen);
+            return null;
+        }
         var locs = _game.World.Locations;
         var path = new List<Location>();
         for (int li = to.Index; li != from.Index && li >= 0; li = _pfCame[li]) path.Add(locs[li]);
@@ -986,14 +1038,17 @@ public sealed class WarfareSystem
     }
     private readonly Dictionary<(War, Country), BorderCacheEntry> _borderCache = new();
 
-    private readonly Dictionary<(Country, Country), (long Stamp, List<(Location Own, Location Enemy)> Pairs)> _peaceBorderCache = new();
+    private readonly Dictionary<(Country, Country), (long Stamp, int Ownership, List<(Location Own, Location Enemy)> Pairs)> _peaceBorderCache = new();
 
     /// <summary>Border pairs between a country's land and another country's land (fronts at peace).</summary>
     private List<(Location Own, Location Enemy)> PeaceBorderPairs(Country owner, Country other)
     {
+        // Kept until one of the two gains or loses control of a location, or states change owner. (It was dropped whenever any location of the world changed
+        // controller: with fifty wars going on that is all the time, and every army holding a peaceful border went through all its country's land again each day.)
         long stamp = Location.ControllerVersion;
-        if (_peaceBorderCache.TryGetValue((owner, other), out var c) && c.Stamp == stamp) return c.Pairs;
-        if (_peaceBorderCache.Count > 256) _peaceBorderCache.Clear();
+        int ownership = _game.World.OwnershipVersion;
+        if (_peaceBorderCache.TryGetValue((owner, other), out var c) && c.Ownership == ownership && owner.ControlVersion <= c.Stamp && other.ControlVersion <= c.Stamp) return c.Pairs;
+        if (_peaceBorderCache.Count > 4096) _peaceBorderCache.Clear();
         var pairs = new List<(Location Own, Location Enemy)>();
         foreach (var st in owner.OwnedStates)
             foreach (var l in st.Locations)
@@ -1002,7 +1057,7 @@ public sealed class WarfareSystem
                 foreach (var adj in l.Neighbors)
                     if (adj.Kind != AdjacencyKind.Sea && adj.To.IsPassable && adj.To.Controller == other) pairs.Add((l, adj.To));
             }
-        _peaceBorderCache[(owner, other)] = (stamp, pairs);
+        _peaceBorderCache[(owner, other)] = (stamp, ownership, pairs);
         return pairs;
     }
 

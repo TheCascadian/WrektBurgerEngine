@@ -763,7 +763,8 @@ public sealed class Game
                 if (hour == 9 && Features.Has(F.Characters)) P("Characters.MonthlyTick", () => Characters.MonthlyTick());
                 if (hour == 10 && Features.Has(F.Intrigue)) P("Intrigue.MonthlyTick", () => Intrigue.MonthlyTick());
                 if (hour == 11 && Features.Has(F.Titles)) P("Titles.MonthlyTick", () => Titles.MonthlyTick());
-                if (hour == 12 && Features.Has(F.Succession)) P("Succession.MonthlyTick", () => Succession.MonthlyTick());
+                // (who the heir is, for every country: 90 ms in one tick twenty years into a game. A single player game asks it for a 24th of the countries each hour.)
+                if (Features.Has(F.Succession) && (RelaxedTiming || hour == 12)) P("Succession.MonthlyTick", () => { if (RelaxedTiming) Succession.MonthlyTickPart(hour, 24); else Succession.MonthlyTick(); });
                 if (hour == 13 && Features.Has(F.RaisingTroops)) P("Raising.MonthlyTick", () => Raising.MonthlyTick());
                 if (hour == 14 && Features.Has(F.ArmyOrganization)) P("ArmyOrg.MonthlyTick", () => ArmyOrg.MonthlyTick());
                 if (hour == 15 && Features.Has(F.Dynasties)) P("Dynasties.MonthlyTick", () => Dynasties.MonthlyTick());

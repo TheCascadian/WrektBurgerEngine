@@ -38,7 +38,10 @@ public sealed class TradeRoute
     public TradeRouteKind Kind;
     public double DistanceKm;
     public double Capacity;
-    public List<State> Path = new();
+    /// <summary>The states the route goes through, from the seller's to the buyer's. Worked out when asked for: the settlement needs only its length and capacity.</summary>
+    public List<State> Path { get => _path ??= PathSource?.Invoke(From, To) ?? new List<State> { From, To }; set => _path = value; }
+    private List<State>? _path;
+    internal Func<State, State, List<State>>? PathSource;
     private string? _key;
     public string Key => _key ??= $"{From.Index}>{To.Index}:{Kind}";
 }
@@ -108,7 +111,29 @@ public sealed class AiEconomicPlan
 public sealed class TradeNetworkSystem
 {
     private readonly Game _game;
-    private readonly Dictionary<long, TradeRoute> _routes = new();
+    // The routes of the month, a small table for each destination state: a buyer asks for the routes from its two dozen sellers one after the other, and they are
+    // found next to each other. (One table of all pairs, a quarter of a million a month, was a third of the settlement's time twenty years into a game: every lookup
+    // somewhere else in memory.) The list keeps them in the order they were made.
+    private Dictionary<int, TradeRoute>?[] _routesTo = Array.Empty<Dictionary<int, TradeRoute>?>();
+    private readonly List<int> _routesTouched = new();
+    private readonly List<TradeRoute> _routeList = new();
+
+    private void ClearRoutes()
+    {
+        foreach (int to in _routesTouched) _routesTo[to]!.Clear();
+        _routesTouched.Clear();
+        _routeList.Clear();
+    }
+
+    private TradeRoute Keep(TradeRoute route)
+    {
+        var table = _routesTo[route.To.Index];
+        if (table == null) _routesTo[route.To.Index] = table = new Dictionary<int, TradeRoute>();
+        if (table.Count == 0) _routesTouched.Add(route.To.Index);
+        table[route.From.Index] = route;
+        _routeList.Add(route);
+        return route;
+    }
     private int _routesMapVersion = -1;
     private bool _routeMissed;
     private long _landTopology;
@@ -171,20 +196,29 @@ public sealed class TradeNetworkSystem
     private int[][] _landEdgeTo = Array.Empty<int[]>();
     private double[][] _landEdgeKm = Array.Empty<double[]>();
     private int[] _landQueue = Array.Empty<int>();
-    private readonly Dictionary<State, ushort[]> _landPaths = new();
+    private ushort[]?[] _landTrees = Array.Empty<ushort[]?>();   // by the origin's state number
+    private readonly List<int> _landTreeOrigins = new();
     /// <summary>The arrays of dropped land trees, filled again by the next month's origins instead of new ones (a tree is a whole world wide).</summary>
     private readonly Stack<ushort[]> _landTreePool = new();
 
     private void DropLandTrees()
     {
-        if (_landPaths.Count == 0) return;
+        if (_landTreeOrigins.Count == 0) return;
         int n = _landEdgeTo.Length;
         if (_landTreePool.Count > 0 && _landTreePool.Peek().Length != n) _landTreePool.Clear();
-        foreach (var tree in _landPaths.Values)
+        foreach (int origin in _landTreeOrigins)
+        {
+            var tree = _landTrees[origin]!;
+            _landTrees[origin] = null;
             if (tree.Length == n) _landTreePool.Push(tree);
-        _landPaths.Clear();
+        }
+        _landTreeOrigins.Clear();
     }
-    private readonly Dictionary<long, (TradeRouteKind Kind, List<State> Path, int[] Stops, double Distance)> _routeWays = new();
+    // (The way between each pair of states was kept here for the whole game: millions of them after a few years, gigabytes after thirty, and every lookup slower as it grew.
+    // A way is read off the land tree of its origin instead, which is made once a month.)
+    private int[] _wayStops = new int[64];
+    private readonly Dictionary<State, bool> _coastal = new();
+    private Func<State, State, List<State>>? _landPathOf;
     private int _landEdgesVersion = -1, _landTopologyDay = int.MinValue;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
     private readonly Dictionary<TradeAgreement, double> _agreementUse = new();
@@ -216,8 +250,8 @@ public sealed class TradeNetworkSystem
     }
 
     public bool Enabled => _game.Features.Has(FeatureSet.Commodities) && _game.Commodities.Defs.Count > 0;
-    public IReadOnlyList<TradeRoute> ActiveRoutes => _routes.Values.ToList();
-    public IReadOnlyList<TradeRoute> BlockadedRoutes => _routes.Values
+    public IReadOnlyList<TradeRoute> ActiveRoutes => _routeList.ToList();
+    public IReadOnlyList<TradeRoute> BlockadedRoutes => _routeList
         .Where(r => r.Kind == TradeRouteKind.Sea && IsRouteBlocked(r)).ToList();
     public IReadOnlyCollection<string> Blockades => _blockades.ToList();
     public int LastMonthTransactions => History.Count(t => t.Date.Year == _game.World.Date.Year && t.Date.Month == _game.World.Date.Month);
@@ -275,8 +309,8 @@ public sealed class TradeNetworkSystem
         _landEdgesVersion = -1;
         _landEdgeTo = Array.Empty<int[]>();
         DropLandTrees();
-        _routeWays.Clear();
-        _routes.Clear();
+        _coastal.Clear();
+        ClearRoutes();
         _routeUse.Clear();
         _agreementUse.Clear();
         _current.Clear();
@@ -289,7 +323,7 @@ public sealed class TradeNetworkSystem
         _landEdgesVersion = -1;
         _landEdgeTo = Array.Empty<int[]>();
         DropLandTrees();
-        _routeWays.Clear();
+        _coastal.Clear();
         Markets.Clear();
         _marketsShape++;
         Policies.Clear();
@@ -298,7 +332,7 @@ public sealed class TradeNetworkSystem
         Workforce.Clear();
         Plans.Clear();
         SelectedMethods.Clear();
-        _routes.Clear();
+        ClearRoutes();
         _routeUse.Clear();
         _current.Clear();
         _agreementUse.Clear();
@@ -355,8 +389,10 @@ public sealed class TradeNetworkSystem
         // Capacity depends on buildings and service satisfaction. Rebuild economic
         // routes each month so a warm cache and a freshly loaded game agree.
         // The topology/path caches remain reusable until the map changes.
-        _routes.Clear();
-        DropLandTrees();
+        ClearRoutes();
+        // (the land trees depend only on which states border which, so they are kept from month to month: two bytes a state for each origin, 22 MB for a world of
+        // 3300 states. Only a very large world, where they would pass a quarter of a gigabyte, makes them again each month.)
+        if ((long)_landTreeOrigins.Count * _landEdgeTo.Length * 2 > 256L << 20) DropLandTrees();
         RecycleMarkets();
         Workforce.Clear();
         _routeUse.Clear();
@@ -1156,52 +1192,62 @@ public sealed class TradeNetworkSystem
             _routesMapVersion = _game.MapVersion;
             // In a war the map changes all the time, and every route of the world would be worked out again each time. The live clock keeps them for the month, unless the states themselves changed.
             if (_game.Commodities.SpreadWork) EnsureLandEdges();
-            else _routes.Clear();
+            else ClearRoutes();
         }
-        long key = ((long)from.Index << 32) | (uint)to.Index;
-        if (_routes.TryGetValue(key, out var cached)) return cached;
+        if (_routesTo.Length < _game.World.States.Count) { ClearRoutes(); _routesTo = new Dictionary<int, TradeRoute>?[_game.World.States.Count]; }
+        if (_routesTo[to.Index] is { } known && known.TryGetValue(from.Index, out var cached)) return cached;
         _routeMissed = true;
         EnsureLandEdges();
-        // the way between two states only changes with the map's states; what changes each month is its capacity
-        if (_routeWays.TryGetValue(key, out var way))
-            return _routes[key] = new TradeRoute { From = from, To = to, Kind = way.Kind, DistanceKm = way.Distance, Capacity = RouteCapacity(way.Kind, way.Stops, way.Distance), Path = way.Path };
         var tree = LandTree(from);
         if (tree[to.Index] != NotReached)
         {
-            // the way back through the parents; its length is added up from the origin outwards, as the search went
-            // (counted first, so the list is made at its size and filled from the end instead of grown and reversed)
-            var states = _game.World.States;
+            // the way back through the parents, written into a reused array from its end; its length is added up from the origin outwards, as the search went
             int length = 1;
             for (int cursor = to.Index; cursor != from.Index; cursor = tree[cursor]) length++;
-            var wayStates = new State[length];
-            for (int cursor = to.Index, at = length - 1; ; cursor = tree[cursor], at--) { wayStates[at] = states[cursor]; if (cursor == from.Index) break; }
-            var path = new List<State>(wayStates);
+            if (_wayStops.Length < length) _wayStops = new int[Math.Max(length, _wayStops.Length * 2)];
+            var stops = _wayStops;
+            for (int cursor = to.Index, at = length - 1; ; cursor = tree[cursor], at--) { stops[at] = cursor; if (cursor == from.Index) break; }
             double distance = 0;
-            for (int k = 0; k + 1 < path.Count; k++)
+            for (int k = 0; k + 1 < length; k++)
             {
-                int next = path[k + 1].Index;
-                var edges = _landEdgeTo[path[k].Index];
+                int next = stops[k + 1];
+                var edges = _landEdgeTo[stops[k]];
                 for (int e = 0; e < edges.Length; e++)
-                    if (edges[e] == next) { distance += _landEdgeKm[path[k].Index][e]; break; }
+                    if (edges[e] == next) { distance += _landEdgeKm[stops[k]][e]; break; }
             }
-            var stops = StopsOf(path);
-            _routeWays[key] = (TradeRouteKind.Land, path, stops, distance);
-            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Land, stops, distance), Path = path };
+            return Keep(new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Land, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Land, stops, length, distance), PathSource = _landPathOf ??= LandPathOf });
         }
-        bool coastal = from.Locations.Any(l => l.IsCoastal && l.IsLand) && to.Locations.Any(l => l.IsCoastal && l.IsLand);
-        if (coastal)
+        var ends = _wayStops;
+        ends[0] = from.Index; ends[1] = to.Index;
+        if (IsCoastal(from) && IsCoastal(to))
         {
             double distance = CentreDistance(from, to);
-            var seaPath = new List<State> { from, to };
-            var seaStops = StopsOf(seaPath);
-            _routeWays[key] = (TradeRouteKind.Sea, seaPath, seaStops, distance);
-            return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Sea, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Sea, seaStops, distance), Path = seaPath };
+            return Keep(new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Sea, DistanceKm = distance, Capacity = RouteCapacity(TradeRouteKind.Sea, ends, 2, distance) });
         }
         double caravanDistance = Math.Max(100, CentreDistance(from, to));
-        var caravanPath = new List<State> { from, to };
-        var caravanStops = StopsOf(caravanPath);
-        _routeWays[key] = (TradeRouteKind.Caravan, caravanPath, caravanStops, caravanDistance);
-        return _routes[key] = new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Caravan, DistanceKm = caravanDistance, Capacity = RouteCapacity(TradeRouteKind.Caravan, caravanStops, caravanDistance), Path = caravanPath };
+        return Keep(new TradeRoute { From = from, To = to, Kind = TradeRouteKind.Caravan, DistanceKm = caravanDistance, Capacity = RouteCapacity(TradeRouteKind.Caravan, ends, 2, caravanDistance) });
+    }
+
+    private bool IsCoastal(State s)
+    {
+        if (_coastal.TryGetValue(s, out bool known)) return known;
+        bool coastal = false;
+        foreach (var l in s.Locations) if (l.IsCoastal && l.IsLand) { coastal = true; break; }
+        return _coastal[s] = coastal;
+    }
+
+    /// <summary>The states of a land route in order (for <see cref="TradeRoute.Path"/>).</summary>
+    private List<State> LandPathOf(State from, State to)
+    {
+        EnsureLandEdges();
+        var states = _game.World.States;
+        if (from.Index >= _landEdgeTo.Length || to.Index >= _landEdgeTo.Length) return new List<State> { from, to };
+        var tree = LandTree(from);
+        if (tree[to.Index] == NotReached) return new List<State> { from, to };
+        var path = new List<State>();
+        for (int cursor = to.Index; ; cursor = tree[cursor]) { path.Add(states[cursor]); if (cursor == from.Index) break; }
+        path.Reverse();
+        return path;
     }
 
     private void EnsureLandEdges()
@@ -1222,8 +1268,8 @@ public sealed class TradeNetworkSystem
         }
         if (topology == _landTopology && _landEdgeTo.Length == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
         _landTopology = topology;
-        _routes.Clear();
-        _routeWays.Clear();
+        ClearRoutes();
+        _coastal.Clear();
         _landCentres.Clear();
         DropLandTrees();
         int stateCount = _game.World.States.Count;
@@ -1254,14 +1300,15 @@ public sealed class TradeNetworkSystem
     private const ushort NotReached = ushort.MaxValue;
 
     /// <summary>
-    /// The breadth-first tree of the land from one state: for each state the one it was reached from. A whole world in two bytes a state; the trees of a month's origins are dropped
-    /// when the next month starts (the ways they gave are kept in <see cref="_routeWays"/>, so a later month rarely needs one).
+    /// The breadth-first tree of the land from one state: for each state the one it was reached from. A whole world in two bytes a state; the trees are kept until the map.s states change
+    /// when the next month starts (a way is read off its origin's tree each month).
     /// </summary>
     private ushort[] LandTree(State from)
     {
-        if (_landPaths.TryGetValue(from, out var tree)) return tree;
-        long bfs0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
         int n = _landEdgeTo.Length;
+        if (_landTrees.Length < n) { DropLandTrees(); _landTrees = new ushort[]?[n]; }
+        if (_landTrees[from.Index] is { } tree) return tree;
+        long bfs0 = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
         tree = _landTreePool.Count > 0 && _landTreePool.Peek().Length == n ? _landTreePool.Pop() : new ushort[n];
         Array.Fill(tree, NotReached);
         if (_landQueue.Length < n) _landQueue = new int[n];
@@ -1282,16 +1329,10 @@ public sealed class TradeNetworkSystem
                 queue[tail++] = next;
             }
         }
-        _landPaths[from] = tree;
+        _landTrees[from.Index] = tree;
+        _landTreeOrigins.Add(from.Index);
         if (_game.Profiling) _game.ProfileElapsed("Trade.BFS", System.Diagnostics.Stopwatch.GetTimestamp() - bfs0);
         return tree;
-    }
-
-    private static int[] StopsOf(List<State> path)
-    {
-        var stops = new int[path.Count];
-        for (int i = 0; i < stops.Length; i++) stops[i] = path[i].Index;
-        return stops;
     }
 
     // A war changes the map all the time, and every change makes all routes be worked out again (thousands for a commodity, each along tens of states): what a route's capacity is made of
@@ -1302,7 +1343,7 @@ public sealed class TradeNetworkSystem
     private int _capStamp, _capWalk;
     private bool _capHold;
 
-    private double RouteCapacity(TradeRouteKind kind, int[] stops, double distance)
+    private double RouteCapacity(TradeRouteKind kind, int[] stops, int stopCount, double distance)
     {
         double baseCapacity = _game.Data.Defines.Get(kind == TradeRouteKind.Sea ? "trade_sea_capacity" : kind == TradeRouteKind.Caravan ? "trade_caravan_capacity" : "trade_land_capacity", kind == TradeRouteKind.Sea ? 1500 : kind == TradeRouteKind.Caravan ? 400 : 900);
         var states = _game.World.States;
@@ -1322,8 +1363,9 @@ public sealed class TradeNetworkSystem
         int walk = ++_capWalk;
         int infrastructure = 0, markets = 0, ownerCount = 0;
         double satisfiedSum = 0;
-        foreach (int i in stops)
+        for (int at = 0; at < stopCount; at++)
         {
+            int i = stops[at];
             if (_capStateStamp[i] != stamp)
             {
                 var s = states[i];
@@ -1382,20 +1424,43 @@ public sealed class TradeNetworkSystem
         if (seller.Vars.Flags.Count > 0 && seller.Vars.HasFlag("blockade_" + buyer.Tag) || buyer.Vars.Flags.Count > 0 && buyer.Vars.HasFlag("blockade_" + seller.Tag)) return true;
         if (!_game.Navy.Enabled) return false;
         // (only a fleet at war with one of the two can block: usually there is none, and looking at each port and sea for it is dear)
+        // Who is at war with one of the two, found in one pass over the wars: asking for each fleet whether its owner was at war with either went through every war
+        // for every fleet, for every sea route a buyer looked at, a fifth of all simulation time twenty years into a game. Most pairs have no enemy and are done here.
+        var enemies = _blockEnemies ??= new List<Country>();
+        enemies.Clear();
+        foreach (var war in _game.World.Wars)
+        {
+            if (war.Armistice) continue;
+            bool attacks = war.IsAttacker(seller) || war.IsAttacker(buyer), defends = war.IsDefender(seller) || war.IsDefender(buyer);
+            if (attacks) foreach (var c in war.Defenders) if (c != seller && c != buyer) enemies.Add(c);
+            if (defends) foreach (var c in war.Attackers) if (c != seller && c != buyer) enemies.Add(c);
+        }
+        if (enemies.Count == 0) return false;
         bool anyHostile = false;
         foreach (var fleet in _game.Navy.Fleets)
-            if (fleet.Owner != seller && fleet.Owner != buyer && (_game.World.AtWar(fleet.Owner, seller) || _game.World.AtWar(fleet.Owner, buyer))) { anyHostile = true; break; }
+            if (enemies.Contains(fleet.Owner)) { anyHostile = true; break; }
         if (!anyHostile) return false;
 
         // A hostile fleet in the sea immediately outside either trading coast blocks
         // the route. The route layer stays independent of naval movement, but naval
         // patrols now have a deterministic economic consequence.
-        foreach (var port in route.From.Locations.Concat(route.To.Locations).Where(l => l.IsLand && l.IsCoastal))
-            foreach (var sea in port.Neighbors.Select(a => a.To).Where(l => l.IsWater))
-                foreach (var fleet in _game.Navy.FleetsAt(sea))
-                    if (fleet.Owner != seller && fleet.Owner != buyer
-                        && (_game.World.AtWar(fleet.Owner, seller) || _game.World.AtWar(fleet.Owner, buyer)))
-                        return true;
+        return HostileFleetOff(route.From, enemies) || HostileFleetOff(route.To, enemies);
+    }
+    [ThreadStatic] private static List<Country>? _blockEnemies;
+
+    private bool HostileFleetOff(State state, List<Country> enemies)
+    {
+        foreach (var port in state.Locations)
+        {
+            if (!port.IsLand || !port.IsCoastal) continue;
+            foreach (var adjacency in port.Neighbors)
+            {
+                var sea = adjacency.To;
+                if (!sea.IsWater) continue;
+                foreach (var fleet in _game.Navy.Fleets)
+                    if (fleet.Location == sea && enemies.Contains(fleet.Owner)) return true;
+            }
+        }
         return false;
     }
 
