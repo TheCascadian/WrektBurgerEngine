@@ -367,10 +367,18 @@ public sealed class CommoditySystem
         _settlementComplete = false;
         _settlementRolloverPending = false;
         DropPlan();
-        _spreadEstimateMs = _spreadLastMs > 0 ? _spreadLastMs * 1.1 : _settlementCommodities.Count * SpreadFirstGuessMs;
+        _spreadEstimateMs = _spreadLastMs > 0 ? _spreadLastMs * 1.03 : _settlementCommodities.Count * SpreadFirstGuessMs;
         _spreadSpentMs = 0;
         _spreadCommitted = 0;
-        _spreadEndHour = _game.World.Date.TotalHours + SpreadHours;
+        // until the next settlement begins (the 6th of next month, 18h), less a little room in case it runs late: no days at the end of a month with nothing left to do
+        var today = _game.World.Date;
+        var next = new GameDate(today.Year, today.Month, 6, 18);
+        while (next.TotalHours <= today.TotalHours + 48) next = next.AddMonths(1);
+        _spreadSpanHours = (int)Math.Clamp(next.TotalHours - today.TotalHours - SpreadRoomHours, 240, 740);
+        _spreadEndHour = today.TotalHours + _spreadSpanHours;
+        _costNow.Clear();
+        if (_otherNowCount >= 48) { (_otherNow, _otherLast) = (_otherLast, _otherNow); _otherLastCount = _otherNowCount; }
+        _otherNowCount = 0;
     }
 
     // ------------------------------------------------------------------------------------- the settlement spread over the hours
@@ -383,7 +391,10 @@ public sealed class CommoditySystem
     public bool SpreadWork;
     /// <summary>For tests: when above 0, each hour of the spread settlement does this many steps of work instead of working by the clock, so a run can be repeated exactly.</summary>
     public int SpreadFixedSteps;
-    private const int SpreadHours = 640;    // a month has 720: there is room left if it runs late
+    private const int SpreadHours = 640;    // (a game just loaded, before its first settlement begins)
+    private const int SpreadRoomHours = 3;
+    private int _spreadSpanHours = SpreadHours;
+    private double _otherAverageMs;   // what the rest of an hour takes on this machine, averaged over about ten days
     private enum SpreadStage { Plan, Priorities, Markets, Pairing, Finish }
     private IEnumerator<int>? _planSteps;
     private Burger.Core.Diplomacy.DiplomacySystem.OpinionBatch? _opinionBatch;
@@ -428,6 +439,35 @@ public sealed class CommoditySystem
     private long _spreadEndHour;
     private int _spreadCommitted;
 
+    private Dictionary<string, double> _costNow = new(StringComparer.OrdinalIgnoreCase), _costLast = new(StringComparer.OrdinalIgnoreCase);   // milliseconds each commodity took, this settlement and the last
+    private double _planStartedMs, _overrunAverageMs;
+    // What the rest of the game took in each hour since the settlement began, and in each hour of the last settlement: the same hours of a month carry the same work
+    // (the monthly work of the systems on the first days, the AI until the 28th), so last month tells how busy the hours still to come will be.
+    private const int SpreadPhases = 768;
+    private float[] _otherNow = new float[SpreadPhases], _otherLast = new float[SpreadPhases];
+    private int _otherNowCount, _otherLastCount;
+
+    /// <summary>
+    /// The length in milliseconds every hour still to come can be filled up to, so that the work left is done when the hours are over: the hours the rest of the game
+    /// makes longer than that get nothing, the others the difference.
+    /// </summary>
+    // (leastMs: what even the busiest hour does, the least it is allowed and what a step that cannot be cut short runs over on average)
+    private double HourLength(double otherNowMs, double workLeftMs, int hoursLeft, int phase, double leastMs)
+    {
+        float[] known = _otherLastCount >= 48 ? _otherLast : _otherNow;
+        int count = _otherLastCount >= 48 ? _otherLastCount : Math.Min(phase, _otherNowCount);
+        if (count < 24) return otherNowMs + workLeftMs / Math.Max(1, hoursLeft) + Math.Max(0, _otherAverageMs - otherNowMs);
+        double low = 0, high = 60 + workLeftMs;
+        for (int step = 0; step < 24; step++)
+        {
+            double length = (low + high) / 2, fits = Math.Max(leastMs, length - otherNowMs);
+            for (int h = 1; h < hoursLeft && fits < workLeftMs; h++)
+                fits += Math.Max(leastMs, length - known[(phase + h) % count]);
+            if (fits < workLeftMs) low = length; else high = length;
+        }
+        return high;
+    }
+
     /// <summary>One hour's part of the settlement (see <see cref="SpreadWork"/>).</summary>
     public void SpreadTick()
     {
@@ -443,10 +483,26 @@ public sealed class CommoditySystem
         if (_spreadEstimateMs <= 0) _spreadEstimateMs = commoditiesLeft * SpreadFirstGuessMs;   // (a game just loaded)
         long hoursLeft = Math.Max(8, _spreadEndHour - now);
         if (_spreadEndHour <= now && _spreadCommitted == 0 && _spreadSpentMs == 0) hoursLeft = Math.Max(64, SpreadHours * commoditiesLeft / Math.Max(1, _settlementCommodities.Count));
-        // what is still to do, by last month's total or by how long a commodity has taken this month, over the hours left
-        double pace = _spreadCommitted > 0 ? _spreadSpentMs / _spreadCommitted * commoditiesLeft : 0;
-        double allowedMs = Math.Clamp(Math.Max(_spreadEstimateMs - _spreadSpentMs, pace) / hoursLeft, SpreadSlowestMs, SpreadFastestMs);
+        // what is still to do: what each commodity still waiting took last month (they differ a lot), over the hours left
+        double typicalMs = _spreadCommitted > 0 ? _spreadSpentMs / _spreadCommitted : _costLast.Count > 0 ? _spreadLastMs / _costLast.Count : SpreadFirstGuessMs;
+        double workLeftMs = 0;
+        for (int i = _settlementIndex; i < _settlementCommodities.Count; i++)
+        {
+            double cost = _costLast.TryGetValue(_settlementCommodities[i], out var known) ? known * 1.03 : typicalMs;
+            if (i == _settlementIndex && ReferenceEquals(_planKey, _settlementCommodities[i])) cost = Math.Max(cost * 0.1, cost - (_spreadSpentMs - _planStartedMs));
+            workLeftMs += cost;
+        }
+        double shareMs = workLeftMs / hoursLeft;
         long start = System.Diagnostics.Stopwatch.GetTimestamp();
+        // The settlement fills the hours up to one length: an hour in which the rest of the game had little to do takes more of it, a busy hour (monthly work, a war) only a little.
+        // So the days of a month take about the same time, whatever else falls on them. (Not with SpreadFixedSteps, which counts steps and never looks at the clock.)
+        double otherMs = _game.TickStarted == 0 ? 0 : Math.Min(60, Math.Max(0, (start - _game.TickStarted) * 1000.0 / System.Diagnostics.Stopwatch.Frequency));
+        _otherAverageMs = _otherAverageMs <= 0 ? otherMs : _otherAverageMs + (otherMs - _otherAverageMs) / 240;
+        int phase = (int)Math.Clamp(now - (_spreadEndHour - _spreadSpanHours), 0, SpreadPhases - 1);
+        _otherNow[phase] = (float)otherMs;
+        if (phase >= _otherNowCount) _otherNowCount = phase + 1;
+        double leastMs = Math.Min(SpreadSlowestMs, shareMs);
+        double allowedMs = Math.Clamp(HourLength(otherMs, workLeftMs, (int)hoursLeft, phase, leastMs + _overrunAverageMs) - otherMs - _overrunAverageMs, leastMs, SpreadFastestMs);
         long limit = start + (long)(allowedMs * System.Diagnostics.Stopwatch.Frequency / 1000);
         var network = _game.TradeNetwork;
         _opinionBatchReady = false;
@@ -464,6 +520,7 @@ public sealed class CommoditySystem
                 {
                     DropPlan();
                     _planKey = key;
+                    _planStartedMs = _spreadSpentMs + (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
                     _planStage = SpreadStage.Plan;
                     _planCursor = 0;
                     _plannedCountries.Clear();
@@ -491,7 +548,8 @@ public sealed class CommoditySystem
                     case SpreadStage.Priorities:
                         if (_planCursor >= _planBuyers.Count) { _planStage = SpreadStage.Markets; continue; }
                         long tq = _game.Profiling ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
-                        if (BatchPriorities())
+                        if (network.PreparePrioritiesFromMonth(_planBuyers[_planCursor], _planSellers)) _planCursor++;
+                        else if (BatchPriorities())
                         {
                             // (the game does not change within this tick until the markets are filled: the sellers' side holds for every buyer)
                             if (!_opinionBatchReady) { (_opinionBatch ??= new(_game)).Begin(_planSellers); _opinionBatchReady = true; }
@@ -528,6 +586,7 @@ public sealed class CommoditySystem
                         break;
                     default:
                         FinishPlan(k);
+                        _costNow[key] = _spreadSpentMs + (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency - _planStartedMs;
                         _settlementIndex++;
                         _spreadCommitted++;
                         DropPlan();
@@ -541,14 +600,19 @@ public sealed class CommoditySystem
             network.MethodMemo = null;
             Burger.Core.Mechanics.ModifierSystem.EndMemo();
         }
-        _spreadSpentMs += (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        double tookMs = (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        _spreadSpentMs += tookMs;
+        // (a step is not cut short when the time is up: what the hours run over on average is taken off what the next ones are allowed)
+        if (SpreadFixedSteps <= 0) _overrunAverageMs += (Math.Clamp(tookMs - allowedMs, 0, 20) - _overrunAverageMs) / 120;
         if (_settlementIndex >= _settlementCommodities.Count)
         {
             _settlementIndex = _settlementCommodities.Count;
             _settlementComplete = true;
             _usedThisMonth.Clear();
             _spreadLastMs = _spreadSpentMs;
-            SpreadReport = $"last settlement {_spreadSpentMs:0} ms over {now - (_spreadEndHour - SpreadHours)} hours";
+            (_costNow, _costLast) = (_costLast, _costNow);
+            _costNow.Clear();
+            SpreadReport = $"last settlement {_spreadSpentMs:0} ms over {now - (_spreadEndHour - _spreadSpanHours)} of {_spreadSpanHours} hours";
         }
     }
 
@@ -609,7 +673,7 @@ public sealed class CommoditySystem
         network.BeginCommodity(k.Key);
         double storage = Rules.StorageMonths(_game, k);
         foreach (var row in _plannedStates) network.AddPlannedMarket(row.State, k.Key, row.Output, row.Demand, row.Opening, storage);
-        network.MarketsFilled();
+        network.MarketsFilled(k.Key);
         if (_game.Profiling) _game.ProfileElapsed("Settle.Markets", System.Diagnostics.Stopwatch.GetTimestamp() - t0);
     }
 

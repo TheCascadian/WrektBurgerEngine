@@ -608,6 +608,8 @@ public static partial class Program
             try { File.Delete(startPath); } catch { }
             Console.WriteLine($"RELOAD|0|{StateDigest(reloaded)} vs {StateDigest(game)}");
         }
+        using var dayScopes = game.Profiling && Opt(args, "--day-scopes") is { } dayScopesPath ? new StreamWriter(dayScopesPath) : null;
+        var dayScopesBefore = new Dictionary<string, double>();
         for (int d = 0; d < days; d++)
         {
             if (reloaded != null && args.Contains("--reload-trace") && !(reloadAt > 0 && d + 1 == reloadAt))
@@ -627,6 +629,16 @@ public static partial class Program
             else
                 for (int h = 0; h < 24; h++) { if (streamed) game.TickLive(); else game.Tick(); }
             recorder?.Daily();
+            if (dayScopes != null)   // --day-scopes FILE (with --profile): what each system took on each day, to see which days of a month are heavy and why
+            {
+                lock (game.ProfileMs)
+                    foreach (var (name, total) in game.ProfileMs)
+                    {
+                        double took = total - dayScopesBefore.GetValueOrDefault(name);
+                        dayScopesBefore[name] = total;
+                        if (took >= 1) dayScopes.WriteLine($"{d}	{game.World.Date.Day}	{name}	{took:0.0}");
+                    }
+            }
             if (reloadAt > 0 && d + 1 == reloadAt)
             {
                 string savePath = Path.Combine(Path.GetTempPath(), $"burger_reload_{Environment.ProcessId}.sav");

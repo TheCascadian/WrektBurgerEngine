@@ -327,7 +327,27 @@ public sealed partial class PopulationSystem
     /// <summary>1.2M, 340k, 900 ...</summary>
     public static string Format(double n) => n >= 1e9 ? $"{n / 1e9:0.##}B" : n >= 1e6 ? $"{n / 1e6:0.##}M" : n >= 1e4 ? $"{n / 1e3:0}k" : n >= 1e3 ? $"{n / 1e3:0.#}k" : $"{n:0}";
 
-    public double TotalOf(State s) => _states.TryGetValue(s, out var sp) ? sp.Total : 0;
+    public double TotalOf(State s)
+    {
+        if (!_game.RelaxedTiming) return _states.TryGetValue(s, out var sp) ? sp.Total : 0;
+        // A single player game counts the people of a state once a day (they were counted again for every commodity, building and country total that asked).
+        int day = _game.World.Date.TotalDays, i = s.Index;
+        var stamps = _totalDay; var totals = _totalKept;
+        if (i >= stamps.Length || i >= totals.Length)
+        {
+            int size = Math.Max(i + 1, _game.World.States.Count);
+            _totalKept = totals = new double[size];
+            var grown = new int[size]; Array.Fill(grown, int.MinValue);
+            _totalDay = stamps = grown;
+        }
+        if (stamps[i] == day) return totals[i];
+        double total = _states.TryGetValue(s, out var pops) ? pops.Total : 0;
+        totals[i] = total;
+        stamps[i] = day;
+        return total;
+    }
+    private int[] _totalDay = Array.Empty<int>();
+    private double[] _totalKept = Array.Empty<double>();
     public double TotalOf(Country c)
     {
         double t = 0;

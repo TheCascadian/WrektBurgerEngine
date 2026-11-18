@@ -7,6 +7,10 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 PROJECT=${1:-SampleGame}
 DAYS=${2:-365}
 FOCUS=${FOCUS:-}
+# LIVE=1 profiles the live clock of a single player game (the settlement spread over the hours, the single player schedule and caches)
+# and writes what each system took on each day to day-scopes.tsv; results then differ from run to run.
+LIVE=${LIVE:-}
+MODE=()
 OUT=${OUT:-"${TMPDIR:-/tmp}/burger-profile-sim-$(date +%Y%m%d-%H%M%S)"}
 mkdir -p "$OUT"
 cd "$ROOT"
@@ -20,6 +24,7 @@ Runs the deterministic headless simulation with --profile.
 Examples:
   tools/profile-sim.sh SampleGame 365
   FOCUS=Ai.MonthlyTick tools/profile-sim.sh SampleGame 365
+  LIVE=1 tools/profile-sim.sh World500BCE 120      (the live single player clock; adds tick statistics and day-scopes.tsv)
   OUT=logs/sim-profile tools/profile-sim.sh SampleGame 60
 EOF
   exit 0
@@ -36,16 +41,17 @@ if ! dotnet build BurgerEngine.sln -c Release -nologo >"$OUT/build.log" 2>&1; th
 fi
 
 set +e
-dotnet src/Burger.Tools/bin/Release/net8.0/burger.dll validate "$PROJECT" --days "$DAYS" --profile \
+[[ -n "$LIVE" ]] && MODE=(--spread --tick-stats --settle 6000 --day-scopes "$OUT/day-scopes.tsv")
+dotnet src/Burger.Tools/bin/Release/net8.0/burger.dll validate "$PROJECT" --days "$DAYS" --profile ${MODE[@]+"${MODE[@]}"} \
   >"$OUT/profile.log" 2>&1
 RC=$?
 set -e
 cp "$OUT/profile.log" "$OUT/raw.log"
 
 echo "runtime_exit=$RC"
-grep -E '(^| )((PERF|Path)\.|PROFILE_(RAW|DAY)|time per system|Validating|  loaded|Simulating|  simulated|  feature |  world:)' "$OUT/profile.log" >"$OUT/all-profile-lines.txt" || true
+grep -E '(^| )((PERF|Path)\.|PROFILE_(RAW|DAY)|TICKSTATS|SLOWEST|ECONOMY\||MEMORY\||time per system|Validating|  loaded|Simulating|  simulated|  feature |  world:)' "$OUT/profile.log" >"$OUT/all-profile-lines.txt" || true
 {
-  echo "command: dotnet src/Burger.Tools/bin/Release/net8.0/burger.dll validate $PROJECT --days $DAYS --profile"
+  echo "command: dotnet src/Burger.Tools/bin/Release/net8.0/burger.dll validate $PROJECT --days $DAYS --profile ${MODE[*]}"
   echo "host: $(uname -a)"
   echo "date: $(date -Is)"
   echo "dotnet: $(dotnet --version 2>/dev/null || true)"

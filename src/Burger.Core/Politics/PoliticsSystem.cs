@@ -693,7 +693,8 @@ public sealed partial class PoliticsSystem
         // The lock is re-entrant: the AI ticks run on several threads and a computation can ask for other modifiers.
         lock (_mods)
         {
-            long stamp = _game.World.Date.TotalHours;
+            // (a single player game keeps them for the day: what changes them in between, a law, a minister, an election, marks the country itself)
+            long stamp = _game.RelaxedTiming ? (1L << 62) + _game.World.Date.TotalDays : _game.World.Date.TotalHours;
             if (stamp != _modsStamp)
             {
                 // (the hour's dictionaries are used again for the next hour's: none is held outside this lock)

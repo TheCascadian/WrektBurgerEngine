@@ -250,7 +250,9 @@ public sealed class CultureSystem
             _tradKeys = keys; _tradKeysFrom = Traditions.Count;
         }
         if (!_tradKeys.Contains(key)) return 0;
-        long now = _game.World.Date.TotalHours;
+        // per hour, so a reloaded game sees what the original did; a single player game keeps them for the day and until land changes hands
+        // (the peoples of a country are counted for this: every hour for every country was a large part of the monthly population's time)
+        long now = _game.RelaxedTiming ? (1L << 62) + _game.World.Date.TotalDays * 16777216L + (_game.World.OwnershipVersion & 0xFFFFFF) : _game.World.Date.TotalHours;
         lock (_mods)   // (a key is now remembered on each request, not only on the first)
         {
             if (now != _modsHour) { ClearMods(); _modsHour = now; } // per hour, so a reloaded game sees what the original did

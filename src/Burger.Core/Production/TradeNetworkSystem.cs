@@ -185,7 +185,7 @@ public sealed class TradeNetworkSystem
         _landPaths.Clear();
     }
     private readonly Dictionary<long, (TradeRouteKind Kind, List<State> Path, int[] Stops, double Distance)> _routeWays = new();
-    private int _landEdgesVersion = -1;
+    private int _landEdgesVersion = -1, _landTopologyDay = int.MinValue;
     private readonly Dictionary<string, double> _routeUse = new(StringComparer.Ordinal);
     private readonly Dictionary<TradeAgreement, double> _agreementUse = new();
     private readonly HashSet<string> _blockades = new(StringComparer.OrdinalIgnoreCase);
@@ -226,6 +226,17 @@ public sealed class TradeNetworkSystem
     private static string F(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 
     private void InvalidateTotalsCache() => _totalsEpoch++;
+    /// <summary>
+    /// The markets of one commodity have changed. A single player game drops only its totals (and all of them when land changes hands): while a settlement is under way
+    /// some commodity changes every hour, and the construction of every country added up all the markets of its inputs again each time. Multiplayer and the tools drop
+    /// all totals as before, so a game loaded from a save and the game it was saved from agree.
+    /// </summary>
+    private void InvalidateTotalsCache(string commodity)
+    {
+        if (!_game.RelaxedTiming) { _totalsEpoch++; return; }
+        if (_totalsByCommodity.TryGetValue(commodity, out var t)) t.Epoch = -1;
+    }
+    private int _totalsOwnership = -1;
 
     public TradePolicy PolicyOf(Country country)
         => Policies.TryGetValue(country, out var p) ? p : Policies[country] = new TradePolicy();
@@ -304,7 +315,7 @@ public sealed class TradeNetworkSystem
         }
         if (!byCommodity.TryGetValue(commodity, out var market))
         {
-            InvalidateTotalsCache();
+            InvalidateTotalsCache(commodity);
             _marketsShape++;
             byCommodity[commodity] = market = NewMarket(state, commodity);
         }
@@ -340,6 +351,7 @@ public sealed class TradeNetworkSystem
     public void BeginMonth()
     {
         InvalidateTotalsCache();
+        _monthStampNow++;
         // Capacity depends on buildings and service satisfaction. Rebuild economic
         // routes each month so a warm cache and a freshly loaded game agree.
         // The topology/path caches remain reusable until the map changes.
@@ -357,11 +369,32 @@ public sealed class TradeNetworkSystem
     {
         _current.Clear();
         _currentSlot.Clear();
-        foreach (var state in _game.World.States)
+        // (the markets stand in the order of the states: a state finds its place by its number, and the table of places is only filled if one ever does not)
+        foreach (var state in _game.World.States) _current.Add(MarketOf(state, commodity));
+        _currentSlotsOpen = true;
+    }
+
+    private bool _currentSlotsOpen;   // _currentSlot has not been filled from _current yet
+
+    /// <summary>The place of the state's market in <see cref="_current"/>, or -1.</summary>
+    private int CurrentSlot(State state)
+    {
+        int i = state.Index;
+        if ((uint)i < (uint)_current.Count && ReferenceEquals(_current[i].State, state)) return i;
+        if (_currentSlotsOpen)
         {
-            _currentSlot[state] = _current.Count;
-            _current.Add(MarketOf(state, commodity));
+            _currentSlotsOpen = false;
+            for (int k = 0; k < _current.Count; k++) _currentSlot[_current[k].State] = k;
         }
+        return _currentSlot.TryGetValue(state, out int slot) ? slot : -1;
+    }
+
+    private void SetCurrent(State state, StateMarket market)
+    {
+        int slot = CurrentSlot(state);
+        if (slot >= 0) { _current[slot] = market; return; }
+        _currentSlot[state] = _current.Count;
+        _current.Add(market);
     }
 
     public void AddMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
@@ -372,8 +405,7 @@ public sealed class TradeNetworkSystem
         market.OpeningStockpile = Math.Max(0, openingStockpile);
         market.StorageMonths = Math.Max(0, storageMonths);
         market.Import = market.Export = 0;
-        if (_currentSlot.TryGetValue(state, out int slot)) _current[slot] = market;
-        else { _currentSlot[state] = _current.Count; _current.Add(market); }
+        SetCurrent(state, market);
         InvalidateTotalsCache();
     }
 
@@ -401,12 +433,34 @@ public sealed class TradeNetworkSystem
         _pairStampNow = 0; _pairSide = side;
         _preStamp = Array.Empty<int>();
         _prePriority = Array.Empty<double>();
+        _monthStamp = Array.Empty<int>();
+        _monthPriority = Array.Empty<double>();
     }
 
     // How much a buyer wants each seller, worked out over the hours before the settlement (see CommoditySystem.SpreadWork): the dearest part of a settlement, and it only reads the game.
     private int[] _preStamp = Array.Empty<int>();
     private double[] _prePriority = Array.Empty<double>();
     private int _preStampNow = 1;
+    // ... and kept for the whole settlement: whom a seller prefers is the same question for each of the forty commodities of a month, and asking it again for each
+    // was still a twentieth of all simulation time. (The spread settlement only; a war that starts in between still stops the trade, that is asked when the goods are matched.)
+    private int[] _monthStamp = Array.Empty<int>();
+    private double[] _monthPriority = Array.Empty<double>();
+    private int _monthStampNow = 1;
+
+    /// <summary>True if the buyer's priority for every one of the sellers is known from an earlier commodity of this settlement: they are taken, and nothing has to be worked out.</summary>
+    internal bool PreparePrioritiesFromMonth(Country buyer, List<Country> sellers)
+    {
+        int row = _pairNumber[buyer.Index] * _pairSide;
+        for (int i = 0; i < sellers.Count; i++)
+            if (_monthStamp[row + _pairNumber[sellers[i].Index]] != _monthStampNow) return false;
+        for (int i = 0; i < sellers.Count; i++)
+        {
+            int at = row + _pairNumber[sellers[i].Index];
+            _prePriority[at] = _monthPriority[at];
+            _preStamp[at] = _preStampNow;
+        }
+        return true;
+    }
 
     internal void BeginPreparedPriorities(List<Country> buyers, List<Country> sellers)
     {
@@ -416,6 +470,7 @@ public sealed class TradeNetworkSystem
         EnsurePairTables();
         int size = _pairSide * _pairSide;
         if (_preStamp.Length < size) { _preStamp = new int[size]; _prePriority = new double[size]; }
+        if (_monthStamp.Length < size) { _monthStamp = new int[size]; _monthPriority = new double[size]; }
     }
 
     internal void PreparePriorities(Country buyer, List<Country> sellers, Func<Country, Country, double> priority)
@@ -426,6 +481,8 @@ public sealed class TradeNetworkSystem
             int at = row + _pairNumber[seller.Index];
             _prePriority[at] = priority(seller, buyer);
             _preStamp[at] = _preStampNow;
+            _monthPriority[at] = _prePriority[at];
+            _monthStamp[at] = _monthStampNow;
         }
     }
 
@@ -438,20 +495,24 @@ public sealed class TradeNetworkSystem
             int at = row + _pairNumber[sellers[i].Index];
             _prePriority[at] = priorities[i];
             _preStamp[at] = _preStampNow;
+            _monthPriority[at] = priorities[i];
+            _monthStamp[at] = _monthStampNow;
         }
     }
 
     /// <summary>A market whose demand was worked out in advance (see CommoditySystem.SpreadWork).</summary>
     internal void AddPlannedMarket(State state, string commodity, double output, double demand, double openingStockpile, double storageMonths)
     {
-        var market = MarketOf(state, commodity);
+        // (the commodity's market of the state is usually at the state's place already: no need to look it up again)
+        int at = state.Index;
+        var market = (uint)at < (uint)_current.Count && ReferenceEquals(_current[at].State, state) && string.Equals(_current[at].Commodity, commodity, StringComparison.OrdinalIgnoreCase)
+            ? _current[at] : MarketOf(state, commodity);
         market.Output = Math.Max(0, output);
         market.Demand = demand;
         market.OpeningStockpile = Math.Max(0, openingStockpile);
         market.StorageMonths = Math.Max(0, storageMonths);
         market.Import = market.Export = 0;
-        if (_currentSlot.TryGetValue(state, out int slot)) _current[slot] = market;
-        else { _currentSlot[state] = _current.Count; _current.Add(market); }
+        SetCurrent(state, market);
     }
 
     public IReadOnlyList<TradeMatch> MatchCommodity(CommodityDef definition, Func<Country, Country, bool> canTrade, Func<Country, Country, double> priority)
@@ -500,7 +561,7 @@ public sealed class TradeNetworkSystem
     }
 
     /// <summary>The markets were filled without <see cref="AddMarket"/>: what was added up from them is out of date.</summary>
-    internal void MarketsFilled() => InvalidateTotalsCache();
+    internal void MarketsFilled(string commodity) => InvalidateTotalsCache(commodity);
 
     private bool PairNumbered(Country c) => c.Index < _pairNumber.Length && _pairNumber[c.Index] >= 0;
 
@@ -508,7 +569,7 @@ public sealed class TradeNetworkSystem
     {
         // Matching mutates stockpiles, imports, exports, prices and satisfaction.
         // Clear before mutation so an exception cannot leave a stale aggregate usable.
-        InvalidateTotalsCache();
+        InvalidateTotalsCache(definition.Key);
         var sellerMarkets = _sellerMarketsScratch;
         var sellerLeft = _sellerLeftScratch;
         var buyers = _buyersScratch;
@@ -755,7 +816,7 @@ public sealed class TradeNetworkSystem
             });
         }
         if (History.Count > 6000) History.RemoveRange(0, History.Count - 6000);
-        InvalidateTotalsCache();
+        InvalidateTotalsCache(definition.Key);
         if (_game.Profiling)
         {
             _game.ProfileElapsed("Match.Pairing", m1 - m0);
@@ -766,6 +827,7 @@ public sealed class TradeNetworkSystem
     public (double Output, double Demand, double Import, double Export, double Stockpile, double Price, double Satisfied) Totals(Country country, string commodity)
     {
         if (!_totalsByCommodity.TryGetValue(commodity, out var t)) _totalsByCommodity[commodity] = t = new CommodityTotals();
+        if (_totalsOwnership != _game.World.OwnershipVersion && _game.RelaxedTiming) { _totalsOwnership = _game.World.OwnershipVersion; _totalsEpoch++; }
         if (t.Epoch != _totalsEpoch) SumTotals(t, commodity);
         int i = country.Index;
         if ((uint)i < (uint)t.OwnerStamp.Length && t.OwnerStamp[i] == t.Stamp) return t.OwnerTotals[i];
@@ -1145,6 +1207,11 @@ public sealed class TradeNetworkSystem
     private void EnsureLandEdges()
     {
         if (_landEdgesVersion == _game.MapVersion) return;
+        // (in a war the map changes many times a day, and each time every location of the world was gone through to see whether one had moved to another state:
+        // a single player game looks once a day)
+        int today = _game.World.Date.TotalDays;
+        if (_game.RelaxedTiming && _landTopologyDay == today && _landEdgeTo.Length == _game.World.States.Count) { _landEdgesVersion = _game.MapVersion; return; }
+        _landTopologyDay = today;
         // Ownership changes bump the map version far more often than the state graph changes.
         // Keep the edges and search trees unless a location moved between states.
         long topology = 17;

@@ -597,6 +597,15 @@ public sealed class Game
     /// <summary>With profiling on: what the last tick spent its time on (scopes of 2 ms and more, those inside others too).</summary>
     public readonly List<(string Name, double Ms)> TickScopes = new();
 
+    /// <summary>
+    /// The live clock of a single player game: nobody else has to agree with this game tick by tick, so work may be spread by the time it really takes and
+    /// slowly moving totals may be kept a little longer. Off for multiplayer and the tools, whose results stay exactly as they were.
+    /// </summary>
+    public bool RelaxedTiming => Commodities.SpreadWork;
+
+    /// <summary>When the hour being simulated began (a stopwatch timestamp): work that can wait looks at how long the hour has taken so far.</summary>
+    internal long TickStarted;
+
     /// <summary>Advances the simulation by one hour and completes economic settlement at month boundaries.</summary>
     public void Tick() => Tick(streamEconomicWork: false);
 
@@ -607,6 +616,10 @@ public sealed class Game
     internal void Tick(bool streamEconomicWork)
     {
         World.Date = World.Date.AddHours(1);
+        // With server GC the youngest generation grows to gigabytes before it is collected, and that one collection then stops the clock for 50 to 120 ms.
+        // The live clock collects it once a game day instead, while there is little in it: about a millisecond each, and a gigabyte less memory.
+        if (RelaxedTiming && World.Date.Hour == 0 && System.Runtime.GCSettings.IsServerGC) GC.Collect(0, GCCollectionMode.Forced, blocking: true);
+        TickStarted = System.Diagnostics.Stopwatch.GetTimestamp();
         if (Profiling) lock (ProfileMs) TickScopes.Clear();
         Modifiers.BeginTick();
         try
@@ -697,12 +710,10 @@ public sealed class Game
         }
         // two more commodity batches a day, so the 40 commodities of a settlement finish well inside the month instead of piling up at the next one
         if ((hour == 10 || hour == 20) && Features.Has(F.Commodities)) P("Commodities.DailyTick", () => Commodities.DailyTick());
-        if (Commodities.SpreadWork)
-        {
-            if (Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTickPart(hour));
-            if (Features.Has(F.Commodities)) P("Commodities.Spread", () => Commodities.SpreadTick());
-        }
+        if (Commodities.SpreadWork && Features.Has(F.Production)) P("Production.DailyTick", () => Production.DailyTickPart(hour));
         if (World.Date.Day <= 9) MonthlyStage(World.Date.Day, hour, streamEconomicWork);
+        // last: it fills what is left of the hour (see CommoditySystem.SpreadTick)
+        if (Commodities.SpreadWork && Features.Has(F.Commodities)) P("Commodities.Spread", () => Commodities.SpreadTick());
     }
 
     /// <summary>
@@ -727,10 +738,12 @@ public sealed class Game
                 if (hour == 12 && Geo.Enabled) P("Geo.MonthlyTick", () => GeoDynamics.MonthlyTick());
                 break;
             case 3:
+                if (RelaxedTiming && Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTickPart(hour, 48));
                 if (hour == 6) { P("Resources.MonthlyTick", () => Resources.MonthlyTick()); P("Modifiers.MonthlyTick", () => Modifiers.MonthlyTick()); }
                 break;
             case 4:
-                if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => Politics.MonthlyTickPart(hour, 24));
+                // (a single player game does it by halves, on the 3rd and the 4th: by far the heaviest monthly work, and the 3rd has little else)
+                if (Features.Has(F.Politics)) P("Politics.MonthlyTick", () => { if (RelaxedTiming) Politics.MonthlyTickPart(24 + hour, 48); else Politics.MonthlyTickPart(hour, 24); });
                 break;
             case 5:
                 if (hour == 6 && Features.Has(F.Development)) P("Development.MonthlyTick", () => Development.MonthlyTick());

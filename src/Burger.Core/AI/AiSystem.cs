@@ -202,7 +202,16 @@ public class AiSystem
 
     private void DrainIndustryWork()
     {
-        _industryWork.Drain(IndustryWorkPerDay, c =>
+        int perHour = IndustryWorkPerDay;
+        if (Game.RelaxedTiming)
+        {
+            // (see MonthlyTickSpread: nothing on the first nine days, then what is queued evenly over the days to the 26th)
+            int day = Game.World.Date.Day;
+            if (day <= QuietDays) return;
+            int hoursLeft = Math.Max(1, (26 - day) * 24 + 24 - Game.World.Date.Hour);
+            perHour = Math.Max(IndustryWorkPerDay, (_industryWork.Count + hoursLeft - 1) / hoursLeft);
+        }
+        _industryWork.Drain(perHour, c =>
         {
             _queuedIndustryCountries.Remove(c.Index);
             if (!c.Exists || c.IsPlayer) return;
@@ -316,7 +325,8 @@ public class AiSystem
             && !Game.World.Relations.AreOverlordAndSubject(player, c);
     }
 
-    private int _sliceDay = -1;
+    private int _sliceDay = -1, _sliceCount = 28 * 24;
+    private const int QuietDays = 9;
     private bool? _overridesMonthly;
 
     /// <summary>
@@ -329,16 +339,18 @@ public class AiSystem
         _overridesMonthly ??= GetType().GetMethod(nameof(MonthlyTick))?.DeclaringType != typeof(AiSystem);
         if (_overridesMonthly == true) { if (day == 1 && hour == 0) MonthlyTick(); return; }
         if (day > 28) return;
-        _sliceDay = (day - 1) * 24 + hour;
-        try
+        if (streamEconomicWork && day == 1 && hour == 0 && _industryQueueMonth != Game.World.Date.TotalDays)
         {
-            if (streamEconomicWork && day == 1 && hour == 0 && _industryQueueMonth != Game.World.Date.TotalDays)
-            {
-                QueueIndustryWork(ActiveAiCountries());
-                _industryQueueMonth = Game.World.Date.TotalDays;
-            }
-            MonthlyTick(streamEconomicWork);
+            QueueIndustryWork(ActiveAiCountries());
+            _industryQueueMonth = Game.World.Date.TotalDays;
         }
+        // A single player game: the monthly work of the systems (population, economy, politics, diplomacy) is on the first nine days and cannot wait, so the AI's
+        // monthly work is done on the days after them (10 to 28) and no day carries both.
+        bool late = streamEconomicWork && Game.RelaxedTiming;
+        if (late && day < QuietDays + 1) return;
+        _sliceCount = late ? (28 - QuietDays) * 24 : 28 * 24;
+        _sliceDay = late ? (day - QuietDays - 1) * 24 + hour : (day - 1) * 24 + hour;
+        try { MonthlyTick(streamEconomicWork); }
         finally { _sliceDay = -1; }
     }
 
@@ -352,7 +364,7 @@ public class AiSystem
         var F = Game.Features;
         bool diplomacy = F.Has(FeatureSet.Diplomacy);
         var countries = ActiveAiCountries();
-        if (_sliceDay >= 0) countries.RemoveAll(c => c.Index % (28 * 24) != _sliceDay);
+        if (_sliceDay >= 0) countries.RemoveAll(c => c.Index % _sliceCount != _sliceDay);
         if (_sliceDay >= 0 && countries.Count == 0) return;   // (most hours of the month have no country of their own)
         if (streamEconomicWork)
         {

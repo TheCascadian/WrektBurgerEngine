@@ -5,6 +5,21 @@ namespace Burger.Core.Economy;
 /// <summary>Overridable economy formulas. Assign a subclass to <c>Game.Rules.Economy</c> from a C# mod.</summary>
 public class EconomyRules
 {
+    /// <summary>
+    /// While the monthly economy goes through many countries: what each occupied location brings its occupier, counted in one pass over the map
+    /// (every country looked at every location of the world for itself: countries times locations each month).
+    /// </summary>
+    [ThreadStatic] internal static List<double>?[]? OccupiedIncome;
+
+    internal static List<double>?[] CountOccupiedIncome(Game game)
+    {
+        var counted = new List<double>?[game.World.Countries.Count];
+        foreach (var l in game.World.Locations)
+            if (l.Controller is { } c && l.Owner != null && l.Owner != c && l.State != null && l.State.Locations.Count > 0 && c.Index < counted.Length)
+                (counted[c.Index] ??= new()).Add(l.State.Tax / l.State.Locations.Count * 0.25);
+        return counted;
+    }
+
     /// <summary>Monthly gold income of a country (before upkeep).</summary>
     public virtual double MonthlyIncome(Game game, Country c)
     {
@@ -12,9 +27,15 @@ public class EconomyRules
         double income = 0;
         foreach (var s in c.OwnedStates) income += s.Tax * game.Modifiers.Factor(s, "tax") * s.ControlledShare(c);
         // occupied enemy land gives a little income too
-        foreach (var l in game.World.Locations)
-            if (l.Controller == c && l.Owner != null && l.Owner != c && l.State != null && l.State.Locations.Count > 0)
-                income += l.State.Tax / l.State.Locations.Count * 0.25;
+        if (OccupiedIncome is { } counted)
+        {
+            if (c.Index < counted.Length && counted[c.Index] is { } parts)
+                foreach (double part in parts) income += part;   // (one by one in the order of the locations, as below: the same sum to the last bit)
+        }
+        else
+            foreach (var l in game.World.Locations)
+                if (l.Controller == c && l.Owner != null && l.Owner != c && l.State != null && l.State.Locations.Count > 0)
+                    income += l.State.Tax / l.State.Locations.Count * 0.25;
         income *= game.Data.Defines.IncomeMultiplier * (1 + c.Vars.Get("income_modifier") + game.Modifiers.Sum(c, "income"));
         return income;
     }
@@ -75,8 +96,13 @@ public sealed class EconomySystem
     {
         var rules = _game.Rules.Economy;
         var w = _game.World;
-        foreach (var c in w.Countries)
-            if (c.Exists && c.Index % parts == part) UpdateEstimates(c);
+        EconomyRules.OccupiedIncome = EconomyRules.CountOccupiedIncome(_game);   // (for every country: a rule may ask for the income of another one)
+        try
+        {
+            foreach (var c in w.Countries)
+                if (c.Exists && c.Index % parts == part) UpdateEstimates(c);
+        }
+        finally { EconomyRules.OccupiedIncome = null; }
         if (part != parts - 1) return;
         var income = new Dictionary<Country, double>();
         foreach (var c in w.Countries)

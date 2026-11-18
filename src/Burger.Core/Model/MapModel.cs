@@ -150,10 +150,19 @@ public sealed class State : IScope
     public double ControlledShare(Country c)
     {
         if (Locations.Count == 0) return 0;
+        // asked for every state by every sum of factories, output and income: counted again only when a location of the world has changed controller.
+        // (One object swapped whole, so the threads of the AI never see half of an answer.)
+        int version = Location.ControllerVersion;
+        var known = _share;
+        if (known != null && known.Version == version && ReferenceEquals(known.Country, c) && known.Locations == Locations.Count) return known.Share;
         int n = 0;
         foreach (var l in Locations) if (l.Controller == c) n++;
-        return n / (double)Locations.Count;
+        double share = n / (double)Locations.Count;
+        _share = new ShareMemo(version, c, Locations.Count, share);
+        return share;
     }
+    private sealed record ShareMemo(int Version, Country Country, int Locations, double Share);
+    private ShareMemo? _share;
 
     public override string ToString() => Key;
 }
